@@ -1,6 +1,118 @@
 import { z } from "zod";
 import type { VersionedJourneyResponse } from "./birth-time-journey-service.ts";
 
+export const conversationalRectificationTelemetryProtocols = [
+  "conversational-evidence-v3",
+] as const;
+export const conversationalRectificationTelemetryPhases = [
+  "entry",
+  "collecting_evidence",
+  "paused",
+  "confirming",
+  "completed",
+  "abandoned",
+] as const;
+export const conversationalRectificationTelemetryActionKinds = [
+  "start",
+  "resume",
+  "answer",
+  "pause",
+  "abandon",
+  "confirm",
+  "unknown",
+] as const;
+export const conversationalRectificationTelemetryResultCategories = [
+  "success",
+  "rejected",
+  "conflict",
+  "failed",
+] as const;
+export const conversationalRectificationTelemetryLatencyBuckets = [
+  "lt_100ms",
+  "100_499ms",
+  "500_1999ms",
+  "2s_plus",
+] as const;
+export const conversationalRectificationTelemetryBillingStates = [
+  "not_applicable",
+  "charged",
+  "released",
+  "migration_waived",
+  "unchanged",
+  "unknown",
+] as const;
+export const conversationalRectificationTelemetryErrorCategories = [
+  "none",
+  "authentication",
+  "validation",
+  "conflict",
+  "billing",
+  "dependency",
+  "unknown",
+] as const;
+
+const deploymentShaSchema = z.union([
+  z.string().regex(/^[0-9a-f]{7,64}$/),
+  z.literal("unknown"),
+]);
+
+export const conversationalRectificationTelemetryPayloadSchema = z.object({
+  protocol: z.enum(conversationalRectificationTelemetryProtocols),
+  phase: z.enum(conversationalRectificationTelemetryPhases),
+  actionKind: z.enum(conversationalRectificationTelemetryActionKinds),
+  resultCategory: z.enum(conversationalRectificationTelemetryResultCategories),
+  latencyBucket: z.enum(conversationalRectificationTelemetryLatencyBuckets),
+  billingState: z.enum(conversationalRectificationTelemetryBillingStates),
+  errorCategory: z.enum(conversationalRectificationTelemetryErrorCategories),
+  deploymentSha: deploymentShaSchema,
+}).strict().readonly();
+
+export type ConversationalRectificationTelemetryPayload = z.infer<
+  typeof conversationalRectificationTelemetryPayloadSchema
+>;
+export type ConversationalRectificationTelemetrySink = (
+  payload: ConversationalRectificationTelemetryPayload,
+) => void;
+
+function conversationalRectificationConsoleSink(
+  payload: ConversationalRectificationTelemetryPayload,
+): void {
+  console.info("[conversational-rectification]", JSON.stringify(payload));
+}
+
+export function createConversationalRectificationTelemetry(
+  sink: ConversationalRectificationTelemetrySink = conversationalRectificationConsoleSink,
+): ConversationalRectificationTelemetrySink {
+  return (input) => {
+    const payload = conversationalRectificationTelemetryPayloadSchema.parse(input);
+    try {
+      sink(payload);
+    } catch { // no-excuse-ok: observability cannot break the product request
+      return;
+    }
+  };
+}
+
+export const recordConversationalRectificationTelemetry =
+  createConversationalRectificationTelemetry();
+
+export function conversationalRectificationLatencyBucket(
+  latencyMs: number,
+): ConversationalRectificationTelemetryPayload["latencyBucket"] {
+  if (!Number.isFinite(latencyMs) || latencyMs < 0) return "2s_plus";
+  if (latencyMs < 100) return "lt_100ms";
+  if (latencyMs < 500) return "100_499ms";
+  if (latencyMs < 2_000) return "500_1999ms";
+  return "2s_plus";
+}
+
+export function safeConversationalRectificationDeploymentSha(
+  value: string | undefined,
+): ConversationalRectificationTelemetryPayload["deploymentSha"] {
+  const normalized = value?.trim().toLowerCase() ?? "";
+  return /^[0-9a-f]{7,64}$/.test(normalized) ? normalized : "unknown";
+}
+
 export const journeyMetricNames = [
   "turn_advanced",
   "draft_corrected",

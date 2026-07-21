@@ -72,6 +72,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=...
 SUPABASE_SERVICE_ROLE_KEY=...
 ADMIN_EMAILS=...
 
+# Conversational birth-time rectification rollout controls.
+# Keep migrations false until the ordered database gate below has passed.
+RECTIFICATION_PRICE_CREDITS=3
+RECTIFICATION_V3_CREATE_ENABLED=true
+RECTIFICATION_V3_MIGRATIONS_READY=false
+
 # Recommended multi-model catalog. The JSON references server-only keys.
 LLM_DEFAULT_MODEL_ID=deepseek-pro
 LLM_MODELS_JSON='[{"id":"deepseek-pro","label":"DeepSeek V4 Pro","description":"更适合复杂分析","provider":"openai-compatible","baseURL":"https://api.deepseek.com","apiKeyEnv":"DEEPSEEK_API_KEY","model":"deepseek-v4-pro","creditCost":1},{"id":"gpt-5-mini","label":"ChatGPT 5 Mini","description":"响应稳定、速度均衡","provider":"openai","apiKeyEnv":"OPENAI_API_KEY","model":"openai/gpt-5-mini","creditCost":1}]'
@@ -183,6 +189,77 @@ Do not treat a green app deployment as proof this database step ran. If the SQL
 Editor shows `You do not have access to this project`, use the correct Supabase
 organization account or invite the current GitHub user to project
 `vtvnfqmonbfuxmqkqdlc` before retrying.
+
+## Conversational birth-time rectification v3 rollout
+
+`conversational-evidence-v3` is an account-level workflow. A web-image rollout
+does not prove its database contract is present. Apply migrations before the
+web image, in this order:
+
+1. `20260720000000_chat_delete_and_dynamic_candidate_confirmation.sql`
+2. `20260720010000_conversational_rectification_schema.sql`
+3. `20260720020000_conversational_rectification_billing.sql`
+4. `20260720030000_conversational_rectification_transitions.sql`
+5. `20260720040000_rectification_question_handoff.sql`
+6. `20260721010000_conversational_legacy_import_projection.sql`
+
+Run `cd frontend && npx supabase db push --linked` with the authorized project
+account. Verify the linked migration ledger contains all six versions. Do not
+print the database URL or any service-role credential. Then set
+`RECTIFICATION_V3_MIGRATIONS_READY=true`, keep
+`RECTIFICATION_V3_CREATE_ENABLED=true`, and deploy the tested Git revision.
+
+Before declaring rollout successful, fetch `https://jyotisha.chat/api/health`
+and verify all of the following against the revision that passed validation:
+
+- `deployment.gitCommit` exactly equals the tested 40-character Git SHA;
+- `rollout.conversationalRectificationV3.protocol` is
+  `conversational-evidence-v3`;
+- `newCaseCreation` and `migrations` are `enabled` and `ready`;
+- `readyForNewCases` is `true`;
+- ordinary health checks remain healthy. The health response must never contain
+  environment values or credentials.
+
+Using an authorized synthetic account with no real birth data, run this smoke
+sequence. A plain HTTP `200` is not substitute evidence:
+
+1. Finish onboarding without rectification. Verify an unverified reported time
+   offers current-chat consent or `先校正再询问`.
+2. Save a synthetic ordinary question and start v3. Verify one fixed fee and a
+   rich first turn containing the candidate boundary, stable/sensitive layers,
+   domain rationale, and a dated historical-event request.
+3. Answer with one explicit event, choose `都不符合`, submit one ambiguous
+   event, then a clear event. Verify the ambiguous/future facts do not score.
+4. Pause, reload, and resume from a second authenticated browser session.
+   Verify no second rectification charge.
+5. Reach a candidate, verify the prior active time is still in force, reject a
+   mismatched candidate confirmation, then explicitly confirm the exact
+   candidate. Verify the time changes atomically.
+6. Explicitly continue the saved ordinary question. Verify one normal
+   consultation reservation. Delete its chat and verify the account case still
+   resumes/loads.
+7. For an unfinished legacy case, verify exactly one
+   `migration_waived` import, unchanged history, and no broad-year questionnaire.
+8. Inject one transient 502. Verify byte-identical retry and stable Chinese
+   fallback, never raw browser English.
+
+Record only protocol, phase, action kind, result category, latency bucket,
+billing state, error category, and deployment SHA. Narrative, event text, birth
+data, email, user/user-case identifiers, tokens, and model prompts are forbidden
+from telemetry.
+
+### Rollback
+
+Rollback is forward-compatible and non-destructive. First set
+`RECTIFICATION_V3_CREATE_ENABLED=false` and redeploy a revision that can still
+read/resume v3. Health must report `newCaseCreation: paused`. This stops only
+new v3 starts: keep reads, resume, answer, pause, confirmation, and saved-question
+handoff available for existing cases. Never reverse or delete the v3 migrations,
+rows, turns, evidence, receipts, or legacy import links. Never point an imported
+case back to mutable legacy history. A revision in progress keeps the account's
+prior active time until its exact atomic confirmation succeeds. If no compatible
+reader is available, leave the current image serving existing cases and disable
+only creation; do not deploy an older schema consumer.
 
 ## Common operations
 

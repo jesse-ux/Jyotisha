@@ -284,7 +284,7 @@ test("known conflicts and unavailable failures use stable safe Chinese responses
     assert.equal(response.status, status);
     assert.equal(body.code, code);
     assert.match(`${body.error}${body.message}`, /校正|服务|进度|稍后|重试/);
-    assert.deepEqual(logs, [{ requestId, actionId, caseId, code }]);
+    assert.deepEqual(logs, [{ code }]);
   }
 });
 
@@ -304,7 +304,7 @@ test("unknown SQL, model, and browser errors are never exposed or logged", async
   assert.equal(response.status, 503);
   assert.equal(serialized.includes(raw), false);
   assert.equal(JSON.stringify(logs).includes(raw), false);
-  assert.deepEqual(logs, [{ requestId, actionId, caseId, code: "service_unavailable" }]);
+  assert.deepEqual(logs, [{ code: "service_unavailable" }]);
 });
 
 test("production profile conversion links terminal v3 revisions and owner-bound unfinished legacy imports", async () => {

@@ -22,6 +22,14 @@ import {
 import type { RectificationNarrativeGenerator } from "../../../lib/conversational-rectification/narrative-agent.ts";
 import type { BirthTimeJourneyEngine, RectificationQuestionnaire } from "../../../lib/birth-time-journey-service.ts";
 import type { CandidateResult, LifeEvent } from "../../../lib/birth-time-evidence.ts";
+import {
+  conversationalRectificationLatencyBucket,
+  createConversationalRectificationTelemetry,
+  recordConversationalRectificationTelemetry,
+  safeConversationalRectificationDeploymentSha,
+  type ConversationalRectificationTelemetryPayload,
+  type ConversationalRectificationTelemetrySink,
+} from "../../../lib/birth-time-journey-telemetry.ts";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -34,9 +42,6 @@ type AuthenticatedRequest = Readonly<{
 export type BirthTimeConversationRouteService = ConversationalRectificationService;
 
 export type BirthTimeConversationRouteLog = Readonly<{
-  requestId: string;
-  actionId: string | null;
-  caseId: string | null;
   code: string;
 }>;
 
@@ -45,6 +50,9 @@ export type BirthTimeConversationPostDependencies = Readonly<{
   createService(authenticated: AuthenticatedRequest): Promise<BirthTimeConversationRouteService>;
   createRequestId?(request: Request): string;
   log?(entry: BirthTimeConversationRouteLog): void;
+  telemetry?: ConversationalRectificationTelemetrySink;
+  deploymentSha?: string;
+  now?(): number;
 }>;
 
 type ProfileQueryResult = Readonly<{
@@ -580,6 +588,8 @@ async function createProductionService(
     store: createSupabaseConversationalRectificationStore(admin),
     billing: createSupabaseConversationalRectificationBilling(admin),
     get rectificationPriceCredits() { return priceCredits(); },
+    allowNewCaseCreation:
+      process.env.RECTIFICATION_V3_CREATE_ENABLED?.trim().toLowerCase() !== "false",
     async loadDeclaredProfile(userId) {
       return loadProductionConversationalRectificationProfile({
         async loadProfile(receivedUserId) {
@@ -665,11 +675,6 @@ function stableRequestId(request: Request): string {
     : randomUUID();
 }
 
-function errorResponse(error: unknown) {
-  const publicError = toConversationalRectificationPublicError(error);
-  return Response.json(publicError, { status: publicError.status });
-}
-
 async function dispatch(
   service: BirthTimeConversationRouteService,
   userId: string,
@@ -685,27 +690,90 @@ async function dispatch(
   }
 }
 
+function telemetryPhase(
+  turn: ConversationalRectificationTurn | null,
+): ConversationalRectificationTelemetryPayload["phase"] {
+  switch (turn?.status) {
+    case "active": return "collecting_evidence";
+    case "paused": return "paused";
+    case "confirming": return "confirming";
+    case "completed": return "completed";
+    case "abandoned": return "abandoned";
+    default: return "entry";
+  }
+}
+
+function telemetryErrorCategory(
+  code: string,
+): ConversationalRectificationTelemetryPayload["errorCategory"] {
+  if (code === "authentication_required") return "authentication";
+  if (code === "invalid_command" || code === "profile_incomplete") return "validation";
+  if (code === "stale_turn" || code === "action_conflict" || code === "candidate_changed"
+    || code === "invalid_transition" || code === "case_not_found") return "conflict";
+  if (code === "billing_failed") return "billing";
+  if (code === "service_unavailable" || code === "store_unavailable") return "dependency";
+  return "unknown";
+}
+
+function telemetryResultCategory(
+  status: number,
+): ConversationalRectificationTelemetryPayload["resultCategory"] {
+  if (status === 409) return "conflict";
+  if (status >= 400 && status < 500) return "rejected";
+  return "failed";
+}
+
 export function createBirthTimeConversationPostHandler(
   dependencies: BirthTimeConversationPostDependencies,
 ) {
   return async function handleBirthTimeConversationPost(request: Request): Promise<Response> {
-    const requestId = dependencies.createRequestId?.(request) ?? stableRequestId(request);
-    let actionId: string | null = null;
-    let caseId: string | null = null;
+    const startedAt = dependencies.now?.() ?? Date.now();
+    const now = dependencies.now ?? Date.now;
+    const telemetry = dependencies.telemetry
+      ? createConversationalRectificationTelemetry(dependencies.telemetry)
+      : recordConversationalRectificationTelemetry;
+    const deploymentSha = safeConversationalRectificationDeploymentSha(
+      dependencies.deploymentSha
+      ?? process.env.GITHUB_SHA
+      ?? process.env.VERCEL_GIT_COMMIT_SHA
+      ?? process.env.NEXT_PUBLIC_GIT_COMMIT,
+    );
+    dependencies.createRequestId?.(request);
+    let actionKind: ConversationalRectificationTelemetryPayload["actionKind"] = "unknown";
     try {
       const authenticated = await dependencies.authenticate(request);
-      if (!authenticated) return errorResponse(new ConversationalRectificationError("authentication_required"));
+      if (!authenticated) throw new ConversationalRectificationError("authentication_required");
 
       const parsed = conversationalRectificationCommandSchema.safeParse(await requestPayload(request));
-      if (!parsed.success) return errorResponse(new ConversationalRectificationError("invalid_command"));
-      actionId = parsed.data.actionId;
-      caseId = parsed.data.type === "start" ? parsed.data.actionId : parsed.data.caseId;
+      if (!parsed.success) throw new ConversationalRectificationError("invalid_command");
+      actionKind = parsed.data.type;
 
       const service = await dependencies.createService(authenticated);
-      return Response.json(await dispatch(service, authenticated.userId, parsed.data));
+      const turn = await dispatch(service, authenticated.userId, parsed.data);
+      telemetry({
+        protocol: "conversational-evidence-v3",
+        phase: telemetryPhase(turn),
+        actionKind,
+        resultCategory: "success",
+        latencyBucket: conversationalRectificationLatencyBucket(now() - startedAt),
+        billingState: actionKind === "start" ? "unknown" : "unchanged",
+        errorCategory: "none",
+        deploymentSha,
+      });
+      return Response.json(turn);
     } catch (error) {
       const publicError = toConversationalRectificationPublicError(error);
-      dependencies.log?.({ requestId, actionId, caseId, code: publicError.code });
+      dependencies.log?.({ code: publicError.code });
+      telemetry({
+        protocol: "conversational-evidence-v3",
+        phase: "entry",
+        actionKind,
+        resultCategory: telemetryResultCategory(publicError.status),
+        latencyBucket: conversationalRectificationLatencyBucket(now() - startedAt),
+        billingState: publicError.code === "billing_failed" ? "unknown" : "not_applicable",
+        errorCategory: telemetryErrorCategory(publicError.code),
+        deploymentSha,
+      });
       return Response.json(publicError, { status: publicError.status });
     }
   };
@@ -715,10 +783,11 @@ const productionPost = createBirthTimeConversationPostHandler({
   authenticate: authenticateProductionRequest,
   createService: createProductionService,
   createRequestId: stableRequestId,
+  deploymentSha: process.env.GITHUB_SHA
+    ?? process.env.VERCEL_GIT_COMMIT_SHA
+    ?? process.env.NEXT_PUBLIC_GIT_COMMIT,
   log(entry) {
-    console.error(
-      `[birth-time-conversation] request=${entry.requestId} action=${entry.actionId ?? "none"} case=${entry.caseId ?? "none"} code=${entry.code}`,
-    );
+    console.error(`[birth-time-conversation] code=${entry.code}`);
   },
 });
 

@@ -12,6 +12,10 @@ const gitCommit =
   ?? process.env.VERCEL_GIT_COMMIT_SHA
   ?? process.env.NEXT_PUBLIC_GIT_COMMIT
   ?? "unknown";
+const rectificationV3CreationEnabled =
+  process.env.RECTIFICATION_V3_CREATE_ENABLED?.trim().toLowerCase() !== "false";
+const rectificationV3MigrationsReady =
+  process.env.RECTIFICATION_V3_MIGRATIONS_READY?.trim().toLowerCase() === "true";
 
 function envCheck(names: string[]): Check {
   const missing = names.filter((name) => !process.env[name]);
@@ -66,12 +70,24 @@ export async function GET() {
     jyotishApi: await jyotishApiCheck(),
   };
   const status = aggregate(checks);
+  const rectificationV3Ready = rectificationV3CreationEnabled
+    && rectificationV3MigrationsReady
+    && gitCommit !== "unknown";
   return NextResponse.json(
     {
       status,
       timestamp: new Date().toISOString(),
       deployment: {
         gitCommit,
+      },
+      rollout: {
+        conversationalRectificationV3: {
+          protocol: "conversational-evidence-v3",
+          newCaseCreation: rectificationV3CreationEnabled ? "enabled" : "paused",
+          migrations: rectificationV3MigrationsReady ? "ready" : "unverified",
+          syntheticSmoke: "required",
+          readyForNewCases: rectificationV3Ready,
+        },
       },
       checks,
     },

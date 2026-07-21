@@ -71,6 +71,7 @@ export type ConversationalRectificationServicePorts = Readonly<{
     & Partial<Pick<ConversationalRectificationStore, "importLegacy">>;
   billing: Pick<ConversationalRectificationBilling, "reserve" | "complete" | "release">;
   rectificationPriceCredits: number;
+  allowNewCaseCreation?: boolean;
   loadDeclaredProfile(userId: string): Promise<ConversationalRectificationProfile>;
   loadLegacyCase?(
     userId: string,
@@ -518,6 +519,9 @@ export function createConversationalRectificationService(
         && current.billingState === "migration_waived") {
         throw new ConversationalRectificationError("action_conflict");
       }
+      if (ports.allowNewCaseCreation === false) {
+        throw new ConversationalRectificationError("service_unavailable");
+      }
 
       const legacy = await loadLegacy(userId, legacyCaseId);
       if (!legacy) throw new ConversationalRectificationError("case_not_found");
@@ -689,6 +693,9 @@ export function createConversationalRectificationService(
           throw new ConversationalRectificationError("billing_failed");
         }
         return publicTurn(existing);
+      }
+      if (ports.allowNewCaseCreation === false) {
+        throw new ConversationalRectificationError("service_unavailable");
       }
 
       let reserved = false;
