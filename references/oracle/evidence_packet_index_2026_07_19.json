@@ -5,8 +5,8 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 118,
-    "blocked_or_partial_count": 51,
+    "packet_count": 120,
+    "blocked_or_partial_count": 52,
     "human_review_required_count": 3
   },
   "packets": [
@@ -953,6 +953,22 @@
       "claim_status": "partial",
       "consumer_policy": "research_observation_only",
       "claim_boundary": "Classifies BAV/SAV rows into partial consensus or multi-engine variant; public worked table and method metadata still required."
+    },
+    {
+      "packet_id": "panchanga_temcq_061_schema_packet_2026_07_21",
+      "path": "references/oracle/panchanga_temcq_061_schema_packet_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Creates TEMCQ-061 Panchanga schema mapping queue from jyotishganit raw; local/PyJHora/VedAstro normalized fields remain missing or unpinned."
+    },
+    {
+      "packet_id": "panchanga_local_jyotishganit_comparison_2026_07_21",
+      "path": "references/oracle/panchanga_local_jyotishganit_comparison_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Compares local calc_panchanga against jyotishganit for five Panchanga labels; one Karana alias remains naming-only and no global truth upgrade is made."
     }
   ]
 }
