@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: "请先登录" }, { status: 401 });
 
     const body = await request.json().catch(() => null) as ChartProfilePayload | null;
-    if (!body?.profile || typeof body.profile !== "object") {
+    if (!body?.profile || typeof body.profile !== "object" || Array.isArray(body.profile)) {
       return NextResponse.json({ error: "星盘资料格式不正确" }, { status: 400 });
     }
     const role = body.role === "self" ? "self" : "other";
@@ -70,16 +70,9 @@ export async function POST(request: Request) {
           .single();
       ({ data, error } = await query);
     } else {
-      const record = {
-        ...(body.id ? { id: body.id } : {}),
-        user_id: user.id,
-        role,
-        profile: body.profile,
-        updated_at: updatedAt,
-      };
       ({ data, error } = await supabase
         .from("chart_profiles")
-        .upsert(record, { onConflict: "id" })
+        .insert({ user_id: user.id, role, profile: body.profile, updated_at: updatedAt })
         .select("id, role, profile, updated_at")
         .single());
     }

@@ -24,3 +24,15 @@ def test_capture_writes_runtime_contexts_without_required_layer_echo(tmp_path: P
         assert data["success"] is True
         assert "consumer_context" in data
         assert "required_layers" not in data
+
+
+def test_capture_supports_public_real_case_website_e2e_contract(tmp_path: Path) -> None:
+    contract = ROOT / "references" / "real_case_calibration" / "real_case_website_e2e_eval_2026_07_20.json"
+    manifest = capture_script.capture(contract_path=contract, output_dir=tmp_path, max_items=3)
+    assert manifest["question_count"] == 3
+    first = manifest["rows"][0]
+    assert "__" in first["id"]
+    context_path = ROOT / first["context_file"] if not Path(first["context_file"]).is_absolute() else Path(first["context_file"])
+    data = json.loads(context_path.read_text(encoding="utf-8"))
+    assert data["success"] is True
+    assert "consumer_context" in data

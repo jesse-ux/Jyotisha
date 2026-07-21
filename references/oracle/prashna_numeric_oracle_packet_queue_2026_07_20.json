@@ -1,0 +1,46 @@
+{
+  "boundary": "Queue only; no Prashna/Saham/Gulika/Sphuta claim is upgraded until complete input, raw/hash and local/external replay close.",
+  "claim_status": "open_queue",
+  "created_at": "2026-07-20",
+  "production_tuning_allowed": false,
+  "rows": [
+    {
+      "candidate_hash": "2f8fafd98fba0f328b9eba58af1b4446ebf3a856d0769c79d6dc27e99218c63d",
+      "claim_boundary": "Numeric Sphuta example exists, but full Prashna input/settings are incomplete; use as candidate only.",
+      "domain": "horary_annual_sensitive_points",
+      "expected_values": {
+        "chatusphuta": "2s 15° 18' 34\"",
+        "gulika": "3s 14° 10'",
+        "lagna": "3s 27° 22'",
+        "moon": "3s 19° 36' 34\"",
+        "panchasphuta": "5s 23° 34' 34\"",
+        "rahu": "3s 8° 16'",
+        "sun": "4s 3° 8' 25\"",
+        "trisphuta": "11s 1° 8' 34\""
+      },
+      "missing_for_oracle": [
+        "complete_prashna_input",
+        "ayanamsa",
+        "node_mode",
+        "timezone",
+        "raw_capture_hash",
+        "local_replay",
+        "pyjhora_or_other_legal_replay"
+      ],
+      "numeric_fields_present": true,
+      "source_id": "vedastro_prasna_marga_ch5_sphuta_example",
+      "source_role": "public_numeric_candidate",
+      "technique_family": "sphuta_trisphuta_family",
+      "upgrade_status": "candidate_not_oracle",
+      "url": "https://vedastro.org/book/PrasnaMarga/Chapter5"
+    }
+  ],
+  "scope": "prashna_numeric_oracle_packet_queue",
+  "status": "queue_ready",
+  "summary": {
+    "candidate_count": 1,
+    "numeric_candidate_count": 1,
+    "oracle_ready_count": 0
+  },
+  "truth_matrix_allowed": false
+}

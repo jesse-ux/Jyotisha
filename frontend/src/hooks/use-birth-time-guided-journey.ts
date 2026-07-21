@@ -20,6 +20,7 @@ import {
   saveGuidedBirthTimeCandidate,
 } from "@/lib/birth-time-guided-client";
 import { confirmReviewedBirthTimeDraft } from "@/lib/birth-time-guided-draft-confirmation";
+import { birthTimeUserError } from "@/lib/birth-time-user-error";
 import {
   claimMutation,
   createStableActionIdentityRegistry,
@@ -112,7 +113,7 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
         publish: onJourney,
       })) latest.current = turn;
     }).catch((caught: unknown) => {
-      setError(caught instanceof Error ? caught.message : "当前步骤暂时无法完成，请重试。");
+      setError(birthTimeUserError(caught));
     }).finally(() => {
       release();
       setPending(false);
@@ -198,7 +199,7 @@ export function useBirthTimeGuidedJourney(input: GuidedJourneyInput): BirthTimeG
       : completeGuidedBirthTimeCandidate({ caseId: turn.caseId, resultId, time });
     void completion
       .then(() => onCandidateComplete(turn, time))
-      .catch((caught) => setError(caught instanceof Error ? caught.message : "候选时间暂时无法保存"))
+      .catch((caught) => setError(birthTimeUserError(caught)))
       .finally(() => {
         release();
         setPending(false);

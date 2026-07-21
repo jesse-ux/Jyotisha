@@ -68,14 +68,79 @@ def _capture_body(question: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def capture(contract_path: Path = DEFAULT_CONTRACT, output_dir: Path = DEFAULT_OUTPUT_DIR) -> dict[str, Any]:
+def _capture_body_for_real_case(case: dict[str, Any], prompt: str) -> dict[str, Any]:
+    birth = case["birth"]
+    year, month, day = [int(part) for part in birth["date"].split("-")]
+    hour, minute = [int(part) for part in birth["time"].split(":")[:2]]
+    theme_map = {
+        "annual": "career",
+        "education": "career",
+        "family": "marriage",
+        "migration": "career",
+        "timing": "career",
+    }
+    themes = [theme_map.get(domain, domain) for domain in case["domains"]]
+    prompt_prefix = ""
+    if "迁移" in prompt or "海外" in prompt:
+        prompt_prefix = "迁移 migration foreign abroad: "
+    elif "家庭" in prompt or "子女" in prompt:
+        prompt_prefix = "家庭 family children home: "
+    elif "学习" in prompt or "教育" in prompt:
+        prompt_prefix = "教育 education study: "
+    elif "年度" in prompt or "运势" in prompt:
+        prompt_prefix = "年度 annual yearly forecast: "
+    elif "健康" in prompt:
+        prompt_prefix = "健康 health: "
+    elif "婚恋" in prompt or "关系" in prompt:
+        prompt_prefix = "婚恋 relationship marriage: "
+    elif "财富" in prompt or "风险" in prompt:
+        prompt_prefix = "财富 finance wealth: "
+    elif "阶段" in prompt or "何时" in prompt:
+        prompt_prefix = "应期 timing when: "
+    return {
+        "year": year,
+        "month": month,
+        "day": day,
+        "hour": hour,
+        "minute": minute,
+        "lat": birth["lat"],
+        "lon": birth["lon"],
+        "tz": birth["tz"],
+        "city": birth["place"],
+        "question": f"{prompt_prefix}{prompt}",
+        "question_text": f"{prompt_prefix}{prompt}",
+        "theme": themes,
+        "evaluation_domains": case["domains"],
+        "entry_mode": "direct_chart",
+        "case_id": case["case_id"],
+        "subject": case["subject"],
+        "source_policy": birth["source_policy"],
+    }
+
+
+def capture(
+    contract_path: Path = DEFAULT_CONTRACT,
+    output_dir: Path = DEFAULT_OUTPUT_DIR,
+    max_items: int | None = None,
+    offset: int = 0,
+) -> dict[str, Any]:
     contract = _load_json(contract_path)
     output_dir = output_dir.resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
     rows: list[dict[str, Any]] = []
-    for question in contract["questions"]:
+    if "cases" in contract:
+        questions = [
+            {"id": f"{case['case_id']}__{index + 1}", "body": _capture_body_for_real_case(case, prompt)}
+            for case in contract["cases"]
+            for index, prompt in enumerate(case["prompts"])
+        ]
+    else:
+        questions = [{"id": str(question["id"]), "body": _capture_body(question)} for question in contract["questions"]]
+    for question in questions[offset:]:
+        if max_items is not None and len(rows) >= max_items:
+            break
         qid = str(question["id"])
-        result = execute_consultation_workflow(_capture_body(question), surface="commercial_e2e_capture")
+        result = execute_consultation_workflow(question["body"], surface="commercial_e2e_capture")
         context_path = output_dir / f"{qid}.json"
         context_path.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         rows.append(
@@ -93,6 +158,7 @@ def capture(contract_path: Path = DEFAULT_CONTRACT, output_dir: Path = DEFAULT_O
         "contract": _display_path(contract_path),
         "output_dir": _display_path(output_dir),
         "question_count": len(rows),
+        "offset": offset,
         "rows": rows,
     }
     (output_dir / "capture_manifest.json").write_text(
@@ -106,8 +172,17 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--contract", type=Path, default=DEFAULT_CONTRACT)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument("--max-items", type=int, default=None)
+    parser.add_argument("--offset", type=int, default=0)
     args = parser.parse_args()
-    print(json.dumps(capture(args.contract, args.output_dir), ensure_ascii=False, indent=2, sort_keys=True))
+    print(
+        json.dumps(
+            capture(args.contract, args.output_dir, max_items=args.max_items, offset=args.offset),
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
     return 0
 
 

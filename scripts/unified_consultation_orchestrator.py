@@ -87,6 +87,14 @@ class UnifiedConsultationOrchestrator:
         "wealth": "wealth",
         "career": "career",
         "health": "health",
+        "migration": "migration",
+        "foreign": "migration",
+        "education": "education",
+        "study": "education",
+        "family": "family",
+        "children": "family",
+        "annual": "annual",
+        "yearly": "annual",
         "spirituality": "spirituality",
         "事业": "career",
         "婚恋": "marriage",
@@ -95,10 +103,28 @@ class UnifiedConsultationOrchestrator:
         "财富": "wealth",
         "财运": "wealth",
         "健康": "health",
+        "迁移": "migration",
+        "海外": "migration",
+        "教育": "education",
+        "学习": "education",
+        "家庭": "family",
+        "子女": "family",
+        "年度": "annual",
+        "流年": "annual",
         "灵性": "spirituality",
     }
     _DEFAULT_THEMES = ["career", "marriage", "wealth"]
-    _ALLOWED_THEMES = {"career", "marriage", "wealth", "health", "spirituality"}
+    _ALLOWED_THEMES = {
+        "annual",
+        "career",
+        "education",
+        "family",
+        "health",
+        "marriage",
+        "migration",
+        "spirituality",
+        "wealth",
+    }
     _ROUTE_DEFINITIONS = {
         "career": RouteDefinition(
             question_type="career",
@@ -118,6 +144,36 @@ class UnifiedConsultationOrchestrator:
             focus_techniques=["D2", "D11", "Dasha", "Shadbala", "Ashtakavarga"],
             display_label="finance",
         ),
+        "health": RouteDefinition(
+            question_type="health",
+            primary_theme="health",
+            focus_techniques=["D1", "D6", "D8", "Dasha", "Shadbala", "non-medical boundary"],
+            display_label="health",
+        ),
+        "migration": RouteDefinition(
+            question_type="migration",
+            primary_theme="migration",
+            focus_techniques=["D4", "D12", "12th house", "Dasha", "Narayana Dasha"],
+            display_label="migration",
+        ),
+        "family": RouteDefinition(
+            question_type="family",
+            primary_theme="family",
+            focus_techniques=["D7", "D12", "4th house", "5th house", "9th house", "Dasha"],
+            display_label="family",
+        ),
+        "education": RouteDefinition(
+            question_type="education",
+            primary_theme="education",
+            focus_techniques=["D5", "D24", "5th house", "9th house", "Dasha"],
+            display_label="education",
+        ),
+        "annual": RouteDefinition(
+            question_type="annual",
+            primary_theme="annual",
+            focus_techniques=["Annual chart boundary", "Dasha", "Transit", "Tajika candidate", "claim boundary"],
+            display_label="annual",
+        ),
         "timing": RouteDefinition(
             question_type="timing",
             primary_theme="career",
@@ -135,6 +191,11 @@ class UnifiedConsultationOrchestrator:
         "career": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
         "relationship": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
         "finance": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
+        "health": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
+        "migration": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
+        "family": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
+        "education": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
+        "annual": ["compute_chart", "run_rectification_gate", "run_muhurta_panchanga", "run_thematic_report"],
         "timing": ["compute_chart", "run_rectification_gate", "run_muhurta_panchanga", "run_thematic_report"],
         "general": ["compute_chart", "run_rectification_gate", "run_thematic_report"],
     }
@@ -172,6 +233,11 @@ class UnifiedConsultationOrchestrator:
             "career": ("career", "job", "work", "promotion", "business", "profession", "事业", "工作", "升职", "生意"),
             "relationship": ("marriage", "married", "wedding", "relationship", "love", "spouse", "partner", "divorce", "婚恋", "婚姻", "感情", "配偶", "恋爱", "结婚", "marry"),
             "finance": ("money", "wealth", "finance", "investment", "property", "income", "财务", "财富", "投资", "房产", "收入"),
+            "health": ("health", "illness", "medical", "disease", "vitality", "健康", "疾病", "病", "体力", "医疗"),
+            "migration": ("migration", "foreign", "abroad", "overseas", "relocation", "迁移", "海外", "出国", "搬迁", "远方"),
+            "family": ("family", "children", "home", "mother", "father", "家庭", "子女", "孩子", "父母", "家宅"),
+            "education": ("education", "study", "learning", "school", "degree", "学习", "教育", "学历", "学校", "考试"),
+            "annual": ("annual", "yearly", "this year", "next year", "年度", "流年", "今年", "明年", "年运"),
         }
         first_hits: list[tuple[int, str]] = []
         for route_name, tokens in domain_tokens.items():
@@ -195,6 +261,16 @@ class UnifiedConsultationOrchestrator:
             route = self._ROUTE_DEFINITIONS["relationship"]
         elif "wealth" in normalized_themes:
             route = self._ROUTE_DEFINITIONS["finance"]
+        elif "health" in normalized_themes:
+            route = self._ROUTE_DEFINITIONS["health"]
+        elif "migration" in normalized_themes:
+            route = self._ROUTE_DEFINITIONS["migration"]
+        elif "family" in normalized_themes:
+            route = self._ROUTE_DEFINITIONS["family"]
+        elif "education" in normalized_themes:
+            route = self._ROUTE_DEFINITIONS["education"]
+        elif "annual" in normalized_themes:
+            route = self._ROUTE_DEFINITIONS["annual"]
         else:
             route = self._ROUTE_DEFINITIONS["general"]
 

@@ -89,6 +89,7 @@ type ChartLibraryRecord = {
   profile: Profile;
   updatedAt: number;
 };
+type SynastryRelationshipType = "romance" | "business" | "family" | "general";
 type ChartLibraryApiRecord = {
   id: string;
   role: "self" | "other";
@@ -337,13 +338,12 @@ async function saveCloudChartProfile(record: ChartLibraryRecord) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      id: record.role === "self" ? undefined : record.id,
       role: record.role,
       profile: record.profile,
     }),
   });
-  if (!response.ok) throw new Error("cloud_chart_profile_save_failed");
-  const payload = await response.json().catch(() => null) as { profile?: ChartLibraryApiRecord } | null;
+  const payload = await response.json().catch(() => null) as { profile?: ChartLibraryApiRecord; error?: string } | null;
+  if (!response.ok) throw new Error(payload?.error || "cloud_chart_profile_save_failed");
   return payload?.profile ? normalizeChartLibraryApiRecord(payload.profile) : record;
 }
 
@@ -356,12 +356,18 @@ function profilePlaceLabel(profile: Profile) {
   return selectedBirthPlace(profile)?.label || "地点未完整";
 }
 
-function buildSynastryQuestion(selfProfile: Profile, partnerProfile: Profile) {
+function buildSynastryQuestion(selfProfile: Profile, partnerProfile: Profile, relationshipType: SynastryRelationshipType) {
+  const relationshipLabel = relationshipType === "business" ? "商业合作" : relationshipType === "family" ? "亲友/家庭" : relationshipType === "general" ? "其他关系" : "婚恋";
+  const evidenceRequest = relationshipType === "business"
+    ? "请先说明 D2/D10/D11 已用层与 A10、双方 Dasha/Narayana、功能吉凶等缺失层；不得给出合作成败、收益保证或精确时点。"
+    : relationshipType === "romance"
+      ? "请先说明会使用哪些证据层，再分析关系模式、冲突点、适合发展的方式和需要谨慎的时间窗口。"
+      : "请先说明当前缺少专用合盘计算合同，只基于可验证资料提出需要补充的现实关系信息，不作确定性判断。";
   return [
-    `请用印度占星合盘分析我和${partnerProfile.name || "对方"}的关系。`,
+    `请用印度占星分析我和${partnerProfile.name || "对方"}的${relationshipLabel}关系。`,
     `我的资料：${selfProfile.name || "本人"}，${selfProfile.date} ${selfProfile.time}，${profilePlaceLabel(selfProfile)}。`,
     `对方资料：${partnerProfile.name || "对方"}，${partnerProfile.date} ${partnerProfile.time}，${profilePlaceLabel(partnerProfile)}。`,
-    "请先说明会使用哪些证据层，再分析关系模式、冲突点、适合发展的方式和需要谨慎的时间窗口。",
+    evidenceRequest,
   ].join("\n");
 }
 
@@ -399,6 +405,13 @@ function missingProfileStep(profile: Profile): OnboardingStep | null {
   if (!isBirthTimeDraftReady(profile)) return "birth";
   if (!selectedBirthPlace(profile)) return "place";
   if (!isBirthTimeReadyForConsultation(profile)) return "rectification";
+  return null;
+}
+
+function missingOtherProfileStep(profile: Profile): "name" | "birth" | "place" | null {
+  if (!profile.name.trim()) return "name";
+  if (!isBirthTimeDraftReady(profile)) return "birth";
+  if (!selectedBirthPlace(profile)) return "place";
   return null;
 }
 
@@ -662,6 +675,8 @@ export default function Home() {
   const [activeAccountDialog, setActiveAccountDialog] = useState<AccountDialog | null>(null);
   const [chartLibrary, setChartLibrary] = useState<ChartLibraryRecord[]>([]);
   const [chartLibraryOpen, setChartLibraryOpen] = useState(false);
+  const [synastryRelationshipType, setSynastryRelationshipType] = useState<SynastryRelationshipType>("romance");
+  const [synastryPendingId, setSynastryPendingId] = useState<string | null>(null);
   const [otherProfileDraft, setOtherProfileDraft] = useState<Profile>(emptyProfile);
   const [synastryReportCard, setSynastryReportCard] = useState<SynastryReportCard | null>(null);
   const [synastryHistory, setSynastryHistory] = useState<SynastryReportCard[]>([]);
@@ -680,6 +695,7 @@ export default function Home() {
   const [archivedSessionIds, setArchivedSessionIds] = useState<string[]>([]);
   const [showArchivedSessions, setShowArchivedSessions] = useState(false);
   const [sessionMenuId, setSessionMenuId] = useState<string | null>(null);
+  const [pendingSessionDeletion, setPendingSessionDeletion] = useState<ChatSession | null>(null);
   const [modelCatalog, setModelCatalog] = useState<PublicLanguageModelCatalog | null>(null);
   const [activeSessionId, setActiveSessionId] = useState("");
   const [draft, setDraft] = useState("");
@@ -795,12 +811,8 @@ export default function Home() {
     setSynastryHistory(readSynastryHistory(accountId));
     void fetchCloudChartLibrary()
       .then((cloudLibrary) => {
-        setChartLibrary((current) => {
-          const otherById = new Map([
-            ...current.filter((record) => record.role === "other").map((record) => [record.id, record] as const),
-            ...cloudLibrary.filter((record) => record.role === "other").map((record) => [record.id, record] as const),
-          ]);
-          const next = upsertSelfChart([...otherById.values()], profile);
+        setChartLibrary(() => {
+          const next = upsertSelfChart(cloudLibrary.filter((record) => record.role !== "self"), profile);
           localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
           return next;
         });
@@ -1128,7 +1140,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [hydrated, profile.date, profile.time, profile.birthTimeStatus, profile.provinceCode, profile.cityCode, profileComplete]);
+  }, [hydrated, profile, profileComplete]);
 
   useEffect(() => {
     if (!hydrated || !profileComplete) return;
@@ -1234,7 +1246,7 @@ export default function Home() {
   }
 
   async function deleteSession(session: ChatSession) {
-    if (!account || !window.confirm(`删除“${session.title}”？此操作不可恢复。`)) return;
+    if (!account) return;
     const previousSessions = sessions;
     const nextSessions = sessions.filter((item) => item.id !== session.id);
     setSessions(nextSessions);
@@ -1242,9 +1254,9 @@ export default function Home() {
     setArchivedSessionIds((current) => current.filter((id) => id !== session.id));
     if (activeSessionId === session.id) setActiveSessionId(nextSessions[0]?.id ?? "");
     try {
-      const supabase = createBrowserSupabaseClient();
-      const { error } = await supabase.from("chat_sessions").delete().eq("id", session.id).eq("user_id", account.user.id);
-      if (error) throw error;
+      const response = await fetch(`/api/sessions/${encodeURIComponent(session.id)}`, { method: "DELETE" });
+      const payload = await response.json().catch(() => null) as { error?: string } | null;
+      if (!response.ok) throw new Error(payload?.error || "删除聊天记录失败");
     } catch (caught) {
       setSessions(previousSessions);
       setComposerNotice(caught instanceof Error ? `删除失败：${caught.message}` : "删除失败");
@@ -1256,8 +1268,12 @@ export default function Home() {
   }
 
   function toggleArchivedSession(sessionId: string) {
-    setArchivedSessionIds((current) => current.includes(sessionId) ? current.filter((id) => id !== sessionId) : [sessionId, ...current]);
-    if (activeSessionId === sessionId) setActiveSessionId(visibleSessions.find((session) => session.id !== sessionId)?.id ?? "");
+    const restoring = archivedSessionIds.includes(sessionId);
+    setArchivedSessionIds((current) => restoring ? current.filter((id) => id !== sessionId) : [sessionId, ...current]);
+    if (!restoring && activeSessionId === sessionId) {
+      setActiveSessionId(visibleSessions.find((session) => session.id !== sessionId)?.id ?? "");
+    }
+    setComposerNotice(restoring ? "已恢复到聊天记录。" : "已归档，可在左侧归档中恢复。");
   }
 
   async function shareSession(session: ChatSession) {
@@ -1431,7 +1447,7 @@ export default function Home() {
   async function saveOtherChart(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const nextProfile = { ...otherProfileDraft, name: otherProfileDraft.name.trim() };
-    if (missingProfileStep(nextProfile)) {
+    if (missingOtherProfileStep(nextProfile)) {
       setAccountError("请补全其他星盘的称呼、出生时间和出生地点。");
       return;
     }
@@ -1442,10 +1458,13 @@ export default function Home() {
       profile: nextProfile,
       updatedAt: timestamp(),
     };
+    let cloudSaved = false;
     try {
       record = await saveCloudChartProfile(record);
+      cloudSaved = true;
     } catch {
-      // Keep local chart library usable when cloud sync is unavailable.
+      setProfileNotice("已保存到本地星盘库；云端同步失败，稍后会继续使用本地记录。");
+      setAccountError("");
     }
     setChartLibrary((current) => {
       const next = [...upsertSelfChart(current, profile), record];
@@ -1453,20 +1472,30 @@ export default function Home() {
       return next;
     });
     setOtherProfileDraft(emptyProfile);
-    setAccountError("");
-    setProfileNotice("已添加到星盘库。");
+    if (cloudSaved) {
+      setAccountError("");
+      setProfileNotice("已保存到云端星盘库。请选择关系类型后点击“用于合盘”。");
+    }
   }
 
-  function deleteOtherChart(recordId: string) {
+  async function deleteOtherChart(recordId: string) {
     if (!accountId) return;
-    void deleteCloudChartProfile(recordId).catch(() => {
-      // Local deletion should not be blocked by temporary cloud sync failures.
-    });
+    let cloudDeleted = false;
+    try {
+      await deleteCloudChartProfile(recordId);
+      cloudDeleted = true;
+    } catch {
+      setAccountError("");
+    }
     setChartLibrary((current) => {
       const next = current.filter((record) => record.id !== recordId || record.role === "self");
       localStorage.setItem(chartLibraryStorageKey(accountId), JSON.stringify(next));
       return next;
     });
+    setAccountError("");
+    setProfileNotice(cloudDeleted
+      ? "已从云端星盘库删除。"
+      : "已从本地星盘库删除；云端同步失败，稍后云端可能仍显示旧记录。");
   }
 
   async function makeDefaultChart(record: ChartLibraryRecord) {
@@ -1728,21 +1757,27 @@ export default function Home() {
     );
   }
 
-  async function draftSynastryQuestionFromChart(record: ChartLibraryRecord) {
+  async function draftSynastryQuestionFromChart(record: ChartLibraryRecord, relationshipType: SynastryRelationshipType) {
     if (record.role !== "other") return;
-    const baseQuestion = buildSynastryQuestion(profile, record.profile);
+    if (synastryPendingId) return;
+    const baseQuestion = buildSynastryQuestion(profile, record.profile, relationshipType);
+    setSynastryPendingId(record.id);
+    setComposerNotice("正在计算基础合盘证据，请稍候。");
     try {
       const response = await fetch("/api/synastry", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selfProfile: profile, partnerProfile: record.profile }),
+        body: JSON.stringify({ selfProfile: profile, partnerProfile: record.profile, relationshipType }),
       });
-      const payload = await response.json().catch(() => null) as { status?: string; evidenceLayers?: string[]; synastry?: { total_score?: number; max_score?: number; assessment?: string }; relationshipReport?: { headline?: string; scoreBand?: string; strengths?: string[]; risks?: string[]; nextEvidence?: string[] } } | null;
+      const payload = await response.json().catch(() => null) as { status?: string; claimStatus?: string; blockedLayers?: string[]; evidenceLayers?: string[]; synastry?: { total_score?: number; max_score?: number; assessment?: string }; relationshipReport?: { headline?: string; scoreBand?: string; strengths?: string[]; risks?: string[]; nextEvidence?: string[] } } | null;
       if (response.ok && payload?.status === "ok") {
         const score = payload.synastry?.total_score;
         const max = payload.synastry?.max_score;
         const assessment = payload.synastry?.assessment;
         const layers = (payload.evidenceLayers || []).join(" / ") || "Ashtakoot / Moon / D9";
+        const evidenceSummary = relationshipType === "business"
+          ? `已完成基础商业合作证据筛查：${layers}；声明状态：${payload.claimStatus || "partial"}；未用层：${(payload.blockedLayers || []).join(" / ") || "A10 / 双方 Dasha-Narayana / 功能吉凶"}。请勿将其表述为合作保证或精确时点。`
+          : `已计算基础合盘证据：${layers}；Ashtakoot ${score ?? "?"}/${max ?? "?"}，初步评级：${assessment || "待解释"}。请基于这个证据包继续分析。`;
         const reportCard: SynastryReportCard = {
           id: `${record.id}-${Date.now()}`,
           partnerName: record.profile.name || "对方",
@@ -1775,16 +1810,18 @@ export default function Home() {
         chooseSuggestedQuestion([
           baseQuestion,
           "",
-          `已计算基础合盘证据：${layers}；Ashtakoot ${score ?? "?"}/${max ?? "?"}，初步评级：${assessment || "待解释"}。请基于这个证据包继续分析。`,
+          evidenceSummary,
           payload.relationshipReport?.headline ? `结构化摘要：${payload.relationshipReport.headline}` : "",
-        ].join("\n"), "marriage");
+        ].join("\n"), relationshipType === "business" ? "career" : "marriage");
       } else {
-        chooseSuggestedQuestion(baseQuestion, "marriage");
+        chooseSuggestedQuestion(baseQuestion, relationshipType === "business" ? "career" : "marriage");
         setComposerNotice(payload?.status === "blocked" ? "合盘计算暂时不可用，已先生成问题草稿。" : "已生成合盘问题草稿。");
       }
     } catch {
-      chooseSuggestedQuestion(baseQuestion, "marriage");
+      chooseSuggestedQuestion(baseQuestion, relationshipType === "business" ? "career" : "marriage");
       setComposerNotice("合盘计算暂时不可用，已先生成问题草稿。");
+    } finally {
+      setSynastryPendingId(null);
     }
     closeAccountDialog();
   }
@@ -2276,7 +2313,7 @@ export default function Home() {
             onToggleArchived: toggleArchivedSession,
             onDelete: (sessionId) => {
               const session = sessions.find((candidate) => candidate.id === sessionId);
-              if (session) void deleteSession(session);
+              if (session) setPendingSessionDeletion(session);
             },
           }}
           onAccountMenuOpenChange={setAccountMenuOpen}
@@ -2286,6 +2323,22 @@ export default function Home() {
           onOpenRedeem={() => openAccountDialog("redeem")}
           onOpenLogout={() => openAccountDialog("logout")}
         />
+        {pendingSessionDeletion ? (
+          <div className="account-modal-overlay session-delete-overlay" role="presentation" onMouseDown={() => setPendingSessionDeletion(null)}>
+            <section className="account-modal logout-modal session-delete-confirmation" role="alertdialog" aria-modal="true" aria-label="确认删除聊天记录" onMouseDown={(event) => event.stopPropagation()}>
+              <h2>删除聊天记录？</h2>
+              <p>“{pendingSessionDeletion.title}”将被永久删除，无法恢复。</p>
+              <div className="dialog-actions">
+                <button type="button" onClick={() => setPendingSessionDeletion(null)}>取消</button>
+                <button className="danger-button" type="button" onClick={() => {
+                  const session = pendingSessionDeletion;
+                  setPendingSessionDeletion(null);
+                  void deleteSession(session);
+                }}>确认删除</button>
+              </div>
+            </section>
+          </div>
+        ) : null}
         <SidebarInset className="chat-panel" inert={activeAccountDialog !== null}>
           <header className="chat-header">
             <SidebarTrigger placement="inset" />
@@ -2578,7 +2631,13 @@ export default function Home() {
                               <small>{record.profile.date} {record.profile.time} · {profilePlaceLabel(record.profile)}</small>
                             </div>
                             <div className="chart-library-actions">
-                              <button className="button-secondary" type="button" onClick={() => void draftSynastryQuestionFromChart(record)}>用于合盘</button>
+                              <select aria-label="关系类型" value={synastryRelationshipType} onChange={(event) => setSynastryRelationshipType(event.target.value as SynastryRelationshipType)} disabled={synastryPendingId !== null}>
+                                <option value="romance">婚恋</option>
+                                <option value="business">商业合作</option>
+                                <option value="family">亲友/家庭</option>
+                                <option value="general">其他关系</option>
+                              </select>
+                              <button className="button-secondary" type="button" onClick={() => void draftSynastryQuestionFromChart(record, synastryRelationshipType)} disabled={synastryPendingId !== null}>{synastryPendingId === record.id ? "正在计算合盘..." : "用于合盘"}</button>
                               <button className="button-secondary" type="button" onClick={() => void makeDefaultChart(record)} disabled={profileSaving}>设为默认</button>
                               <button className="button-secondary danger-button" type="button" onClick={() => deleteOtherChart(record.id)}>删除</button>
                             </div>

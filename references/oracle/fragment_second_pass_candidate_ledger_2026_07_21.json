@@ -1,0 +1,72 @@
+{
+  "scope": "fragment_second_pass_candidate_ledger",
+  "created_at": "2026-07-21",
+  "claim_status": "open_queue",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "allowed_decisions": [
+    "migrate_to_research_test_or_registry",
+    "reference_only",
+    "forbidden_private_or_obsolete"
+  ],
+  "boundary": "Second-pass precision audit of five high-value fragment candidates only. No file is copied wholesale; reusable value must become a research test/registry, reference-only citation, or forbidden/private/obsolete marker.",
+  "candidates": [
+    {
+      "candidate_id": "workbuddy_event_judgment_engine",
+      "source_path": "/Users/wuyongnaren/.workbuddy/backups/jyotish-vedic-astrology-20260711-154109/scripts/event_judgment_engine.py",
+      "sha256_prefix": "f982bfd539fb1213",
+      "decision": "migrate_to_research_test_or_registry",
+      "value": "Contains event-route evidence ledger pattern: promise/activation/manifestation/timing, Vimshottari+Narayana timing, D9/UL for marriage, D10/A10 for career, D2/D10/AV for wealth.",
+      "migration_plan": "Do not copy old engine. Convert its route/evidence-field inventory into research registry/tests that assert current event_judgment_skeleton and strict workflow retain the same mandatory evidence families.",
+      "risk": "Old WorkBuddy fork is far behind current main; risk terms include generic key/pending strings. Treat as design/reference inventory, not runtime source.",
+      "next_artifact": "event_judgment_fragment_rule_family_registry"
+    },
+    {
+      "candidate_id": "workbuddy_shadbala_handan_operator_card",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/shadbala_handan_raman_first_packet_operator_card.md",
+      "decision": "forbidden_private_or_obsolete",
+      "value": "Shows an oracle-packet operator workflow pattern, but the named Handan/Raman personal packet is not a reusable public numeric oracle.",
+      "migration_plan": "Do not migrate content. If useful, recreate a blank operator-card template from current public-oracle packet schema without personal identifiers.",
+      "risk": "Contains named personal-case context and source/consent uncertainty; cannot be used as research truth or commercial input.",
+      "next_artifact": "none"
+    },
+    {
+      "candidate_id": "workbuddy_first_shadbala_packet_assistant",
+      "source_path": "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing/docs/benchmark/first_shadbala_oracle_packet_assistant.json",
+      "decision": "forbidden_private_or_obsolete",
+      "value": "Potential packet-assistant structure is superseded by current evidence_packet_index and Shadbala component closure packets.",
+      "migration_plan": "Do not migrate raw JSON. Preserve only the requirement that Shadbala packets need source, input, unit, hash and replay fields, already covered by current packet gates.",
+      "risk": "Linked to first/Handan packet chain and may include non-public or insufficiently sourced case metadata.",
+      "next_artifact": "none"
+    },
+    {
+      "candidate_id": "commercial_birth_time_journey_tests",
+      "source_path": "/private/tmp/jyotisha-commercial-readonly.adiUr0/frontend/tests/birth-time-journey*.test.ts",
+      "decision": "migrate_to_research_test_or_registry",
+      "value": "Mature UX test patterns: resume state, projected baseline action for legacy snapshot, turn persistence, mobile scroll contract, dynamic stop policy, candidate completion and user-facing error contracts.",
+      "migration_plan": "Recreate research-local UI tests that assert profile mode hides chat composer, journey state resumes locally, candidate claims stay exploratory, and no Supabase/credits runtime is imported.",
+      "risk": "Commercial repo is dirty and includes business runtime. Copy no code; port only behavior contracts into localStorage/research-mode tests.",
+      "next_artifact": "research_birth_time_journey_ui_contract_tests"
+    },
+    {
+      "candidate_id": "vedicastro_kp_source_table_candidate",
+      "source_path": "/Users/wuyongnaren/Documents/印度占星/references/open_source_sources/VedicAstro/vedicastro/VedicAstro.py",
+      "decision": "reference_only",
+      "value": "Useful KP API surface reference: get_rl_nl_sl_data, houses/planets data, SubLord/SubSubLord fields.",
+      "migration_plan": "Keep as pinned source/API reference only. Continue requiring legal KP_SL_Divisions.csv table hash and public worked example before exact KP cusp oracle upgrade.",
+      "risk": "Runtime dependency mismatch and table fixture missing; source/API surface does not prove event timing truth.",
+      "next_artifact": "kp_external_table_hash_manifest_2026_07_20"
+    }
+  ],
+  "summary": {
+    "candidate_count": 5,
+    "migrate_to_research_test_or_registry_count": 2,
+    "reference_only_count": 1,
+    "forbidden_private_or_obsolete_count": 2
+  },
+  "next_actions": [
+    "Create event_judgment_fragment_rule_family_registry from the WorkBuddy engine inventory without copying implementation.",
+    "Create research-local birth-time journey UI contract tests based on commercial behavior, not commercial code.",
+    "Keep Handan/first packet materials forbidden unless replaced by public, consent-safe numeric examples."
+  ]
+}

@@ -1,0 +1,219 @@
+{
+  "scope": "shadbala_digbala_formula_packet",
+  "created_at": "2026-07-20",
+  "component": "dig",
+  "canonical_component": "Digbala",
+  "status": "formula_packet_ready",
+  "claim_status": "partial",
+  "closure_classification": "formula_or_unit_mismatch",
+  "absolute_parity_ready": false,
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_queue": "references/oracle/shadbala_component_closure_queue_v2_2026_07_19.json",
+  "summary": {
+    "component_row_count": 7,
+    "formula_or_unit_mismatch_count": 7,
+    "within_tolerance_count": 0,
+    "local_formula_outlier_count": 3,
+    "small_delta_still_unfrozen_count": 1,
+    "max_delta_virupa": 83.27
+  },
+  "rows": [
+    {
+      "ticket_id": "shadbala.sun.dig",
+      "planet": "Sun",
+      "canonical_component": "Digbala",
+      "normalized_values_virupa": {
+        "jyotishganit": 29.175,
+        "local": 24.81,
+        "vp_jain_local": 6.6,
+        "vp_jain_published": 6.59,
+        "xalen": 30.0
+      },
+      "max_delta_virupa": 23.41,
+      "closure_classification": "formula_or_unit_mismatch",
+      "mismatch_family": "multi_cluster_formula_variant",
+      "next_evidence_owner": "formula_source_arbitration",
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "unit_contract": "Virupa directional-strength component; angular reference, interpolation, cap/floor and house/cusp model must be explicit.",
+      "source_evidence": [
+        "classical directional strength rule",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "claim_boundary": "Do not tune Digbala by majority vote. Resolve formula source and angular reference first."
+    },
+    {
+      "ticket_id": "shadbala.moon.dig",
+      "planet": "Moon",
+      "canonical_component": "Digbala",
+      "normalized_values_virupa": {
+        "jyotishganit": 20.159,
+        "local": 95.48,
+        "vp_jain_local": 12.21,
+        "vp_jain_published": 12.22,
+        "xalen": 20.000000000000004
+      },
+      "max_delta_virupa": 83.27,
+      "closure_classification": "formula_or_unit_mismatch",
+      "mismatch_family": "local_formula_outlier",
+      "next_evidence_owner": "formula_source_arbitration",
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "unit_contract": "Virupa directional-strength component; angular reference, interpolation, cap/floor and house/cusp model must be explicit.",
+      "source_evidence": [
+        "classical directional strength rule",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "claim_boundary": "Do not tune Digbala by majority vote. Resolve formula source and angular reference first."
+    },
+    {
+      "ticket_id": "shadbala.mars.dig",
+      "planet": "Mars",
+      "canonical_component": "Digbala",
+      "normalized_values_virupa": {
+        "jyotishganit": 46.955,
+        "local": 77.41,
+        "vp_jain_local": 20.98,
+        "vp_jain_published": 20.99,
+        "xalen": 50.0
+      },
+      "max_delta_virupa": 56.43,
+      "closure_classification": "formula_or_unit_mismatch",
+      "mismatch_family": "local_formula_outlier",
+      "next_evidence_owner": "formula_source_arbitration",
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "unit_contract": "Virupa directional-strength component; angular reference, interpolation, cap/floor and house/cusp model must be explicit.",
+      "source_evidence": [
+        "classical directional strength rule",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "claim_boundary": "Do not tune Digbala by majority vote. Resolve formula source and angular reference first."
+    },
+    {
+      "ticket_id": "shadbala.mercury.dig",
+      "planet": "Mercury",
+      "canonical_component": "Digbala",
+      "normalized_values_virupa": {
+        "jyotishganit": 7.954,
+        "local": 12.64,
+        "vp_jain_local": 31.97,
+        "vp_jain_published": 31.97,
+        "xalen": 9.999999999999998
+      },
+      "max_delta_virupa": 24.016,
+      "closure_classification": "formula_or_unit_mismatch",
+      "mismatch_family": "multi_cluster_formula_variant",
+      "next_evidence_owner": "formula_source_arbitration",
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "unit_contract": "Virupa directional-strength component; angular reference, interpolation, cap/floor and house/cusp model must be explicit.",
+      "source_evidence": [
+        "classical directional strength rule",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "claim_boundary": "Do not tune Digbala by majority vote. Resolve formula source and angular reference first."
+    },
+    {
+      "ticket_id": "shadbala.jupiter.dig",
+      "planet": "Jupiter",
+      "canonical_component": "Digbala",
+      "normalized_values_virupa": {
+        "jyotishganit": 44.095,
+        "local": 80.59,
+        "vp_jain_local": 31.99,
+        "vp_jain_published": 31.99,
+        "xalen": 40.00000000000001
+      },
+      "max_delta_virupa": 48.6,
+      "closure_classification": "formula_or_unit_mismatch",
+      "mismatch_family": "local_formula_outlier",
+      "next_evidence_owner": "formula_source_arbitration",
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "unit_contract": "Virupa directional-strength component; angular reference, interpolation, cap/floor and house/cusp model must be explicit.",
+      "source_evidence": [
+        "classical directional strength rule",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "claim_boundary": "Do not tune Digbala by majority vote. Resolve formula source and angular reference first."
+    },
+    {
+      "ticket_id": "shadbala.venus.dig",
+      "planet": "Venus",
+      "canonical_component": "Digbala",
+      "normalized_values_virupa": {
+        "jyotishganit": 45.684,
+        "local": 69.95,
+        "vp_jain_local": 53.29,
+        "vp_jain_published": 53.29,
+        "xalen": 50.0
+      },
+      "max_delta_virupa": 24.266,
+      "closure_classification": "formula_or_unit_mismatch",
+      "mismatch_family": "multi_cluster_formula_variant",
+      "next_evidence_owner": "formula_source_arbitration",
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "unit_contract": "Virupa directional-strength component; angular reference, interpolation, cap/floor and house/cusp model must be explicit.",
+      "source_evidence": [
+        "classical directional strength rule",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "claim_boundary": "Do not tune Digbala by majority vote. Resolve formula source and angular reference first."
+    },
+    {
+      "ticket_id": "shadbala.saturn.dig",
+      "planet": "Saturn",
+      "canonical_component": "Digbala",
+      "normalized_values_virupa": {
+        "jyotishganit": 24.313,
+        "local": 19.63,
+        "vp_jain_local": 26.66,
+        "vp_jain_published": 26.67,
+        "xalen": 20.000000000000004
+      },
+      "max_delta_virupa": 7.04,
+      "closure_classification": "formula_or_unit_mismatch",
+      "mismatch_family": "small_delta_still_unfrozen",
+      "next_evidence_owner": "formula_source_arbitration",
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "unit_contract": "Virupa directional-strength component; angular reference, interpolation, cap/floor and house/cusp model must be explicit.",
+      "source_evidence": [
+        "classical directional strength rule",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "claim_boundary": "Do not tune Digbala by majority vote. Resolve formula source and angular reference first."
+    }
+  ],
+  "boundary": "Digbala remains formula/unit mismatch. This packet narrows the next evidence owner to angular-reference formula arbitration; it does not close absolute Shadbala parity.",
+  "next_actions": [
+    "pin Digbala formula source for each planet directional maximum",
+    "compare whole-house vs cusp angular distance on same chart",
+    "add second public numeric Shadbala worked example before tolerance freeze"
+  ],
+  "raw_hash": "83e028d352fb0e5567289cde1610e2057c54f699e283bbf0f7138801e37b10eb"
+}

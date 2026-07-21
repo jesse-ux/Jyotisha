@@ -536,9 +536,9 @@ Repository -> Settings -> Environments -> New environment
 Name: staging
 ```
 
-Set deployment branches to `Selected branches and tags`, then allow only branch pattern `staging`.
+Set deployment branches to `Selected branches and tags`, then allow only branch pattern `main`.
 
-Expected: the Environment page displays `staging` and its branch policy.
+Expected: the Environment page displays `staging` and allows the `main` controller branch. GitHub evaluates Environment branch rules against the deployment workflow's own `GITHUB_REF`; a `workflow_run` controller executes from the default branch even when the tested upstream revision came from branch `staging`. The workflow separately enforces `head_branch == 'staging'` and deploys the upstream `head_sha`.
 
 - [ ] **Step 2: Add the staging SSH private key as an Environment secret**
 
@@ -578,7 +578,7 @@ Expected Environment inventory:
 ```text
 Secrets (1): STAGING_SSH_PRIVATE_KEY
 Variables (6): STAGING_HOST, STAGING_PORT, STAGING_USER, STAGING_PATH, STAGING_URL, STAGING_KNOWN_HOSTS
-Allowed branch: staging
+Allowed controller branch: main
 ```
 
 GitHub Environment secrets become available only to jobs that explicitly reference that Environment: <https://docs.github.com/en/actions/concepts/workflows-and-actions/deployment-environments>.

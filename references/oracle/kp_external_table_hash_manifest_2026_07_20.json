@@ -1,0 +1,15 @@
+{
+  "scope": "kp_external_table_hash_manifest",
+  "created_at": "2026-07-20",
+  "table_id": "VedicAstro_KP_SL_Divisions",
+  "expected_path": "references/open_source_sources/VedicAstro/vedicastro/data/KP_SL_Divisions.csv",
+  "source_candidate": "https://github.com/diliprk/VedicAstro",
+  "status": "fixture_missing",
+  "claim_status": "blocked_fixture_missing",
+  "sha256": null,
+  "row_count": 0,
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "claim_boundary": "Current repository does not contain the external KP sub/sub-lord table fixture. KP exact cusp and event timing cannot be upgraded until a legal source table is pinned with hash and replay evidence.",
+  "next_action": "pin legal source table file or keep KP exact cusp oracle blocked"
+}

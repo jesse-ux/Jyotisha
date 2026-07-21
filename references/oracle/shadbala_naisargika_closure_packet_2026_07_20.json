@@ -1,0 +1,182 @@
+{
+  "scope": "shadbala_naisargika_closure_packet",
+  "created_at": "2026-07-20",
+  "component": "naisargika",
+  "canonical_component": "Naisargikabala",
+  "status": "same_unit_observation_frozen",
+  "claim_status": "partial",
+  "closure_classification": "within_tolerance_observation",
+  "absolute_parity_ready": false,
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_queue": "references/oracle/shadbala_component_closure_queue_v2_2026_07_19.json",
+  "summary": {
+    "component_row_count": 7,
+    "within_tolerance_count": 7,
+    "max_delta_virupa": 0.0,
+    "source_count_per_row": 5
+  },
+  "rows": [
+    {
+      "ticket_id": "shadbala.sun.naisargika",
+      "planet": "Sun",
+      "canonical_component": "Naisargikabala",
+      "normalized_values_virupa": {
+        "jyotishganit": 60.0,
+        "local": 60.0,
+        "vp_jain_local": 60.0,
+        "vp_jain_published": 60.0,
+        "xalen": 60.0
+      },
+      "max_delta_virupa": 0.0,
+      "closure_status": "same_unit_observation_frozen",
+      "closure_classification": "within_tolerance_observation",
+      "unit_contract": "Virupa fixed natural-strength table; 60 Virupa = 1 Rupa.",
+      "source_evidence": [
+        "classical natural strength ordering",
+        "VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "claim_boundary": "Natural-strength table agrees across current five sources for this one VP Jain chart, but absolute Shadbala parity still requires second public case and full six-force totals."
+    },
+    {
+      "ticket_id": "shadbala.moon.naisargika",
+      "planet": "Moon",
+      "canonical_component": "Naisargikabala",
+      "normalized_values_virupa": {
+        "jyotishganit": 51.43,
+        "local": 51.43,
+        "vp_jain_local": 51.43,
+        "vp_jain_published": 51.43,
+        "xalen": 51.43
+      },
+      "max_delta_virupa": 0.0,
+      "closure_status": "same_unit_observation_frozen",
+      "closure_classification": "within_tolerance_observation",
+      "unit_contract": "Virupa fixed natural-strength table; 60 Virupa = 1 Rupa.",
+      "source_evidence": [
+        "classical natural strength ordering",
+        "VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "claim_boundary": "Natural-strength table agrees across current five sources for this one VP Jain chart, but absolute Shadbala parity still requires second public case and full six-force totals."
+    },
+    {
+      "ticket_id": "shadbala.mars.naisargika",
+      "planet": "Mars",
+      "canonical_component": "Naisargikabala",
+      "normalized_values_virupa": {
+        "jyotishganit": 17.14,
+        "local": 17.14,
+        "vp_jain_local": 17.14,
+        "vp_jain_published": 17.14,
+        "xalen": 17.14
+      },
+      "max_delta_virupa": 0.0,
+      "closure_status": "same_unit_observation_frozen",
+      "closure_classification": "within_tolerance_observation",
+      "unit_contract": "Virupa fixed natural-strength table; 60 Virupa = 1 Rupa.",
+      "source_evidence": [
+        "classical natural strength ordering",
+        "VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "claim_boundary": "Natural-strength table agrees across current five sources for this one VP Jain chart, but absolute Shadbala parity still requires second public case and full six-force totals."
+    },
+    {
+      "ticket_id": "shadbala.mercury.naisargika",
+      "planet": "Mercury",
+      "canonical_component": "Naisargikabala",
+      "normalized_values_virupa": {
+        "jyotishganit": 25.71,
+        "local": 25.71,
+        "vp_jain_local": 25.71,
+        "vp_jain_published": 25.71,
+        "xalen": 25.71
+      },
+      "max_delta_virupa": 0.0,
+      "closure_status": "same_unit_observation_frozen",
+      "closure_classification": "within_tolerance_observation",
+      "unit_contract": "Virupa fixed natural-strength table; 60 Virupa = 1 Rupa.",
+      "source_evidence": [
+        "classical natural strength ordering",
+        "VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "claim_boundary": "Natural-strength table agrees across current five sources for this one VP Jain chart, but absolute Shadbala parity still requires second public case and full six-force totals."
+    },
+    {
+      "ticket_id": "shadbala.jupiter.naisargika",
+      "planet": "Jupiter",
+      "canonical_component": "Naisargikabala",
+      "normalized_values_virupa": {
+        "jyotishganit": 34.29,
+        "local": 34.29,
+        "vp_jain_local": 34.29,
+        "vp_jain_published": 34.29,
+        "xalen": 34.29
+      },
+      "max_delta_virupa": 0.0,
+      "closure_status": "same_unit_observation_frozen",
+      "closure_classification": "within_tolerance_observation",
+      "unit_contract": "Virupa fixed natural-strength table; 60 Virupa = 1 Rupa.",
+      "source_evidence": [
+        "classical natural strength ordering",
+        "VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "claim_boundary": "Natural-strength table agrees across current five sources for this one VP Jain chart, but absolute Shadbala parity still requires second public case and full six-force totals."
+    },
+    {
+      "ticket_id": "shadbala.venus.naisargika",
+      "planet": "Venus",
+      "canonical_component": "Naisargikabala",
+      "normalized_values_virupa": {
+        "jyotishganit": 42.86,
+        "local": 42.86,
+        "vp_jain_local": 42.86,
+        "vp_jain_published": 42.86,
+        "xalen": 42.86
+      },
+      "max_delta_virupa": 0.0,
+      "closure_status": "same_unit_observation_frozen",
+      "closure_classification": "within_tolerance_observation",
+      "unit_contract": "Virupa fixed natural-strength table; 60 Virupa = 1 Rupa.",
+      "source_evidence": [
+        "classical natural strength ordering",
+        "VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "claim_boundary": "Natural-strength table agrees across current five sources for this one VP Jain chart, but absolute Shadbala parity still requires second public case and full six-force totals."
+    },
+    {
+      "ticket_id": "shadbala.saturn.naisargika",
+      "planet": "Saturn",
+      "canonical_component": "Naisargikabala",
+      "normalized_values_virupa": {
+        "jyotishganit": 8.57,
+        "local": 8.57,
+        "vp_jain_local": 8.57,
+        "vp_jain_published": 8.57,
+        "xalen": 8.57
+      },
+      "max_delta_virupa": 0.0,
+      "closure_status": "same_unit_observation_frozen",
+      "closure_classification": "within_tolerance_observation",
+      "unit_contract": "Virupa fixed natural-strength table; 60 Virupa = 1 Rupa.",
+      "source_evidence": [
+        "classical natural strength ordering",
+        "VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "claim_boundary": "Natural-strength table agrees across current five sources for this one VP Jain chart, but absolute Shadbala parity still requires second public case and full six-force totals."
+    }
+  ],
+  "boundary": "This packet freezes same-unit observation for Naisargikabala only. It does not close Sthana/Dig/Kala/Chesta/Drik, does not prove Shadbala total parity, and cannot tune production predictions.",
+  "next_actions": [
+    "add a second public numeric Shadbala worked example",
+    "keep fixed-table source citation attached to formula_source_knowledge_base",
+    "continue component closure for formula_or_unit_mismatch rows"
+  ],
+  "raw_hash": "01d789215d47c293de2a0c23c0373ea9add2b1f4f41bd6e089d94d7bc254a3b7"
+}

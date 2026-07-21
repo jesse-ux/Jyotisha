@@ -1,0 +1,204 @@
+{
+  "boundary": "Intake plan only; public examples remain observation-only until numeric packets are captured and replayed.",
+  "claim_status": "open_queue",
+  "created_at": "2026-07-20",
+  "domain_queues": [
+    {
+      "blocking_fields": [
+        "public_numeric_expected_values",
+        "raw_capture_hash",
+        "cusp longitude",
+        "star_lord",
+        "sub_lord",
+        "sub_sub_lord",
+        "method_settings",
+        "birth_or_query_datetime",
+        "location",
+        "cusp_longitude",
+        "nakshatra_lord",
+        "source_table_raw",
+        "source_table_hash",
+        "license_boundary",
+        "table_raw_capture",
+        "table_hash",
+        "copyright_boundary",
+        "degree_range"
+      ],
+      "candidate_count": 2,
+      "closure_condition": "Promote only after exact public input, method settings, expected numeric values, raw capture, raw hash, and replay comparison are archived.",
+      "domain": "kp_precision_timing",
+      "highest_status": "runtime_only_public_oracle_missing",
+      "items": [
+        {
+          "blocking_fields": [
+            "public_numeric_expected_values",
+            "raw_capture_hash",
+            "cusp longitude",
+            "star_lord",
+            "sub_lord",
+            "sub_sub_lord",
+            "method_settings",
+            "birth_or_query_datetime",
+            "location",
+            "cusp_longitude",
+            "nakshatra_lord"
+          ],
+          "candidate_type": "tool_or_reference_page",
+          "eligibility_status": "runtime_only_public_oracle_missing",
+          "next_capture_artifact": "references/oracle/artifacts/kp_cusp_worked_example_packet.json",
+          "runtime_observation_available": true,
+          "topic": "KP cusp",
+          "upgrade_policy": "observation_only_until_numeric_packet",
+          "url": "https://www.astrosage.com/kp/cuspal-sub-lord.asp"
+        },
+        {
+          "blocking_fields": [
+            "source_table_raw",
+            "source_table_hash",
+            "license_boundary",
+            "public_numeric_expected_values",
+            "table_raw_capture",
+            "table_hash",
+            "copyright_boundary",
+            "degree_range",
+            "star_lord",
+            "sub_lord",
+            "sub_sub_lord"
+          ],
+          "candidate_type": "reference_table_candidate",
+          "eligibility_status": "reference_table_hash_needed",
+          "next_capture_artifact": "references/oracle/artifacts/kp_sub-lord_table_worked_example_packet.json",
+          "runtime_observation_available": false,
+          "topic": "KP sub-lord table",
+          "upgrade_policy": "observation_only_until_numeric_packet",
+          "url": "https://www.aryabhatt.com/astrology/krishnamurti-paddhati/kp-sub-lords-table"
+        }
+      ],
+      "next_action_owner": "oracle_intake"
+    },
+    {
+      "blocking_fields": [
+        "stable date/location/person input",
+        "raw_capture_hash",
+        "rule weights",
+        "public_numeric_expected_values",
+        "date",
+        "location",
+        "birth_moon_nakshatra",
+        "current_moon_nakshatra",
+        "tarabala_result",
+        "chandrabala_result",
+        "date/location fixture",
+        "sunrise/sunset source",
+        "sunrise",
+        "sunset",
+        "weekday",
+        "expected_interval"
+      ],
+      "candidate_count": 2,
+      "closure_condition": "Promote only after exact public input, method settings, expected numeric values, raw capture, raw hash, and replay comparison are archived.",
+      "domain": "muhurta_factor_scoring",
+      "highest_status": "raw_capture_needed",
+      "items": [
+        {
+          "blocking_fields": [
+            "stable date/location/person input",
+            "raw_capture_hash",
+            "rule weights",
+            "public_numeric_expected_values",
+            "date",
+            "location",
+            "birth_moon_nakshatra",
+            "current_moon_nakshatra",
+            "tarabala_result",
+            "chandrabala_result"
+          ],
+          "candidate_type": "worked_example_candidate",
+          "eligibility_status": "raw_capture_needed",
+          "next_capture_artifact": "references/oracle/artifacts/tarabala_chandrabala_worked_example_packet.json",
+          "runtime_observation_available": false,
+          "topic": "Tarabala/Chandrabala",
+          "upgrade_policy": "observation_only_until_numeric_packet",
+          "url": "https://www.mypanchang.com/tarabalam.php"
+        },
+        {
+          "blocking_fields": [
+            "date/location fixture",
+            "sunrise/sunset source",
+            "public_numeric_expected_values",
+            "raw_capture_hash",
+            "date",
+            "location",
+            "sunrise",
+            "sunset",
+            "weekday",
+            "expected_interval"
+          ],
+          "candidate_type": "calculation_reference_candidate",
+          "eligibility_status": "fixture_and_raw_capture_needed",
+          "next_capture_artifact": "references/oracle/artifacts/rahu_kalam_worked_example_packet.json",
+          "runtime_observation_available": false,
+          "topic": "Rahu Kalam",
+          "upgrade_policy": "observation_only_until_numeric_packet",
+          "url": "https://www.drikpanchang.com/muhurat/rahu-kalam.html"
+        }
+      ],
+      "next_action_owner": "oracle_intake"
+    },
+    {
+      "blocking_fields": [
+        "complete birth input",
+        "public_numeric_expected_values",
+        "method_variant",
+        "raw_capture_hash",
+        "birth_input",
+        "planet",
+        "component_name",
+        "formula_variant",
+        "unit",
+        "expected_virupa"
+      ],
+      "candidate_count": 1,
+      "closure_condition": "Promote only after exact public input, method settings, expected numeric values, raw capture, raw hash, and replay comparison are archived.",
+      "domain": "shadbala_component_closure",
+      "highest_status": "formula_reference_only",
+      "items": [
+        {
+          "blocking_fields": [
+            "complete birth input",
+            "public_numeric_expected_values",
+            "method_variant",
+            "raw_capture_hash",
+            "birth_input",
+            "planet",
+            "component_name",
+            "formula_variant",
+            "unit",
+            "expected_virupa"
+          ],
+          "candidate_type": "formula_reference_candidate",
+          "eligibility_status": "formula_reference_only",
+          "next_capture_artifact": "references/oracle/artifacts/shadbala_virupa_worked_example_packet.json",
+          "runtime_observation_available": false,
+          "topic": "Shadbala Virupa",
+          "upgrade_policy": "observation_only_until_numeric_packet",
+          "url": "https://www.astrojyoti.com/shadbala.htm"
+        }
+      ],
+      "next_action_owner": "oracle_intake"
+    }
+  ],
+  "production_tuning_allowed": false,
+  "scope": "worked_example_packet_intake_plan",
+  "sources": {
+    "eligibility": "references/oracle/worked_example_numeric_packet_eligibility_2026_07_20.json"
+  },
+  "status": "intake_plan_ready",
+  "summary": {
+    "candidate_count": 5,
+    "domain_count": 3,
+    "domains_with_runtime_observation": 1,
+    "oracle_ready_count": 0
+  },
+  "truth_matrix_allowed": false
+}

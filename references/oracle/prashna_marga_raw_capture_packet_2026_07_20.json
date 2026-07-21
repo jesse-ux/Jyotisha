@@ -1,0 +1,66 @@
+{
+  "boundary": "Capture metadata only; long copyrighted text is not reproduced.",
+  "claim_status": "source_intake_only",
+  "created_at": "2026-07-20",
+  "field_locator_terms": [
+    "Trisphuta",
+    "Chatusphuta",
+    "Catusphuta",
+    "Panchasphuta",
+    "Gulika"
+  ],
+  "internet_archive_items": [
+    {
+      "claim_boundary": "Metadata/file hash pin only; no book text is vendored and no numeric truth is upgraded.",
+      "files": [
+        {
+          "download_url": "https://archive.org/download/PrasnaMargaBVR/Prasna%20Marga%201_djvu.txt",
+          "format": "DjVuTXT",
+          "name": "Prasna Marga 1_djvu.txt",
+          "sha1": "bed3491a79ca5039409dac7fd62e386f7de55a47"
+        },
+        {
+          "download_url": "https://archive.org/download/PrasnaMargaBVR/Prasna%20Marga%201.pdf",
+          "format": "Text PDF",
+          "name": "Prasna Marga 1.pdf",
+          "sha1": "86839fc2d13509309ec3a14a160c861bb223d844"
+        }
+      ],
+      "identifier": "PrasnaMargaBVR",
+      "metadata_url": "https://archive.org/metadata/PrasnaMargaBVR",
+      "source_metadata_hash": "a36100f19e1f6440c2bae22d9cb45f7535e94f6956fac1c5d13b90dd3e6989fb",
+      "title": "Prasna Marga - Dr. BV Raman",
+      "upgrade_status": "candidate_not_oracle"
+    },
+    {
+      "claim_boundary": "Metadata/file hash pin only; no book text is vendored and no numeric truth is upgraded.",
+      "files": [
+        {
+          "download_url": "https://archive.org/download/prasna-marga-part-2-by-bv-raman/Prasna%20Marga%20Part%202%20by%20BV%20Raman_djvu.txt",
+          "format": "DjVuTXT",
+          "name": "Prasna Marga Part 2 by BV Raman_djvu.txt",
+          "sha1": "17c432465520ef75bde7a2c4fa167ff119664666"
+        }
+      ],
+      "identifier": "prasna-marga-part-2-by-bv-raman",
+      "metadata_url": "https://archive.org/metadata/prasna-marga-part-2-by-bv-raman",
+      "source_metadata_hash": "faaeb9c95112f48480d8b79023c83a7ac1a101c7865b4ead1085dd3a16974dfe",
+      "title": "Prasna Marga Part 2 By BV Raman",
+      "upgrade_status": "candidate_not_oracle"
+    }
+  ],
+  "next_steps": [
+    "raw excerpt capture around locator terms with page/line coordinates",
+    "compare B.V. Raman scan vs VedAstro transcription",
+    "only then classify formula_variant vs source_transcription"
+  ],
+  "production_tuning_allowed": false,
+  "scope": "prashna_marga_raw_capture_packet",
+  "status": "raw_capture_metadata_ready",
+  "summary": {
+    "ia_item_count": 2,
+    "oracle_ready_count": 0,
+    "pinned_file_count": 3
+  },
+  "truth_matrix_allowed": false
+}

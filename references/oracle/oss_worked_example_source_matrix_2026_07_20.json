@@ -1,0 +1,108 @@
+{
+  "scope": "oss_worked_example_source_matrix",
+  "created_at": "2026-07-20",
+  "claim_status": "source_intake_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "boundary": "Source matrix for reusable open-source/public worked-example candidates. A row can feed numeric oracle packets only after license, version/commit, raw capture hash, input contract, and replay comparison are archived.",
+  "sources": [
+    {
+      "source_id": "pyjhora_pvr_tests",
+      "name": "naturalstupid/PyJHora JHora pvr_tests",
+      "url": "https://github.com/naturalstupid/PyJHora",
+      "license_status": "AGPL_or_strong_copyleft_observation_only",
+      "candidate_domains": [
+        "prashna_sphuta",
+        "shadbala",
+        "varga",
+        "dasha"
+      ],
+      "case_usefulness": "Installed package includes executable tests such as sphuta_tests with concrete birth data and expected textual values.",
+      "local_status": "installed_runtime_observation_available",
+      "numeric_packet_status": "one_sphuta_case_probe_created",
+      "reuse_policy": "black_box_observation_only",
+      "promotion_boundary": "May provide external observation/raw/hash only; do not vendor code or copy formulas into runtime."
+    },
+    {
+      "source_id": "jyotishganit_github",
+      "name": "northtara/jyotishganit",
+      "url": "https://github.com/northtara/jyotishganit",
+      "license_status": "MIT_candidate_verify_commit_license",
+      "candidate_domains": [
+        "panchanga",
+        "varga",
+        "ashtakavarga",
+        "shadbala_surface"
+      ],
+      "case_usefulness": "Already used as field-level raw probe for D2/D4/D9/D10, Panchanga, BAV/SAV; Shadbala API surface still incomplete.",
+      "local_status": "installed_or_local_mirror_available",
+      "numeric_packet_status": "field_probe_ready_not_truth",
+      "reuse_policy": "permissive_candidate_adapter_preferred",
+      "promotion_boundary": "Can be adapter/observation source after commit/hash/license and same-input raw are pinned; does not resolve formula variants alone."
+    },
+    {
+      "source_id": "vedicastro_kp_runtime",
+      "name": "diliprk/VedicAstro",
+      "url": "https://github.com/diliprk/VedicAstro",
+      "license_status": "repo_license_and_file_license_must_be_verified_before_copy",
+      "candidate_domains": [
+        "kp_precision_timing"
+      ],
+      "case_usefulness": "Runtime/API surface can emit KP house cusp/star/sub/sub-sub raw for batch probes.",
+      "local_status": "temporary_flatlib_polars_probe_available",
+      "numeric_packet_status": "runtime_raw_available_but_public_worked_example_needed",
+      "reuse_policy": "isolated_subprocess_observation_until_license_clear",
+      "promotion_boundary": "KP exact cusp may advance only after public numeric worked example replay matches pinned raw."
+    },
+    {
+      "source_id": "fusionstrings_panchangam",
+      "name": "fusionstrings/panchangam",
+      "url": "https://github.com/fusionstrings/panchangam",
+      "license_status": "permissive_candidate_verify_repo_license",
+      "candidate_domains": [
+        "muhurta_factor_scoring",
+        "panchanga"
+      ],
+      "case_usefulness": "Open-source Panchangam candidate for Tarabala/Chandrabala/Rahu Kalam/Abhijit style factor comparison.",
+      "local_status": "not_imported",
+      "numeric_packet_status": "candidate_requires_pin_install_and_raw_hash",
+      "reuse_policy": "adapter_candidate_no_truth_upgrade",
+      "promotion_boundary": "Observation-only until exact date/place/timezone, sunrise source, and factor scoring weights are pinned."
+    },
+    {
+      "source_id": "bidyashish_panchang",
+      "name": "bidyashish/panchang",
+      "url": "https://github.com/bidyashish/panchang",
+      "license_status": "public_repo_license_verify_before_use",
+      "candidate_domains": [
+        "panchanga",
+        "muhurta_factor_scoring"
+      ],
+      "case_usefulness": "Candidate secondary Panchanga implementation for cross-checking weekday/tithi/nakshatra/yoga/karana and Rahu-type intervals.",
+      "local_status": "not_imported",
+      "numeric_packet_status": "candidate_requires_pin_install_and_raw_hash",
+      "reuse_policy": "adapter_candidate_no_truth_upgrade",
+      "promotion_boundary": "Do not produce Muhurta verdicts until factor weights and negative examples are validated."
+    },
+    {
+      "source_id": "kp_sub_lord_boundary_tables",
+      "name": "KP star/sub lord boundary tables from open-source CSV/API surfaces",
+      "url": "https://github.com/diliprk/VedicAstro",
+      "license_status": "table_file_license_and_hash_required",
+      "candidate_domains": [
+        "kp_precision_timing"
+      ],
+      "case_usefulness": "Boundary tables can validate star/sub/sub-sub segmentation independently of event interpretation.",
+      "local_status": "partial_table_probe_exists",
+      "numeric_packet_status": "candidate_requires_raw_capture_hash",
+      "reuse_policy": "hash_tables_then_adapter_only",
+      "promotion_boundary": "Segmentation correctness is not event-timing correctness; worked examples and holdout are still required."
+    }
+  ],
+  "next_actions": [
+    "Pin source commit/package hash before each runtime probe.",
+    "Use local mirrors or temporary isolated installs; do not add runtime dependencies to research app unless explicitly promoted.",
+    "Upgrade only rows with concrete numeric inputs/outputs into numeric oracle packets.",
+    "Keep AGPL/GPL sources observation-only and outside commercial runtime."
+  ]
+}

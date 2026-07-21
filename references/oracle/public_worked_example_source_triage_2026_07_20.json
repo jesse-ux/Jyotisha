@@ -1,0 +1,123 @@
+{
+  "boundary": "Public source triage only. Numeric candidates require raw capture and replay before becoming oracle packets.",
+  "claim_status": "source_intake_only",
+  "created_at": "2026-07-20",
+  "production_tuning_allowed": false,
+  "scope": "public_worked_example_source_triage",
+  "sources": [
+    {
+      "claim_boundary": "Source triage only; do not upgrade until raw page capture, exact settings, expected numeric values, hash, and replay comparison are archived.",
+      "domain": "muhurta_factor_scoring",
+      "missing_for_oracle": [
+        "raw_capture_hash",
+        "exact_date_selection",
+        "timezone",
+        "sunrise",
+        "formula_weight_contract"
+      ],
+      "numeric_fields_present": true,
+      "observation_hash": "d57a30a4da43bb5ee92f16b6d8e2f6df099854a1cab1a2f95f72efea16dd9671",
+      "observed_numeric_fields": [
+        "tarabalam periods",
+        "chandrabalam periods",
+        "nakshatra",
+        "rasi",
+        "tithi",
+        "yoga",
+        "karana"
+      ],
+      "source_id": "mypanchang_edison_2025_panchangam",
+      "source_role": "numeric_candidate",
+      "topic": "Tarabala/Chandrabala/Panchangam daily factors",
+      "upgrade_status": "candidate_not_oracle",
+      "url": "https://www.mypanchang.com/phppanchang.php?cityhead=&cityname=Edison-NJ&mn=04&monthtype=1&yr=2025"
+    },
+    {
+      "claim_boundary": "Source triage only; do not upgrade until raw page capture, exact settings, expected numeric values, hash, and replay comparison are archived.",
+      "domain": "muhurta_factor_scoring",
+      "missing_for_oracle": [
+        "raw_capture_hash",
+        "sunrise",
+        "sunset",
+        "timezone",
+        "calculation_rule_replay"
+      ],
+      "numeric_fields_present": true,
+      "observation_hash": "a7a4c1f5ba3fe872af645cddab962eba9fe4e0f697eee5d3bfca73951a571a8a",
+      "observed_numeric_fields": [
+        "rahu kalam interval",
+        "weekday",
+        "city/date scoped daily table"
+      ],
+      "source_id": "drikpanchang_mumbai_rahu_2026_07_20",
+      "source_role": "numeric_candidate",
+      "topic": "Rahu Kalam daily interval",
+      "upgrade_status": "candidate_not_oracle",
+      "url": "https://www.drikpanchang.com/muhurat/rahu-kalam.html?date=20/07/2026&geoname-id=1275339"
+    },
+    {
+      "claim_boundary": "Source triage only; do not upgrade until raw page capture, exact settings, expected numeric values, hash, and replay comparison are archived.",
+      "domain": "muhurta_factor_scoring",
+      "missing_for_oracle": [
+        "birth_moon_nakshatra",
+        "current_moon_nakshatra",
+        "worked_numeric_example",
+        "raw_capture_hash"
+      ],
+      "numeric_fields_present": false,
+      "observation_hash": "26b314e3d7d2fb1dfa91e82e4d92e966a3aa3f43a04f423a9a36c08cf1b0925f",
+      "observed_numeric_fields": [],
+      "source_id": "mypanchang_tarabalam_chakra",
+      "source_role": "formula_reference",
+      "topic": "Tarabalam/Chandrabalam formula reference",
+      "upgrade_status": "candidate_not_oracle",
+      "url": "https://www.mypanchang.com/tarabalam.php"
+    },
+    {
+      "claim_boundary": "Source triage only; do not upgrade until raw page capture, exact settings, expected numeric values, hash, and replay comparison are archived.",
+      "domain": "kp_precision_timing",
+      "missing_for_oracle": [
+        "public_birth_or_query_input",
+        "cusp_longitude",
+        "star_lord",
+        "sub_lord",
+        "sub_sub_lord",
+        "raw_capture_hash"
+      ],
+      "numeric_fields_present": false,
+      "observation_hash": "bae793bb25145c8f716937c4c4dd575c60307dc1eb0a01f007b452e1907c0705",
+      "observed_numeric_fields": [],
+      "source_id": "astrosage_kp_cuspal_sub_lord",
+      "source_role": "runtime_or_reference_candidate",
+      "topic": "KP cuspal sub lord calculator/reference",
+      "upgrade_status": "candidate_not_oracle",
+      "url": "https://www.astrosage.com/kp/cuspal-sub-lord.asp"
+    },
+    {
+      "claim_boundary": "Source triage only; do not upgrade until raw page capture, exact settings, expected numeric values, hash, and replay comparison are archived.",
+      "domain": "shadbala_component_closure",
+      "missing_for_oracle": [
+        "complete_birth_input",
+        "component_virupa_table",
+        "method_variant",
+        "raw_capture_hash"
+      ],
+      "numeric_fields_present": false,
+      "observation_hash": "70f17bcba9f127e2fe46a42c3830abc05acaf250085e796e0e21506fe099d160",
+      "observed_numeric_fields": [],
+      "source_id": "astrojyoti_shadbala_formula",
+      "source_role": "formula_reference",
+      "topic": "Shadbala formula reference",
+      "upgrade_status": "candidate_not_oracle",
+      "url": "https://www.astrojyoti.com/shadbala.htm"
+    }
+  ],
+  "status": "source_triage_ready",
+  "summary": {
+    "formula_reference_count": 2,
+    "numeric_candidate_count": 2,
+    "oracle_ready_count": 0,
+    "source_count": 5
+  },
+  "truth_matrix_allowed": false
+}

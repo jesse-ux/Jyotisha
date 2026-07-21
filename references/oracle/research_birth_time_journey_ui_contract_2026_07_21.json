@@ -1,0 +1,44 @@
+{
+  "scope": "research_birth_time_journey_ui_contract",
+  "created_at": "2026-07-21",
+  "claim_status": "ready_contract",
+  "source_fragment": "/private/tmp/jyotisha-commercial-readonly.adiUr0/frontend/tests/birth-time-journey*.test.ts",
+  "source_policy": "behavior_contract_only_no_commercial_code",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "boundary": "Ports commercial birth-time journey maturity as research-local UI contracts only. No Supabase, credits, auth, queue, or commercial implementation is imported.",
+  "contracts": [
+    {
+      "contract_id": "profile_mode_hides_chat_overlay",
+      "source_pattern": "mobile scroll/profile journey separation",
+      "research_requirement": "When user opens My Chart/profile form, bottom chat composer must disappear and the form must be centered."
+    },
+    {
+      "contract_id": "new_chat_restores_chat_surface",
+      "source_pattern": "journey resume / turn state transitions",
+      "research_requirement": "New chat or starter prompt must restore chat mode and composer visibility."
+    },
+    {
+      "contract_id": "candidate_claim_stays_exploratory",
+      "source_pattern": "candidate completion / response invariants",
+      "research_requirement": "Birth-time rectification result may show candidate ranges and scores, but must not claim birth-time truth."
+    },
+    {
+      "contract_id": "local_resume_only",
+      "source_pattern": "journey turn persistence",
+      "research_requirement": "Research repo may persist local journey/profile state with localStorage only; no Supabase or credit dependency."
+    },
+    {
+      "contract_id": "user_error_contract",
+      "source_pattern": "dynamic question validator / user errors",
+      "research_requirement": "Invalid dates, missing time/place, or unparseable choices must produce actionable local UI messages, not silent fake UI."
+    }
+  ],
+  "forbidden_imports": [
+    "Supabase runtime",
+    "credits/payment/subscription logic",
+    "commercial auth/session business rules",
+    "dirty commercial worktree code",
+    "commercial user data"
+  ]
+}

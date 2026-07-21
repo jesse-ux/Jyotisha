@@ -1,0 +1,717 @@
+{
+  "acceptance_rules": [
+    "Website must save/render input contract and runtime context JSON for each prompt.",
+    "Answers may use public cases as explanation references, not prediction proof.",
+    "Precise day/month claims must stay exploratory_unvalidated unless holdout closes.",
+    "Marriage/career/wealth/health/migration/family/education/timing/annual domains must route to matching technique context.",
+    "Any Shadbala/AV/KP conflict must be described as method/source difference, not majority-vote truth."
+  ],
+  "boundary": "Product E2E quality harness only; not an accuracy benchmark or independent holdout.",
+  "case_count": 20,
+  "cases": [
+    {
+      "birth": {
+        "date": "1955-02-24",
+        "lat": 37.7749,
+        "lon": -122.4194,
+        "place": "San Francisco, CA, USA",
+        "source_policy": "public_record_candidate",
+        "time": "19:15",
+        "tz": -8
+      },
+      "case_id": "steve_jobs",
+      "domains": [
+        "career",
+        "wealth",
+        "timing"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "财富来源和风险是什么？",
+        "历史关键阶段能否用 Dasha + Narayana 回看？"
+      ],
+      "subject": "Steve Jobs"
+    },
+    {
+      "birth": {
+        "date": "1879-03-14",
+        "lat": 48.4011,
+        "lon": 9.9876,
+        "place": "Ulm, Germany",
+        "source_policy": "public_record_candidate",
+        "time": "11:30",
+        "tz": 1
+      },
+      "case_id": "albert_einstein",
+      "domains": [
+        "education",
+        "career",
+        "timing"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "学习与教育路径怎么看？",
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "历史关键阶段能否用 Dasha + Narayana 回看？"
+      ],
+      "subject": "Albert Einstein"
+    },
+    {
+      "birth": {
+        "date": "1961-08-04",
+        "lat": 21.3069,
+        "lon": -157.8583,
+        "place": "Honolulu, HI, USA",
+        "source_policy": "public_record_candidate",
+        "time": "19:24",
+        "tz": -10
+      },
+      "case_id": "barack_obama",
+      "domains": [
+        "career",
+        "migration",
+        "annual"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "迁移/海外发展应看哪些宫位和 Dasha？",
+        "年度运势应如何避免过度承诺？"
+      ],
+      "subject": "Barack Obama"
+    },
+    {
+      "birth": {
+        "date": "1961-07-01",
+        "lat": 52.8294,
+        "lon": 0.5143,
+        "place": "Sandringham, England",
+        "source_policy": "public_record_candidate",
+        "time": "19:45",
+        "tz": 0
+      },
+      "case_id": "princess_diana",
+      "domains": [
+        "marriage",
+        "family",
+        "timing"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "婚恋关系中应看哪些印度占星指标？",
+        "家庭/子女主题应调用哪些分盘和宫位？",
+        "历史关键阶段能否用 Dasha + Narayana 回看？"
+      ],
+      "subject": "Princess Diana"
+    },
+    {
+      "birth": {
+        "date": "1946-06-14",
+        "lat": 40.7282,
+        "lon": -73.7949,
+        "place": "Queens, NY, USA",
+        "source_policy": "public_record_candidate",
+        "time": "10:54",
+        "tz": -5
+      },
+      "case_id": "donald_trump",
+      "domains": [
+        "career",
+        "wealth",
+        "annual"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "财富来源和风险是什么？",
+        "年度运势应如何避免过度承诺？"
+      ],
+      "subject": "Donald Trump"
+    },
+    {
+      "birth": {
+        "date": "1954-01-29",
+        "lat": 33.0576,
+        "lon": -89.5887,
+        "place": "Kosciusko, MS, USA",
+        "source_policy": "public_record_candidate",
+        "time": "04:30",
+        "tz": -6
+      },
+      "case_id": "oprah_winfrey",
+      "domains": [
+        "career",
+        "wealth",
+        "family"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "财富来源和风险是什么？",
+        "家庭/子女主题应调用哪些分盘和宫位？"
+      ],
+      "subject": "Oprah Winfrey"
+    },
+    {
+      "birth": {
+        "date": "1971-06-28",
+        "lat": -25.7479,
+        "lon": 28.2293,
+        "place": "Pretoria, South Africa",
+        "source_policy": "public_record_candidate",
+        "time": "07:30",
+        "tz": 2
+      },
+      "case_id": "elon_musk",
+      "domains": [
+        "career",
+        "migration",
+        "wealth"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "迁移/海外发展应看哪些宫位和 Dasha？",
+        "财富来源和风险是什么？"
+      ],
+      "subject": "Elon Musk"
+    },
+    {
+      "birth": {
+        "date": "1869-10-02",
+        "lat": 21.6417,
+        "lon": 69.6293,
+        "place": "Porbandar, India",
+        "source_policy": "public_record_candidate",
+        "time": "07:11",
+        "tz": 5.5
+      },
+      "case_id": "mahatma_gandhi",
+      "domains": [
+        "career",
+        "migration",
+        "timing"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "迁移/海外发展应看哪些宫位和 Dasha？",
+        "历史关键阶段能否用 Dasha + Narayana 回看？"
+      ],
+      "subject": "Mahatma Gandhi"
+    },
+    {
+      "birth": {
+        "date": "1926-06-01",
+        "lat": 34.0522,
+        "lon": -118.2437,
+        "place": "Los Angeles, CA, USA",
+        "source_policy": "public_record_candidate",
+        "time": "09:30",
+        "tz": -8
+      },
+      "case_id": "marilyn_monroe",
+      "domains": [
+        "marriage",
+        "career",
+        "health"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "婚恋关系中应看哪些印度占星指标？",
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "健康主题只能如何非医疗表达？"
+      ],
+      "subject": "Marilyn Monroe"
+    },
+    {
+      "birth": {
+        "date": "1955-10-28",
+        "lat": 47.6062,
+        "lon": -122.3321,
+        "place": "Seattle, WA, USA",
+        "source_policy": "public_record_candidate",
+        "time": "22:00",
+        "tz": -8
+      },
+      "case_id": "bill_gates",
+      "domains": [
+        "career",
+        "wealth",
+        "education"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "财富来源和风险是什么？",
+        "学习与教育路径怎么看？"
+      ],
+      "subject": "Bill Gates"
+    },
+    {
+      "birth": {
+        "date": "1965-07-31",
+        "lat": 0.0,
+        "lon": 0.0,
+        "place": "Yate, England",
+        "source_policy": "public_record_candidate",
+        "time": "14:00",
+        "tz": 0
+      },
+      "case_id": "j_k_rowling",
+      "domains": [
+        "career",
+        "wealth",
+        "timing"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "财富来源和风险是什么？",
+        "历史关键阶段能否用 Dasha + Narayana 回看？"
+      ],
+      "subject": "J. K. Rowling"
+    },
+    {
+      "birth": {
+        "date": "1918-07-18",
+        "lat": 0.0,
+        "lon": 0.0,
+        "place": "Mvezo, South Africa",
+        "source_policy": "public_record_candidate",
+        "time": "14:54",
+        "tz": 0
+      },
+      "case_id": "nelson_mandela",
+      "domains": [
+        "career",
+        "timing",
+        "migration"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "历史关键阶段能否用 Dasha + Narayana 回看？",
+        "迁移/海外发展应看哪些宫位和 Dasha？"
+      ],
+      "subject": "Nelson Mandela"
+    },
+    {
+      "birth": {
+        "date": "1910-08-26",
+        "lat": 0.0,
+        "lon": 0.0,
+        "place": "Skopje, North Macedonia",
+        "source_policy": "public_record_candidate",
+        "time": "14:25",
+        "tz": 0
+      },
+      "case_id": "mother_teresa",
+      "domains": [
+        "career",
+        "migration",
+        "health"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "迁移/海外发展应看哪些宫位和 Dasha？",
+        "健康主题只能如何非医疗表达？"
+      ],
+      "subject": "Mother Teresa"
+    },
+    {
+      "birth": {
+        "date": "1958-08-29",
+        "lat": 0.0,
+        "lon": 0.0,
+        "place": "Gary, IN, USA",
+        "source_policy": "public_record_candidate",
+        "time": "19:33",
+        "tz": 0
+      },
+      "case_id": "michael_jackson",
+      "domains": [
+        "career",
+        "wealth",
+        "health"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "财富来源和风险是什么？",
+        "健康主题只能如何非医疗表达？"
+      ],
+      "subject": "Michael Jackson"
+    },
+    {
+      "birth": {
+        "date": "1926-04-21",
+        "lat": 0.0,
+        "lon": 0.0,
+        "place": "London, England",
+        "source_policy": "public_record_candidate",
+        "time": "02:40",
+        "tz": 0
+      },
+      "case_id": "queen_elizabeth_ii",
+      "domains": [
+        "career",
+        "family",
+        "annual"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "家庭/子女主题应调用哪些分盘和宫位？",
+        "年度运势应如何避免过度承诺？"
+      ],
+      "subject": "Queen Elizabeth II"
+    },
+    {
+      "birth": {
+        "date": "1917-05-29",
+        "lat": 0.0,
+        "lon": 0.0,
+        "place": "Brookline, MA, USA",
+        "source_policy": "public_record_candidate",
+        "time": "15:00",
+        "tz": 0
+      },
+      "case_id": "john_f_kennedy",
+      "domains": [
+        "career",
+        "family",
+        "health"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "家庭/子女主题应调用哪些分盘和宫位？",
+        "健康主题只能如何非医疗表达？"
+      ],
+      "subject": "John F. Kennedy"
+    },
+    {
+      "birth": {
+        "date": "1929-01-15",
+        "lat": 0.0,
+        "lon": 0.0,
+        "place": "Atlanta, GA, USA",
+        "source_policy": "public_record_candidate",
+        "time": "12:00",
+        "tz": 0
+      },
+      "case_id": "martin_luther_king_jr",
+      "domains": [
+        "career",
+        "timing",
+        "health"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "历史关键阶段能否用 Dasha + Narayana 回看？",
+        "健康主题只能如何非医疗表达？"
+      ],
+      "subject": "Martin Luther King Jr."
+    },
+    {
+      "birth": {
+        "date": "1975-06-04",
+        "lat": 0.0,
+        "lon": 0.0,
+        "place": "Los Angeles, CA, USA",
+        "source_policy": "public_record_candidate",
+        "time": "09:09",
+        "tz": 0
+      },
+      "case_id": "angelina_jolie",
+      "domains": [
+        "marriage",
+        "family",
+        "career"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "婚恋关系中应看哪些印度占星指标？",
+        "家庭/子女主题应调用哪些分盘和宫位？",
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？"
+      ],
+      "subject": "Angelina Jolie"
+    },
+    {
+      "birth": {
+        "date": "1963-12-18",
+        "lat": 0.0,
+        "lon": 0.0,
+        "place": "Shawnee, OK, USA",
+        "source_policy": "public_record_candidate",
+        "time": "06:31",
+        "tz": 0
+      },
+      "case_id": "brad_pitt",
+      "domains": [
+        "marriage",
+        "career",
+        "wealth"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "婚恋关系中应看哪些印度占星指标？",
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "财富来源和风险是什么？"
+      ],
+      "subject": "Brad Pitt"
+    },
+    {
+      "birth": {
+        "date": "1981-09-26",
+        "lat": 0.0,
+        "lon": 0.0,
+        "place": "Saginaw, MI, USA",
+        "source_policy": "public_record_candidate",
+        "time": "20:28",
+        "tz": 0
+      },
+      "case_id": "serena_williams",
+      "domains": [
+        "career",
+        "health",
+        "annual"
+      ],
+      "expected_runtime_context": [
+        "birth_input_contract",
+        "ayanamsa_node_mode",
+        "D1",
+        "D9_or_relevant_varga",
+        "Dasha",
+        "Narayana_Dasha_for_timing",
+        "functional_benefic_malefic",
+        "claim_boundary",
+        "similar_case_reference_allowed"
+      ],
+      "prompts": [
+        "事业主轴是什么？",
+        "哪类阶段更容易爆发？",
+        "健康主题只能如何非医疗表达？",
+        "年度运势应如何避免过度承诺？"
+      ],
+      "subject": "Serena Williams"
+    }
+  ],
+  "claim_status": "ready_contract",
+  "created_at": "2026-07-20",
+  "production_tuning_allowed": false,
+  "scope": "real_case_website_e2e_eval",
+  "truth_matrix_allowed": false
+}

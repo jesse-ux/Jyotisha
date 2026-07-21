@@ -1,0 +1,17 @@
+{
+  "batch_max_items": 20,
+  "batch_offset": 0,
+  "boundary": "Route optimization smoke summary for public real-case E2E capture; not prediction accuracy proof.",
+  "captured_count": 20,
+  "core_status_counts": {
+    "ready": 20
+  },
+  "created_at": "2026-07-20",
+  "missing_route_layer_total": 0,
+  "route_counts": {
+    "finance": 8,
+    "relationship": 4,
+    "timing": 8
+  },
+  "scope": "real_case_website_e2e_route_optimization_summary"
+}

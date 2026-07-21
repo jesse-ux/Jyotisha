@@ -208,6 +208,7 @@ button:disabled { cursor: default; opacity: .45; }
 }
 
 @media (max-width: 767px) {
+  .conversation.is-empty { display: block; }
   .brand-row { padding: 0 4px; }
   .brand-mark { width: 26px; height: 26px; }
   .session-nav { overflow: hidden; }
@@ -706,3 +707,5 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
   .auth-panel h1 { font-size: var(--type-display-sm); }
   .admin-section { padding: var(--space-5); }
 }
+.session-delete-overlay { z-index: 100; }
+.session-delete-confirmation p { margin: 0; color: var(--color-ink-secondary); }

@@ -11,6 +11,8 @@ type Profile = {
   districtCode?: string;
 };
 
+type RelationshipType = "romance" | "business" | "family" | "general";
+
 const apiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200";
 const china = chinaLocations.country;
 
@@ -102,6 +104,30 @@ function relationshipReport(synastry: Record<string, unknown>, selfD9: Record<st
   };
 }
 
+function vargaPlanetSign(varga: Record<string, unknown>, division: string, planet: string) {
+  const result = varga.result && typeof varga.result === "object" ? varga.result as Record<string, unknown> : {};
+  const chart = result[division] && typeof result[division] === "object" ? result[division] as Record<string, unknown> : {};
+  const planets = chart.planets && typeof chart.planets === "object" ? chart.planets as Record<string, unknown> : {};
+  return planetSign(planet === "Ascendant" ? chart.ascendant : planets[planet]);
+}
+
+function businessReport(selfVargas: Record<string, unknown>, partnerVargas: Record<string, unknown>) {
+  return {
+    status: "partial_evidence",
+    scoreBand: "not_scored",
+    headline: "已完成基础合作结构筛查；这不是合作成败、收益或契约保证。",
+    strengths: [
+      `D10 事业轴：本人 ${vargaPlanetSign(selfVargas, "D10_Dasamsa", "Ascendant")} / 对方 ${vargaPlanetSign(partnerVargas, "D10_Dasamsa", "Ascendant")}`,
+      `D2 财富轴：本人 Moon ${vargaPlanetSign(selfVargas, "D2_Hora", "Moon")} / 对方 Moon ${vargaPlanetSign(partnerVargas, "D2_Hora", "Moon")}`,
+      `D11 收益轴：本人 Sun ${vargaPlanetSign(selfVargas, "D11_Rudramsa", "Sun")} / 对方 Sun ${vargaPlanetSign(partnerVargas, "D11_Rudramsa", "Sun")}`,
+    ],
+    risks: [
+      "尚未完成 A10、功能吉凶、双方 Vimshottari + Narayana、Shadbala/AV 与外部数值一致性，不得据此断言合作结果或精确时点。",
+    ],
+    nextEvidence: ["A10", "功能吉凶", "双方 Vimshottari + Narayana", "D10/D2/D11 原始度数与外部校验"],
+  };
+}
+
 async function postPython(path: string, body: unknown) {
   const response = await fetch(`${apiBase}${path}`, {
     method: "POST",
@@ -118,12 +144,37 @@ async function postPython(path: string, body: unknown) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json().catch(() => null) as { selfProfile?: Profile; partnerProfile?: Profile } | null;
+    const body = await request.json().catch(() => null) as { selfProfile?: Profile; partnerProfile?: Profile; relationshipType?: RelationshipType } | null;
     if (!body?.selfProfile || !body.partnerProfile) {
       return NextResponse.json({ error: "请提供双方星盘资料" }, { status: 400 });
     }
     const selfChart = await postPython("/api/chart", birthPayload(body.selfProfile));
     const partnerChart = await postPython("/api/chart", birthPayload(body.partnerProfile));
+    const relationshipType = body.relationshipType === "business" || body.relationshipType === "family" || body.relationshipType === "general"
+      ? body.relationshipType
+      : "romance";
+    if (relationshipType === "business") {
+      const [selfVargas, partnerVargas] = await Promise.all([
+        postPython("/api/varga_full", { ...birthPayload(body.selfProfile), planets: selfChart.planets, ascendant: selfChart.ascendant, divisions: ["D2", "D10", "D11"] }),
+        postPython("/api/varga_full", { ...birthPayload(body.partnerProfile), planets: partnerChart.planets, ascendant: partnerChart.ascendant, divisions: ["D2", "D10", "D11"] }),
+      ]);
+      return NextResponse.json({
+        status: "ok",
+        relationshipType,
+        claimStatus: "partial",
+        method: "d2_d10_d11_business_screening_partial",
+        evidenceLayers: ["d2_hora", "d10_dashamsa", "d11_ekadashamsa"],
+        blockedLayers: ["A10", "functional_benefic_malefic", "vimshottari_narayana", "shadbala_ashtakavarga", "external_engine_parity"],
+        relationshipReport: businessReport(selfVargas, partnerVargas),
+      });
+    }
+    if (relationshipType !== "romance") {
+      return NextResponse.json({
+        status: "blocked",
+        relationshipType,
+        message: "该关系类型尚无可验证的专用合盘计算合同；已保留问题草稿。",
+      });
+    }
     const selfD9 = await postPython("/api/varga_full", {
       ...birthPayload(body.selfProfile),
       planets: selfChart.planets,

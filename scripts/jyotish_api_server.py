@@ -1510,6 +1510,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
 
     def _require_dynamic_rectification_token(self):
         configured = os.environ.get('JYOTISH_DYNAMIC_RECTIFICATION_TOKEN', '').strip()
+        if not configured:
+            service_role = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '').strip()
+            if service_role:
+                configured = hashlib.sha256(
+                    f'jyotisha-dynamic-rectification-v1:{service_role}'.encode('utf-8')
+                ).hexdigest()
         supplied = self._job_access_token()
         matches = secrets.compare_digest(supplied, configured)
         if not configured or not matches:

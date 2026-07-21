@@ -1,0 +1,52 @@
+{
+  "boundary": "Queue records candidate causes; closure requires raw source and replay evidence.",
+  "claim_status": "open_queue",
+  "created_at": "2026-07-20",
+  "production_tuning_allowed": false,
+  "rows": [
+    {
+      "candidate_causes": [
+        "formula_variant",
+        "source_transcription",
+        "chatusphuta_catusphuta_naming",
+        "incomplete_input_settings"
+      ],
+      "chatusphuta_status": "mismatch",
+      "claim_boundary": "Mismatch queue only; do not tune formulas or upgrade Prashna truth from this packet.",
+      "next_evidence": [
+        "raw scan/page capture",
+        "complete example input",
+        "independent translation/transcription check",
+        "legal external replay"
+      ],
+      "next_evidence_owner": "worked_example_collection",
+      "panchasphuta_status": "mismatch",
+      "source_id": "vedastro_prasna_marga_ch5_sphuta_example",
+      "trisphuta_status": "matches",
+      "upgrade_status": "not_oracle_ready",
+      "url": "https://vedastro.org/book/PrasnaMarga/Chapter5"
+    }
+  ],
+  "scope": "prashna_sphuta_mismatch_arbitration",
+  "source_candidates": [
+    {
+      "source_id": "vedastro_prasna_marga_ch5_sphuta_example",
+      "source_role": "numeric_candidate",
+      "upgrade_status": "candidate_not_oracle",
+      "url": "https://vedastro.org/book/PrasnaMarga/Chapter5"
+    },
+    {
+      "source_id": "internet_archive_prasna_marga_bv_raman_sphuta_fragment",
+      "source_role": "public_formula_numeric_fragment_candidate",
+      "upgrade_status": "candidate_not_oracle",
+      "url": "https://archive.org/details/PrasnaMarga/"
+    }
+  ],
+  "status": "arbitration_queue_ready",
+  "summary": {
+    "mismatch_count": 1,
+    "oracle_ready_count": 0,
+    "source_candidate_count": 2
+  },
+  "truth_matrix_allowed": false
+}

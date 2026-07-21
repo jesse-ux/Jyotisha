@@ -1,0 +1,23 @@
+{
+  "batch_offsets": [
+    0,
+    20,
+    40
+  ],
+  "boundary": "Full 60-context public real-case E2E route optimization summary; product QA only, not prediction accuracy proof.",
+  "captured_count": 60,
+  "core_status_counts": {
+    "ready": 60
+  },
+  "created_at": "2026-07-20",
+  "missing_route_layer_total": 0,
+  "production_tuning_allowed": false,
+  "route_counts": {
+    "career": 4,
+    "finance": 24,
+    "relationship": 16,
+    "timing": 16
+  },
+  "scope": "real_case_website_e2e_full_route_optimization_summary",
+  "truth_matrix_allowed": false
+}
