@@ -1268,8 +1268,12 @@ export default function Home() {
   }
 
   function toggleArchivedSession(sessionId: string) {
-    setArchivedSessionIds((current) => current.includes(sessionId) ? current.filter((id) => id !== sessionId) : [sessionId, ...current]);
-    if (activeSessionId === sessionId) setActiveSessionId(visibleSessions.find((session) => session.id !== sessionId)?.id ?? "");
+    const restoring = archivedSessionIds.includes(sessionId);
+    setArchivedSessionIds((current) => restoring ? current.filter((id) => id !== sessionId) : [sessionId, ...current]);
+    if (!restoring && activeSessionId === sessionId) {
+      setActiveSessionId(visibleSessions.find((session) => session.id !== sessionId)?.id ?? "");
+    }
+    setComposerNotice(restoring ? "已恢复到聊天记录。" : "已归档，可在左侧归档中恢复。");
   }
 
   async function shareSession(session: ChatSession) {
