@@ -118,6 +118,8 @@ test("ready completion is explicit and terminal low has no finish mutation", () 
   assert.doesNotMatch(hookSource, /turn\.nextAction\.kind === "ready"\) onReady/);
   assert.match(candidateSource, /acknowledgeReady/);
   assert.doesNotMatch(candidateSource, /controller\.finish/);
+  assert.doesNotMatch(hookSource, /completeGuidedBirthTimeCandidate/);
+  assert.doesNotMatch(hookSource, /completeCandidate:/);
 });
 
 test("unconfirmed terminal candidates preserve the range without offering direct adoption", () => {

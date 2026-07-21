@@ -47,16 +47,17 @@ test("birth time intake requires only the fields selected by the source", () => 
   assert.equal(isBirthTimeDraftReady({ ...emptyDraft, birthTimeSource: "unknown" }), true);
 });
 
-test("a persisted candidate working time can leave rectification onboarding", () => {
+test("an unconfirmed candidate working time remains in rectification onboarding", () => {
   const candidate = {
     ...emptyDraft,
     time: "04:53",
     birthTimeStatus: "candidate",
   } satisfies BirthTimeDraft;
 
-  assert.equal(isBirthTimeReadyForConsultation(candidate), true);
+  assert.equal(isBirthTimeReadyForConsultation(candidate), false);
   assert.equal(isBirthTimeReadyForConsultation({ ...candidate, time: "" }), false);
   assert.equal(isBirthTimeReadyForConsultation({ ...candidate, birthTimeStatus: "rectifying" }), false);
+  assert.equal(isBirthTimeReadyForConsultation({ ...candidate, birthTimeStatus: "confirmed" }), true);
 });
 
 test("a persisted candidate working time takes precedence over the reported range", () => {

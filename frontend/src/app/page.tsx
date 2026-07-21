@@ -747,7 +747,6 @@ export default function Home() {
     preview: process.env.NODE_ENV === "development" && uiPreview.current,
     onJourney: setBirthTimeJourney,
     onReady: completeGuidedBirthTime,
-    onCandidateComplete: completeCandidateBirthTime,
     onEditBirthTimeDetails: editDeclaredBirthTimeDetails,
   });
 
@@ -1019,7 +1018,7 @@ export default function Home() {
         setSessions(nextSessions);
         setActiveSessionId(nextSessions[0].id);
         if ((nextProfile.birthTimeStatus === "rectifying"
-          || (nextProfile.birthTimeStatus === "candidate" && !nextProfile.time))
+          || nextProfile.birthTimeStatus === "candidate")
           && nextProfile.rectificationCaseId) {
           try {
             const resumed = await resumeBirthTimeJourney(nextProfile.rectificationCaseId);
@@ -1654,21 +1653,6 @@ export default function Home() {
     setProfile(confirmedProfile);
     setProfileDraft(confirmedProfile);
     setPresetMessageLength(0);
-    setOnboardingJustCompleted(true);
-  }
-
-  function completeCandidateBirthTime(result: JourneyClientResponse, time: string) {
-    const candidateProfile: Profile = {
-      ...profileDraft,
-      time,
-      birthTimeStatus: "candidate",
-      rectificationCaseId: result.caseId,
-    };
-    setProfile(candidateProfile);
-    setProfileDraft(candidateProfile);
-    setBirthTimeJourney(null);
-    setPresetMessageLength(0);
-    setStartGreeting(createStartGreeting(candidateProfile.name));
     setOnboardingJustCompleted(true);
   }
 
