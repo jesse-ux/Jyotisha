@@ -12,7 +12,10 @@ test("login page selects the auth provider from server-only validated config", (
 
   assert.doesNotMatch(page, /["']use client["']/);
   assert.match(page, /readIdentityConfig\(process\.env\)/);
-  assert.match(page, /provider=\{config\.provider\}/);
+  assert.match(page, /isSelfHostedIdentityEnabled\(process\.env\)/);
+  assert.match(page, /resolveIdentitySurface/);
+  assert.match(page, /surface === "admin"/);
+  assert.match(page, /provider=\{provider\}/);
   assert.doesNotMatch(page, /NEXT_PUBLIC_AUTH_PROVIDER/);
 });
 

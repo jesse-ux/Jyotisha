@@ -3,7 +3,8 @@ import { Pool } from "pg";
 
 import { buildAuthOptions, type AdminUserAuthorizer } from "./auth-factory.ts";
 import {
-  readIdentityConfig,
+  isSelfHostedIdentityEnabled,
+  readSelfHostedIdentityConfig,
   type SelfHostedIdentityConfig,
 } from "./config.ts";
 import type { EmailOtpSender } from "./contracts.ts";
@@ -110,10 +111,10 @@ const identityGlobal = globalThis as typeof globalThis & {
 export function getIdentityAuthServices(
   env: NodeJS.ProcessEnv = process.env,
 ): IdentityAuthServices {
-  const config = readIdentityConfig(env);
-  if (config.provider !== "self-hosted") {
+  if (!isSelfHostedIdentityEnabled(env)) {
     throw new Error("self-hosted identity is not enabled");
   }
+  const config = readSelfHostedIdentityConfig(env);
 
   identityGlobal.jyotishaIdentityAuth ??= createIdentityAuthServices(config);
   return identityGlobal.jyotishaIdentityAuth;

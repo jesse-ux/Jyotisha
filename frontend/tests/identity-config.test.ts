@@ -1,10 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { readIdentityConfig } from "../src/modules/identity/config.ts";
+import {
+  isSelfHostedIdentityEnabled,
+  readIdentityConfig,
+  readSelfHostedIdentityConfig,
+} from "../src/modules/identity/config.ts";
 
 const selfHostedEnvironment = {
   AUTH_PROVIDER: "self-hosted",
+  SELF_HOSTED_IDENTITY_ENABLED: "true",
   IDENTITY_DATABASE_URL:
     "postgresql://identity_runtime:test-password@postgres:5432/jyotisha?options=-csearch_path%3Didentity",
   AUTH_USER_ORIGIN: "https://staging.jyotisha.chat",
@@ -17,6 +22,21 @@ const selfHostedEnvironment = {
 
 test("identity provider defaults to supabase without self-hosted settings", () => {
   assert.deepEqual(readIdentityConfig({}), { provider: "supabase" });
+  assert.equal(isSelfHostedIdentityEnabled({}), false);
+});
+
+test("self-hosted identity can be enabled alongside the Supabase default", () => {
+  const environment = {
+    ...selfHostedEnvironment,
+    AUTH_PROVIDER: "supabase",
+  };
+
+  assert.deepEqual(readIdentityConfig(environment), { provider: "supabase" });
+  assert.equal(isSelfHostedIdentityEnabled(environment), true);
+  assert.equal(
+    readSelfHostedIdentityConfig(environment).databaseUrl,
+    selfHostedEnvironment.IDENTITY_DATABASE_URL,
+  );
 });
 
 test("identity config accepts a complete self-hosted environment", () => {
@@ -35,6 +55,21 @@ test("identity config rejects unknown providers", () => {
   assert.throws(
     () => readIdentityConfig({ AUTH_PROVIDER: "firebase" }),
     /AUTH_PROVIDER must be supabase or self-hosted/,
+  );
+});
+
+test("self-hosted provider requires its independent service flag", () => {
+  assert.throws(
+    () =>
+      readIdentityConfig({
+        ...selfHostedEnvironment,
+        SELF_HOSTED_IDENTITY_ENABLED: "false",
+      }),
+    /SELF_HOSTED_IDENTITY_ENABLED must be true/,
+  );
+  assert.throws(
+    () => isSelfHostedIdentityEnabled({ SELF_HOSTED_IDENTITY_ENABLED: "yes" }),
+    /must be true or false/,
   );
 });
 

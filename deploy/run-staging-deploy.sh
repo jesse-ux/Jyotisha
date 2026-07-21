@@ -125,6 +125,7 @@ export APP_ENV_FILE='../.env.staging'
 export DATABASE_ENV_FILE='../.env.staging.database'
 export CADDYFILE_PATH='./Caddyfile.staging'
 export SITE_ADDRESS='https://staging.jyotisha.chat'
+export ADMIN_SITE_ADDRESS='https://admin.staging.jyotisha.chat'
 export GITHUB_SHA="$DEPLOY_SHA"
 
 "${compose[@]}" config --quiet
@@ -180,6 +181,7 @@ verify_container_image web "$WEB_IMAGE"
 
 "${compose[@]}" exec -T \
   -e EXPECTED_SHA="$DEPLOY_SHA" -e STAGING_URL="$STAGING_URL" \
+  -e STAGING_ADMIN_URL="https://admin.staging.jyotisha.chat" \
   web node --input-type=module <<'NODE'
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 let login;
@@ -191,6 +193,12 @@ for (let attempt = 0; attempt < 12; attempt += 1) {
   await delay(5_000);
 }
 if (!login?.ok) process.exit(1);
+const adminLogin = await fetch(`${process.env.STAGING_ADMIN_URL}/login`);
+if (!adminLogin.ok) process.exit(1);
+const adminRoot = await fetch(process.env.STAGING_ADMIN_URL, { redirect: "manual" });
+if (adminRoot.status !== 404) process.exit(1);
+const adminSession = await fetch(`${process.env.STAGING_ADMIN_URL}/api/auth/get-session`);
+if (!adminSession.ok) process.exit(1);
 const account = await fetch(`${process.env.STAGING_URL}/api/account`);
 if (account.status !== 401) process.exit(1);
 const publicHealth = await fetch(`${process.env.STAGING_URL}/api/health`);

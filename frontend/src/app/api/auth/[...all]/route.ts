@@ -1,7 +1,10 @@
 import { toNextJsHandler } from "better-auth/next-js";
 
 import { getIdentityAuthServices } from "@/modules/identity/auth";
-import { readIdentityConfig } from "@/modules/identity/config";
+import {
+  isSelfHostedIdentityEnabled,
+  readSelfHostedIdentityConfig,
+} from "@/modules/identity/config";
 import {
   createHostIsolatedAuthHandlers,
   type IdentityAuthHandlers,
@@ -13,10 +16,10 @@ async function dispatch(
   method: keyof IdentityAuthHandlers,
   request: Request,
 ): Promise<Response> {
-  const config = readIdentityConfig(process.env);
-  if (config.provider !== "self-hosted") {
+  if (!isSelfHostedIdentityEnabled(process.env)) {
     return new Response("Not found", { status: 404 });
   }
+  const config = readSelfHostedIdentityConfig(process.env);
 
   const services = getIdentityAuthServices();
   const handlers = createHostIsolatedAuthHandlers(config, {

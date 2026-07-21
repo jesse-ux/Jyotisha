@@ -19,6 +19,16 @@ export type IdentityConfig =
   | SupabaseIdentityConfig
   | SelfHostedIdentityConfig;
 
+export function isSelfHostedIdentityEnabled(
+  env: IdentityEnvironment,
+): boolean {
+  const value = env.SELF_HOSTED_IDENTITY_ENABLED?.trim() || "false";
+  if (value !== "true" && value !== "false") {
+    throw new Error("SELF_HOSTED_IDENTITY_ENABLED must be true or false");
+  }
+  return value === "true";
+}
+
 function required(env: IdentityEnvironment, key: string): string {
   const value = env[key]?.trim();
   if (!value) throw new Error(`${key} is required`);
@@ -81,15 +91,9 @@ function readSender(env: IdentityEnvironment): string {
   return value;
 }
 
-export function readIdentityConfig(
+export function readSelfHostedIdentityConfig(
   env: IdentityEnvironment,
-): IdentityConfig {
-  const provider = env.AUTH_PROVIDER?.trim() || "supabase";
-  if (provider === "supabase") return { provider };
-  if (provider !== "self-hosted") {
-    throw new Error("AUTH_PROVIDER must be supabase or self-hosted");
-  }
-
+): SelfHostedIdentityConfig {
   const userOrigin = readOrigin(env, "AUTH_USER_ORIGIN");
   const adminOrigin = readOrigin(env, "AUTH_ADMIN_ORIGIN");
   if (userOrigin === adminOrigin) {
@@ -103,7 +107,7 @@ export function readIdentityConfig(
   }
 
   return {
-    provider,
+    provider: "self-hosted",
     databaseUrl: readPostgresUrl(env),
     userOrigin,
     adminOrigin,
@@ -112,4 +116,20 @@ export function readIdentityConfig(
     resendApiKey: required(env, "RESEND_API_KEY"),
     resendFrom: readSender(env),
   };
+}
+
+export function readIdentityConfig(
+  env: IdentityEnvironment,
+): IdentityConfig {
+  const provider = env.AUTH_PROVIDER?.trim() || "supabase";
+  if (provider === "supabase") return { provider };
+  if (provider !== "self-hosted") {
+    throw new Error("AUTH_PROVIDER must be supabase or self-hosted");
+  }
+  if (!isSelfHostedIdentityEnabled(env)) {
+    throw new Error(
+      "SELF_HOSTED_IDENTITY_ENABLED must be true when AUTH_PROVIDER is self-hosted",
+    );
+  }
+  return readSelfHostedIdentityConfig(env);
 }

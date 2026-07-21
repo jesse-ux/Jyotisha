@@ -1,7 +1,23 @@
-import { EmailOtpLogin } from "@/components/email-otp-login";
-import { readIdentityConfig } from "@/modules/identity/config";
+import { headers } from "next/headers";
 
-export default function LoginPage() {
+import { EmailOtpLogin } from "@/components/email-otp-login";
+import {
+  isSelfHostedIdentityEnabled,
+  readIdentityConfig,
+  readSelfHostedIdentityConfig,
+} from "@/modules/identity/config";
+import { resolveIdentitySurface } from "@/modules/identity/host";
+
+export default async function LoginPage() {
   const config = readIdentityConfig(process.env);
-  return <EmailOtpLogin provider={config.provider} />;
+  let provider = config.provider;
+  if (isSelfHostedIdentityEnabled(process.env)) {
+    const selfHosted = readSelfHostedIdentityConfig(process.env);
+    const surface = resolveIdentitySurface(
+      (await headers()).get("host"),
+      selfHosted,
+    );
+    if (surface === "admin") provider = "self-hosted";
+  }
+  return <EmailOtpLogin provider={provider} />;
 }
