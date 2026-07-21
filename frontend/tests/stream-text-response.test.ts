@@ -131,6 +131,61 @@ test("an asynchronous first-output rejection preserves already committed bytes",
   assert.equal(observedEmitted, true);
 });
 
+test("a first-output rejection after cancellation does not re-error or settle twice", async (context) => {
+  const originalControllerError = ReadableStreamDefaultController.prototype.error;
+  let controllerErrorCalls = 0;
+  context.mock.method(
+    ReadableStreamDefaultController.prototype,
+    "error",
+    function (this: ReadableStreamDefaultController<unknown>, reason?: unknown) {
+      controllerErrorCalls += 1;
+      return originalControllerError.call(this, reason);
+    },
+  );
+  let rejectSettlement = () => {};
+  const settlement = new Promise<void>((_resolve, reject) => {
+    rejectSettlement = () => reject(new Error("late_settlement_failure"));
+  });
+  let markSettlementStarted = () => {};
+  const settlementStarted = new Promise<void>((resolve) => {
+    markSettlementStarted = resolve;
+  });
+  async function* reply() {
+    yield "已经提交给响应的正文。".repeat(120);
+    yield "不应继续读取";
+  }
+  const cancellations: boolean[] = [];
+  let errorCalls = 0;
+  let completeCalls = 0;
+  const response = streamTextResponse(reply(), {
+    mode: "mastra",
+    requestId: "00000000-0000-4000-8000-000000000103",
+    transformText: (text) => text,
+    onFirstOutput: () => {
+      markSettlementStarted();
+      return settlement;
+    },
+    onCancel: async (emitted) => { cancellations.push(emitted); },
+    onError: async () => { errorCalls += 1; },
+    onComplete: async () => { completeCalls += 1; },
+  });
+  const reader = response.body?.getReader();
+  assert.ok(reader);
+  const pendingRead = reader.read();
+  await settlementStarted;
+  await reader.cancel();
+  const first = await pendingRead;
+  rejectSettlement();
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
+
+  assert.equal(first.done, false);
+  assert.deepEqual(cancellations, [true]);
+  assert.equal(errorCalls, 0);
+  assert.equal(completeCalls, 0);
+  assert.equal(controllerErrorCalls, 0);
+});
+
 test("charges a consultation when cancellation happens after partial output", async () => {
   // Given
   let completed = 0;
@@ -326,6 +381,71 @@ test("cancelling while transformed short output is buffered reports no emitted o
   await reader.cancel();
   await pendingRead;
   assert.equal(observedEmitted, false);
+});
+
+test("a late iterator result after cancellation cannot start output settlement", async () => {
+  let markNextStarted = () => {};
+  const nextStarted = new Promise<void>((resolve) => {
+    markNextStarted = resolve;
+  });
+  let resolveNext: (result: IteratorResult<string>) => void = () => {};
+  const pendingNext = new Promise<IteratorResult<string>>((resolve) => {
+    resolveNext = resolve;
+  });
+  let markReturnStarted = () => {};
+  const returnStarted = new Promise<void>((resolve) => {
+    markReturnStarted = resolve;
+  });
+  let resolveReturn = () => {};
+  const pendingReturn = new Promise<IteratorResult<string>>((resolve) => {
+    resolveReturn = () => resolve({ done: true, value: undefined });
+  });
+  const reply: AsyncIterable<string> = {
+    [Symbol.asyncIterator]() {
+      return {
+        next() {
+          markNextStarted();
+          return pendingNext;
+        },
+        return() {
+          markReturnStarted();
+          return pendingReturn;
+        },
+      };
+    },
+  };
+  let firstOutputCalls = 0;
+  let completeCalls = 0;
+  let errorCalls = 0;
+  const cancellations: boolean[] = [];
+  const response = streamTextResponse(reply, {
+    mode: "mastra",
+    requestId: "00000000-0000-4000-8000-000000000009",
+    transformText: (text) => text,
+    onFirstOutput: async () => { firstOutputCalls += 1; },
+    onComplete: async () => { completeCalls += 1; },
+    onError: async () => { errorCalls += 1; },
+    onCancel: async (emitted) => { cancellations.push(emitted); },
+  });
+  const reader = response.body?.getReader();
+  assert.ok(reader);
+  const pendingRead = reader.read();
+  await nextStarted;
+  const cancellation = reader.cancel();
+  await returnStarted;
+
+  resolveNext({ done: false, value: "取消后才到达的可见正文。".repeat(120) });
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
+  resolveReturn();
+  await cancellation;
+  const read = await pendingRead;
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
+
+  assert.equal(read.done, true);
+  assert.deepEqual(cancellations, [false]);
+  assert.equal(firstOutputCalls, 0);
+  assert.equal(completeCalls, 0);
+  assert.equal(errorCalls, 0);
 });
 
 test("cancelling a transformed stream after visible output preserves emitted settlement", async () => {

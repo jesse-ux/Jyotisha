@@ -157,6 +157,7 @@ export function streamTextResponse(
     : null;
   let pending = "";
   let settled = false;
+  let cancellationStarted = false;
   let emitted = false;
   let firstOutputSettlementStarted = false;
 
@@ -180,7 +181,9 @@ export function streamTextResponse(
     async pull(controller) {
       try {
         while (true) {
-          const { done, value } = await iterator.next();
+          const next = await iterator.next();
+          if (settled) return;
+          const { done, value } = next;
           if (done) {
             const finalText = visibleTransformer
               ? visibleTransformer.finish(pending)
@@ -215,6 +218,7 @@ export function streamTextResponse(
           }
         }
       } catch (error) {
+        if (cancellationStarted) return;
         if (!settled) {
           settled = true;
           await options.onError?.(error, emitted);
@@ -225,6 +229,7 @@ export function streamTextResponse(
     async cancel() {
       if (settled) return;
       settled = true;
+      cancellationStarted = true;
       try {
         await iterator.return?.();
       } finally {
