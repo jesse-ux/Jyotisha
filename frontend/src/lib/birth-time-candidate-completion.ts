@@ -31,6 +31,7 @@ export function candidateWorkingTime(
 
   return assessment?.id === request.caseId
     && assessment?.user_id === request.userId
+    && assessment?.journey_protocol === "legacy-guided-v1"
     && terminalStatusMatches
     && assessment.candidate_result_id === request.resultId
     && action?.resultId === request.resultId

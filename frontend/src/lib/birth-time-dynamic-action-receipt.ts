@@ -20,6 +20,7 @@ export type DynamicActionReceipt = ReceiptBase & (
   | { readonly kind: "pause" }
   | { readonly kind: "finish" }
   | { readonly kind: "resume" }
+  | { readonly kind: "confirm_candidate"; readonly resultId: string; readonly time: string }
 );
 
 const receiptBase = {
@@ -64,4 +65,10 @@ export const dynamicActionReceiptSchema: z.ZodType<DynamicActionReceipt> = z.uni
   z.object({ ...receiptBase, kind: z.literal("pause") }).strict(),
   z.object({ ...receiptBase, kind: z.literal("finish") }).strict(),
   z.object({ ...receiptBase, kind: z.literal("resume") }).strict(),
+  z.object({
+    ...receiptBase,
+    kind: z.literal("confirm_candidate"),
+    resultId: z.string().uuid(),
+    time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+  }).strict(),
 ]).readonly();

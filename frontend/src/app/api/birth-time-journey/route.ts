@@ -184,6 +184,15 @@ export async function POST(request: Request) {
           resultId: parsed.data.resultId,
           time: parsed.data.time,
         }), "turn_advanced");
+      case "confirm_dynamic_candidate":
+        return responseWithJourneyMetric(service.confirmDynamicCandidate({
+          userId: user.id,
+          caseId: parsed.data.caseId,
+          actionId: parsed.data.actionId,
+          expectedVersion: parsed.data.turnVersion,
+          resultId: parsed.data.resultId,
+          time: parsed.data.time,
+        }), "turn_advanced");
       default: {
         const exhaustive: never = parsed.data;
         return exhaustive;

@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     const admin = createAdminSupabaseClient();
     const { data: stored, error: caseError } = await admin
       .from("birth_time_rectification_cases")
-      .select("id,user_id,status,candidate_result_id,candidate_result,turn_state")
+      .select("id,user_id,journey_protocol,status,candidate_result_id,candidate_result,turn_state")
       .eq("id", parsed.data.caseId)
       .eq("user_id", user.id)
       .maybeSingle();

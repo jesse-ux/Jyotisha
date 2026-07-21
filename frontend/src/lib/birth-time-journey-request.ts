@@ -72,6 +72,12 @@ export const birthTimeJourneyRequestSchema = z.discriminatedUnion("type", [
     resultId: z.string().uuid(),
     time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   }).strict(),
+  z.object({
+    type: z.literal("confirm_dynamic_candidate"),
+    ...mutationFields,
+    resultId: z.string().uuid(),
+    time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+  }).strict(),
 ]).superRefine((value, context) => {
   if (value.type === "revise_evidence_draft" && !lifeEventSchema.safeParse({
     id: revisionValidationId,

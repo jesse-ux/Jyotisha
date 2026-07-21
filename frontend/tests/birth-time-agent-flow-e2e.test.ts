@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createJourneyTelemetry } from "../src/lib/birth-time-journey-telemetry.ts";
+import { createBirthTimeJourneyService } from "../src/lib/birth-time-journey-service.ts";
 import { StaleJourneyTurnError } from "../src/lib/birth-time-journey-turn-persistence.ts";
 import {
   actionIds,
@@ -12,6 +13,57 @@ import {
   journeyCaseId,
   reachScoring,
 } from "./birth-time-agent-flow-test-support.ts";
+import { actionId as dynamicActionId, dynamicCase, ownerId } from "./birth-time-dynamic-persistence-fixture.ts";
+import { memoryStore } from "./birth-time-journey-memory-store.ts";
+
+test("dynamic candidate confirmation remains ready after resume", async () => {
+  const result = candidate("high", "90000000-0000-4000-8000-000000000001");
+  const current = dynamicCase();
+  const memory = memoryStore({
+    ...current,
+    candidateResult: result,
+    snapshot: {
+      ...current.snapshot,
+      state: "confirming",
+      assistantIntent: "confirm_candidate_time",
+      input: "candidate_confirmation",
+      confidence: "high",
+      canApply: true,
+    },
+    currentChoiceQuestion: null,
+    dynamicTurnState: {
+      ...current.dynamicTurnState,
+      nextAction: { kind: "request_candidate_confirmation", resultId: result.resultId },
+      progress: { ...current.dynamicTurnState.progress, phase: "result" },
+      permissions: { canConfirmCandidate: true },
+    },
+  });
+  const service = createBirthTimeJourneyService({
+    store: memory.store,
+    engine: {
+      async scan() { throw new Error("unexpected scan"); },
+      async score() { throw new Error("unexpected score"); },
+      async scoreEvents() { throw new Error("unexpected event score"); },
+      async buildDifferencePacket() { throw new Error("unexpected packet"); },
+      async scoreChoices() { throw new Error("unexpected choice score"); },
+    },
+  });
+
+  const confirmation = await service.confirmDynamicCandidate({
+    userId: ownerId,
+    caseId: current.id,
+    actionId: dynamicActionId,
+    expectedVersion: current.turnVersion,
+    resultId: result.resultId,
+    time: result.winningSegment?.representativeTime ?? "",
+  });
+  const confirmationResume = await service.resume(ownerId, current.id);
+
+  assert.equal(confirmation.nextAction.kind, "ready");
+  assert.equal(confirmationResume.nextAction.kind, "ready");
+  assert.equal(confirmation.snapshot.activeTime, "14:24");
+  assert.equal(confirmationResume.snapshot.activeTime, "14:24");
+});
 
 test("fake Agent and engine complete baseline, adaptive, low, and no-apply flow", async () => {
   const harness = createHarness({ initial: guidedCase(), result: candidate("low", "10000000-0000-4000-8000-000000000001") });

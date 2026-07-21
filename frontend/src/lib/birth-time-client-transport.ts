@@ -15,9 +15,14 @@ function isAbort(error: unknown, signal?: AbortSignal): boolean {
     || (error instanceof DOMException && error.name === "AbortError");
 }
 
+function isJsonSyntaxError(error: unknown): boolean {
+  return error instanceof SyntaxError
+    || (error instanceof DOMException && error.name === "SyntaxError");
+}
+
 function isLostResponse(error: unknown, signal?: AbortSignal): boolean {
   return !isAbort(error, signal)
-    && (error instanceof TypeError || error instanceof SyntaxError);
+    && (error instanceof TypeError || isJsonSyntaxError(error));
 }
 
 async function postOnce(input: JsonPostInput): Promise<JsonPostResult> {
@@ -30,7 +35,7 @@ async function postOnce(input: JsonPostInput): Promise<JsonPostResult> {
   try {
     return { response, payload: await response.json() };
   } catch (error) {
-    if (!response.ok && isLostResponse(error, input.signal)) {
+    if (!response.ok && isJsonSyntaxError(error)) {
       return { response, payload: null };
     }
     throw error;

@@ -6,10 +6,15 @@ const route = readFileSync(new URL("../src/app/api/consult/route.ts", import.met
 const mastra = readFileSync(new URL("../src/mastra/index.ts", import.meta.url), "utf8");
 
 test("runs the Jyotish workflow before streaming a commercial consultation", () => {
+  const chartBranch = route.slice(route.indexOf("const toolInput = consultationInputSchema.parse"));
+
   assert.match(route, /runConsultationWorkflow/);
-  assert.match(route, /await runConsultationWorkflow\(toolInput\)/);
-  assert.match(route, /getJyotishAgent\(selectedModel, workflowContext\)\.stream/);
-  assert.ok(route.indexOf("await runConsultationWorkflow(toolInput)") < route.indexOf(".stream("));
+  assert.match(chartBranch, /await runConsultationWorkflow\(toolInput\)/);
+  assert.match(chartBranch, /getJyotishAgent\(selectedModel, workflowContext\)\.stream/);
+  assert.ok(
+    chartBranch.indexOf("await runConsultationWorkflow(toolInput)")
+      < chartBranch.indexOf("getJyotishAgent(selectedModel, workflowContext).stream"),
+  );
 });
 
 test("grounds the answer in the server-computed workflow without a second tool run", () => {

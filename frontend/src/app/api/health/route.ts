@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  conversationalRectificationCreationPolicyFromEnvironment,
+  conversationalRectificationDeploymentShaFromEnvironment,
+} from "../../../lib/conversational-rectification/creation-policy.ts";
 
 type Check = {
   status: "ok" | "degraded" | "blocked";
@@ -7,11 +11,6 @@ type Check = {
 };
 
 const jyotishApiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200";
-const gitCommit =
-  process.env.GITHUB_SHA
-  ?? process.env.VERCEL_GIT_COMMIT_SHA
-  ?? process.env.NEXT_PUBLIC_GIT_COMMIT
-  ?? "unknown";
 
 function envCheck(names: string[]): Check {
   const missing = names.filter((name) => !process.env[name]);
@@ -58,6 +57,10 @@ function aggregate(checks: Record<string, Check>) {
 }
 
 export async function GET() {
+  const gitCommit = conversationalRectificationDeploymentShaFromEnvironment();
+  const rectificationV3MigrationsReady =
+    process.env.RECTIFICATION_V3_MIGRATIONS_READY?.trim().toLowerCase() === "true";
+  const creationPolicy = conversationalRectificationCreationPolicyFromEnvironment();
   const checks = {
     web: { status: "ok" } satisfies Check,
     supabasePublicConfig: envCheck(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]),
@@ -66,12 +69,24 @@ export async function GET() {
     jyotishApi: await jyotishApiCheck(),
   };
   const status = aggregate(checks);
+  const rectificationV3Ready = status === "ok"
+    && creationPolicy.audience === "public";
   return NextResponse.json(
     {
       status,
       timestamp: new Date().toISOString(),
       deployment: {
         gitCommit,
+      },
+      rollout: {
+        conversationalRectificationV3: {
+          protocol: "conversational-evidence-v3",
+          newCaseCreation: creationPolicy.audience === "paused" ? "paused" : "enabled",
+          creationAudience: creationPolicy.audience,
+          migrations: rectificationV3MigrationsReady ? "ready" : "unverified",
+          syntheticSmoke: creationPolicy.smokeMatchesDeployment ? "matched" : "pending",
+          readyForNewCases: rectificationV3Ready,
+        },
       },
       checks,
     },

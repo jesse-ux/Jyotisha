@@ -150,6 +150,29 @@ export function memoryStore(
       committedTurnWrites += 1;
       return savedDynamic;
     },
+    async confirmDynamicCandidate(value, command) {
+      if (!savedCase || !savedDynamicCase) throw new MissingTestCaseError();
+      const receipt = command.actionId.toLowerCase();
+      if ((savedCase.processedActionIds ?? []).includes(receipt)) {
+        if (samePersistedDynamicReceipt(value, savedDynamicCase, receipt, command.expectedVersion)) {
+          return savedDynamicCase;
+        }
+        throw new StaleJourneyTurnError(value.id, command.expectedVersion, savedDynamicCase.turnVersion);
+      }
+      if (savedCase.journeyProtocol !== "dynamic-choice-v2" || savedCase.turnVersion !== command.expectedVersion) {
+        throw new StaleJourneyTurnError(savedCase.id, command.expectedVersion, savedCase.turnVersion ?? 0);
+      }
+      const saved = {
+        ...value,
+        turnVersion: command.expectedVersion + 1,
+        dynamicTurnState: { ...value.dynamicTurnState, turnVersion: command.expectedVersion + 1 },
+        processedActionIds: [...(savedCase.processedActionIds ?? []), receipt],
+      };
+      savedCase = saved;
+      savedDynamicCase = saved;
+      committedTurnWrites += 1;
+      return saved;
+    },
     async completeDynamicScoringJob(value, command) {
       return persistDynamicScoring(value, { kind: "complete", command, result: value.candidateResult });
     },

@@ -56,15 +56,19 @@ test("low without a result and saved medium both return to declared-time editing
   });
 });
 
-test("dynamic medium terminal completes with its candidate working time", () => {
+test("dynamic non-confirmable terminal stays in declared-time editing", () => {
   const medium = dynamicBirthTimePreview("medium");
 
   assert.deepEqual(guidedTerminalPath(medium), {
-    kind: "complete_with_candidate",
-    time: "05:43",
+    kind: "edit_birth_time_details",
     preservesCase: true,
-    appliesCandidateTime: true,
+    appliesCandidateTime: false,
   });
+});
+
+test("candidate completion hook cannot invoke the legacy endpoint for dynamic turns", () => {
+  const hookSource = readFileSync(new URL("../src/hooks/use-birth-time-guided-journey.ts", import.meta.url), "utf8");
+  assert.match(hookSource, /if \(turn\.journeyProtocol === "dynamic-choice-v2"\) return;/);
 });
 
 test("request identity cache and scheduled polling deduplicate Strict Mode starts", async () => {
@@ -141,12 +145,14 @@ test("terminal candidate owns one explicit next step and its completion error", 
   assert.match(globalCssSource, /\.birth-time-next-step/);
 });
 
-test("terminal and entrypoint CJK phrases stay intact at narrow widths", () => {
+test("terminal CJK copy stays intact while homepage candidates remain unconfirmed in v3", () => {
   const candidateResultSource = readFileSync(new URL("../src/components/birth-time-candidate-result.tsx", import.meta.url), "utf8");
   const pageSource = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 
   assert.match(candidateResultSource, /作为<span className="phrase-nowrap">当前排盘时间<\/span>并进入对话；<span className="phrase-nowrap">原始填报<\/span>和本次<span className="phrase-nowrap">候选结果<\/span><span className="phrase-nowrap">仍会保留<\/span>。/);
-  assert.match(pageSource, /当前使用候选时间排盘；<span className="phrase-nowrap">原始填报范围<\/span>仍保留。/);
+  assert.match(pageSource, /未确认；\$\{birthTimeConsultationOptionsCopy\(profile\)\}/);
+  assert.match(pageSource, /<ConversationalBirthTimeRectification/);
+  assert.doesNotMatch(pageSource, /当前使用候选时间排盘/);
 });
 
 test("completed rectification transcript does not repeat the birth place turn", () => {

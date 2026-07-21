@@ -50,11 +50,12 @@ function migrationInvocation(
   return {
     arguments: [runnerPath, ...(options.check ? ["--check"] : [])],
     environment: {
+      NODE_ENV: process.env.NODE_ENV,
       SCHEMA_DATABASE_URL: connectionString,
       ...(options.migrationsDirectory
         ? { MIGRATIONS_DIRECTORY: options.migrationsDirectory }
         : {}),
-    } as NodeJS.ProcessEnv,
+    },
   };
 }
 
