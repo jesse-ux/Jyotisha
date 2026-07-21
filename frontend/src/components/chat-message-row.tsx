@@ -1,4 +1,5 @@
 import { ChatMessageContent } from "@/components/chat-message-content";
+import { ClaimBoundaryBadge } from "@/components/claim-boundary-badge";
 import type { ChatMessageView } from "@/lib/chat-message-view";
 
 export function AgentAvatar() {
@@ -23,7 +24,7 @@ export function ChatMessageRow({ message }: { readonly message: ChatMessageView 
           {message.role === "assistant" ? (
             message.state === "thinking"
               ? <div className="thinking"><i /><i /><i /></div>
-              : <ChatMessageContent text={message.text} />
+              : <><ClaimBoundaryBadge status={message.techniqueTruth} /><ChatMessageContent text={message.text} /></>
           ) : <p>{message.text}</p>}
         </div>
       </div>

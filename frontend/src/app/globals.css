@@ -148,6 +148,7 @@ button:disabled { cursor: default; opacity: .45; }
 .message-markdown { color: var(--color-ink); font-size: 17px; line-height: 1.65; }
 .message-markdown > *:first-child { margin-top: 0; }
 .message-markdown > *:last-child { margin-bottom: 0; }
+.claim-boundary-badge { width: fit-content; margin: 0 0 var(--space-2); padding: 4px 9px; border: 1px solid color-mix(in srgb, var(--color-action) 24%, transparent); border-radius: 999px; background: var(--color-action-soft); color: var(--color-action-hover); font-size: 12px; line-height: 1.45; }
 .message-markdown p { margin: 0 0 14px; }
 .message-markdown ul, .message-markdown ol { margin: 10px 0 16px; padding-left: 24px; }
 .message-markdown li { margin: 6px 0; }
