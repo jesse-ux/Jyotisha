@@ -51,6 +51,7 @@ const turn: ConversationalRectificationTurn = {
     id: "00000000-0000-4000-8000-000000000822",
     summary: "开始第一份长期工作",
     dateLabel: "2021 年 7 月",
+    domain: "career",
     isCorrection: false,
   }],
   actions: ["answer", "pause", "abandon", "confirm"],
@@ -93,14 +94,39 @@ test("rich narrative precedes 2–4 domain choices while free text remains avail
   assert.match(markup, /<h2>当前判断<\/h2>/);
   assert.match(markup, /<strong>05:18<\/strong>/);
   assert.ok(markup.indexOf("候选时间") < markup.indexOf("当前判断"));
-  assert.ok(markup.indexOf("当前判断") < markup.indexOf("重要关系"));
+  assert.ok(markup.indexOf("当前判断") < markup.indexOf('data-evidence-domain="relationship"'));
   assert.equal((markup.match(/data-evidence-domain=/g) ?? []).length, 3);
+  assert.match(markup, /aria-label="重要关系，下一步建议"/);
+  assert.match(markup, /aria-label="事业与身份，已提供，可继续补充"/);
+  assert.ok(
+    markup.indexOf('data-evidence-domain="relationship"')
+      < markup.indexOf('data-evidence-domain="career"'),
+  );
   assert.match(markup, /<textarea[^>]+id="conversational-rectification-answer"/);
   assert.match(markup, /aria-label="经历发生年份"/);
   assert.match(markup, /aria-label="经历发生月份"/);
   assert.match(markup, /<option value=""[^>]*>不确定<\/option>/);
   assert.match(markup, /Ctrl\/⌘ \+ Enter/);
   assert.doesNotMatch(markup, /2006[^<]*2011|BirthTimeChoiceQuestion|birth-time-choice-question/);
+});
+
+test("a resumed legacy turn replaces repeated technical prose with actionable guidance", () => {
+  const legacyTurn = {
+    ...turn,
+    status: "active",
+    candidate: { ...turn.candidate, status: "pending_validation" },
+    narrative: "05:30 是范围内的待验证候选。D1 保持稳定；D9 与 D24 呈现分钟敏感差异。",
+    actions: ["answer", "pause", "abandon"],
+  } satisfies ConversationalRectificationTurn;
+  const markup = renderToStaticMarkup(React.createElement(
+    ConversationalRectificationSurface,
+    { controller: controller({ turn: legacyTurn }) },
+  ));
+
+  assert.match(markup, /已记录：2021 年 7 月 · 开始第一份长期工作/);
+  assert.match(markup, /范围暂未变化不代表提交失败/);
+  assert.match(markup, /下一步：请优先补充一件重要关系或搬迁与居住地领域/);
+  assert.doesNotMatch(markup, /D1 保持稳定/);
 });
 
 test("an uninitialized surface shows progress without a second start card", () => {
@@ -138,6 +164,9 @@ test("evidence is correctable, secondary controls stay hidden, and confirmation 
   assert.doesNotMatch(markup, /本轮技术回执|rectification-technical-v1|consult-d9/);
   assert.match(markup, /待确认 · 未验证/);
   assert.match(markup, /确认将 05:18 设为当前排盘时间/);
+  assert.match(markup, /已记录 1 条经历/);
+  assert.match(markup, /至少需要 3 条/);
+  assert.match(markup, /下一步优先补充/);
   assert.match(markup, /不会自动采用/);
   assert.doesNotMatch(markup, /暂停，稍后继续|继续校正|放弃本次校正/);
 });
@@ -196,6 +225,9 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
   );
 
   assert.match(markup, /aria-busy="true"/);
+  assert.match(markup, /aria-label="正在核对经历"/);
+  assert.match(markup, /正在核对这段经历/);
+  assert.match(markup, /app-loading-orbit/);
   assert.match(markup, /<textarea[^>]+disabled=""[^>]*>保留中的文字<\/textarea>/);
   assert.match(markup, /aria-label="生时校正对话"/);
   assert.match(markup, /role="alert"|aria-live="polite"/);
@@ -204,6 +236,8 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
   assert.match(css, /\.conversational-rectification button[^}]*min-height:\s*44px/);
   assert.match(css, /\.conversational-rectification[^}]*:focus-visible/);
   assert.match(css, /:where\(button, textarea\):focus-visible/);
+  assert.match(css, /\.conversational-answer-pending[\s\S]*grid-template-columns:\s*40px minmax\(0, 1fr\)/);
+  assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
   assert.match(css, /@media\s*\(max-width:\s*430px\)[\s\S]*\.conversational-rectification/);
   assert.doesNotMatch(component, /确认放弃且不应用候选|本轮技术回执/);
   assert.match(component, /onPendingChange/);

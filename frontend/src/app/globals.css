@@ -459,8 +459,17 @@ button:disabled { cursor: default; opacity: .45; }
 .conversational-domain-picker { display: grid; gap: var(--space-3); margin: 0; padding: 0; border: 0; }
 .conversational-domain-picker .conversational-domain-question { margin-bottom: var(--space-2); color: var(--color-ink); font-size: var(--type-body-md); font-weight: 600; line-height: 1.5; }
 .conversational-domain-picker > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-2); }
-.conversational-domain-picker button { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-canvas); color: var(--color-ink); cursor: pointer; text-align: left; }
+.conversational-domain-picker button { display: grid; gap: var(--space-1); padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-canvas); color: var(--color-ink); cursor: pointer; text-align: left; }
+.conversational-domain-picker button > span { font-size: var(--type-body-sm); font-weight: 600; }
+.conversational-domain-picker button > small { color: var(--color-ink-secondary); font-size: var(--type-overline); font-weight: 400; }
 .conversational-domain-picker button[aria-pressed="true"] { border-color: var(--color-action); background: var(--color-action-soft); color: var(--color-action); }
+.conversational-domain-picker button[aria-label$="下一步建议"] { border-color: color-mix(in srgb, var(--color-action) 52%, var(--color-border)); background: var(--color-action-soft); }
+.conversational-answer-pending { min-width: 0; display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border: 1px solid color-mix(in srgb, var(--color-action) 24%, var(--color-border)); border-radius: var(--radius-lg); background: var(--color-action-soft); }
+.conversational-answer-pending .app-loading-symbol { width: 40px; height: 40px; }
+.conversational-answer-pending .app-loading-mark { width: 22px; height: 22px; }
+.conversational-answer-pending > div:last-child { min-width: 0; display: grid; gap: var(--space-1); }
+.conversational-answer-pending strong { color: var(--color-ink); font-size: var(--type-body-sm); font-weight: 600; }
+.conversational-answer-pending span { color: var(--color-ink-secondary); font-size: var(--type-caption); line-height: 1.5; }
 .conversational-composer { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-canvas); }
 .conversational-composer label { display: grid; gap: var(--space-1); font-size: var(--type-body-sm); font-weight: 600; }
 .conversational-composer label span { color: var(--color-ink-secondary); font-size: var(--type-caption); font-weight: 400; line-height: 1.5; }
@@ -486,6 +495,9 @@ button:disabled { cursor: default; opacity: .45; }
 .conversational-candidate dt { color: var(--color-ink-tertiary); font-size: var(--type-overline); }
 .conversational-candidate dd { min-width: 0; margin: 0; color: var(--color-ink); font-size: var(--type-body-sm); overflow-wrap: anywhere; }
 .conversational-candidate time { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.conversational-candidate-progress { min-width: 0; display: grid; gap: var(--space-1); padding-top: var(--space-3); border-top: 1px solid var(--color-border); }
+.conversational-candidate-progress strong { color: var(--color-ink); font-size: var(--type-body-sm); font-weight: 600; }
+.conversational-candidate-progress span { color: var(--color-ink-secondary); font-size: var(--type-caption); line-height: 1.55; text-wrap: pretty; }
 .conversational-confirmation { border-color: color-mix(in srgb, var(--color-action) 44%, var(--color-border)); background: var(--color-action-soft); }
 .conversational-status { min-width: 0; min-height: 1px; }
 .conversational-original-question { background: var(--color-success-muted); }

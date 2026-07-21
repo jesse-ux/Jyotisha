@@ -26,6 +26,42 @@ const domainLabels = {
   other: "其他关键经历",
 } as const satisfies Readonly<Record<EvidenceDomain, string>>;
 
+function orderedEvidenceDomains(turn: ConversationalRectificationTurn): EvidenceDomain[] {
+  const provided = new Set(turn.evidenceRecap.flatMap((item) => item.domain ? [item.domain] : []));
+  return [...(turn.evidenceRequest?.domains ?? [])].sort((left, right) =>
+    Number(provided.has(left)) - Number(provided.has(right)));
+}
+
+function visibleTurnNarrative(turn: ConversationalRectificationTurn): string {
+  if (
+    turn.status !== "active"
+    || turn.evidenceRecap.length === 0
+    || /(?:已记录|已修订)：/.test(turn.narrative)
+  ) {
+    return turn.narrative;
+  }
+
+  const latestEvidence = turn.evidenceRecap.at(-1)!;
+  const candidate = turn.candidate;
+  const candidateRange = candidate.rangeStart && candidate.rangeEnd
+    ? `${candidate.rangeStart}–${candidate.rangeEnd}`
+    : candidate.representativeTime ?? "当前候选范围";
+  const nextDomains = orderedEvidenceDomains(turn)
+    .slice(0, 2)
+    .map((domain) => domainLabels[domain]);
+  const nextStep = candidate.status === "ready_for_confirmation"
+    ? "当前证据已形成候选总结；请先核对上方候选时间，再决定是否确认或继续补充经历。"
+    : nextDomains.length > 0
+      ? `下一步：请优先补充一件${nextDomains.join("或")}领域已经发生的事件，并选择发生年月。`
+      : "下一步：请继续补充一件已经发生并带有年月的真实经历。";
+
+  return [
+    `${latestEvidence.isCorrection ? "已修订" : "已记录"}：${latestEvidence.dateLabel} · ${latestEvidence.summary}。`,
+    `候选范围当前为 ${candidateRange}；范围暂未变化不代表提交失败，系统会结合后续经历继续比较相邻分钟。`,
+    nextStep,
+  ].join("\n");
+}
+
 type SurfaceProps = Readonly<{
   controller: ConversationalRectificationController;
   pendingConsultationQuestion?: string | null;
@@ -47,6 +83,10 @@ function CandidateSummary({ turn }: { readonly turn: ConversationalRectification
     : candidate.status === "ready_for_confirmation"
       ? "待确认 · 未验证"
       : "待验证 · 未确认";
+  const recordedCount = turn.evidenceRecap.length;
+  const nextDomains = orderedEvidenceDomains(turn)
+    .slice(0, 2)
+    .map((domain) => domainLabels[domain]);
 
   return (
     <section className="conversational-candidate" aria-labelledby="conversational-candidate-title">
@@ -69,6 +109,15 @@ function CandidateSummary({ turn }: { readonly turn: ConversationalRectification
         </dl>
       ) : <p>尚未形成可供确认的具体时间。</p>}
       {!confirmed && <p>候选仍待真实经历验证，未经你的明确确认不会成为当前排盘时间。</p>}
+      {!confirmed && recordedCount > 0 && turn.status !== "completed" && (
+        <div className="conversational-candidate-progress" role="status">
+          <strong>已记录 {recordedCount} 条经历</strong>
+          <span>系统至少需要 3 条时间明确、可评分的经历后才会可靠缩小范围；范围不变不代表提交失败。</span>
+          {nextDomains.length > 0 && (
+            <span>下一步优先补充：{nextDomains.join("或")}领域已经发生的事件。</span>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -98,7 +147,13 @@ export function ConversationalRectificationSurface({
   }
 
   const canAnswer = turn.actions.includes("answer") && turn.status !== "abandoned" && turn.status !== "completed";
-  const requestedDomains = turn.evidenceRequest?.domains ?? [];
+  const requestedDomains = orderedEvidenceDomains(turn);
+  const providedDomains = new Set(
+    turn.evidenceRecap.flatMap((item) => item.domain ? [item.domain] : []),
+  );
+  const priorityDomain = requestedDomains.find((domain) => !providedDomains.has(domain))
+    ?? requestedDomains[0]
+    ?? null;
   const submit = async () => {
     if (!canAnswer || !controller.draft.trim() || controller.pending) return;
     const dateLabel = eventYear
@@ -125,7 +180,7 @@ export function ConversationalRectificationSurface({
 
       <article className="conversational-narrative" aria-label="校正分析">
         <div className="conversational-narrative-body">
-          <ChatMessageContent text={turn.narrative} />
+          <ChatMessageContent text={visibleTurnNarrative(turn)} />
         </div>
       </article>
 
@@ -135,6 +190,9 @@ export function ConversationalRectificationSurface({
           <div>
             {requestedDomains.map((domain) => (
               <button
+                aria-label={`${domainLabels[domain]}，${domain === priorityDomain
+                  ? "下一步建议"
+                  : providedDomains.has(domain) ? "已提供，可继续补充" : "可补充"}`}
                 aria-pressed={controller.selectedDomain === domain}
                 data-evidence-domain={domain}
                 disabled={controller.pending || !canAnswer}
@@ -145,11 +203,33 @@ export function ConversationalRectificationSurface({
                   focusComposer();
                 }}
               >
-                {domainLabels[domain]}
+                <span>{domainLabels[domain]}</span>
+                <small>{domain === priorityDomain
+                  ? "下一步建议"
+                  : providedDomains.has(domain) ? "已提供，可继续补充" : "可补充"}</small>
               </button>
             ))}
           </div>
         </fieldset>
+      )}
+
+      {controller.pending && canAnswer && (
+        <div
+          aria-atomic="true"
+          aria-label="正在核对经历"
+          aria-live="polite"
+          className="conversational-answer-pending"
+          role="status"
+        >
+          <div className="app-loading-symbol" aria-hidden="true">
+            <span className="app-loading-orbit" />
+            <span className="app-loading-mark" />
+          </div>
+          <div>
+            <strong>正在核对这段经历</strong>
+            <span>正在比较相邻候选分钟；完成后会继续提问或更新候选范围。</span>
+          </div>
+        </div>
       )}
 
       {canAnswer && <form

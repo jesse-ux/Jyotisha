@@ -28,6 +28,7 @@ import {
 } from "./technical-packet.ts";
 import {
   convergenceNotes,
+  MINIMUM_SCOREABLE_EVENTS,
   nextPlateauCount,
   rangeCompletionCopy,
   rangeCompletionReason,
@@ -182,10 +183,27 @@ function commandFingerprint(command: MutableCommand): string {
   return createHash("sha256").update(JSON.stringify(identity), "utf8").digest("hex");
 }
 
+function visibleEvidenceSummary(value: string): string {
+  const cleaned = value.replace(/(?:发生时间|事件详情)\s*[:：]\s*/g, "").trim();
+  return cleaned || value;
+}
+
 function publicTurn(value: StoredConversationalRectificationCase): ConversationalRectificationTurn {
   const parsed = conversationalRectificationTurnSchema.safeParse(value.latestTurn);
   if (!parsed.success) throw new ConversationalRectificationError("store_unavailable");
-  return parsed.data;
+  const evidenceDomains = new Map(
+    effectiveLifeEventEvidence(value.eventEvidence ?? []).map((item) => [item.id, item.domain]),
+  );
+  return {
+    ...parsed.data,
+    evidenceRecap: parsed.data.evidenceRecap.map((item) => ({
+      ...item,
+      summary: visibleEvidenceSummary(item.summary),
+      ...(item.domain ? {} : evidenceDomains.get(item.id)
+        ? { domain: evidenceDomains.get(item.id) }
+        : {}),
+    })),
+  };
 }
 
 function transitionReceipt(modelId = "deterministic-rectification-transition"): ValidationReceipt {
@@ -222,14 +240,63 @@ export function effectiveLifeEventEvidence<
 function evidenceRecap(evidence: ReadonlyArray<LifeEventEvidenceInput>) {
   return effectiveLifeEventEvidence(evidence).slice(-20).map((item) => ({
     id: item.id,
-    summary: item.eventSummary,
+    summary: visibleEvidenceSummary(item.eventSummary),
     dateLabel: item.dateValue
       ? item.scoreable === false && item.extractionStatus !== "needs_clarification"
         ? `${item.dateValue}（未来，仅作背景）`
         : item.dateValue
       : "日期待补充",
+    domain: item.domain,
     ...((item.correctsEvidenceIds?.length ?? 0) > 0 ? { isCorrection: true } : {}),
   }));
+}
+
+const progressDomainLabels = {
+  career: "事业",
+  education: "学业",
+  finance: "财务",
+  relocation: "搬迁",
+  relationship: "重要关系",
+  family: "家庭",
+  other: "其他关键经历",
+} as const satisfies Readonly<Record<RectificationEvidenceDomain, string>>;
+
+function evidenceProgressNarrative(input: Readonly<{
+  previousCandidate: PrivateCandidateInput;
+  packet: RectificationTechnicalPacket;
+  newEvidence: ReadonlyArray<LifeEventEvidenceInput>;
+  scoreableEventCount: number;
+  willContinue: boolean;
+}>): string {
+  const recorded = evidenceRecap(input.newEvidence);
+  const acknowledgement = recorded.length === 0
+    ? "这段经历已经保存。"
+    : `已记录：${recorded.map((item) => `${item.dateLabel} · ${item.summary}`).join("；")}。`;
+  const previousStart = input.previousCandidate.rangeStart;
+  const previousEnd = input.previousCandidate.rangeEnd;
+  const nextStart = input.packet.candidate.range.startTime;
+  const nextEnd = input.packet.candidate.range.endTime;
+  const rangeChanged = previousStart !== nextStart || previousEnd !== nextEnd;
+  const progress = input.scoreableEventCount < MINIMUM_SCOREABLE_EVENTS
+    ? `当前累计 ${input.scoreableEventCount} 条可评分经历；系统至少需要 ${MINIMUM_SCOREABLE_EVENTS} 条时间明确的经历才开始事件排序，所以本轮候选范围暂时保持 ${nextStart}–${nextEnd}。`
+    : rangeChanged
+      ? `候选范围已从 ${previousStart ?? "原范围"}–${previousEnd ?? "原范围"} 更新为 ${nextStart}–${nextEnd}。`
+      : `本轮已纳入 ${input.scoreableEventCount} 条可评分经历，但候选范围暂未稳定缩小；这不是提交失败。`;
+  const suggested = input.packet.suggestedDomains
+    .slice(0, 2)
+    .map((item) => progressDomainLabels[item.domain]);
+  const nextStep = input.willContinue && suggested.length > 0
+    ? `下一步：请优先补充一件${suggested.join("或")}领域已经发生的事件，并选择大致年月。`
+    : "";
+  const differenceBasis = input.packet.suggestedDomains.length > 0
+    ? `本轮区分重点：${input.packet.suggestedDomains.slice(0, 2)
+      .map((item) => `${progressDomainLabels[item.domain]}事件用于比较 ${item.layer}`)
+      .join("；")}。`
+    : "";
+  return [acknowledgement, progress, nextStep, differenceBasis]
+    .filter(Boolean)
+    .join("\n")
+    .slice(0, 12_000);
 }
 
 function exactTechnicalReceipt(packet: RectificationTechnicalPacket) {
@@ -1060,6 +1127,17 @@ export function createConversationalRectificationService(
           scoreableEventCount: allScoreable.length,
           plateauCount,
         });
+        const narrativeWithProgress = {
+          ...narrative,
+          narrative: evidenceProgressNarrative({
+            previousCandidate: current.privateCandidate,
+            packet: computed.packet,
+            newEvidence: evidence,
+            scoreableEventCount: allScoreable.length,
+            willContinue: completionReason === null
+              && computed.packet.candidate.status !== "ready_for_confirmation",
+          }),
+        } satisfies RectificationNarrativeResult;
         const privateCandidate = privateCandidateFromPacket({
           packet: computed.packet,
           resultId: computed.resultId,
@@ -1071,7 +1149,7 @@ export function createConversationalRectificationService(
           turnVersion: command.turnVersion + 1,
           pendingConsultationQuestion: current.pendingConsultationQuestion,
           packet: computed.packet,
-          narrative,
+          narrative: narrativeWithProgress,
           evidence: [...current.eventEvidence, ...evidence],
         });
         const turn = completionReason

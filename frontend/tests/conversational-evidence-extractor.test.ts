@@ -24,6 +24,20 @@ test("preserves raw text and splits two clear facts sharing an explicit month", 
   assert.equal(new Set(evidence.map((item) => item.id)).size, 2);
 });
 
+test("removes the date-picker transport labels from the visible event summary", () => {
+  const rawText = "发生时间：2016 年 6 月\n事件详情：大学毕业";
+  const [evidence] = extractLifeEventEvidence({
+    rawText,
+    sourceTurnId,
+    asOfDate: "2026-07-20",
+  });
+
+  assert.equal(evidence?.eventSummary, "大学毕业");
+  assert.equal(evidence?.dateValue, "2016-06");
+  assert.equal(evidence?.domain, "education");
+  assert.equal(evidence?.scoreable, true);
+});
+
 test("keeps vague evidence non-scoreable and asks for clarification", () => {
   const rawText = "那几年工作不太顺";
   const [evidence] = extractLifeEventEvidence({ rawText, sourceTurnId, asOfDate: "2026-07-20" });

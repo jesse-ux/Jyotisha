@@ -151,6 +151,18 @@ test("homepage reuses the session bound to an unfinished rectification case", ()
   assert.match(handler, /resumableSession \?\? createSession/);
 });
 
+test("starting again after a completed rectification creates a new dedicated session", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("async function openBirthTimeRectification");
+  const end = source.indexOf("function handleConversationalRectificationTurn", start);
+  const handler = source.slice(start, end);
+
+  assert.match(handler, /const canReuseSourceRectificationSession = action === "resume"/);
+  assert.match(handler, /sourceSession\.rectificationCaseId === account\.rectificationCase\.caseId/);
+  assert.match(handler, /const rectificationSession = canReuseSourceRectificationSession[\s\S]*?: resumableSession \?\? createSession/);
+  assert.doesNotMatch(handler, /const rectificationSession = sourceSession\.sessionType === "birth_time_rectification"/);
+});
+
 test("rectify-first suggestions hand the source question to a dedicated rectification session", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   const start = source.indexOf("function chooseConversationSuggestion");

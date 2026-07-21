@@ -69,6 +69,7 @@ function eventSummary(fragment: string): string {
   const withoutDates = fragment
     .replace(chineseDatePattern, "")
     .replace(isoDatePattern, "")
+    .replace(/(?:发生时间|事件详情)\s*[:：]\s*/g, "")
     .replace(/^\s*(?:更正|纠正|修正)\s*[:：]?\s*/, "")
     .replace(leadingRelativeTimePattern, "")
     .replace(/^\s*(?:同时|又)\s*/, "")

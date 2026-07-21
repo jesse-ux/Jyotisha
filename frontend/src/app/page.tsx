@@ -1953,12 +1953,16 @@ export default function Home() {
           && session.rectificationCaseId === null)
         ?? null
       : null;
-    const rectificationSession = sourceSession.sessionType === "birth_time_rectification"
+    const canReuseSourceRectificationSession = action === "resume"
+      && sourceSession.sessionType === "birth_time_rectification"
+      && account.rectificationCase !== null
+      && (sourceSession.rectificationCaseId === account.rectificationCase.caseId
+        || sourceSession.rectificationCaseId === null);
+    const rectificationSession = canReuseSourceRectificationSession
       ? sourceSession
       : resumableSession ?? createSession(modelCatalog.defaultModelId, "birth_time_rectification");
-    const reusingRectificationSession = rectificationSession !== sourceSession
-      ? resumableSession !== null
-      : sourceSession.sessionType === "birth_time_rectification";
+    const reusingRectificationSession = canReuseSourceRectificationSession
+      || resumableSession !== null;
     const requestedQuestion = pendingConsultationQuestion
       ?? (reusingRectificationSession
         ? null

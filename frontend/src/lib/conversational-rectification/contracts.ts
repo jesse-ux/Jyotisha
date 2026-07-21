@@ -83,6 +83,8 @@ const evidenceRecapEntrySchema = boundedJson(z.object({
   id: z.string().uuid(),
   summary: boundedNonblankText(1_000),
   dateLabel: boundedNonblankText(80),
+  // Optional so turns written before domain-aware follow-up ordering still resume safely.
+  domain: evidenceDomainSchema.optional(),
   // Optional so turns written before correction lineage was introduced still resume safely.
   isCorrection: z.boolean().optional(),
 }).strict(), 4_096);

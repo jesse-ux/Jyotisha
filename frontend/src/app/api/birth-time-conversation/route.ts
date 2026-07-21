@@ -458,6 +458,21 @@ function boundaryDistance(range: { readonly startTime: string; readonly endTime:
   return Math.max(0, Math.min(value - start, end - value));
 }
 
+async function rectificationPacketStage<Value>(
+  stage: "score_events" | "scan" | "merge_scans" | "candidate_differences" | "time_links" | "technical_packet",
+  operation: () => Value | Promise<Value>,
+): Promise<Value> {
+  try {
+    return await operation();
+  } catch (error) {
+    const errorKind = error instanceof Error ? error.name : typeof error;
+    const status = error !== null && typeof error === "object" && "status" in error
+      && typeof error.status === "number" ? error.status : null;
+    console.error(`[birth-time-conversation-packet] stage=${stage} error=${errorKind}${status === null ? "" : ` status=${status}`}`);
+    throw error;
+  }
+}
+
 export async function buildProductionConversationalRectificationPacket(
   engine: BirthTimeJourneyEngine,
   input: ConversationalRectificationPacketBuildInput,
@@ -466,21 +481,23 @@ export async function buildProductionConversationalRectificationPacket(
   if (place.latitude === undefined || place.longitude === undefined) {
     throw new ConversationalRectificationError("profile_incomplete");
   }
+  const latitude = place.latitude;
+  const longitude = place.longitude;
   const baseRange = currentRange(input);
   const events = scoreableLifeEvents(
     input.evidence as readonly LifeEventEvidence[],
     input.declaredBirthInput.birthDate,
   );
   const eventScore: CandidateResult | null = events.length >= 3
-    ? await engine.scoreEvents({
+    ? await rectificationPacketStage("score_events", () => engine.scoreEvents({
         birthDate: input.declaredBirthInput.birthDate,
         startTime: baseRange.startTime,
         endTime: baseRange.endTime,
-        lat: place.latitude,
-        lon: place.longitude,
+        lat: latitude,
+        lon: longitude,
         tz: place.timezoneOffset,
         events,
-      })
+      }))
     : null;
   const selectedRange = !input.preserveCandidateRange && eventScore?.winningSegment
     ? { startTime: eventScore.winningSegment.startTime, endTime: eventScore.winningSegment.endTime }
@@ -488,25 +505,28 @@ export async function buildProductionConversationalRectificationPacket(
   const questionnaires: RectificationQuestionnaire[] = [];
   for (const scanRange of boundedScanRanges(selectedRange)) {
     const scanPoint = scanCoordinates(scanRange);
-    const { questionnaire } = await engine.scan({
+    const { questionnaire } = await rectificationPacketStage("scan", () => engine.scan({
       birthTime: `${input.declaredBirthInput.birthDate} ${scanPoint.centerTime}`,
       uncertaintyMinutes: scanPoint.uncertaintyMinutes,
-      lat: place.latitude,
-      lon: place.longitude,
+      lat: latitude,
+      lon: longitude,
       tz: place.timezoneOffset,
       ayanamsa: "lahiri",
-    });
+    }));
     questionnaires.push(questionnaire);
   }
-  const questionnaire = mergeQuestionnaireScans(questionnaires, selectedRange);
-  const candidateDifferences = await engine.buildDifferencePacket({
+  const questionnaire = await rectificationPacketStage(
+    "merge_scans",
+    () => mergeQuestionnaireScans(questionnaires, selectedRange),
+  );
+  const candidateDifferences = await rectificationPacketStage("candidate_differences", () => engine.buildDifferencePacket({
     caseId: input.caseId,
     asOfDate: input.asOfDate,
     birthDate: input.declaredBirthInput.birthDate,
     startTime: selectedRange.startTime,
     endTime: selectedRange.endTime,
-    lat: place.latitude,
-    lon: place.longitude,
+    lat: latitude,
+    lon: longitude,
     tz: place.timezoneOffset,
     evidence: [],
     events,
@@ -515,18 +535,22 @@ export async function buildProductionConversationalRectificationPacket(
     partitionFingerprints: [],
     recentRanges: [],
     candidateModel: null,
-  });
+  }));
   const calculationVersion = eventScore
     ? `${candidateDifferences.packet.scoringVersion}+${eventScore.algorithmVersion}`
     : candidateDifferences.packet.scoringVersion;
   const metadata = layerMetadata(questionnaire, calculationVersion);
+  const timeLinkedScanSamples = await rectificationPacketStage(
+    "time_links",
+    () => sampleTimes(questionnaire),
+  );
   const representative = eventScore?.winningSegment?.representativeTime
     ?? scanCoordinates(selectedRange).centerTime;
   const { buildRectificationTechnicalPacket } = await import(
     "../../../lib/conversational-rectification/technical-packet.ts"
   );
   return {
-    packet: buildRectificationTechnicalPacket({
+    packet: await rectificationPacketStage("technical_packet", () => buildRectificationTechnicalPacket({
       scan: questionnaire,
       candidateDifferences,
       eventScore: input.preserveCandidateRange && eventScore
@@ -537,11 +561,11 @@ export async function buildProductionConversationalRectificationPacket(
         calculationVersion,
         availableLayers: metadata.availableLayers,
         layerReferences: metadata.layerReferences,
-        timeLinkedScanSamples: sampleTimes(questionnaire),
+        timeLinkedScanSamples,
         boundaryDistanceMinutes: boundaryDistance(selectedRange, representative),
         futureWindows: [],
       },
-    }),
+    })),
     resultId: eventScore?.resultId ?? null,
   };
 }

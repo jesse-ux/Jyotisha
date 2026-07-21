@@ -543,6 +543,7 @@ test("evidence corrections are append-only while recap and scoring use only the 
     id: secondId,
     summary: "其实是离职",
     dateLabel: "2020-11",
+    domain: "career",
     isCorrection: true,
   }]);
 
@@ -564,6 +565,7 @@ test("evidence corrections are append-only while recap and scoring use only the 
     id: stored[2]?.id,
     summary: "准确的是入职",
     dateLabel: "2021-02",
+    domain: "career",
     isCorrection: true,
   }]);
   assert.deepEqual(value.packetEvidenceCounts, [0, 1, 1, 1]);
@@ -591,6 +593,7 @@ test("an unclear correction immediately retires the wrong fact and stays retired
     id: unclear?.id,
     summary: "具体年月记不清",
     dateLabel: "日期待补充",
+    domain: "other",
     isCorrection: true,
   }]);
   assert.equal(clarification.status, "active");
@@ -825,7 +828,7 @@ test("a rejected professional narrative falls back safely while the first scorea
   assert.equal(turn.candidate.status, "ready_for_confirmation");
   assert.equal(stored?.privateCandidate.resultId, resultId);
   assert.equal(stored?.validationReceipts.at(-1)?.fallbackUsed, true);
-  assert.match(turn.narrative, /下一步|当前证据已形成候选总结/);
+  assert.match(turn.narrative, /已记录：|本轮区分重点/);
   assert.doesNotMatch(turn.narrative, /候选没有推进|请稍后重试/);
 });
 
@@ -850,6 +853,8 @@ test("one and two supported events save and narrate before the third accumulated
     assert.equal(stored?.eventEvidence.length, index + 1);
     assert.equal(turn.evidenceRecap.length, index + 1);
     assert.equal(turn.status, index < 2 ? "active" : "confirming");
+    assert.match(turn.narrative, new RegExp(`当前累计 ${index + 1} 条可评分经历|候选范围已从|本轮已纳入 ${index + 1} 条可评分经历`));
+    assert.match(turn.narrative, /已记录：/);
   }
 
   assert.equal(value.counts().packetBuilds, 4);
@@ -905,6 +910,7 @@ test("family evidence remains stored and public without changing its domain", as
     id: stored[0]?.id,
     summary: stored[0]?.eventSummary,
     dateLabel: "2020-07",
+    domain: "family",
   }]);
   assert.equal(turn.status, "active");
 });
