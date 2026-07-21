@@ -41,6 +41,7 @@ import {
   isGuidedBirthTimePreview,
   previewRectificationJourney,
 } from "@/lib/birth-time-guided-preview";
+import { defaultGuidedJyotishTopics } from "@/lib/guided-jyotish-topics";
 import { keepFocusWithin } from "@/lib/focus-trap";
 import { chatMessageViews, type ChatMessage } from "@/lib/chat-message-view";
 import {
@@ -155,11 +156,7 @@ type PendingConsultation = {
 const undoWindowMs = 2_500;
 const china = chinaLocations.country;
 
-const themes: Array<{ id: Exclude<Theme, "general">; label: string; prompt: string }> = [
-  { id: "career", label: "事业", prompt: "未来一年，事业和收入该关注什么？" },
-  { id: "marriage", label: "关系", prompt: "我的关系模式是什么？" },
-  { id: "timing", label: "时运", prompt: "未来哪些阶段值得把握？" },
-];
+const themes = defaultGuidedJyotishTopics;
 
 const accountDialogTitles = {
   profile: "个人资料",
@@ -2482,7 +2479,7 @@ export default function Home() {
                     const theme = themes.find((candidate) => candidate.id === item.theme);
                     return (
                       <button key={`${item.theme}-${item.text}`} type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={() => chooseSuggestedQuestion(item.text, item.theme)}>
-                        <span className="starter-content"><b>{theme?.label || "开始"}</b><span>{item.text}</span></span>
+                        <span className="starter-content"><b>{theme?.label || "开始"}</b><span>{item.text}</span>{theme && <small>{theme.evidencePreview.join(" / ")} · {theme.claimBoundary}</small>}</span>
                         <ArrowUpRight className="starter-arrow" aria-hidden="true" />
                       </button>
                     );
