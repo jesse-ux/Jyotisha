@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 115,
+    "packet_count": 118,
     "blocked_or_partial_count": 51,
     "human_review_required_count": 3
   },
@@ -929,6 +929,30 @@
       "claim_status": "observation_only",
       "consumer_policy": "research_observation_only",
       "claim_boundary": "Classifies 18 jyotishganit-applied TEMCQ rows and creates a Panchanga ticket placeholder; status only, no numeric truth upgrade."
+    },
+    {
+      "packet_id": "three_engine_d2_field_closure_packet_2026_07_21",
+      "path": "references/oracle/three_engine_d2_field_closure_packet_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "D2 rows show local/PyJHora/jyotishganit agreement while VedAstro endpoint semantics remain blocked; no global truth upgrade."
+    },
+    {
+      "packet_id": "three_engine_d4_d9_d10_field_closure_packet_2026_07_21",
+      "path": "references/oracle/three_engine_d4_d9_d10_field_closure_packet_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "D4/D9/D10 Moon.sign rows show local/PyJHora/jyotishganit agreement while VedAstro endpoint semantics remain blocked; no global truth upgrade."
+    },
+    {
+      "packet_id": "three_engine_bav_sav_field_closure_packet_2026_07_21",
+      "path": "references/oracle/three_engine_bav_sav_field_closure_packet_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies BAV/SAV rows into partial consensus or multi-engine variant; public worked table and method metadata still required."
     }
   ]
 }
