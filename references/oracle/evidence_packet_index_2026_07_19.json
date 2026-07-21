@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 121,
+    "packet_count": 122,
     "blocked_or_partial_count": 52,
     "human_review_required_count": 3
   },
@@ -977,6 +977,14 @@
       "claim_status": "open_queue",
       "consumer_policy": "research_observation_only",
       "claim_boundary": "Triage ledger for stale WorkBuddy candidate fragments only; no runtime truth, no bulk-copy permission, and no commercial technique upgrade until each entry is separately reviewed."
+    },
+    {
+      "packet_id": "workbuddy_round4_candidate_ledger_2026_07_21",
+      "path": "references/oracle/workbuddy_round4_candidate_ledger_2026_07_21.json",
+      "domain": "fragment_migration",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Round4 triage confirms round3 was non-exhaustive: 858 unindexed WorkBuddy filename-signal files were detected and 20 high-value candidates were classified; no truth upgrade or bulk-copy permission."
     }
   ]
 }
