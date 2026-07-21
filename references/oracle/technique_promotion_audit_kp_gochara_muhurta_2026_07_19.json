@@ -3,14 +3,14 @@
   "items": [
     {
       "claim_boundary": "Panchanga is runtime-visible but still needs field-level external oracle examples for high-rigor claims.",
-      "current_call_status": "formally_called_in_api_and_web",
+      "current_call_status": "partial",
       "external_or_reference_artifacts": [
         "references/open_source_sources/panchanga_api"
       ],
       "main_artifacts": [
         "scripts/jyotish_api_server.py",
-        "jyotish-app/main.js",
-        "jyotish-app/index.html"
+        "frontend/src/app/page.tsx",
+        "jyotish-app/main.js (research static UI only, absent in commercial repo)"
       ],
       "next_action": "add panchanga claim/display contract and source/oracle packet for tithi/nakshatra/yoga/karana/rahu-kalam outputs",
       "reuse_decision": "do_not_duplicate_runtime",
@@ -57,7 +57,7 @@
   "production_tuning_allowed": false,
   "scope": "technique_promotion_audit_kp_gochara_muhurta",
   "summary": {
-    "formally_called_count": 1,
+    "formally_called_count": 0,
     "items_checked": 4,
     "reference_only_count": 3
   },

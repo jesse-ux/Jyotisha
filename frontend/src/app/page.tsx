@@ -14,6 +14,7 @@ import { BirthTimeIntakeFields } from "@/components/birth-time-intake";
 import { ChatMessageContent } from "@/components/chat-message-content";
 import { AgentAvatar, ChatMessageRow } from "@/components/chat-message-row";
 import { ModelSelector } from "@/components/model-selector";
+import { ParameterFreezePanel, type ParameterFreezeRow } from "@/components/parameter-freeze-panel";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,8 +42,10 @@ import {
   isGuidedBirthTimePreview,
   previewRectificationJourney,
 } from "@/lib/birth-time-guided-preview";
+import { defaultGuidedJyotishTopics } from "@/lib/guided-jyotish-topics";
 import { keepFocusWithin } from "@/lib/focus-trap";
 import { chatMessageViews, type ChatMessage } from "@/lib/chat-message-view";
+import { consultationReportMarkdown } from "@/lib/consultation-report-export";
 import {
   OnboardingAuthenticationError,
   type OnboardingContent,
@@ -155,11 +158,7 @@ type PendingConsultation = {
 const undoWindowMs = 2_500;
 const china = chinaLocations.country;
 
-const themes: Array<{ id: Exclude<Theme, "general">; label: string; prompt: string }> = [
-  { id: "career", label: "事业", prompt: "未来一年，事业和收入该关注什么？" },
-  { id: "marriage", label: "关系", prompt: "我的关系模式是什么？" },
-  { id: "timing", label: "时运", prompt: "未来哪些阶段值得把握？" },
-];
+const themes = defaultGuidedJyotishTopics;
 
 const accountDialogTitles = {
   profile: "个人资料",
@@ -844,6 +843,16 @@ export default function Home() {
 
   const profileComplete = isProfileComplete(profile);
   const birthTimeDisplay = birthTimeDisplayState(profile);
+  const profileBirthPlace = selectedBirthPlace(profile);
+  const parameterFreezeRows: ParameterFreezeRow[] = profileComplete && profileBirthPlace ? [
+    { label: "出生时间", value: `${profile.date} ${profile.time || "未定"}` },
+    { label: "出生地点", value: profileBirthPlace.label },
+    { label: "经纬度", value: `${profileBirthPlace.lat.toFixed(4)}, ${profileBirthPlace.lon.toFixed(4)}` },
+    { label: "时区", value: `UTC+${profileBirthPlace.tz}` },
+    { label: "Ayanamsa", value: "Lahiri / Sidereal" },
+    { label: "Node mode", value: "True Node" },
+    { label: "出生时间精度", value: birthTimeDisplay?.kind === "candidate" ? "候选时间" : birthTimeDisplay?.kind === "confirmed" ? "已确认" : "待校正" },
+  ] : [];
   const dailyStarlanguage = dailyStarlanguageCard ?? (profileComplete ? buildDailyStarlanguageCard(profile) : null);
   const onboardingPending = profileComplete && !onboarding && !onboardingError;
   const currentOnboardingMessage = onboardingJustCompleted
@@ -1284,10 +1293,14 @@ export default function Home() {
       message_count: session.messages.length,
       messages: session.messages.map((message) => ({ role: message.role, text: message.text })),
     };
+    const reportMarkdown = consultationReportMarkdown({ title: session.title, messages: session.messages });
     const transcript = [
       `Jyotisha 对话：${session.title}`,
       "",
       ...session.messages.map((message) => `${message.role === "user" ? "我" : "Jyotisha"}：${message.text}`),
+      "",
+      "---- Markdown 报告 ----",
+      reportMarkdown,
       "",
       "---- JSON 分享包 ----",
       JSON.stringify(sharePayload, null, 2),
@@ -2090,6 +2103,15 @@ export default function Home() {
       }
       if (!response.body) throw new Error("浏览器未收到可读取的回答流");
       const techniqueTruth = response.headers.get("x-jyotish-technique-truth") ?? "unknown";
+      const workflowReceipt = {
+        route: response.headers.get("x-jyotish-workflow-route") ?? "unknown",
+        status: response.headers.get("x-jyotish-workflow-status") ?? "unknown",
+        preciseTiming: response.headers.get("x-jyotish-precise-timing") ?? "unknown",
+        missingLayers: (response.headers.get("x-jyotish-missing-layers") ?? "none")
+          .split(",")
+          .map((item) => item.trim())
+          .filter((item) => item && item !== "none"),
+      };
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -2118,7 +2140,7 @@ export default function Home() {
       const completedSession: ChatSession = {
         ...userSession,
         title: currentSession.messages.length === 0 && reply.title ? reply.title : userSession.title,
-        messages: [...userSession.messages, { role: "assistant", text: reply.text, suggestions: reply.suggestions, techniqueTruth }],
+        messages: [...userSession.messages, { role: "assistant", text: reply.text, suggestions: reply.suggestions, techniqueTruth, workflowReceipt }],
         updatedAt: timestamp(),
       };
       updateSession(sessionId, () => completedSession);
@@ -2172,16 +2194,16 @@ export default function Home() {
           await persistSession(interruptedSession);
           setRequestError({
             sessionId,
-            message: "回答中途断开，已保留生成内容；本次已开始生成并计费。",
+            message: "回答中途断开，已保留生成内容；请复制现有内容或继续追问，系统正在以账户记录为准同步点数。",
           });
         } catch (persistError) {
           setRequestError({
             sessionId,
-            message: `${persistError instanceof Error ? persistError.message : "云端同步失败"} 已计费的部分回答仍保留在当前页面，请复制保存。`,
+            message: `${persistError instanceof Error ? persistError.message : "云端同步失败"} 部分回答仍保留在当前页面，请复制保存后继续追问。`,
           });
         }
         if (activeSessionIdRef.current === sessionId) {
-          setComposerNotice("回答中途断开，已保留现有内容，本次已计费。");
+          setComposerNotice("回答中途断开，已保留现有内容；请继续追问或复制保存。");
         }
       }
     } finally {
@@ -2420,6 +2442,7 @@ export default function Home() {
                 <div className="starter-loading" role="status">正在准备三个入门问题…</div>
               ) : (
                 <div className="starter-list" aria-label="Jyotisha 推荐的初始问题">
+                  {parameterFreezeRows.length > 0 && <ParameterFreezePanel rows={parameterFreezeRows} />}
                   <div className="product-entrypoints" aria-label="常用占星入口">
                     <article className="daily-starlanguage-card product-entrypoint-card" aria-label="今日星语">
                       <button
@@ -2482,7 +2505,7 @@ export default function Home() {
                     const theme = themes.find((candidate) => candidate.id === item.theme);
                     return (
                       <button key={`${item.theme}-${item.text}`} type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={() => chooseSuggestedQuestion(item.text, item.theme)}>
-                        <span className="starter-content"><b>{theme?.label || "开始"}</b><span>{item.text}</span></span>
+                        <span className="starter-content"><b>{theme?.label || "开始"}</b><span>{item.text}</span>{theme && <small>{theme.evidencePreview.join(" / ")} · {theme.claimBoundary}</small>}</span>
                         <ArrowUpRight className="starter-arrow" aria-hidden="true" />
                       </button>
                     );

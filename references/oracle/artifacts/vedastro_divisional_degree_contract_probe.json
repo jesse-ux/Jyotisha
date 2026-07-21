@@ -1,0 +1,48 @@
+{
+  "boundary": "This probe validates only the divisional degree transformation. It does not establish complete D2/D4/D9/D10 sign, ayanamsa, node, timezone, or hosted-endpoint chart parity.",
+  "chart_sign_contract": "blocked",
+  "contract_status": "degree_mapping_verified",
+  "input_total_degrees": 3.5,
+  "privacy": {
+    "api_key_persisted": false
+  },
+  "rows": {
+    "D10": {
+      "local_degree": 5.0,
+      "matches_local": true,
+      "official_degree": 5.0,
+      "official_status": "Pass",
+      "raw_hash": "c18c8f9033f6267d71326618350439669a298bf54df92250fe448450519ff9e0",
+      "request_body_hash": "0d5e0c96f6afce151b23960ab1a932ad81b68bd1d3cac568cb84811744317798",
+      "response_payload_hash": "355368858f2631e02e2a5dde2287a1909dae13deef6f9a4702baea32091f1807"
+    },
+    "D2": {
+      "local_degree": 7.0,
+      "matches_local": true,
+      "official_degree": 7.0,
+      "official_status": "Pass",
+      "raw_hash": "265db56c75e04db854f8455c10dc87bf1b546e50bdaca078cd452382b3ddba8e",
+      "request_body_hash": "3270b71182f85800fece09c4a0dd2119287a692bd99bb8c1946b2c172cefe33f",
+      "response_payload_hash": "0132659fbfdc9e3f0ba0a07e8d2d9ce91ef2d1d8498b0ec92c236456c8df404f"
+    },
+    "D4": {
+      "local_degree": 14.0,
+      "matches_local": true,
+      "official_degree": 14.0,
+      "official_status": "Pass",
+      "raw_hash": "ec3b79e9919862585115b48d69e0766debe7bc7e42bd8c5cd398af3b1d6ead19",
+      "request_body_hash": "6e052dd18d79a9a974b78d052f431ae165778b1987db8d8a0ecd4d3cbfe3b6ff",
+      "response_payload_hash": "e3d32cc6ce7be7882dbbb732e998ad443148d4edb1a7ca356d63a3d83c74197d"
+    },
+    "D9": {
+      "local_degree": 1.5,
+      "matches_local": true,
+      "official_degree": 1.5,
+      "official_status": "Pass",
+      "raw_hash": "0f126a7e7e1995922a0a406e74c884e00ebcdc2e325d655c5ec8c18be7ec4358",
+      "request_body_hash": "187825c5229aed9e695f3bb59eb5704a854c3d272bd83094c20e9da4575e4380",
+      "response_payload_hash": "3e10867dac0b9a0f78c6d0c5a40e7436c3292ac334604bc015d3382bfea4d834"
+    }
+  },
+  "scope": "vedastro_divisional_degree_contract_probe"
+}

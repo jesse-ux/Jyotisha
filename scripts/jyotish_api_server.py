@@ -2,14 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 印度占星 API 服务器 v1.0
-为 Next.js 产品前端提供 v6.9.14 引擎的精算能力
+为 jyotish-app 前端提供 v6.9.14 引擎的精算能力
 
 启动: python3 scripts/jyotish_api_server.py --port 5200
 """
 
 import argparse
 import base64
-import copy
 import html as html_lib
 import io
 import json, sys, os, math
@@ -20,7 +19,6 @@ import secrets
 import sqlite3
 import threading
 import time
-import tempfile
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
@@ -28,23 +26,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-# This file is intentionally runnable as ``python scripts/jyotish_api_server.py``.
-# In that mode Python adds ``scripts/`` (not the repository root) to sys.path,
-# so later lazy imports such as ``from scripts.vedastro_gateway import ...``
-# otherwise fail during a real consultation request.
-SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
-REPO_ROOT = os.path.abspath(os.path.join(SCRIPTS_DIR, '..'))
-if REPO_ROOT not in sys.path:
-    sys.path.insert(0, REPO_ROOT)
-if SCRIPTS_DIR not in sys.path:
-    sys.path.insert(0, SCRIPTS_DIR)
-
 try:
     from scripts.local_env import load_local_env
-    from scripts.vedastro_runtime_context import temporary_timeout_seconds
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from local_env import load_local_env
-    from vedastro_runtime_context import temporary_timeout_seconds
 try:
     from scripts.unified_consultation_orchestrator import UnifiedConsultationOrchestrator
 except ModuleNotFoundError:  # pragma: no cover - script execution path
@@ -66,6 +51,14 @@ try:
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from candidate_time_sensitivity_scan import scan_candidate_times
 try:
+    from scripts.chart_profile_store import ChartProfileStore
+except ModuleNotFoundError:  # pragma: no cover - script execution path
+    from chart_profile_store import ChartProfileStore
+try:
+    from scripts.chat_session_store import ChatSessionStore
+except ModuleNotFoundError:  # pragma: no cover - script execution path
+    from chat_session_store import ChatSessionStore
+try:
     from scripts.western_oracle_adapter import build_packet_from_oracle_payload
     from scripts.western_chart_engine import build_tropical_western_evidence_packet
     from scripts.western_timing_engine import build_timing_techniques
@@ -74,6 +67,9 @@ except ModuleNotFoundError:  # pragma: no cover - script execution path
     from western_chart_engine import build_tropical_western_evidence_packet
     from western_timing_engine import build_timing_techniques
 
+SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.abspath(os.path.join(SCRIPTS_DIR, '..'))
+sys.path.insert(0, SCRIPTS_DIR)
 load_local_env(REPO_ROOT)
 _LOCAL_MODULE_CACHE = {}
 _API_CHART_CACHE_SCOPE = 'api_chart_response'
@@ -231,8 +227,8 @@ def _western_evidence_packet_from_body(
                 packet['missing_sections'] = [item for item in packet['missing_sections'] if item != 'timing_techniques']
                 packet['boundary'] = (
                     'Native calculations include only explicitly requested transit, solar-return, secondary-progression, '
-                    'solar-arc, midpoint, lunar-return and daily duration-scan layers; parans remain blocked until a '
-                    'dedicated latitude-aware event solver is implemented. Outputs do not infer outcomes or interpretation.'
+                    'solar-arc, midpoint, lunar-return, daily duration-scan, quotidian progressed-angle and '
+                    'latitude-aware paran layers. Outputs do not infer outcomes or interpretation.'
                 )
         return packet
     except Exception as exc:  # pragma: no cover - defensive boundary
@@ -245,250 +241,6 @@ def _western_evidence_packet_from_body(
             'adapter_error': exc.__class__.__name__,
             'boundary': 'Native Western natal calculation could not be materialized.',
         }
-def _consultation_reference_date(body: dict) -> datetime:
-    raw = (
-        body.get('reference_date')
-        or body.get('transit_date')
-        or body.get('today')
-        or body.get('current_date')
-    )
-    if isinstance(raw, str) and raw.strip():
-        try:
-            return datetime.fromisoformat(raw.strip().replace('Z', '+00:00'))
-        except ValueError:
-            pass
-    return datetime.now()
-
-
-def _consultation_current_age(birth_payload: dict, body: dict) -> float:
-    try:
-        born = datetime(
-            int(birth_payload['year']),
-            int(birth_payload['month']),
-            int(birth_payload['day']),
-            int(float(birth_payload.get('hour', 0))),
-            int(float(birth_payload.get('minute', 0))),
-        )
-    except (KeyError, TypeError, ValueError):
-        return 0.0
-    reference = _consultation_reference_date(body)
-    return max(0.0, (reference.replace(tzinfo=None) - born).total_seconds() / (365.2425 * 86400))
-
-
-def _attach_local_consultation_layers(handler, chart: dict, birth_payload: dict, body: dict) -> dict:
-    """Attach locally-computable consultation layers before reports/evidence are assembled.
-
-    VedAstro is an optional external cross-check for the web chat. D9/D10, Arudha
-    padas (including A10/UL), and Narayana Dasha are available in this repository
-    and must not be reported as missing merely because the external provider is
-    not configured.
-    """
-    if not isinstance(chart, dict) or not chart.get('success', True):
-        return chart
-
-    modules = chart.get('modules') if isinstance(chart.get('modules'), dict) else {}
-    chart['modules'] = modules
-    planets = chart.get('planets') if isinstance(chart.get('planets'), dict) else {}
-    ascendant = chart.get('ascendant') if isinstance(chart.get('ascendant'), dict) else {}
-    diagnostics = []
-
-    if planets and ascendant and not isinstance(modules.get('varga_full'), dict):
-        try:
-            varga_response = handler._compute_varga_full({
-                'planets': planets,
-                'ascendant': ascendant,
-                'divisions': ['D2', 'D4', 'D9', 'D10', 'D11'],
-            })
-            varga_result = varga_response.get('result') if isinstance(varga_response, dict) else None
-            if isinstance(varga_result, dict):
-                modules['varga_full'] = varga_result
-        except Exception as exc:  # optional local layer; preserve core D1 result
-            diagnostics.append({'layer': 'varga_full', 'status': 'unavailable', 'reason': exc.__class__.__name__})
-
-    if planets and ascendant and not isinstance(modules.get('arudha_padas'), dict):
-        try:
-            jaimini = _load_local_module('jaimini')
-            planet_lons = {
-                name: float(data.get('lon'))
-                for name, data in planets.items()
-                if isinstance(data, dict) and data.get('lon') is not None
-            }
-            asc_sign_idx = int(ascendant.get('sign_idx', int(float(ascendant.get('lon', 0))) // 30)) % 12
-            arudha_padas = jaimini.calc_arudha_padas(asc_sign_idx, planet_lons)
-            if isinstance(arudha_padas, dict):
-                modules['arudha_padas'] = arudha_padas
-                modules.setdefault('jaimini', {})['arudha_padas'] = arudha_padas
-                chart['arudha_padas'] = arudha_padas
-        except Exception as exc:
-            diagnostics.append({'layer': 'arudha_padas', 'status': 'unavailable', 'reason': exc.__class__.__name__})
-
-    if planets and ascendant and not isinstance(modules.get('narayana_dasha'), dict):
-        try:
-            narayana = _load_local_module('narayana_dasha')
-            planet_lons = {
-                name: float(data.get('lon'))
-                for name, data in planets.items()
-                if isinstance(data, dict) and data.get('lon') is not None
-            }
-            asc_sign_idx = int(ascendant.get('sign_idx', int(float(ascendant.get('lon', 0))) // 30)) % 12
-            narayana_result = narayana.narayana_dasha_full_report(
-                lagna_sign_idx=asc_sign_idx,
-                planet_lons=planet_lons,
-                current_age=_consultation_current_age(birth_payload, body),
-                birth_year=int(birth_payload.get('year', 0) or 0),
-            )
-            if isinstance(narayana_result, dict):
-                modules['narayana_dasha'] = narayana_result
-        except Exception as exc:
-            diagnostics.append({'layer': 'narayana_dasha', 'status': 'unavailable', 'reason': exc.__class__.__name__})
-
-    chart['local_consultation_layers'] = {
-        'status': 'ready' if not diagnostics else 'partial',
-        'source': 'repository_local_engines',
-        'available': [
-            name
-            for name in ('varga_full', 'arudha_padas', 'narayana_dasha')
-            if isinstance(modules.get(name), dict) and modules.get(name)
-        ],
-        'diagnostics': diagnostics,
-    }
-    return chart
-
-
-def _build_consumer_context(
-    *,
-    question: str,
-    route_packet: dict,
-    chart: dict,
-    rectification: dict,
-    machine_evidence_packet: dict,
-    vedastro_official: dict,
-) -> dict:
-    """Build a chat-facing truth contract without exposing provider noise as a fatal error."""
-    question_text = (question or '').lower()
-    sections = (
-        machine_evidence_packet.get('sections')
-        if isinstance(machine_evidence_packet.get('sections'), dict)
-        else {}
-    )
-    route = str(route_packet.get('question_type') or route_packet.get('primary_theme') or 'general')
-    route_requirements = {
-        'career': ['D1', 'D10', 'A10', 'dasha_boundaries', 'narayana_dasha'],
-        'relationship': ['D1', 'D9', 'UL', 'dasha_boundaries'],
-        'finance': ['D1', 'D2', 'dasha_boundaries'],
-        'timing': ['D1', 'dasha_boundaries', 'narayana_dasha'],
-        'general': ['D1', 'D9', 'dasha_boundaries'],
-    }
-    required = route_requirements.get(route, route_requirements['general'])
-    available_layers = sorted(
-        name for name, section in sections.items()
-        if isinstance(section, dict) and section.get('status') == 'used'
-    )
-    missing_route_layers = [
-        name for name in required
-        if not isinstance(sections.get(name), dict) or sections[name].get('status') != 'used'
-    ]
-    domain_context_layers = []
-    domain_boundaries = {}
-
-    def add_domain_layer(*layers: str, boundary_key: str | None = None, boundary: str | None = None) -> None:
-        for layer in layers:
-            if layer not in domain_context_layers:
-                domain_context_layers.append(layer)
-        if boundary_key and boundary:
-            domain_boundaries[boundary_key] = boundary
-
-    if re.search(r'(婚|结婚|感情|关系|配偶|伴侣|spouse|marriage|relationship)', question_text):
-        add_domain_layer(
-            'gender interpretation boundary',
-            boundary_key='gender_interpretation_boundary',
-            boundary='Gender can affect interpretation wording and spouse-role overlays, but it must not change astronomical calculation facts.',
-        )
-    if re.search(r'(健康|疾病|身体|病|医疗|health)', question_text):
-        add_domain_layer(
-            'D6', 'D8', '6th/8th/12th house', 'health non_medical boundary',
-            boundary_key='health_non_medical_boundary',
-            boundary='Health reading is non_medical guidance only; no diagnosis, guaranteed disease event, or treatment instruction.',
-        )
-    if re.search(r'(出国|移民|迁移|异地|海外|foreign|migration|relocation)', question_text):
-        add_domain_layer('12th house', 'twelfth house', 'house_12')
-    if re.search(r'(家庭|房产|子女|父母|家|children|family|property)', question_text):
-        add_domain_layer('4th/5th/9th house')
-    if re.search(r'(教育|学习|读书|考试|考证|education|study|exam)', question_text):
-        add_domain_layer('5th/9th house')
-    if re.search(r'(出生时间|时间不准|校正|矫正|rectification|birth time)', question_text):
-        add_domain_layer(
-            'birth_time uncertain boundary', 'not_auto_rectified',
-            boundary_key='birth_time_uncertainty_boundary',
-            boundary='Birth-time uncertainty requires candidate windows and event evidence; the workflow is not_auto_rectified.',
-        )
-    if re.search(r'(年度|一年|未来一年|年运|annual|year)', question_text):
-        add_domain_layer(
-            'annual forecast boundary',
-            boundary_key='annual_forecast_boundary',
-            boundary='Annual forecast is a bounded trend reading; no full-year certainty or exact day/month guarantee.',
-        )
-    d1_ready = 'D1' in available_layers and bool(chart.get('success', True))
-    hard_blockers = [] if d1_ready else ['core_chart_unavailable']
-
-    official_state = (
-        sections.get('external_oracle_status', {}).get('status')
-        if isinstance(sections.get('external_oracle_status'), dict)
-        else 'official_blocked'
-    )
-    optional_unavailable = []
-    if official_state != 'official_verified':
-        optional_unavailable.append({
-            'layer': 'vedastro_official_cross_check',
-            'status': official_state,
-            'impact': 'external_cross_validation_only',
-        })
-
-    rect_summary = rectification.get('summary') if isinstance(rectification.get('summary'), dict) else {}
-    warned_vargas = rect_summary.get('warned') if isinstance(rect_summary.get('warned'), list) else []
-    disabled_vargas = rect_summary.get('disabled') if isinstance(rect_summary.get('disabled'), list) else []
-    relevant_warned_vargas = [name for name in warned_vargas if name in required]
-    precise_timing_requested = route == 'timing' or bool(re.search(r'(具体|精确|哪一|几月|月份|日期|何时|什么时候|时间点|年份)', question or ''))
-    timing_layers_ready = all(name not in missing_route_layers for name in ('dasha_boundaries', 'narayana_dasha'))
-    precision_allows_timing = not any(name in disabled_vargas for name in ('D9', 'D10'))
-    can_answer_precise_timing = d1_ready and timing_layers_ready and precision_allows_timing and not missing_route_layers
-
-    limitation_parts = []
-    if missing_route_layers:
-        limitation_parts.append(f"当前问题仍缺少 {', '.join(missing_route_layers)}")
-    if relevant_warned_vargas:
-        limitation_parts.append(f"{', '.join(relevant_warned_vargas)} 对出生时间精度敏感")
-
-    return {
-        'core_status': 'blocked' if hard_blockers else ('degraded' if missing_route_layers else 'ready'),
-        'calculation_source': 'repository_local_engine',
-        'route': route,
-        'available_layers': available_layers,
-        'domain_context_layers': domain_context_layers,
-        'domain_boundaries': domain_boundaries,
-        'missing_route_layers': missing_route_layers,
-        'optional_unavailable_layers': optional_unavailable,
-        'hard_blockers': hard_blockers,
-        'precision': {
-            'warned_layers': warned_vargas,
-            'disabled_layers': disabled_vargas,
-            'summary': rect_summary.get('headline'),
-        },
-        'answer_policy': {
-            'can_answer_direction': d1_ready,
-            'can_answer_chart_interpretation': d1_ready,
-            'can_answer_precise_timing': can_answer_precise_timing,
-            'precise_timing_requested': precise_timing_requested,
-            'should_lead_with_limitations': bool(hard_blockers) or (precise_timing_requested and not can_answer_precise_timing),
-            'provider_unavailable_is_fatal': False,
-        },
-        'user_facing_limitation': '；'.join(limitation_parts) if limitation_parts else None,
-        'provider_status': {
-            'vedastro': official_state,
-            'role': 'optional_external_cross_check',
-            'runtime_status': vedastro_official.get('status') if isinstance(vedastro_official, dict) else None,
-        },
-    }
 
 
 def execute_consultation_workflow(
@@ -499,7 +251,6 @@ def execute_consultation_workflow(
     chart_override: dict | None = None,
 ) -> dict:
     from scripts.timing_precision_contract import build_timing_precision_contract
-    from scripts.reference_transparency_contract import build_reference_transparency_contract
 
     birth_payload = handler._high_rigor_birth_payload(body)
     themes = handler._high_rigor_requested_themes(body)
@@ -575,8 +326,7 @@ def execute_consultation_workflow(
                 result['success'] = False
                 result['blocked_reason'] = 'external_parity_not_passed'
         result['timing_precision_contract'] = build_timing_precision_contract(body.get('timing'))
-        from scripts.commercial_skill_truth import apply_commercial_skill_truth
-        return apply_commercial_skill_truth(result)
+        return result
 
     chart = dict(chart_override) if isinstance(chart_override, dict) else {}
     prashna = {}
@@ -620,8 +370,6 @@ def execute_consultation_workflow(
                 chart = handler._compute_chart(birth_payload)
                 computed_chart = True
             executed_steps.append('compute_chart')
-
-    chart = _attach_local_consultation_layers(handler, chart, birth_payload, body)
 
     historical_backtest = {}
     if 'run_historical_event_backtest' in runtime_planner.get('sync_steps', []):
@@ -670,14 +418,6 @@ def execute_consultation_workflow(
         vedastro_official=vedastro_official,
         vedastro_archive_manifest=vedastro_archive_manifest,
     )
-    consumer_context = _build_consumer_context(
-        question=question,
-        route_packet=route_packet,
-        chart=chart,
-        rectification=rectification,
-        machine_evidence_packet=machine_evidence_packet,
-        vedastro_official=vedastro_official,
-    )
     real_case_calibration = _UNIFIED_CONSULTATION_ORCHESTRATOR.real_case_calibration_catalog(
         route_packet=route_packet,
         machine_evidence_packet=machine_evidence_packet,
@@ -695,18 +435,6 @@ def execute_consultation_workflow(
         western_evidence_packet=western_evidence_packet,
         blind=bool(body.get('blind') or body.get('blind_technical_mode')),
     )
-
-    vedastro_gateway = rectification.get('vedastro_gateway') if isinstance(rectification, dict) else None
-    if not isinstance(vedastro_gateway, dict):
-        try:
-            vedastro_gateway = handler._compute_vedastro_gateway_run(body)
-        except Exception as exc:  # Gateway evidence must not block the local chart result.
-            vedastro_gateway = {
-                'scope': 'vedastro_gateway_run',
-                'status': 'official_blocked',
-                'official_closure_reason': 'gateway_invocation_error',
-                'error_type': type(exc).__name__,
-            }
 
     result = {
         'success': True,
@@ -748,12 +476,10 @@ def execute_consultation_workflow(
         'muhurta_panchanga': muhurta_panchanga,
         'audited_remedies': audited_remedies,
         'vedastro_official': vedastro_official,
-        'vedastro_gateway': vedastro_gateway,
         'runtime_truth': runtime_truth,
         'external_parity_gate': external_parity_gate,
         'interpretation_source_runtime_coverage': interpretation_source_runtime_coverage,
         'machine_evidence_packet': machine_evidence_packet,
-        'consumer_context': consumer_context,
         'western_evidence_packet': western_evidence_packet or {},
         'real_case_calibration': real_case_calibration,
         'runtime_evidence_log': runtime_evidence_log,
@@ -777,14 +503,7 @@ def execute_consultation_workflow(
     if body.get('return_high_rigor_shape'):
         result['endpoint'] = 'high_rigor_workflow'
     result['timing_precision_contract'] = build_timing_precision_contract(body.get('timing'))
-    result['reference_transparency'] = build_reference_transparency_contract(
-        chart,
-        themes,
-        timing=body.get('timing'),
-        reference_date=_consultation_reference_date(body).date().isoformat(),
-    )
-    from scripts.commercial_skill_truth import apply_commercial_skill_truth
-    return apply_commercial_skill_truth(result)
+    return result
 
 
 def _load_local_module(module_name):
@@ -846,16 +565,11 @@ def _vedastro_runtime_fingerprint() -> dict:
         'endpoint_host': (urlparse(endpoint).netloc or '').lower(),
         'network_enabled': str(os.environ.get('VEDASTRO_ENABLE_NETWORK', '')).strip().lower() in {'1', 'true', 'yes'},
         'has_api_key': bool(os.environ.get('VEDASTRO_API_KEY', '').strip()),
-        'timeout_seconds': str(os.environ.get('VEDASTRO_TIMEOUT_SECONDS', '')).strip(),
-        'full_snapshot_fanout_enabled': str(
-            os.environ.get('VEDASTRO_FULL_SNAPSHOT_FANOUT_ENABLED', '1')
-        ).strip().lower() in {'1', 'true', 'yes', 'on'},
     }
 
 
 def _build_api_chart_cache_payload(body: dict) -> dict:
     return {
-        'cache_schema_version': 4,
         'birth': {
             'year': body.get('year'),
             'month': body.get('month'),
@@ -967,14 +681,6 @@ def _async_job_ttl_seconds() -> float:
         return max(float(raw), 1.0)
     except ValueError:
         return 3600.0
-
-
-def _async_high_rigor_vedastro_timeout_seconds() -> float:
-    raw = str(os.environ.get('JYOTISH_ASYNC_HIGH_RIGOR_VEDASTRO_TIMEOUT_SECONDS', '90')).strip()
-    try:
-        return min(max(float(raw), 30.0), 180.0)
-    except ValueError:
-        return 90.0
 
 
 def _async_job_backend() -> str:
@@ -1108,6 +814,8 @@ def _write_async_job_record(scope: str, job_id: str, payload: dict) -> dict:
 
 def _attach_vedastro_main_entry_overview(chart_result, birth_payload):
     if not isinstance(chart_result, dict):
+        return chart_result
+    if birth_payload.get('skip_vedastro_evidence'):
         return chart_result
     modules = chart_result.setdefault('modules', {})
     if not isinstance(modules, dict):
@@ -1304,19 +1012,15 @@ DEFAULT_ALLOWED_ORIGINS = {
     'http://127.0.0.1:3456',
     'http://localhost:3457',
     'http://127.0.0.1:3457',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
 }
-DEFAULT_ALLOWED_HOSTS = {'localhost', '127.0.0.1', '::1'}
 MAX_REQUEST_BYTES = 2 * 1024 * 1024
 MAX_IMPORT_FILE_BYTES = 1536 * 1024
 MAX_IMPORT_TEXT_CHARS = 500_000
 MAX_REPORT_HTML_CHARS = 1_200_000
 MAX_REPORT_BASE64_BYTES = 8 * 1024 * 1024
-REPORT_ARTIFACT_DIR = os.environ.get(
-    'JYOTISH_REPORT_ARTIFACT_DIR',
-    os.path.join(tempfile.gettempdir(), 'jyotish-reports'),
-)
+REPORT_ARTIFACT_DIR = os.path.join('/private/tmp', 'jyotish-reports')
 
 API_COMMAND_MAP = {
     'chart': '/api/chart',
@@ -1460,7 +1164,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json; charset=utf-8')
         self._send_cors_headers()
         self.send_header('X-Content-Type-Options', 'nosniff')
-        self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+        self.send_header('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
         self.send_header('Vary', 'Origin')
         self.end_headers()
@@ -1492,8 +1196,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         if origin and origin not in allowed:
             raise Forbidden('Origin is not allowed')
         host = (self.headers.get('Host') or '').split(':', 1)[0].strip('[]').lower()
-        allowed_hosts = getattr(self.server, 'allowed_hosts', DEFAULT_ALLOWED_HOSTS)
-        if host and host not in allowed_hosts:
+        if host and host not in {'localhost', '127.0.0.1', '::1'}:
             raise Forbidden('Host is not allowed')
         if require_json:
             content_type = (self.headers.get('Content-Type') or '').split(';', 1)[0].strip().lower()
@@ -1508,25 +1211,11 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         scheme, _, token = authorization.partition(' ')
         return token.strip() if scheme.lower() == 'bearer' else ''
 
-    def _require_dynamic_rectification_token(self):
-        configured = os.environ.get('JYOTISH_DYNAMIC_RECTIFICATION_TOKEN', '').strip()
-        if not configured:
-            service_role = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '').strip()
-            if service_role:
-                configured = hashlib.sha256(
-                    f'jyotisha-dynamic-rectification-v1:{service_role}'.encode('utf-8')
-                ).hexdigest()
-        supplied = self._job_access_token()
-        matches = secrets.compare_digest(supplied, configured)
-        if not configured or not matches:
-            raise Forbidden('Dynamic rectification server token is missing or invalid')
-
     def _vedastro_status(self):
         adapter = _load_local_module('vedastro_service_adapter')
         endpoint = os.environ.get('VEDASTRO_API_ENDPOINT', '').strip()
         network_flag = os.environ.get('VEDASTRO_ENABLE_NETWORK', '').strip().lower()
         network_enabled = network_flag in {'1', 'true', 'yes'}
-        has_api_key = bool(os.environ.get('VEDASTRO_API_KEY', '').strip())
         parsed = urlparse(endpoint) if endpoint else None
         configured = bool(endpoint)
         if not configured:
@@ -1551,7 +1240,6 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'status': status,
             'configured': configured,
             'network_enabled': network_enabled,
-            'has_api_key': has_api_key,
             'endpoint_host': parsed.netloc if parsed else None,
             'required_env': {
                 'endpoint': 'VEDASTRO_API_ENDPOINT',
@@ -1616,7 +1304,6 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                     'ayanamsa_default': 'lahiri',
                     'modules': 'Chart/KP/Synastry/Prashna/Remedies/Dasha/Varga/Jaimini/Ashtakavarga/Shadbala/Yoga/Aspects/Tajika/Muhurta/BhavaChalit/BhavaBala/Sudarshana/Nakshatra/Transit/RectificationGate/CaseValidation/DivisionalYoga/Kakshya',
                     'async_job_runtime': async_job_runtime_status(),
-                    'vedastro': self._vedastro_status(),
                 })
             elif path == '/api/cities':
                 self._json(list(CITY_DB.keys()))
@@ -1630,6 +1317,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(self._compute_vedastro_gateway_status())
             elif path == '/api/vedastro_gateway/archives':
                 self._json(self._compute_vedastro_gateway_archives())
+            elif path == '/api/profiles':
+                self._json(self._handle_profiles_get())
+            elif path == '/api/chat_sessions':
+                self._json(self._chat_session_store().list_sessions())
+            elif path == '/api/profile-pairs':
+                self._json(self._profile_store().list_pairs())
             elif path.startswith('/api/vedastro_gateway/jobs/'):
                 job_id = path.rsplit('/', 1)[-1]
                 result = self._compute_vedastro_gateway_job(job_id)
@@ -1699,6 +1392,16 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             elif path == '/api/daily_guidance':
                 result = _load_local_module('daily_guidance_service').build_daily_guidance(body)
                 self._json(result)
+            elif path.startswith('/api/profiles/') and path.endswith('/chart'):
+                # POST /api/profiles/{profile_id}/chart
+                profile_id = path.split('/')[-2]
+                self._json(self._handle_profile_chart(profile_id, body))
+            elif path == '/api/profiles':
+                self._json(self._handle_profiles_post(body))
+            elif path == '/api/chat_sessions':
+                self._json(self._chat_session_store().replace_sessions(body.get('sessions') if isinstance(body, dict) else []))
+            elif path == '/api/profile-pairs':
+                self._json(self._profile_store().create_pair(body))
             elif path == '/api/remedies':
                 result = self._compute_remedies(body)
                 self._json(result)
@@ -1824,12 +1527,6 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             elif path == '/api/active_rectification_events':
                 result = self._compute_active_rectification_events(body)
                 self._json(result)
-            elif path == '/api/dynamic_rectification_opportunities':
-                result = self._compute_dynamic_rectification_opportunities(body)
-                self._json(result)
-            elif path == '/api/dynamic_rectification_score':
-                result = self._compute_dynamic_rectification_score(body)
-                self._json(result)
             elif path == '/api/case_validation':
                 result = self._compute_case_validation(body)
                 self._json(result)
@@ -1877,6 +1574,39 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             logging.exception("[api_server] request failed for %s", path)
             self._error_json('Internal server error', 500, 'ERR_INTERNAL')
 
+    def do_PATCH(self):
+        path = urlparse(self.path).path
+        try:
+            self._enforce_request_security(require_json=True)
+            body = self._read_json_body()
+            if path.startswith('/api/profiles/'):
+                self._json(self._handle_profiles_patch(path.rsplit('/', 1)[-1], body))
+            else:
+                self._error_json(f'Unknown endpoint: {path}', 404, 'ERR_NOT_FOUND')
+        except BadRequest as e:
+            self._error_json(str(e), 400, 'ERR_BAD_REQUEST')
+        except KeyError as exc:
+            self._error_json(f'Profile not found: {exc.args[0]}', 404, 'ERR_NOT_FOUND')
+        except Exception:
+            import logging
+            logging.exception("[api_server] PATCH request failed for %s", path)
+            self._error_json('Internal server error', 500, 'ERR_INTERNAL')
+
+    def do_DELETE(self):
+        path = urlparse(self.path).path
+        try:
+            self._enforce_request_security()
+            if path.startswith('/api/profiles/'):
+                self._json(self._handle_profiles_delete(path.rsplit('/', 1)[-1]))
+            else:
+                self._error_json(f'Unknown endpoint: {path}', 404, 'ERR_NOT_FOUND')
+        except KeyError as exc:
+            self._error_json(f'Profile not found: {exc.args[0]}', 404, 'ERR_NOT_FOUND')
+        except Exception:
+            import logging
+            logging.exception("[api_server] DELETE request failed for %s", path)
+            self._error_json('Internal server error', 500, 'ERR_INTERNAL')
+
     def _read_json_body(self):
         raw_length = self.headers.get('Content-Length', '0')
         try:
@@ -1896,6 +1626,61 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         if not isinstance(body, dict):
             raise BadRequest('JSON body must be an object')
         return body
+
+    def _profile_store(self):
+        path = os.environ.get('JYOTISH_PROFILE_STORE_PATH') or os.path.join(
+            REPO_ROOT,
+            'scratch/local/chart_profiles.json',
+        )
+        return ChartProfileStore(path)
+
+    def _chat_session_store(self):
+        path = os.environ.get('JYOTISH_CHAT_SESSION_STORE_PATH') or os.path.join(
+            REPO_ROOT,
+            'scratch/local/chat_sessions.json',
+        )
+        return ChatSessionStore(path)
+
+    def _handle_profiles_get(self):
+        return self._profile_store().list_profiles()
+
+    def _handle_profiles_post(self, body):
+        return self._profile_store().create_profile(body)
+
+    def _handle_profiles_patch(self, profile_id, body):
+        return self._profile_store().update_profile(profile_id, body)
+
+    def _handle_profiles_delete(self, profile_id):
+        deleted = self._profile_store().delete_profile(profile_id)
+        if not deleted:
+            raise KeyError(profile_id)
+        return {'success': True, 'deleted_profile_id': profile_id}
+
+    def _handle_profile_chart(self, profile_id, body):
+        profile = self._profile_store().get_profile(profile_id)
+        birth = profile.get('birth') or {}
+        date_parts = [int(part) for part in str(birth.get('date') or '').split('-')]
+        time_parts = [int(part) for part in str(birth.get('time') or '00:00').split(':')]
+        while len(time_parts) < 3:
+            time_parts.append(0)
+        payload = {
+            **body,
+            'year': date_parts[0],
+            'month': date_parts[1],
+            'day': date_parts[2],
+            'hour': time_parts[0],
+            'minute': time_parts[1],
+            'second': time_parts[2],
+            'lat': birth.get('lat'),
+            'lon': birth.get('lon'),
+            'tz': birth.get('tz') if birth.get('tz') is not None else body.get('tz', 0),
+            **(profile.get('calculation_contract') or {}),
+            'skip_vedastro_evidence': body.get('skip_vedastro_evidence', True),
+        }
+        result = self._compute_chart_sync(payload)
+        result['profile_id'] = profile_id
+        result['profile_display_name'] = profile.get('display_name')
+        return result
 
     def _get_int(self, body, key, default, min_value=None, max_value=None):
         value = body.get(key, default)
@@ -2785,8 +2570,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             running['started_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
             _write_high_rigor_job_record(job_id, running)
             try:
-                with temporary_timeout_seconds(_async_high_rigor_vedastro_timeout_seconds()):
-                    result = self._compute_high_rigor_workflow_sync(body_copy)
+                result = self._compute_high_rigor_workflow_sync(body_copy)
                 completed = dict(running)
                 completed['status'] = 'completed'
                 completed['completed_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
@@ -2826,11 +2610,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         stored_record['access_token_hash'] = _access_token_hash(identity['access_token'])
         _write_async_job_record(scope, job_id, stored_record)
 
+        running = dict(stored_record)
+        running['status'] = 'running'
+        running['started_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+        _write_async_job_record(scope, job_id, running)
+
         def _run_job() -> None:
-            running = dict(stored_record)
-            running['status'] = 'running'
-            running['started_at'] = datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
-            _write_async_job_record(scope, job_id, running)
             try:
                 result = compute_fn()
                 completed = dict(running)
@@ -3388,12 +3173,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 if not isinstance(item, dict):
                     raise BadRequest('evidence items must be objects')
                 strength = strength_map.get(str(item.get('strength', 'moderate')).strip().lower(), report_orchestrator.StrengthLevel.MODERATE)
-                technique = str(item.get('technique') or f'{theme.value}_evidence_{index + 1}')
-                conclusion_limit = 4000 if technique.endswith('-strict-narrative') else 800
                 results.append(report_orchestrator.TechniqueResult(
-                    technique=technique[:80],
+                    technique=str(item.get('technique') or f'{theme.value}_evidence_{index + 1}')[:80],
                     chart=str(item.get('chart') or 'D1')[:24],
-                    conclusion=str(item.get('conclusion') or item.get('summary') or '未提供结论')[:conclusion_limit],
+                    conclusion=str(item.get('conclusion') or item.get('summary') or '未提供结论')[:800],
                     sentiment=str(item.get('sentiment') or 'neutral').strip().lower(),
                     strength=strength,
                     details=item.get('details') if isinstance(item.get('details'), dict) else {},
@@ -3430,15 +3213,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         )
         if skip_full_reading:
             module_status['full_reading'] = 'skipped_reuse_chart_data'
-        # Consultation workflow already computed and attached the local modules to
-        # ``chart_data`` before asking for a thematic report.  When the caller
-        # explicitly skips a second full-reading pass, reuse those modules rather
-        # than silently discarding D9/D10, Arudha padas and Narayana Dasha.
-        chart_modules = raw.get('modules') if isinstance(raw.get('modules'), dict) else {}
-        computed_modules = full_reading.get('modules', {}) if isinstance(full_reading, dict) else {}
-        full_modules = {**chart_modules, **computed_modules}
-        if chart_modules:
-            module_status['chart_modules'] = 'reused'
+        full_modules = full_reading.get('modules', {}) if isinstance(full_reading, dict) else {}
         chart = None
         if full_reading:
             chart = self._chart_from_full_reading(full_reading)
@@ -3486,7 +3261,6 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'periods': (dasha or {}).get('periods') or (dasha or {}).get('timeline') or [],
             'yogas': chart.get('yogas') or [],
             'ashtakavarga': ashtakavarga or {},
-            'modules': full_modules,
         }
         if yogas and isinstance(yogas.get('result'), dict):
             enriched['yogas'] = list(enriched['yogas']) + (yogas['result'].get('extended_yogas') or [])
@@ -3513,7 +3287,6 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'warnings': warnings,
             'evidence_counts': {theme: len(items) for theme, items in evidence.items()},
             'full_reading_used': bool(full_reading),
-            'chart_modules_reused': bool(chart_modules),
             'full_reading_summary': full_reading.get('summary', {}) if isinstance(full_reading, dict) else {},
             'full_reading_module_count': len(full_modules) if isinstance(full_modules, dict) else 0,
         }
@@ -3521,19 +3294,11 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
     def _thematic_evidence_source(self, mode, derived_context, has_custom_evidence):
         if mode == 'derived_chart_evidence' and derived_context:
             full_reading_used = bool(derived_context.get('full_reading_used'))
-            chart_modules_reused = bool(derived_context.get('chart_modules_reused'))
             return {
                 'mode': mode,
-                'source': (
-                    'full_reading_modules'
-                    if full_reading_used
-                    else 'reused_chart_modules'
-                    if chart_modules_reused
-                    else 'birth_or_chart_payload'
-                ),
+                'source': 'full_reading_modules' if full_reading_used else 'birth_or_chart_payload',
                 'sample_fallback': False,
                 'full_reading_used': full_reading_used,
-                'chart_modules_reused': chart_modules_reused,
                 'full_reading_module_count': derived_context.get('full_reading_module_count', 0),
                 'full_reading_summary': derived_context.get('full_reading_summary', {}),
                 'module_status': derived_context.get('module_status', {}),
@@ -3681,66 +3446,6 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 source='shadbala',
                 details=top_strength,
             ))
-
-        varga = full_modules.get('varga_full') if isinstance(full_modules.get('varga_full'), dict) else {}
-        d10 = varga.get('D10_Dasamsa') or varga.get('D10')
-        if isinstance(d10, dict) and d10:
-            ascendant = d10.get('ascendant') or d10.get('Ascendant') or {}
-            d10_planets = d10.get('planets') if isinstance(d10.get('planets'), dict) else {}
-            house_chart = d10.get('house_chart') if isinstance(d10.get('house_chart'), list) else []
-            tenth_house = house_chart[9] if len(house_chart) >= 10 and isinstance(house_chart[9], list) else []
-            asc_sign = ascendant.get('sign_cn') or ascendant.get('sign') or '未知'
-            tenth_label = '、'.join(str(name) for name in tenth_house) if tenth_house else '无行星直接落入'
-            items.append(self._theme_evidence(
-                'D10-Dashamsha-local',
-                'D10',
-                f'D10 事业分盘已完成：上升落 {asc_sign}，第10宫为{tenth_label}；用于校验职业角色、执行方式与社会位置。',
-                'neutral',
-                'strong',
-                source='chart.modules.varga_full.D10_Dasamsa',
-                details={
-                    'ascendant': ascendant,
-                    'tenth_house_planets': tenth_house,
-                    'planet_count': len(d10_planets),
-                },
-            ))
-
-        arudha = full_modules.get('arudha_padas') if isinstance(full_modules.get('arudha_padas'), dict) else {}
-        if not arudha and isinstance(full_modules.get('jaimini'), dict):
-            candidate = full_modules['jaimini'].get('arudha_padas')
-            arudha = candidate if isinstance(candidate, dict) else {}
-        padas = arudha.get('padas') if isinstance(arudha.get('padas'), dict) else arudha
-        a10 = padas.get('A10') if isinstance(padas, dict) else None
-        if isinstance(a10, dict) and a10:
-            sign = a10.get('sign_cn') or a10.get('sign') or '未知'
-            lord = a10.get('lord') or '未知'
-            items.append(self._theme_evidence(
-                'A10-Karma-Pada-local',
-                'A10',
-                f'A10（事业形象点）落 {sign}，主星为 {lord}；用于观察职业品牌、可见度与外界如何识别你的事业角色。',
-                'neutral',
-                'strong',
-                source='chart.modules.arudha_padas.A10',
-                details=a10,
-            ))
-
-        narayana = full_modules.get('narayana_dasha') if isinstance(full_modules.get('narayana_dasha'), dict) else {}
-        current_narayana = narayana.get('current_dasha') if isinstance(narayana.get('current_dasha'), dict) else {}
-        current_md = current_narayana.get('md') if isinstance(current_narayana.get('md'), dict) else {}
-        current_ad = current_narayana.get('ad') if isinstance(current_narayana.get('ad'), dict) else {}
-        if current_md:
-            md_sign = current_md.get('sign_cn') or current_md.get('sign') or '未知'
-            ad_sign = current_ad.get('sign_cn') or current_ad.get('sign') or '未知'
-            items.append(self._theme_evidence(
-                'Narayana-Dasha-local',
-                'Narayana',
-                f'Narayana Dasha 已完成：当前主周期为 {md_sign}，子周期为 {ad_sign}；可与行星大运交叉判断事业阶段。',
-                'neutral',
-                'moderate',
-                source='chart.modules.narayana_dasha.current_dasha',
-                details={'current_dasha': current_narayana},
-            ))
-
         convergence = full_modules.get('dasa_convergence') if isinstance(full_modules, dict) else {}
         if not isinstance(convergence, dict):
             convergence = {}
@@ -3962,15 +3667,30 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         return items
 
     def _theme_evidence(self, technique, chart, conclusion, sentiment, strength, *, source, details=None):
-        conclusion_limit = 4000 if str(technique).endswith('-strict-narrative') else 800
+        detail_payload = details if isinstance(details, dict) else {}
+        conclusion_text = str(conclusion)
+        if len(conclusion_text) > 800:
+            boundaries = detail_payload.get('boundaries') if isinstance(detail_payload.get('boundaries'), list) else []
+            critical = next((str(item) for item in boundaries if 'dual dasha' in str(item)), '')
+            monthly = next(
+                (line.strip() for line in conclusion_text.splitlines() if '月度主状态' in line),
+                '',
+            )
+            preserved = [item for item in (monthly, critical) if item]
+            if preserved:
+                suffix = '\n'.join(dict.fromkeys(preserved))
+                prefix_size = max(0, 797 - len(suffix))
+                conclusion_text = f"{conclusion_text[:prefix_size]}...\n{suffix}"[:800]
+            else:
+                conclusion_text = conclusion_text[:800]
         return {
             'technique': technique,
             'chart': chart,
-            'conclusion': str(conclusion)[:conclusion_limit],
+            'conclusion': conclusion_text,
             'sentiment': sentiment,
             'strength': strength,
             'details': {
-                **(details if isinstance(details, dict) else {}),
+                **detail_payload,
                 'source': source,
                 'derived': True,
             },
@@ -4919,17 +4639,15 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
 
             # Shadbala (v6.9.15: absolute component sum, no global 1200 downscaling)
             try:
-                from shadbala import calc_shadbala
-                shadbala_planets = copy.deepcopy(planets_data)
-                for planet_data in shadbala_planets.values():
-                    if isinstance(planet_data, dict) and planet_data.get('degree_in_sign') is not None:
-                        planet_data['degree'] = planet_data['degree_in_sign']
+                from shadbala import build_shadbala_context, calc_shadbala
+                shadbala_context = build_shadbala_context(jd, lat, lon, ayanamsa_name, tz)
                 sb = calc_shadbala(
-                    shadbala_planets,
+                    planets_data,
                     asc_sign,
                     birth_hour_decimal,
                     planets_data.get('Sun',{}).get('lon',0),
                     moon_lon,
+                    context=shadbala_context,
                 )
                 shadbala_summary = {p: {'rupas': round(d['total_rupas'],2), 'level': d['strength_level']} 
                     for p,d in sb.get('planets',{}).items()}
@@ -4963,57 +4681,6 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             except Exception as e:
                 import logging
                 logging.warning(f"[api_server] yoga expansion detection failed: {e}")
-            calculation_service = _load_local_module('domain_calculation_service')
-            canonical_chart = calculation_service.compute_chart({
-                'year': year,
-                'month': month,
-                'day': day,
-                'hour': hour,
-                'minute': minute,
-                'second': second,
-                'lat': lat,
-                'lon': lon,
-                'tz': tz,
-                'ayanamsa': body.get('ayanamsa', 'lahiri'),
-                'node_mode': body.get('node_mode', body.get('nodeMode', 'mean')),
-            })
-            canonical_dasha = calculation_service.compute_vimshottari_timeline(
-                birth_dt=birth_dt,
-                moon_lon=moon_lon,
-                current_date=datetime.utcnow(),
-            )
-            sade_sati = calculation_service.compute_sade_sati(
-                moon_degree=canonical_chart['planets']['Moon']['lon'],
-                asc_degree=canonical_chart['ascendant']['lon'],
-                reference_date=body.get('transit_date') or body.get('today') or body.get('current_date') or datetime.utcnow().strftime('%Y-%m-%d'),
-                tz=tz,
-                ayanamsa=body.get('ayanamsa', 'lahiri'),
-            )
-            canonical_planets = {}
-            for planet_name, planet in canonical_chart.get('planets', {}).items():
-                if not isinstance(planet, dict):
-                    continue
-                normalized_planet = dict(planet)
-                normalized_planet['degree'] = normalized_planet.get(
-                    'degree_in_sign',
-                    normalized_planet.get('degree', normalized_planet.get('lon')),
-                )
-                if normalized_planet.get('sign') in SIGNS:
-                    normalized_planet['sign_idx'] = SIGNS.index(normalized_planet['sign'])
-                canonical_planets[planet_name] = normalized_planet
-            planets_data = canonical_planets or planets_data
-            ascendant_data = dict(canonical_chart.get('ascendant', {}))
-            if ascendant_data.get('sign') in SIGNS:
-                asc_sign = ascendant_data['sign']
-                asc_sign_idx = SIGNS.index(asc_sign)
-                asc_lon = float(ascendant_data.get('lon', asc_lon))
-            canonical_houses = canonical_chart.get('houses', {})
-            if isinstance(canonical_houses, dict) and canonical_houses:
-                houses = {}
-                for h in range(1, 13):
-                    house = canonical_houses.get(f'house_{h}', {})
-                    sign = house.get('cusp_sign', SIGNS[(asc_sign_idx + h - 1) % 12])
-                    houses[h] = {'sign': sign, 'sign_idx': SIGNS.index(sign)}
             result = {
                 'success': True, 'version': '6.9.15',
                 'birth': {
@@ -5040,10 +4707,10 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 },
                 'planets': planets_data, 'houses': houses, 'shadbala': shadbala_summary,
                 'dasha': {
-                    'current_md': canonical_dasha['birth_balance']['lord'],
-                    'remaining_years': canonical_dasha['birth_balance']['remaining_years'],
+                    'current_md': md_lord,
+                    'remaining_years': round(remaining, 2),
                     'total_years': total_years,
-                    'start_date': canonical_dasha['periods'][0]['start'],
+                    'start_date': dasha_start.isoformat() if hasattr(dasha_start, 'isoformat') else str(dasha_start),
                     'periods': canonical_dasha['periods'],
                     'birth_balance': canonical_dasha['birth_balance'],
                     'calculation_contract': canonical_dasha['calculation_contract'],
@@ -5527,12 +5194,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             from prashna_context import PrashnaContextError, build_prashna_context
         except ModuleNotFoundError:  # pragma: no cover - package import path
             from scripts.prashna_context import PrashnaContextError, build_prashna_context
-        question_type = body.get('question', 'general')
-        if not isinstance(question_type, str):
+        if "question" in body and not isinstance(body["question"], str):
             raise BadRequest('question must be a string')
-        question_text = body.get('question_text', '')
-        if not isinstance(question_text, str):
-            raise BadRequest('question_text must be a string')
         if "question_text" in body and not isinstance(body["question_text"], str):
             raise BadRequest('question_text must be a string')
         if "planets" in body or "asc_degree" in body:
@@ -5550,7 +5213,14 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 "reason": "Prashna adjudication is disabled until Tajika/Saham/Sphuta kernels pass classic golden cases.",
             },
         }
+
         # Legacy client-supplied-chart pipeline below is unreachable pending deletion.
+        question_type = body.get('question', 'general')
+        if not isinstance(question_type, str):
+            raise BadRequest('question must be a string')
+        question_text = body.get('question_text', '')
+        if not isinstance(question_text, str):
+            raise BadRequest('question_text must be a string')
         from prashna import (
             QUESTION_CATEGORIES,
             analyze_lost_item,
@@ -6812,19 +6482,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             headline = '出生时间风险较低，可进入完整解盘'
             next_action = '保留原始出生记录来源；重要预测仍建议用 Dasha/Transit/案例验证交叉确认。'
 
-        try:
-            vedastro_gateway = self._compute_vedastro_gateway_run(body)
-        except Exception as exc:  # Keep rectification available when the external observation is down.
-            vedastro_gateway = {
-                'scope': 'vedastro_gateway_run',
-                'status': 'official_blocked',
-                'official_closure_reason': 'gateway_invocation_error',
-                'error_type': type(exc).__name__,
-            }
         return {
             'success': True,
             'endpoint': 'rectification_gate',
-            'vedastro_gateway': vedastro_gateway,
             'ascendant': {
                 'lon': asc_lon,
                 'sign': SIGNS[int(asc_lon / 30) % 12],
@@ -6969,8 +6629,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'date': event_date,
                 'precision': precision,
             })
-        module = _load_local_module('active_rectification_events')
-        result = module.score_life_events({
+        event_module = _load_local_module('active_rectification_events')
+        result = event_module.score_life_events({
             'birth_date': birth_date,
             'start_time': start_time,
             'end_time': end_time,
@@ -6980,6 +6640,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'events': normalized_events,
         })
         from scripts.rectification_technique_contract import build_rectification_technique_contract
+
         result['technique_contract'] = build_rectification_technique_contract(
             event_count=result.get('event_count', 0),
             domain_count=result.get('domain_count', 0),
@@ -6987,16 +6648,18 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         )
         if high_rigor:
             from scripts.rectification_three_engine_packet import build_packet
-            result['three_engine_packet'] = build_packet({
-                'year': parsed_birth_date.year,
-                'month': parsed_birth_date.month,
-                'day': parsed_birth_date.day,
-                'hour': int(start_time.split(':', 1)[0]),
-                'minute': int(start_time.split(':', 1)[1]),
-                'lat': lat,
-                'lon': lon,
-                'tz': tz,
-            },
+
+            result['three_engine_packet'] = build_packet(
+                {
+                    'year': parsed_birth_date.year,
+                    'month': parsed_birth_date.month,
+                    'day': parsed_birth_date.day,
+                    'hour': int(start_time.split(':', 1)[0]),
+                    'minute': int(start_time.split(':', 1)[1]),
+                    'lat': lat,
+                    'lon': lon,
+                    'tz': tz,
+                },
                 enqueue_vedastro_gateway=True,
                 vedastro_question='High-rigor birth-time rectification evidence packet',
                 vedastro_reference_date=datetime.now().strftime('%Y-%m-%d'),
@@ -7008,95 +6671,6 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'endpoint': 'active_rectification_events',
             **result,
         }
-
-    def _dynamic_rectification_base(self, body, allowed_fields, field_label):
-        unsupported_fields = sorted(set(body) - allowed_fields)
-        if unsupported_fields:
-            raise BadRequest(f'unsupported dynamic rectification {field_label} field: {unsupported_fields[0]}')
-        birth_date = body.get('birth_date')
-        start_time = body.get('start_time')
-        end_time = body.get('end_time')
-        if not isinstance(birth_date, str):
-            raise BadRequest('birth_date must be YYYY-MM-DD')
-        if not isinstance(start_time, str) or not isinstance(end_time, str):
-            raise BadRequest('candidate times must be HH:MM')
-        for key in ('lat', 'lon', 'tz'):
-            if key not in body or body[key] in (None, ''):
-                raise BadRequest(f'{key} is required')
-        try:
-            datetime.strptime(birth_date, '%Y-%m-%d')
-            datetime.strptime(start_time, '%H:%M')
-            datetime.strptime(end_time, '%H:%M')
-        except ValueError as exc:
-            raise BadRequest('birth date or candidate time has invalid format') from exc
-        return {
-            **body,
-            'birth_date': birth_date,
-            'start_time': start_time,
-            'end_time': end_time,
-            'lat': self._get_float(body, 'lat', 0, -90, 90),
-            'lon': self._get_float(body, 'lon', 0, -180, 180),
-            'tz': self._get_float(body, 'tz', 0, -14, 14),
-        }
-
-    def _compute_dynamic_rectification_opportunities(self, body):
-        self._require_dynamic_rectification_token()
-        allowed_fields = {
-            'case_id', 'birth_date', 'as_of_date', 'start_time', 'end_time',
-            'lat', 'lon', 'tz', 'candidate_model', 'evidence',
-            'dismissed_opportunity_ids', 'question_fingerprints',
-            'partition_fingerprints', 'recent_ranges',
-        }
-        normalized = self._dynamic_rectification_base(body, allowed_fields, 'opportunity')
-        case_id = normalized.get('case_id')
-        as_of_date = normalized.get('as_of_date')
-        if not isinstance(case_id, str) or not case_id.strip():
-            raise BadRequest('case_id must be a non-empty string')
-        if not isinstance(as_of_date, str):
-            raise BadRequest('as_of_date must be YYYY-MM-DD')
-        try:
-            datetime.strptime(as_of_date, '%Y-%m-%d')
-        except ValueError as exc:
-            raise BadRequest('as_of_date must be YYYY-MM-DD') from exc
-        for key in ('evidence', 'dismissed_opportunity_ids', 'question_fingerprints', 'partition_fingerprints', 'recent_ranges'):
-            if not isinstance(normalized.get(key), list):
-                raise BadRequest(f'{key} must be an array')
-        if any(not isinstance(item, str) or not item for key in ('dismissed_opportunity_ids', 'question_fingerprints', 'partition_fingerprints') for item in normalized[key]):
-            raise BadRequest('dynamic rectification fingerprints and IDs must be non-empty strings')
-        for item in normalized['recent_ranges']:
-            if not isinstance(item, dict) or set(item) != {'start_time', 'end_time'}:
-                raise BadRequest('recent_ranges must contain only start_time and end_time')
-            try:
-                datetime.strptime(item['start_time'], '%H:%M')
-                datetime.strptime(item['end_time'], '%H:%M')
-            except (KeyError, TypeError, ValueError) as exc:
-                raise BadRequest('recent_ranges must contain valid HH:MM times') from exc
-        if normalized.get('candidate_model') is not None and not isinstance(normalized['candidate_model'], dict):
-            raise BadRequest('candidate_model must be an object')
-        module = _load_local_module('dynamic_rectification')
-        try:
-            result = module.build_difference_packet(normalized)
-        except (KeyError, TypeError, ValueError) as exc:
-            raise BadRequest(str(exc)) from exc
-        return {'success': True, 'endpoint': 'dynamic_rectification_opportunities', **result}
-
-    def _compute_dynamic_rectification_score(self, body):
-        self._require_dynamic_rectification_token()
-        allowed_fields = {
-            'birth_date', 'start_time', 'end_time', 'lat', 'lon', 'tz', 'choice_evidence',
-        }
-        normalized = self._dynamic_rectification_base(body, allowed_fields, 'score')
-        evidence = normalized.get('choice_evidence')
-        if not isinstance(evidence, list):
-            raise BadRequest('choice_evidence must be an array')
-        if any(isinstance(item, dict) and 'option_id' in item for item in evidence):
-            raise BadRequest('option_id is client-owned and cannot be scored')
-        module = _load_local_module('dynamic_rectification')
-        try:
-            result = module.score_choice_evidence(normalized)
-        except (KeyError, TypeError, ValueError) as exc:
-            raise BadRequest(str(exc)) from exc
-        return {'success': True, 'endpoint': 'dynamic_rectification_score', **result}
 
     def _compute_case_validation(self, body):
         planets, _, _ = self._normalized_planets_from_body(body)
@@ -7582,7 +7156,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         techniques = registry.get('techniques', {})
         engine_commands = self._scan_engine_commands()
         api_endpoints = self._scan_api_endpoints()
-        app_routes = self._scan_app_routes()
+        app_tabs = self._scan_app_tabs()
         local_sources = self._scan_local_open_source_sources()
         command_set = set(engine_commands)
         api_command_map = API_COMMAND_MAP
@@ -7591,7 +7165,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             for command, endpoint in api_command_map.items()
             if endpoint in api_endpoints or command in command_set
         )
-        app_visible_topics = self._app_visible_topics()
+        app_visible_topics = self._app_visible_topics(app_tabs)
         registry_commands = sorted({
             command
             for technique in techniques.values()
@@ -7652,8 +7226,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'api_backed_commands': api_backed_commands,
                 'engine_not_api': engine_not_api,
                 'registry_only_commands': registry_only_commands,
-                'app_route_count': len(app_routes),
-                'app_routes': app_routes,
+                'app_tab_count': len(app_tabs),
+                'app_tabs': app_tabs,
                 'app_visible_topics': app_visible_topics,
             },
             'local_open_source': {
@@ -7985,7 +7559,6 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/pancha_mahapurusha': 'Assess Pancha Mahapurusha yoga strength',
             '/api/prashna': 'Compute Prashna chart and answer evidence',
             '/api/rectification_gate': 'Evaluate birth-time precision gate',
-            '/api/active_rectification_events': 'Score dated life events against actual birth-time candidates',
             '/api/relationship': 'Compute relationship and spouse-status evidence',
             '/api/remedies': 'Generate low-risk remedies from doshas/strength/dasha',
             '/api/sade_sati': 'Compute Sade Sati status and phase',
@@ -8111,40 +7684,33 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             return []
         return sorted(set(re.findall(r"path == ['\"](/api/[^'\"]+)['\"]", text)))
 
-    def _scan_app_routes(self):
-        root = os.path.join(REPO_ROOT, 'frontend', 'src', 'app')
-        if not os.path.isdir(root):
+    def _scan_app_tabs(self):
+        path = os.path.join(REPO_ROOT, 'jyotish-app', 'index.html')
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                text = f.read()
+        except OSError:
             return []
-        routes = []
-        for dirpath, _, filenames in os.walk(root):
-            if not {'page.tsx', 'page.ts', 'page.jsx', 'page.js'}.intersection(filenames):
-                continue
-            relative = os.path.relpath(dirpath, root)
-            routes.append('home' if relative == '.' else relative.replace(os.sep, '/'))
-        return sorted(set(routes))
+        return sorted(set(re.findall(r'data-tab="([^"]+)"', text)))
 
     def _scan_app_source_text(self):
-        roots = [
-            os.path.join(REPO_ROOT, 'frontend', 'src', 'app'),
-            os.path.join(REPO_ROOT, 'frontend', 'src', 'components'),
-        ]
+        root = os.path.join(REPO_ROOT, 'jyotish-app')
+        if not os.path.isdir(root):
+            return ''
         chunks = []
-        for root in roots:
-            if not os.path.isdir(root):
-                continue
-            for dirpath, dirnames, filenames in os.walk(root):
-                dirnames[:] = [
-                    d for d in dirnames
-                    if d not in {'api', 'node_modules', '.next', '.git'}
-                ]
-                for filename in filenames:
-                    if not filename.endswith(('.js', '.jsx', '.ts', '.tsx', '.html', '.css')):
-                        continue
-                    try:
-                        with open(os.path.join(dirpath, filename), 'r', encoding='utf-8', errors='ignore') as f:
-                            chunks.append(f.read(40000))
-                    except OSError:
-                        continue
+        for dirpath, dirnames, filenames in os.walk(root):
+            dirnames[:] = [
+                d for d in dirnames
+                if d not in {'node_modules', 'dist', '.vite', '.git'}
+            ]
+            for filename in filenames:
+                if not filename.endswith(('.js', '.html', '.css')):
+                    continue
+                try:
+                    with open(os.path.join(dirpath, filename), 'r', encoding='utf-8', errors='ignore') as f:
+                        chunks.append(f.read(40000))
+                except OSError:
+                    continue
         return '\n'.join(chunks).lower()
 
     def _scan_local_open_source_sources(self):
@@ -8265,8 +7831,29 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 found.append(module)
         return found
 
-    def _app_visible_topics(self):
-        topics = []
+    def _app_visible_topics(self, tabs):
+        mapping = {
+            'chart': 'D1/Rashi',
+            'complete': 'Full Reading',
+            'karaka': 'Jaimini Karaka',
+            'houses': 'Bhava',
+            'aspects': 'Aspects',
+            'yogas': 'Yoga',
+            'vargas': 'Varga',
+            'ashtakavarga': 'Ashtakavarga',
+            'shadbala': 'Shadbala',
+            'dasha': 'Dasha',
+            'transit': 'Transit',
+            'deep': 'PACDARES/Argala',
+            'extended': 'Bhava Bala/Vimsopaka',
+            'remedies': 'Remedies',
+            'synastry': 'Synastry',
+            'prashna': 'Prashna',
+            'kp': 'KP',
+            'verify': 'Verification',
+            'transit-compare': 'Transit Compare',
+        }
+        topics = [mapping[t] for t in tabs if t in mapping]
         source_text = self._scan_app_source_text()
         source_markers = {
             'Muhurta': ['computemuhurta', 'muhurta'],
@@ -8684,18 +8271,11 @@ def _parse_allowed_origins(value):
     return {item.strip() for item in value.split(',') if item.strip()}
 
 
-def _parse_allowed_hosts(value):
-    if not value:
-        return DEFAULT_ALLOWED_HOSTS
-    return {item.strip().lower() for item in value.split(',') if item.strip()}
-
-
-def start_server(port=5200, host='127.0.0.1', allowed_origins=None, allowed_hosts=None):
+def start_server(port=5200, host='127.0.0.1', allowed_origins=None):
     cleanup = prune_expired_async_jobs()
     server = ThreadingHTTPServer((host, port), JyotishAPIHandler)
     server.daemon_threads = True
     server.allowed_origins = allowed_origins or DEFAULT_ALLOWED_ORIGINS
-    server.allowed_hosts = allowed_hosts or DEFAULT_ALLOWED_HOSTS
     print(f'Jyotish API v6.9.14 running on http://{host}:{port}')
     print(f"  Async job cleanup: scanned={cleanup['scanned']}, removed={cleanup['removed']}")
     print(f'  CORS origins: {", ".join(sorted(server.allowed_origins))}')
@@ -8739,20 +8319,7 @@ if __name__ == '__main__':
         default=[],
         help='Allowed browser origin; may be repeated. Defaults to local Vite origins.',
     )
-    parser.add_argument(
-        '--allow-host',
-        action='append',
-        default=[],
-        help='Allowed HTTP Host name; may be repeated. Defaults to loopback hosts.',
-    )
     args = parser.parse_args()
     env_origins = _parse_allowed_origins(os.environ.get('JYOTISH_ALLOWED_ORIGINS'))
     cli_origins = set(args.allow_origin)
-    env_hosts = _parse_allowed_hosts(os.environ.get('JYOTISH_ALLOWED_HOSTS'))
-    cli_hosts = {item.strip().lower() for item in args.allow_host if item.strip()}
-    start_server(
-        args.port,
-        host=args.host,
-        allowed_origins=cli_origins or env_origins,
-        allowed_hosts=cli_hosts or env_hosts,
-    )
+    start_server(args.port, host=args.host, allowed_origins=cli_origins or env_origins)

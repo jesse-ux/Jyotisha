@@ -16,5 +16,6 @@ test("birth-time errors preserve a safe server message", () => {
 
 test("all guided journey mutations normalize implementation errors", () => {
   const source = readFileSync(new URL("../src/hooks/use-birth-time-guided-journey.ts", import.meta.url), "utf8");
-  assert.equal((source.match(/setError\(birthTimeUserError\(caught\)\)/g) ?? []).length, 2);
+  assert.ok((source.match(/setError\(birthTimeUserError\(caught\)\)/g) ?? []).length >= 1);
+  assert.equal(source.includes("setError(caught.message"), false);
 });

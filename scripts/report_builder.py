@@ -467,11 +467,11 @@ Examples:
     footer_cn = """<div class="footer-note">
   本报告基于传统吠陀占星方法（Parashari Jyotish | KN Rao School）。<br>
   每项结论均有量化行星指标支撑。仅供自我反思与战略思考参考。<br>
-  Powered by Jyotish Engine v6.9.7 &amp; Swiss Ephemeris</div>"""
+  Powered by Jyotish Engine v6.9.14 &amp; Swiss Ephemeris</div>"""
     footer_en = """<div class="footer-note">
   Generated using traditional Vedic astrological methods (Parashari Jyotish | KN Rao School).<br>
   Every claim backed by quantified planetary metrics. For self-reflection purposes only.<br>
-  Powered by Jyotish Engine v6.9.7 &amp; Swiss Ephemeris</div>"""
+  Powered by Jyotish Engine v6.9.14 &amp; Swiss Ephemeris</div>"""
     footer = footer_cn if lang == "cn" else footer_en
 
     html_lang = "zh-CN" if lang == "cn" else "en"

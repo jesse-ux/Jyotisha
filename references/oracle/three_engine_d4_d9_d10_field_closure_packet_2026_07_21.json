@@ -1,0 +1,68 @@
+{
+  "scope": "three_engine_d4_d9_d10_field_closure_packet",
+  "created_at": "2026-07-21",
+  "claim_status": "partial",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_arbitration": "references/oracle/three_engine_mismatch_arbitration_2026_07_19.json",
+  "source_queue": "references/oracle/three_engine_mismatch_closure_queue_2026_07_19.json",
+  "source_jyotishganit_bridge": "references/oracle/jyotishganit_three_engine_closure_bridge_2026_07_21.json",
+  "summary": {
+    "rows_total": 3,
+    "local_pyjhora_jyotishganit_agree": 3,
+    "vedastro_endpoint_semantics_blocked": 3,
+    "truth_upgrades": 0
+  },
+  "rows": [
+    {
+      "ticket_id": "TEMCQ-008",
+      "section": "D4",
+      "field": "Moon.sign",
+      "local_value": "Gemini",
+      "pyjhora_jhora_value": "Gemini",
+      "jyotishganit_value": "Gemini",
+      "vedastro_value": "Pisces",
+      "partial_consensus_value": "Gemini",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "closure_status": "partial_consensus_vedastro_endpoint_blocked",
+      "remaining_evidence_needed": "VedAstro endpoint/method contract with ayanamsa, node mode, varga and timezone semantics, plus raw replay pinned to same request",
+      "claim_boundary": "three_engine_consensus_not_global_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-009",
+      "section": "D9",
+      "field": "Moon.sign",
+      "local_value": "Scorpio",
+      "pyjhora_jhora_value": "Scorpio",
+      "jyotishganit_value": "Scorpio",
+      "vedastro_value": "Leo",
+      "partial_consensus_value": "Scorpio",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "closure_status": "partial_consensus_vedastro_endpoint_blocked",
+      "remaining_evidence_needed": "VedAstro endpoint/method contract with ayanamsa, node mode, varga and timezone semantics, plus raw replay pinned to same request",
+      "claim_boundary": "three_engine_consensus_not_global_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-010",
+      "section": "D10",
+      "field": "Moon.sign",
+      "local_value": "Pisces",
+      "pyjhora_jhora_value": "Pisces",
+      "jyotishganit_value": "Pisces",
+      "vedastro_value": "Sagittarius",
+      "partial_consensus_value": "Pisces",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "closure_status": "partial_consensus_vedastro_endpoint_blocked",
+      "remaining_evidence_needed": "VedAstro endpoint/method contract with ayanamsa, node mode, varga and timezone semantics, plus raw replay pinned to same request",
+      "claim_boundary": "three_engine_consensus_not_global_truth"
+    }
+  ],
+  "boundary": "D4/D9/D10 partial consensus only; hosted VedAstro remains blocked, so no global truth or commercial tuning upgrade.",
+  "human_report": "docs/research/three_engine_d4_d9_d10_field_closure_packet_2026_07_21.md"
+}

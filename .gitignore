@@ -43,5 +43,9 @@ frontend/pnpm-workspace.yaml
 /benchmarks/vedastro_nuget_probe/bin/
 /benchmarks/vedastro_nuget_probe/obj/
 
+# Local ephemeris/runtime data downloaded outside the repo artifact contract
+/hip_main.dat
+/hip_main.dat.download
+
 # Local isolated feature worktrees
 .worktrees/

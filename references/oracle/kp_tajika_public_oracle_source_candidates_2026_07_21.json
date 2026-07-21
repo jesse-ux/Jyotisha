@@ -1,0 +1,75 @@
+{
+  "scope": "kp_tajika_public_oracle_source_candidates",
+  "created_at": "2026-07-21",
+  "claim_status": "open_queue",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "boundary": "Public sources were located for KP sub-lord material and Tajika/Varshaphala worked-example material, but none yet supplies a complete, extracted, settings-stable numeric oracle for the requested WorkBuddy closure items.",
+  "candidates": [
+    {
+      "candidate_id": "kp_249_sub_lord_table_candidate",
+      "domain": "kp_exact_cusp",
+      "source_url": "https://astrology-videos.com/krishnamurti-astrology/249-subs-in-kp/",
+      "source_type": "public_reference_table",
+      "promotion_status": "candidate_needs_numeric_extraction",
+      "claim_upgrade": "none",
+      "usable_now": "Reference candidate for KP 249 sub-lord segmentation.",
+      "missing_for_oracle": [
+        "worked birth/question example",
+        "exact cusp longitude",
+        "star lord / sub lord / sub-sub lord result table",
+        "ayanamsa and house system settings",
+        "independent local replay"
+      ]
+    },
+    {
+      "candidate_id": "kp_cusp_sub_lord_theory_candidate",
+      "domain": "kp_exact_cusp",
+      "source_url": "https://kpastrologer.com/kp-system/sub-lord-theory-in-kp-astrology/",
+      "source_type": "public_theory_reference",
+      "promotion_status": "candidate_reference_only",
+      "claim_upgrade": "none",
+      "usable_now": "Explains KP sub-lord theory; not a numeric oracle.",
+      "missing_for_oracle": [
+        "full numeric worked example",
+        "machine-readable cusp/star/sub/sub-sub table"
+      ]
+    },
+    {
+      "candidate_id": "tajika_varshaphala_worked_example_pdf_candidate",
+      "domain": "tajika_varshaphala",
+      "source_url": "https://vedicastrologervaibhavvyas.com/DownloadsofVA/4.%20my%20article%20on%20varshaphala.pdf",
+      "source_type": "public_pdf_worked_example_candidate",
+      "promotion_status": "candidate_needs_numeric_extraction",
+      "claim_upgrade": "none",
+      "usable_now": "Candidate public Varshaphala worked-example source; requires extraction and independent replay.",
+      "missing_for_oracle": [
+        "structured numeric extraction",
+        "source hash",
+        "settings normalization",
+        "field-level local replay",
+        "not Steve Jobs 1984"
+      ]
+    },
+    {
+      "candidate_id": "steve_jobs_1984_tajika_template",
+      "domain": "tajika_varshaphala",
+      "source_url": "references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json",
+      "source_type": "local_blank_template",
+      "promotion_status": "candidate_reference_only",
+      "claim_upgrade": "none",
+      "usable_now": "Template only; no external values captured.",
+      "missing_for_oracle": [
+        "tool/source name",
+        "capture date",
+        "solar return datetime",
+        "varsha lagna degree",
+        "Muntha sign",
+        "year lord",
+        "Mudda Dasha first lord",
+        "Saham values",
+        "Tajika yoga values"
+      ]
+    }
+  ]
+}

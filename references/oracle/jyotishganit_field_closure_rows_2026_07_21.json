@@ -1,0 +1,61 @@
+{
+  "scope": "jyotishganit_field_closure_rows",
+  "created_at": "2026-07-21",
+  "claim_status": "observation_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_probe": "scripts/jyotishganit_field_probe.py",
+  "source_raw_hash": "19fa9ea862b68c4cffb6756fa6cbf0466daf47a8b008b3fe8809e9fc6a1ed30c",
+  "source_selected_hash": "4709b8ade84efdea4d0a67c15f3e32cea516a5aa2e8abe3885578feda20cb3f4",
+  "rows": [
+    {
+      "field": "D2",
+      "source_path": "selected_raw.varga_sign_table.D2",
+      "closure_status": "ready_for_field_comparison",
+      "comparison_unit": "planet_sign_table"
+    },
+    {
+      "field": "D4",
+      "source_path": "selected_raw.varga_sign_table.D4",
+      "closure_status": "ready_for_field_comparison",
+      "comparison_unit": "planet_sign_table"
+    },
+    {
+      "field": "D9",
+      "source_path": "selected_raw.varga_sign_table.D9",
+      "closure_status": "ready_for_field_comparison",
+      "comparison_unit": "planet_sign_table"
+    },
+    {
+      "field": "D10",
+      "source_path": "selected_raw.varga_sign_table.D10",
+      "closure_status": "ready_for_field_comparison",
+      "comparison_unit": "planet_sign_table"
+    },
+    {
+      "field": "Panchanga",
+      "source_path": "selected_raw.panchanga",
+      "closure_status": "ready_for_field_comparison",
+      "comparison_unit": "schema_and_named_fields"
+    },
+    {
+      "field": "BAV",
+      "source_path": "selected_raw.ashtakavarga.bav",
+      "closure_status": "ready_for_field_comparison",
+      "comparison_unit": "per_planet_bindus"
+    },
+    {
+      "field": "SAV",
+      "source_path": "selected_raw.ashtakavarga.sav",
+      "closure_status": "ready_for_field_comparison",
+      "comparison_unit": "sarvashtakavarga_bindus"
+    }
+  ],
+  "explicit_gaps": [
+    {
+      "field": "Shadbala",
+      "reason": "jyotishganit probe did not expose shadbala/strengths in selected raw"
+    }
+  ],
+  "boundary": "field_rows_only_no_formula_truth"
+}

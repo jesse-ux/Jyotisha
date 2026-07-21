@@ -1,0 +1,53 @@
+{
+  "scope": "panchanga_temcq_061_schema_packet",
+  "created_at": "2026-07-21",
+  "ticket_id": "TEMCQ-061",
+  "claim_status": "open_queue",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_ticket_placeholder": "references/oracle/three_engine_field_status_batch_2026_07_21.json",
+  "source_jyotishganit_probe": "references/oracle/jyotishganit_field_probe_steve_jobs_2026_07_19.json",
+  "closure_status": "schema_mapping_required",
+  "summary": {
+    "normalized_fields_ready": 0,
+    "truth_upgrades": 0,
+    "observed_jyotishganit_field_count": 6
+  },
+  "jyotishganit_observed_raw": {
+    "@type": "Panchanga",
+    "karana": "Gara",
+    "nakshatra": "Uttara Bhadrapada",
+    "tithi": "Shukla Tritiya",
+    "vaara": "Thursday",
+    "yoga": "Shubha"
+  },
+  "engine_field_status": {
+    "local": "archived_panchanga_field_missing",
+    "jyotishganit": "raw_available_not_normalized",
+    "VedAstro": "shared_panchanga_endpoint_not_pinned",
+    "PyJHora_JHora": "not_archived_as_normalized_panchanga"
+  },
+  "required_schema_fields": [
+    "vaara",
+    "tithi",
+    "nakshatra",
+    "yoga",
+    "karana"
+  ],
+  "required_contract": [
+    "weekday convention",
+    "tithi naming and paksha convention",
+    "nakshatra spelling/diacritic alias table",
+    "yoga calculation convention",
+    "karana naming convention",
+    "sunrise-relative vs birth-moment rule"
+  ],
+  "next_actions": [
+    "archive local normalized Panchanga for the same public case",
+    "locate or generate legal PyJHora/JHora normalized Panchanga raw",
+    "pin VedAstro Panchanga endpoint or mark not available",
+    "then compare exact named fields after alias normalization"
+  ],
+  "boundary": "panchanga_schema_mapping_only_no_numeric_truth",
+  "human_report": "docs/research/panchanga_temcq_061_schema_packet_2026_07_21.md"
+}

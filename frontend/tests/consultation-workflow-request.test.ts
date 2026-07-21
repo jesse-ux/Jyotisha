@@ -11,11 +11,13 @@ test("timing questions use a legal report theme and preserve a timing route hint
   // When: its workflow request is projected for the Python service.
   const request = projectConsultationWorkflowRequest(question, "timing");
 
-  // Then: the illegal public theme is converted to a legal report theme with a route hint.
-  assert.deepEqual(request, {
-    question: "应期与阶段问题：未来哪些阶段值得把握？",
-    themes: ["career"],
-  });
+  // Then: the illegal public theme is converted to a legal report theme with strict route metadata.
+  assert.equal(request.question, "应期与阶段问题：未来哪些阶段值得把握？");
+  assert.deepEqual(request.themes, ["career"]);
+  assert.equal(request.strictWorkflowRoute, "timing");
+  assert.ok(request.requiredLayers.includes("Narayana"));
+  assert.ok(request.requiredLayers.includes("negative holdout gate"));
+  assert.equal(request.claimBoundary, "candidate_day_month_window_only_until_holdout_passes");
 });
 
 test("timing input projects only legal private workflow fields", async () => {
