@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 125,
+    "packet_count": 128,
     "blocked_or_partial_count": 52,
     "human_review_required_count": 3
   },
@@ -1009,6 +1009,30 @@
       "claim_status": "observation_only",
       "consumer_policy": "research_observation_only",
       "claim_boundary": "Validates only VedAstro DivisionalLongitude degree transformation for a fixed scalar input; does not establish hosted chart sign, ayanamsa, node, timezone, or full D2/D4/D9/D10 parity."
+    },
+    {
+      "packet_id": "workbuddy_round4_remaining_closure_packet_2026_07_21",
+      "path": "references/oracle/workbuddy_round4_remaining_closure_packet_2026_07_21.json",
+      "domain": "fragment_migration",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies the last three round4 WorkBuddy candidates as privacy-scrubbed reference, Shadbala artifact parse-needed, and blank Tajika template; no truth upgrade."
+    },
+    {
+      "packet_id": "pyjhora_steve_jobs_shadbala_stdout_components_2026_07_21",
+      "path": "references/oracle/pyjhora_steve_jobs_shadbala_stdout_components_2026_07_21.json",
+      "domain": "shadbala_oracle",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Parses WorkBuddy/PyJHora Steve Jobs Shadbala stdout into 42 same-unit component rows; observation only, no formula arbitration or absolute parity upgrade."
+    },
+    {
+      "packet_id": "kp_tajika_public_oracle_source_candidates_2026_07_21",
+      "path": "references/oracle/kp_tajika_public_oracle_source_candidates_2026_07_21.json",
+      "domain": "worked_example_collection",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Records public KP and Tajika/Varshaphala candidate sources found during WorkBuddy closure; none is a complete numeric oracle yet."
     }
   ]
 }
