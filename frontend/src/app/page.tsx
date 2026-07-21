@@ -695,6 +695,7 @@ export default function Home() {
   const [archivedSessionIds, setArchivedSessionIds] = useState<string[]>([]);
   const [showArchivedSessions, setShowArchivedSessions] = useState(false);
   const [sessionMenuId, setSessionMenuId] = useState<string | null>(null);
+  const [pendingSessionDeletion, setPendingSessionDeletion] = useState<ChatSession | null>(null);
   const [modelCatalog, setModelCatalog] = useState<PublicLanguageModelCatalog | null>(null);
   const [activeSessionId, setActiveSessionId] = useState("");
   const [draft, setDraft] = useState("");
@@ -1245,7 +1246,7 @@ export default function Home() {
   }
 
   async function deleteSession(session: ChatSession) {
-    if (!account || !window.confirm(`删除“${session.title}”？此操作不可恢复。`)) return;
+    if (!account) return;
     const previousSessions = sessions;
     const nextSessions = sessions.filter((item) => item.id !== session.id);
     setSessions(nextSessions);
@@ -2308,7 +2309,7 @@ export default function Home() {
             onToggleArchived: toggleArchivedSession,
             onDelete: (sessionId) => {
               const session = sessions.find((candidate) => candidate.id === sessionId);
-              if (session) void deleteSession(session);
+              if (session) setPendingSessionDeletion(session);
             },
           }}
           onAccountMenuOpenChange={setAccountMenuOpen}
@@ -2318,6 +2319,19 @@ export default function Home() {
           onOpenRedeem={() => openAccountDialog("redeem")}
           onOpenLogout={() => openAccountDialog("logout")}
         />
+        {pendingSessionDeletion ? (
+          <div className="session-delete-confirmation" role="alertdialog" aria-modal="true" aria-label="确认删除聊天记录">
+            <p>删除“{pendingSessionDeletion.title}”？此操作不可恢复。</p>
+            <div>
+              <button type="button" onClick={() => setPendingSessionDeletion(null)}>取消</button>
+              <button className="danger-button" type="button" onClick={() => {
+                const session = pendingSessionDeletion;
+                setPendingSessionDeletion(null);
+                void deleteSession(session);
+              }}>确认删除</button>
+            </div>
+          </div>
+        ) : null}
         <SidebarInset className="chat-panel" inert={activeAccountDialog !== null}>
           <header className="chat-header">
             <SidebarTrigger placement="inset" />

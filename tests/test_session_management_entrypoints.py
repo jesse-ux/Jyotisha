@@ -13,6 +13,8 @@ def test_chat_history_management_actions_are_exposed() -> None:
     for expected in (
         "renameSession",
         "deleteSession",
+        "pendingSessionDeletion",
+        "确认删除",
         "togglePinnedSession",
         "toggleArchivedSession",
         "showArchivedSessions",
