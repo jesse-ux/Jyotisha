@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   buildRectificationTechnicalPacket,
   projectRectificationTechnicalPacket,
+  RectificationTechnicalPacketRangeError,
 } from "../src/lib/conversational-rectification/technical-packet.ts";
 import type { CandidateResult } from "../src/lib/birth-time-evidence.ts";
 import type { CandidateDifferenceBuild } from "../src/lib/birth-time-dynamic-choice-internal.ts";
@@ -267,7 +268,8 @@ test("does not claim scan-wide 05:10-05:30 differences inside a 05:16-05:24 cand
       boundaryDistanceMinutes: 4,
       futureWindows: [],
     },
-  }), /two time-linked scan samples inside the selected candidate range/);
+  }), (error) => error instanceof RectificationTechnicalPacketRangeError
+    && error.reason === "insufficient_samples");
 });
 
 test("does not describe sparse in-range samples as adjacent-minute switches", () => {
@@ -296,7 +298,8 @@ test("does not describe sparse in-range samples as adjacent-minute switches", ()
       boundaryDistanceMinutes: 4,
       futureWindows: [],
     },
-  }), /two time-linked discriminating domains/);
+  }), (error) => error instanceof RectificationTechnicalPacketRangeError
+    && error.reason === "insufficient_domains");
 });
 
 test("uses typed server time links when normalized scan raw metadata omits sample times", () => {

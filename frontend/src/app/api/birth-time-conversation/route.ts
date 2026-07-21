@@ -502,72 +502,104 @@ export async function buildProductionConversationalRectificationPacket(
   const selectedRange = !input.preserveCandidateRange && eventScore?.winningSegment
     ? { startTime: eventScore.winningSegment.startTime, endTime: eventScore.winningSegment.endTime }
     : baseRange;
-  const questionnaires: RectificationQuestionnaire[] = [];
-  for (const scanRange of boundedScanRanges(selectedRange)) {
-    const scanPoint = scanCoordinates(scanRange);
-    const { questionnaire } = await rectificationPacketStage("scan", () => engine.scan({
-      birthTime: `${input.declaredBirthInput.birthDate} ${scanPoint.centerTime}`,
-      uncertaintyMinutes: scanPoint.uncertaintyMinutes,
-      lat: latitude,
-      lon: longitude,
-      tz: place.timezoneOffset,
-      ayanamsa: "lahiri",
-    }));
-    questionnaires.push(questionnaire);
-  }
-  const questionnaire = await rectificationPacketStage(
-    "merge_scans",
-    () => mergeQuestionnaireScans(questionnaires, selectedRange),
-  );
-  const candidateDifferences = await rectificationPacketStage("candidate_differences", () => engine.buildDifferencePacket({
-    caseId: input.caseId,
-    asOfDate: input.asOfDate,
-    birthDate: input.declaredBirthInput.birthDate,
-    startTime: selectedRange.startTime,
-    endTime: selectedRange.endTime,
-    lat: latitude,
-    lon: longitude,
-    tz: place.timezoneOffset,
-    evidence: [],
-    events,
-    dismissedOpportunityIds: [],
-    questionFingerprints: [],
-    partitionFingerprints: [],
-    recentRanges: [],
-    candidateModel: null,
-  }));
   const calculationVersion = eventScore
-    ? `${candidateDifferences.packet.scoringVersion}+${eventScore.algorithmVersion}`
-    : candidateDifferences.packet.scoringVersion;
-  const metadata = layerMetadata(questionnaire, calculationVersion);
-  const timeLinkedScanSamples = await rectificationPacketStage(
-    "time_links",
-    () => sampleTimes(questionnaire),
-  );
-  const representative = eventScore?.winningSegment?.representativeTime
-    ?? scanCoordinates(selectedRange).centerTime;
-  const { buildRectificationTechnicalPacket } = await import(
+    ? eventScore.algorithmVersion
+    : null;
+  const technicalPacketModule = await import(
     "../../../lib/conversational-rectification/technical-packet.ts"
   );
-  return {
-    packet: await rectificationPacketStage("technical_packet", () => buildRectificationTechnicalPacket({
+  const buildForRange = async (
+    range: { readonly startTime: string; readonly endTime: string },
+    packetEventScore: CandidateResult | null,
+  ) => {
+    const questionnaires: RectificationQuestionnaire[] = [];
+    for (const scanRange of boundedScanRanges(range)) {
+      const scanPoint = scanCoordinates(scanRange);
+      const { questionnaire } = await rectificationPacketStage("scan", () => engine.scan({
+        birthTime: `${input.declaredBirthInput.birthDate} ${scanPoint.centerTime}`,
+        uncertaintyMinutes: scanPoint.uncertaintyMinutes,
+        lat: latitude,
+        lon: longitude,
+        tz: place.timezoneOffset,
+        ayanamsa: "lahiri",
+      }));
+      questionnaires.push(questionnaire);
+    }
+    const questionnaire = await rectificationPacketStage(
+      "merge_scans",
+      () => mergeQuestionnaireScans(questionnaires, range),
+    );
+    const candidateDifferences = await rectificationPacketStage(
+      "candidate_differences",
+      () => engine.buildDifferencePacket({
+        caseId: input.caseId,
+        asOfDate: input.asOfDate,
+        birthDate: input.declaredBirthInput.birthDate,
+        startTime: range.startTime,
+        endTime: range.endTime,
+        lat: latitude,
+        lon: longitude,
+        tz: place.timezoneOffset,
+        evidence: [],
+        events,
+        dismissedOpportunityIds: [],
+        questionFingerprints: [],
+        partitionFingerprints: [],
+        recentRanges: [],
+        candidateModel: null,
+      }),
+    );
+    const version = calculationVersion
+      ? `${candidateDifferences.packet.scoringVersion}+${calculationVersion}`
+      : candidateDifferences.packet.scoringVersion;
+    const metadata = layerMetadata(questionnaire, version);
+    const timeLinkedScanSamples = await rectificationPacketStage(
+      "time_links",
+      () => sampleTimes(questionnaire),
+    );
+    const representative = packetEventScore?.winningSegment?.representativeTime
+      ?? scanCoordinates(range).centerTime;
+    return technicalPacketModule.buildRectificationTechnicalPacket({
       scan: questionnaire,
       candidateDifferences,
-      eventScore: input.preserveCandidateRange && eventScore
-        ? { ...eventScore, confidence: "low", canApply: false, winningSegment: null }
-        : eventScore,
+      eventScore: packetEventScore,
       consultation: {
         source: "server_consultation_workflow",
-        calculationVersion,
+        calculationVersion: version,
         availableLayers: metadata.availableLayers,
         layerReferences: metadata.layerReferences,
         timeLinkedScanSamples,
-        boundaryDistanceMinutes: boundaryDistance(selectedRange, representative),
+        boundaryDistanceMinutes: boundaryDistance(range, representative),
         futureWindows: [],
       },
-    })),
-    resultId: eventScore?.resultId ?? null,
+    });
   };
+
+  const packetEventScore = input.preserveCandidateRange && eventScore
+    ? { ...eventScore, confidence: "low" as const, canApply: false, winningSegment: null }
+    : eventScore;
+  try {
+    return {
+      packet: await buildForRange(selectedRange, packetEventScore),
+      resultId: eventScore?.resultId ?? null,
+    };
+  } catch (error) {
+    const selectedWasNarrowed = selectedRange.startTime !== baseRange.startTime
+      || selectedRange.endTime !== baseRange.endTime;
+    if (!selectedWasNarrowed
+      || !(error instanceof technicalPacketModule.RectificationTechnicalPacketRangeError)) {
+      return rectificationPacketStage("technical_packet", () => Promise.reject(error));
+    }
+    return {
+      packet: await rectificationPacketStage("technical_packet", () => buildForRange(
+        baseRange,
+        eventScore
+          ? { ...eventScore, confidence: "low", canApply: false, winningSegment: null }
+          : null,
+      )),
+      resultId: null,
+    };
+  }
 }
 
 async function productionNarrativeGenerator(): Promise<RectificationNarrativeGenerator> {

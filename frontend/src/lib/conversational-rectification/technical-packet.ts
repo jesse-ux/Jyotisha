@@ -92,6 +92,13 @@ type TimeLinkedVargaSample = {
   readonly sample: RectificationQuestionnaire["samples"][number];
 };
 
+export class RectificationTechnicalPacketRangeError extends TypeError {
+  constructor(readonly reason: "insufficient_samples" | "insufficient_domains") {
+    super(`rectification candidate range has ${reason.replace("_", " ")}`);
+    this.name = "RectificationTechnicalPacketRangeError";
+  }
+}
+
 const layerFields = [
   ["D1", "ascendantSign"],
   ["D2", "d2Sign"],
@@ -270,9 +277,7 @@ export function buildRectificationTechnicalPacket(input: PacketInput): Rectifica
       - (timeToMinute(right.time) - timeToMinute(range.startTime) + 1_440) % 1_440
     ));
   if (selectedSamples.length < 2) {
-    throw new TypeError(
-      "rectification packet requires two time-linked scan samples inside the selected candidate range",
-    );
+    throw new RectificationTechnicalPacketRangeError("insufficient_samples");
   }
   const layers = layerEvidence(selectedSamples.map((item) => item.sample), input.consultation);
   const d1 = layers.find((item) => item.layer === "D1");
@@ -283,9 +288,7 @@ export function buildRectificationTechnicalPacket(input: PacketInput): Rectifica
     && available.has(item.layer));
   const domains = suggestedDomains(sensitiveLayers, selectedSamples);
   if (domains.length < 2) {
-    throw new TypeError(
-      "rectification packet requires two time-linked discriminating domains inside the selected candidate range",
-    );
+    throw new RectificationTechnicalPacketRangeError("insufficient_domains");
   }
   const scoredHistoricalEvidence = (input.eventScore?.evidence ?? []).map((item) => ({
     evidenceId: item.eventId,

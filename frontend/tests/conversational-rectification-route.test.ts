@@ -594,6 +594,75 @@ test("production packet waits for three supported events and then scores the acc
   );
 });
 
+test("production keeps the prior candidate range when a scored segment loses technical discrimination", async () => {
+  const scanCalls: Array<{ readonly birthTime: string; readonly uncertaintyMinutes: number }> = [];
+  const evidence = [
+    syntheticEvidence(11, "education"),
+    syntheticEvidence(12, "relocation"),
+    syntheticEvidence(13, "career"),
+  ];
+  const overNarrowed: CandidateResult = {
+    resultId: "00000000-0000-4000-8000-000000000897",
+    confidence: "high",
+    canApply: true,
+    winningSegment: {
+      startTime: "05:20",
+      endTime: "05:20",
+      representativeTime: "05:20",
+      widthMinutes: 1,
+    },
+    eventCount: 3,
+    domainCount: 3,
+    topScore: 10,
+    secondScore: 1,
+    marginPercent: 90,
+    reasons: ["synthetic over-narrowed segment"],
+    evidence: evidence.map((item) => ({
+      eventId: item.id,
+      domain: item.domain as "career" | "education" | "relocation",
+      candidateTime: "05:20",
+      ruleIds: ["synthetic-rule"],
+      points: 1,
+    })),
+    algorithmVersion: "synthetic-event-score-v1",
+  };
+
+  const built = await buildProductionConversationalRectificationPacket(
+    packetEngine({ scanCalls, scoreResults: [overNarrowed] }),
+    {
+      userId,
+      caseId,
+      asOfDate: "2026-07-21",
+      declaredBirthInput: {
+        source: "approximate",
+        birthDate: "1990-01-01",
+        reportedTime: "05:20",
+        uncertaintyBeforeMinutes: 30,
+        uncertaintyAfterMinutes: 30,
+        birthTimeClue: null,
+        birthplace: packetBirthplace,
+      },
+      privateCandidate: null,
+      evidence,
+    },
+  );
+
+  assert.deepEqual(scanCalls, [{
+    birthTime: "1990-01-01 05:20",
+    uncertaintyMinutes: 1,
+  }, {
+    birthTime: "1990-01-01 05:20",
+    uncertaintyMinutes: 30,
+  }]);
+  assert.deepEqual(built.packet.candidate.range, { startTime: "04:50", endTime: "05:50" });
+  assert.equal(built.packet.candidate.status, "pending_validation");
+  assert.equal(built.resultId, null);
+  assert.deepEqual(
+    built.packet.scoredHistoricalEvidence.map((item) => item.evidenceId),
+    evidence.map((item) => item.id),
+  );
+});
+
 test("legacy import scores inherited events without silently replacing the inherited candidate range", async () => {
   const scoreCalls: LifeEvent[][] = [];
   const inherited = { startTime: "05:10", endTime: "05:50" };
