@@ -14,6 +14,7 @@ import { BirthTimeIntakeFields } from "@/components/birth-time-intake";
 import { ChatMessageContent } from "@/components/chat-message-content";
 import { AgentAvatar, ChatMessageRow } from "@/components/chat-message-row";
 import { ModelSelector } from "@/components/model-selector";
+import { ParameterFreezePanel, type ParameterFreezeRow } from "@/components/parameter-freeze-panel";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
@@ -841,6 +842,16 @@ export default function Home() {
 
   const profileComplete = isProfileComplete(profile);
   const birthTimeDisplay = birthTimeDisplayState(profile);
+  const profileBirthPlace = selectedBirthPlace(profile);
+  const parameterFreezeRows: ParameterFreezeRow[] = profileComplete && profileBirthPlace ? [
+    { label: "出生时间", value: `${profile.date} ${profile.time || "未定"}` },
+    { label: "出生地点", value: profileBirthPlace.label },
+    { label: "经纬度", value: `${profileBirthPlace.lat.toFixed(4)}, ${profileBirthPlace.lon.toFixed(4)}` },
+    { label: "时区", value: `UTC+${profileBirthPlace.tz}` },
+    { label: "Ayanamsa", value: "Lahiri / Sidereal" },
+    { label: "Node mode", value: "True Node" },
+    { label: "出生时间精度", value: birthTimeDisplay?.kind === "candidate" ? "候选时间" : birthTimeDisplay?.kind === "confirmed" ? "已确认" : "待校正" },
+  ] : [];
   const dailyStarlanguage = dailyStarlanguageCard ?? (profileComplete ? buildDailyStarlanguageCard(profile) : null);
   const onboardingPending = profileComplete && !onboarding && !onboardingError;
   const currentOnboardingMessage = onboardingJustCompleted
@@ -2417,6 +2428,7 @@ export default function Home() {
                 <div className="starter-loading" role="status">正在准备三个入门问题…</div>
               ) : (
                 <div className="starter-list" aria-label="Jyotisha 推荐的初始问题">
+                  {parameterFreezeRows.length > 0 && <ParameterFreezePanel rows={parameterFreezeRows} />}
                   <div className="product-entrypoints" aria-label="常用占星入口">
                     <article className="daily-starlanguage-card product-entrypoint-card" aria-label="今日星语">
                       <button
