@@ -6,6 +6,7 @@ MIGRATIONS = ROOT / "frontend" / "supabase" / "migrations"
 SCHEMA = MIGRATIONS / "20260720010000_conversational_rectification_schema.sql"
 BILLING = MIGRATIONS / "20260720020000_conversational_rectification_billing.sql"
 TRANSITIONS = MIGRATIONS / "20260720030000_conversational_rectification_transitions.sql"
+LEGACY_IMPORT = MIGRATIONS / "20260721010000_conversational_legacy_import_projection.sql"
 
 
 def _normalized(path: Path) -> str:
@@ -208,6 +209,49 @@ def test_legacy_import_is_waived_without_changing_credits() -> None:
         "timezone_offset",
     ):
         assert f"v_profile.{preserved_profile_field}" in body
+
+
+def test_forward_legacy_import_projects_only_trusted_facts_into_v3() -> None:
+    sql = _normalized(LEGACY_IMPORT)
+    body = _function(sql, "import_legacy_conversational_rectification_case")
+    projection = _function(
+        sql, "conversational_rectification_project_legacy_event_evidence"
+    )
+
+    assert "drop function if exists public.import_legacy_conversational_rectification_case" in sql
+    assert "birth_time_rectification_cases_one_v3_import_per_legacy" in sql
+    assert "p_declared_birth_input jsonb" in body
+    assert "p_evidence jsonb" in body
+    assert "p_declared_birth_input is distinct from v_expected_declared" in body
+    assert "p_evidence is distinct from v_expected_evidence" in body
+    assert "conversational_rectification_valid_life_event_evidence_array" in body
+    assert "insert into public.birth_time_rectification_event_evidence" in body
+    assert "'{}'::jsonb, '{}'::jsonb, '[]'::jsonb, '{}'::jsonb" in body
+    assert "v_legacy.questionnaire" not in body
+    assert "v_legacy.answers" not in body
+    assert "v_legacy.candidate_scan" not in body
+    assert "update public.birth_time_rectification_cases" not in body
+    assert "'migration_waived'" in body
+    assert "set credits =" not in body
+    assert "for update" in body
+    assert "pg_advisory_xact_lock" in body
+    assert "v_legacy.status in ('confirmed', 'completed', 'abandoned')" in body
+    assert "v_legacy.turn_version is distinct from p_expected_version" in body
+    assert "current_date" in body
+
+    assert "v_date < pg_catalog.to_char(p_birth_date, 'yyyy')" in projection
+    assert "v_date > pg_catalog.to_char(p_as_of_date, 'yyyy')" in projection
+    assert "when v_domain in ('finance', 'health_pressure') then 'other'" in projection
+    assert "current_choice_question" not in projection
+    assert "choice_answers" not in projection
+
+
+def test_forward_legacy_import_rpc_is_service_role_only() -> None:
+    sql = _normalized(LEGACY_IMPORT)
+    assert "revoke all on function public.import_legacy_conversational_rectification_case" in sql
+    assert "from public, anon, authenticated" in sql
+    assert "grant execute on function public.import_legacy_conversational_rectification_case" in sql
+    assert "to service_role" in sql
 
 
 def test_imported_legacy_sources_are_immutable_history() -> None:

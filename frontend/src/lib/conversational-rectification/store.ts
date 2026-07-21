@@ -127,6 +127,8 @@ export type ImportLegacyConversationalRectificationInput = MutationIdentity & Re
   legacyCaseId: string;
   price: number;
   pendingConsultationQuestion: string | null;
+  declaredBirthInput: DeepReadonly<DeclaredBirthInput>;
+  evidence: ReadonlyArray<LifeEventEvidenceInput>;
   firstTurn: ConversationalRectificationTurnInput;
   validationReceipt: ValidationReceiptInput;
   privateCandidate: PrivateCandidateInput;
@@ -414,6 +416,8 @@ export class ConversationalRectificationStore {
       p_legacy_case_id: input.legacyCaseId,
       p_price: input.price,
       p_pending_consultation_question: input.pendingConsultationQuestion,
+      p_declared_birth_input: requireDeclaredBirthInput(input.declaredBirthInput),
+      p_evidence: requireEvidence(input.evidence),
       p_first_turn: requirePublicTurn(input.firstTurn),
       p_validation_receipt: requireValidationReceipt(input.validationReceipt),
       p_private_candidate: requirePrivateCandidate(input.privateCandidate),

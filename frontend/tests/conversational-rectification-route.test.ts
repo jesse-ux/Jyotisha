@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   buildProductionConversationalRectificationPacket,
   createBirthTimeConversationPostHandler,
+  declaredBirthInputForLegacyCase,
   loadProductionConversationalRectificationProfile,
   type BirthTimeConversationRouteService,
 } from "../src/app/api/birth-time-conversation/route.ts";
@@ -57,6 +58,7 @@ function request(body: unknown, events: string[]) {
 function service(overrides: Partial<BirthTimeConversationRouteService> = {}): BirthTimeConversationRouteService {
   const response = async () => turn;
   return {
+    importLegacyCase: response,
     start: response,
     resume: response,
     answer: response,
@@ -305,7 +307,7 @@ test("unknown SQL, model, and browser errors are never exposed or logged", async
   assert.deepEqual(logs, [{ requestId, actionId, caseId, code: "service_unavailable" }]);
 });
 
-test("production profile conversion only links terminal v3 revisions and leaves pre-v3 baselines unlinked", async () => {
+test("production profile conversion links terminal v3 revisions and owner-bound unfinished legacy imports", async () => {
   const priorId = "00000000-0000-4000-8000-000000000715";
   const profile = {
     birth_date: "1990-01-01",
@@ -325,12 +327,17 @@ test("production profile conversion only links terminal v3 revisions and leaves 
     timezone_offset: 8,
     rectification_case_id: priorId,
   };
-  for (const [prior, expectedRevision] of [
-    [{ id: priorId, journey_protocol: "conversational-evidence-v3", status: "completed" }, priorId],
-    [{ id: priorId, journey_protocol: "conversational-evidence-v3", status: "abandoned" }, priorId],
-    [{ id: priorId, journey_protocol: "conversational-evidence-v3", status: "active" }, null],
-    [{ id: priorId, journey_protocol: "dynamic-choice-v2", status: "confirmed" }, null],
-    [{ id: priorId, journey_protocol: "legacy-guided-v1", status: "confirmed" }, null],
+  for (const [prior, expectedRevision, expectedLegacy] of [
+    [{ id: priorId, journey_protocol: "conversational-evidence-v3", status: "completed" }, priorId, null],
+    [{ id: priorId, journey_protocol: "conversational-evidence-v3", status: "abandoned" }, priorId, null],
+    [{ id: priorId, journey_protocol: "conversational-evidence-v3", status: "active" }, null, null],
+    [{ id: priorId, journey_protocol: "dynamic-choice-v2", status: "rectifying" }, null, priorId],
+    [{ id: priorId, journey_protocol: "legacy-guided-v1", status: "candidate" }, null, priorId],
+    [{ id: priorId, journey_protocol: "dynamic-choice-v2", status: "confirmed" }, null, null],
+    [{ id: priorId, journey_protocol: "legacy-guided-v1", status: "abandoned" }, null, null],
+    [{ id: priorId, journey_protocol: "dynamic-choice-v2", status: null }, null, null],
+    [{ id: priorId, journey_protocol: "legacy-guided-v1", status: "unexpected" }, null, null],
+    [{ id: actionId, journey_protocol: "dynamic-choice-v2", status: "rectifying" }, null, null],
   ] as const) {
     const caseLoads: unknown[] = [];
     const loaded = await loadProductionConversationalRectificationProfile({
@@ -345,12 +352,57 @@ test("production profile conversion only links terminal v3 revisions and leaves 
     }, userId);
 
     assert.equal(loaded.revisionOfCaseId, expectedRevision);
+    assert.equal(loaded.legacyCaseId, expectedLegacy);
     assert.deepEqual(caseLoads, [[userId, priorId]]);
     assert.equal(loaded.declaredBirthInput.source, "legacy_import");
     assert.equal("reportedTime" in loaded.declaredBirthInput
       ? loaded.declaredBirthInput.reportedTime
       : null, "04:58");
   }
+});
+
+test("legacy import declaration uses the immutable old case time while preserving current place and clue", () => {
+  const declared = declaredBirthInputForLegacyCase({
+    birth_date: "1990-01-01",
+    reported_birth_time: "06:40:00",
+    birth_time_source: "family_exact",
+    birth_time_period: null,
+    birth_time_clue: "现存账户线索",
+    uncertainty_before_minutes: 15,
+    uncertainty_after_minutes: 15,
+    country_code: "TW",
+    province_code: "TPE",
+    city_code: "TPE-CITY",
+    district_code: "DAAN",
+    latitude: 25.0268,
+    longitude: 121.5434,
+    timezone_offset: 8,
+  }, {
+    reported_date: "1990-01-01",
+    reported_time: "05:20:00",
+    source: "approximate",
+    reported_period: null,
+    uncertainty_before_minutes: 30,
+    uncertainty_after_minutes: 30,
+  });
+
+  assert.deepEqual(declared, {
+    source: "approximate",
+    birthDate: "1990-01-01",
+    reportedTime: "05:20",
+    uncertaintyBeforeMinutes: 30,
+    uncertaintyAfterMinutes: 30,
+    birthTimeClue: "现存账户线索",
+    birthplace: {
+      countryCode: "TW",
+      provinceCode: "TPE",
+      cityCode: "TPE-CITY",
+      districtCode: "DAAN",
+      latitude: 25.0268,
+      longitude: 121.5434,
+      timezoneOffset: 8,
+    },
+  });
 });
 
 test("production unknown-time adapter covers the declared full day with bounded deduplicated scans", async () => {
@@ -484,6 +536,73 @@ test("production packet waits for three supported events and then scores the acc
 
   assert.equal(scoreCalls.length, 1);
   assert.deepEqual(scoreCalls[0]?.map((event) => event.id), evidence.map((item) => item.id));
+});
+
+test("legacy import scores inherited events without silently replacing the inherited candidate range", async () => {
+  const scoreCalls: LifeEvent[][] = [];
+  const inherited = { startTime: "05:10", endTime: "05:50" };
+  const inheritedEvidence = [
+    syntheticEvidence(1, "career"),
+    syntheticEvidence(2, "education"),
+    syntheticEvidence(3, "relocation"),
+  ];
+  const scored: CandidateResult = {
+    resultId: "00000000-0000-4000-8000-000000000898",
+    confidence: "low",
+    canApply: false,
+    winningSegment: {
+      startTime: "05:20",
+      endTime: "05:24",
+      representativeTime: "05:22",
+      widthMinutes: 5,
+    },
+    eventCount: 3,
+    domainCount: 3,
+    topScore: 4,
+    secondScore: 3,
+    marginPercent: 10,
+    reasons: ["synthetic narrower scored segment"],
+    evidence: inheritedEvidence.map((item) => ({
+      eventId: item.id,
+      domain: item.domain as "career" | "education" | "relocation",
+      candidateTime: "05:22",
+      ruleIds: ["synthetic-rule"],
+      points: 1,
+    })),
+    algorithmVersion: "synthetic-event-score-v1",
+  };
+  const result = await buildProductionConversationalRectificationPacket(
+    packetEngine({ scoreCalls, scoreResults: [scored] }),
+    {
+      userId,
+      caseId,
+      asOfDate: "2026-07-21",
+      declaredBirthInput: {
+        source: "approximate",
+        birthDate: "1990-01-01",
+        reportedTime: "05:20",
+        uncertaintyBeforeMinutes: 30,
+        uncertaintyAfterMinutes: 30,
+        birthTimeClue: null,
+        birthplace: packetBirthplace,
+      },
+      privateCandidate: {
+        calculationVersion: "legacy-import-range-v1",
+        rangeStart: inherited.startTime,
+        rangeEnd: inherited.endTime,
+      },
+      evidence: inheritedEvidence,
+      preserveCandidateRange: true,
+    },
+  );
+
+  assert.equal(scoreCalls.length, 1, "trusted inherited facts still contribute technical evidence");
+  assert.deepEqual(result.packet.candidate.range, inherited);
+  assert.equal(result.packet.candidate.status, "pending_validation");
+  assert.deepEqual(
+    result.packet.scoredHistoricalEvidence.map((item) => item.evidenceId),
+    scored.evidence.map((item) => item.eventId),
+  );
 });
 
 test("production rescans the declared range after correction while ordinary evidence stays incremental", async () => {

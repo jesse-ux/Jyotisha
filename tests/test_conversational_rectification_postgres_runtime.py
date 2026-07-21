@@ -1825,10 +1825,28 @@ def test_crash_then_legacy_import_refunds_orphan_without_an_unrelated_paid_start
     _create_legacy_case(pg14_database, user_id, legacy_case_id)
     assert _reserve(pg14_database, user_id, lost_action)["credits"] == 7
 
+    declared = {
+        "birthDate": "1990-01-01",
+        "reportedTime": "05:20",
+        "source": "legacy_import",
+        "birthTimeClue": None,
+        "uncertaintyBeforeMinutes": 0,
+        "uncertaintyAfterMinutes": 0,
+        "birthplace": {
+            "countryCode": "TW",
+            "provinceCode": "TPE",
+            "cityCode": "TPE-CITY",
+            "districtCode": "DAAN",
+            "latitude": 25.0268,
+            "longitude": 121.5434,
+            "timezoneOffset": 8,
+        },
+    }
     statement = f"""
     select public.import_legacy_conversational_rectification_case(
       '{user_id}'::uuid, '{import_action}'::uuid, '{legacy_case_id}'::uuid,
       0, '{import_action}'::uuid, 3, null,
+      {_jsonb(declared)}, '[]'::jsonb,
       {_jsonb(_valid_turn(import_action))},
       {_jsonb({'modelId': 'synthetic-model', 'schemaValidated': True})},
       {_jsonb(_valid_private_candidate())}
@@ -1889,3 +1907,165 @@ def test_crash_then_legacy_import_refunds_orphan_without_an_unrelated_paid_start
     assert pg14_database.sql(
         f"select count(*) from public.credit_transactions where user_id = '{user_id}'::uuid"
     ) == "2"
+
+
+def test_concurrent_legacy_import_projects_events_once_and_keeps_old_row_read_only(
+    pg14_database: PgDatabase,
+) -> None:
+    user_id = "00000000-0000-4000-8000-000000002701"
+    legacy_case_id = "00000000-0000-4000-8000-000000002702"
+    action_a = "00000000-0000-4000-8000-000000002703"
+    action_b = "00000000-0000-4000-8000-000000002704"
+    drift_action = "00000000-0000-4000-8000-000000002709"
+    career_id = "00000000-0000-4000-8000-000000002705"
+    finance_id = "00000000-0000-4000-8000-000000002706"
+    _create_user(pg14_database, user_id, credits=10)
+    _create_legacy_case(pg14_database, user_id, legacy_case_id)
+    old_life_events = [
+        {"id": career_id, "domain": "career", "precision": "month", "date": "2021-07"},
+        {"id": finance_id, "domain": "finance", "precision": "year", "date": "2020"},
+        {"id": "00000000-0000-4000-8000-000000002707", "domain": "relationship", "precision": "month", "date": "2099-01"},
+        {"id": "00000000-0000-4000-8000-000000002708", "domain": "education", "precision": "year", "date": "1980"},
+    ]
+    pg14_database.sql(
+        f"""
+        update public.birth_time_rectification_cases
+        set questionnaire = {_jsonb({'questions': [{'prompt': '哪一个时间段更符合？'}]})},
+            answers = {_jsonb({'generic-question': 'A'})},
+            life_events = {_jsonb(old_life_events)},
+            candidate_scan = {_jsonb({'genericRanges': ['2006-2011', '2011-2016']})},
+            candidate_start = '05:10',
+            candidate_end = '05:30'
+        where id = '{legacy_case_id}'::uuid;
+        """
+    )
+    declared = {
+        "birthDate": "1990-01-01",
+        "reportedTime": "05:20",
+        "source": "legacy_import",
+        "birthTimeClue": None,
+        "uncertaintyBeforeMinutes": 0,
+        "uncertaintyAfterMinutes": 0,
+        "birthplace": {
+            "countryCode": "TW",
+            "provinceCode": "TPE",
+            "cityCode": "TPE-CITY",
+            "districtCode": "DAAN",
+            "latitude": 25.0268,
+            "longitude": 121.5434,
+            "timezoneOffset": 8,
+        },
+    }
+    evidence = [
+        {
+            "id": career_id,
+            "rawText": "旧校时记录中的事业事件（2021-07）",
+            "domain": "career",
+            "eventSummary": "旧校时记录中的事业事件",
+            "dateValue": "2021-07",
+            "datePrecision": "month",
+            "extractionStatus": "clear",
+            "scoreable": True,
+            "correctsEvidenceIds": [],
+        },
+        {
+            "id": finance_id,
+            "rawText": "旧校时记录中的其他事件（2020）",
+            "domain": "other",
+            "eventSummary": "旧校时记录中的其他事件",
+            "dateValue": "2020",
+            "datePrecision": "year",
+            "extractionStatus": "clear",
+            "scoreable": True,
+            "correctsEvidenceIds": [],
+        },
+    ]
+
+    def statement(action: str) -> str:
+        turn = {
+            **_valid_turn(action),
+            "evidenceRecap": [
+                {"id": item["id"], "summary": item["eventSummary"], "dateLabel": item["dateValue"]}
+                for item in evidence
+            ],
+        }
+        return f"""
+        select public.import_legacy_conversational_rectification_case(
+          '{user_id}'::uuid, '{action}'::uuid, '{legacy_case_id}'::uuid,
+          0, '{action}'::uuid, 3, null,
+          {_jsonb(declared)}, {_jsonb(evidence)}, {_jsonb(turn)},
+          {_jsonb({'modelId': 'synthetic-model', 'schemaValidated': True})},
+          {_jsonb(_valid_private_candidate())}
+        )::text;
+        """
+
+    drifted_declared = {**declared, "reportedTime": "06:40"}
+    drifted_turn = {
+        **_valid_turn(drift_action),
+        "evidenceRecap": [
+            {"id": item["id"], "summary": item["eventSummary"], "dateLabel": item["dateValue"]}
+            for item in evidence
+        ],
+    }
+    assert pg14_database.rejects(
+        f"""
+        select public.import_legacy_conversational_rectification_case(
+          '{user_id}'::uuid, '{drift_action}'::uuid, '{legacy_case_id}'::uuid,
+          0, '{drift_action}'::uuid, 3, null,
+          {_jsonb(drifted_declared)}, {_jsonb(evidence)}, {_jsonb(drifted_turn)},
+          {_jsonb({'modelId': 'synthetic-model', 'schemaValidated': True})},
+          {_jsonb(_valid_private_candidate())}
+        )::text;
+        """
+    )
+    assert pg14_database.sql(
+        f"select count(*) from public.birth_time_rectification_cases where imported_from_case_id = '{legacy_case_id}'::uuid"
+    ) == "0"
+
+    processes = [subprocess.Popen(
+        pg14_database.command("-A", "-t", "-q", "-c", statement(action)),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    ) for action in (action_a, action_b)]
+    results = [process.communicate(timeout=20) for process in processes]
+    return_codes = [process.returncode for process in processes]
+    assert return_codes.count(0) == 1, results
+    assert sum(code != 0 for code in return_codes) == 1, results
+
+    durable = json.loads(pg14_database.sql(
+        f"""
+        select pg_catalog.jsonb_build_object(
+          'credits', profile.credits,
+          'activeTime', pg_catalog.to_char(profile.active_birth_time, 'HH24:MI'),
+          'importCount', (select pg_catalog.count(*) from public.birth_time_rectification_cases imported where imported.imported_from_case_id = '{legacy_case_id}'::uuid),
+          'billingStates', (select pg_catalog.jsonb_agg(billing.state) from public.birth_time_rectification_billing billing join public.birth_time_rectification_cases imported on imported.id = billing.case_id where imported.imported_from_case_id = '{legacy_case_id}'::uuid),
+          'eventIds', (select pg_catalog.jsonb_agg(event.id order by event.created_at) from public.birth_time_rectification_event_evidence event join public.birth_time_rectification_cases imported on imported.id = event.case_id where imported.imported_from_case_id = '{legacy_case_id}'::uuid),
+          'importedGenericState', (select pg_catalog.jsonb_build_object('questionnaire', imported.questionnaire, 'answers', imported.answers, 'lifeEvents', imported.life_events, 'candidateScan', imported.candidate_scan, 'baseline', pg_catalog.to_char(imported.baseline_active_time, 'HH24:MI')) from public.birth_time_rectification_cases imported where imported.imported_from_case_id = '{legacy_case_id}'::uuid),
+          'legacyGenericState', (select pg_catalog.jsonb_build_object('questionnaire', legacy.questionnaire, 'answers', legacy.answers, 'candidateScan', legacy.candidate_scan) from public.birth_time_rectification_cases legacy where legacy.id = '{legacy_case_id}'::uuid)
+        )::text
+        from public.profiles profile where profile.id = '{user_id}'::uuid;
+        """
+    ))
+    assert durable == {
+        "credits": 10,
+        "activeTime": "04:58",
+        "importCount": 1,
+        "billingStates": ["migration_waived"],
+        "eventIds": [career_id, finance_id],
+        "importedGenericState": {
+            "questionnaire": {},
+            "answers": {},
+            "lifeEvents": [],
+            "candidateScan": {},
+            "baseline": "04:58",
+        },
+        "legacyGenericState": {
+            "questionnaire": {"questions": [{"prompt": "哪一个时间段更符合？"}]},
+            "answers": {"generic-question": "A"},
+            "candidateScan": {"genericRanges": ["2006-2011", "2011-2016"]},
+        },
+    }
+    assert pg14_database.rejects(
+        f"update public.birth_time_rectification_cases set answers = '{{}}'::jsonb where id = '{legacy_case_id}'::uuid"
+    )

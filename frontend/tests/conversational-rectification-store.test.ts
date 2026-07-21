@@ -332,6 +332,8 @@ test("save, pause, abandon, confirm, and import carry owner/version/action guard
     legacyCaseId: "00000000-0000-4000-8000-000000000106",
     price: 3,
     pendingConsultationQuestion: null,
+    declaredBirthInput: declaredBirthInputSchema.parse(storedRow.declared_birth_input),
+    evidence: [],
     firstTurn: { ...firstTurn, caseId: importCaseId },
     validationReceipt,
     privateCandidate: { resultId, calculationVersion: "rectification-v3.1" },

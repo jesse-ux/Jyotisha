@@ -27,6 +27,10 @@ import {
   type RectificationTechnicalPacket,
 } from "./technical-packet.ts";
 import type { ConversationalRectificationBilling } from "./billing.ts";
+import {
+  projectLegacyCaseForConversationalImport,
+  type LegacyConversationalImportSource,
+} from "./legacy-import.ts";
 import type {
   ConversationalRectificationStore,
   LifeEventEvidenceInput,
@@ -48,6 +52,7 @@ export type ComputedConversationalRectificationPacket = Readonly<{
 export type ConversationalRectificationProfile = Readonly<{
   declaredBirthInput: unknown;
   revisionOfCaseId: string | null;
+  legacyCaseId?: string | null;
 }>;
 
 export type ConversationalRectificationPacketBuildInput = Readonly<{
@@ -57,14 +62,20 @@ export type ConversationalRectificationPacketBuildInput = Readonly<{
   declaredBirthInput: DeclaredBirthInput;
   privateCandidate: PrivateCandidateInput | null;
   evidence: ReadonlyArray<LifeEventEvidenceInput>;
+  preserveCandidateRange?: true;
 }>;
 
 export type ConversationalRectificationServicePorts = Readonly<{
   store: Pick<ConversationalRectificationStore,
-    "createCaseWithFirstTurn" | "loadCase" | "loadActionReceipt" | "saveTurn" | "pause" | "abandon" | "confirm">;
+    "createCaseWithFirstTurn" | "loadCase" | "loadActionReceipt" | "saveTurn" | "pause" | "abandon" | "confirm">
+    & Partial<Pick<ConversationalRectificationStore, "importLegacy">>;
   billing: Pick<ConversationalRectificationBilling, "reserve" | "complete" | "release">;
   rectificationPriceCredits: number;
   loadDeclaredProfile(userId: string): Promise<ConversationalRectificationProfile>;
+  loadLegacyCase?(
+    userId: string,
+    legacyCaseId: string,
+  ): Promise<LegacyConversationalImportSource | null>;
   buildTechnicalPacket(
     input: ConversationalRectificationPacketBuildInput,
   ): Promise<ComputedConversationalRectificationPacket>;
@@ -73,6 +84,12 @@ export type ConversationalRectificationServicePorts = Readonly<{
 }>;
 
 export type ConversationalRectificationService = Readonly<{
+  importLegacyCase(
+    userId: string,
+    legacyCaseId: string,
+    actionId: string,
+    pendingConsultationQuestion?: string | null,
+  ): Promise<ConversationalRectificationTurn>;
   start(userId: string, command: CommandOf<"start">): Promise<ConversationalRectificationTurn>;
   resume(userId: string, command: CommandOf<"resume">): Promise<ConversationalRectificationTurn>;
   answer(userId: string, command: CommandOf<"answer">): Promise<ConversationalRectificationTurn>;
@@ -316,6 +333,21 @@ function boundedNarrative(previous: string, suffix: string): string {
   return `${previous.slice(0, room)}\n\n${suffix}`.slice(0, 12_000);
 }
 
+function midpointOfRange(range: Readonly<{ startTime: string; endTime: string }>): string {
+  const minute = (value: string) => {
+    const [hour = 0, part = 0] = value.split(":").map(Number);
+    return hour * 60 + part;
+  };
+  const clock = (value: number) => {
+    const normalized = ((value % 1_440) + 1_440) % 1_440;
+    return `${String(Math.floor(normalized / 60)).padStart(2, "0")}:${String(normalized % 60).padStart(2, "0")}`;
+  };
+  const start = minute(range.startTime);
+  let end = minute(range.endTime);
+  if (end < start) end += 1_440;
+  return clock(Math.round((start + end) / 2));
+}
+
 function domainsForClarification(
   current: ConversationalRectificationTurn,
   hint: RectificationEvidenceDomain | undefined,
@@ -454,6 +486,114 @@ export function createConversationalRectificationService(
     }
   }
 
+  async function importLegacyCase(
+    userId: string,
+    legacyCaseId: string,
+    actionId: string,
+    pendingConsultationQuestion: string | null = null,
+  ): Promise<ConversationalRectificationTurn> {
+    const importer = ports.store.importLegacy;
+    const loadLegacy = ports.loadLegacyCase;
+    if (!importer || !loadLegacy) {
+      throw new ConversationalRectificationError("service_unavailable");
+    }
+
+    try {
+      const existingByAction = await ports.store.loadCase({ userId, caseId: actionId });
+      if (existingByAction) {
+        if (existingByAction.importedFromCaseId !== legacyCaseId
+          || existingByAction.billingState !== "migration_waived"
+          || existingByAction.pendingConsultationQuestion !== pendingConsultationQuestion) {
+          throw new ConversationalRectificationError("action_conflict");
+        }
+        return publicTurn(existingByAction);
+      }
+      const current = await ports.store.loadCase({ userId });
+      if (current?.importedFromCaseId === legacyCaseId
+        && current.billingState === "migration_waived"
+        && current.pendingConsultationQuestion === pendingConsultationQuestion) {
+        return publicTurn(current);
+      }
+      if (current?.importedFromCaseId === legacyCaseId
+        && current.billingState === "migration_waived") {
+        throw new ConversationalRectificationError("action_conflict");
+      }
+
+      const legacy = await loadLegacy(userId, legacyCaseId);
+      if (!legacy) throw new ConversationalRectificationError("case_not_found");
+      const projected = projectLegacyCaseForConversationalImport({
+        source: legacy,
+        asOfDate: ports.asOfDate(),
+        expectedUserId: userId,
+      });
+      const rangeSeed = privateCandidateSchema.parse({
+        resultId: null,
+        representativeTime: midpointOfRange(projected.currentRange),
+        rangeStart: projected.currentRange.startTime,
+        rangeEnd: projected.currentRange.endTime,
+        calculationVersion: "legacy-import-range-v1",
+        workingState: { phase: "collecting_evidence", iteration: 0, notes: [] },
+      });
+      const computed = await ports.buildTechnicalPacket({
+        userId,
+        caseId: actionId,
+        asOfDate: ports.asOfDate(),
+        declaredBirthInput: projected.declaredBirthInput,
+        privateCandidate: rangeSeed,
+        evidence: projected.evidence,
+        preserveCandidateRange: true,
+      });
+      const narrative = await generateRectificationNarrative({
+        phase: "first",
+        packet: computed.packet,
+        generator: ports.narrativeGenerator,
+      });
+      const privateCandidate = privateCandidateFromPacket({
+        packet: computed.packet,
+        resultId: computed.resultId,
+        iteration: 0,
+      });
+      const firstTurn = turnFromNarrative({
+        caseId: actionId,
+        turnVersion: 0,
+        pendingConsultationQuestion,
+        packet: computed.packet,
+        narrative,
+        evidence: projected.evidence,
+      });
+      const imported = await importer.call(ports.store, {
+        userId,
+        caseId: actionId,
+        expectedVersion: projected.expectedVersion,
+        actionId,
+        legacyCaseId,
+        price: ports.rectificationPriceCredits,
+        pendingConsultationQuestion,
+        declaredBirthInput: projected.declaredBirthInput,
+        evidence: projected.evidence,
+        firstTurn,
+        validationReceipt: narrative.validationReceipt,
+        privateCandidate,
+      });
+      return publicTurn(imported);
+    } catch (error) {
+      if (error instanceof ConversationalRectificationError
+        && error.code === "action_conflict") {
+        try {
+          const winner = await ports.store.loadCase({ userId });
+          if (winner?.importedFromCaseId === legacyCaseId
+            && winner.billingState === "migration_waived"
+            && winner.pendingConsultationQuestion === pendingConsultationQuestion) {
+            return publicTurn(winner);
+          }
+        } catch {
+          // Preserve the original stable conflict below.
+        }
+      }
+      throw safeFailure(error);
+    }
+  }
+
   function extractedEvidence(command: CommandOf<"answer">): readonly LifeEventEvidence[] {
     let extracted: readonly LifeEventEvidence[];
     try {
@@ -480,6 +620,7 @@ export function createConversationalRectificationService(
   }
 
   return Object.freeze({
+    importLegacyCase,
     async start(userId, rawCommand) {
       const command = parseCommand("start", rawCommand);
       let profile: ConversationalRectificationProfile;
@@ -490,6 +631,15 @@ export function createConversationalRectificationService(
       }
       const declared = declaredBirthInputSchema.safeParse(profile.declaredBirthInput);
       if (!declared.success) throw new ConversationalRectificationError("profile_incomplete");
+
+      if (profile.legacyCaseId) {
+        return importLegacyCase(
+          userId,
+          profile.legacyCaseId,
+          command.actionId,
+          command.pendingConsultationQuestion ?? null,
+        );
+      }
 
       let price: number;
       try {

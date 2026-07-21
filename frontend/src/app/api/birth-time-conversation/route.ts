@@ -167,6 +167,26 @@ function declaredBirthInputFromProfile(value: unknown): DeclaredBirthInput {
   return parsed.data;
 }
 
+export function declaredBirthInputForLegacyCase(
+  currentProfileValue: unknown,
+  legacyCaseValue: unknown,
+): DeclaredBirthInput {
+  const currentProfile = profileRecord(currentProfileValue);
+  const legacyCase = profileRecord(legacyCaseValue);
+  if (!currentProfile || !legacyCase) {
+    throw new ConversationalRectificationError("profile_incomplete");
+  }
+  return declaredBirthInputFromProfile({
+    ...currentProfile,
+    birth_date: legacyCase.reported_date,
+    reported_birth_time: legacyCase.reported_time,
+    birth_time_source: legacyCase.source,
+    birth_time_period: legacyCase.reported_period,
+    uncertainty_before_minutes: legacyCase.uncertainty_before_minutes,
+    uncertainty_after_minutes: legacyCase.uncertainty_after_minutes,
+  });
+}
+
 export type ProductionConversationalRectificationProfileDependencies = Readonly<{
   loadProfile(userId: string): Promise<unknown>;
   loadRectificationCase(userId: string, caseId: string): Promise<unknown>;
@@ -178,22 +198,42 @@ export async function loadProductionConversationalRectificationProfile(
 ): Promise<Readonly<{
   declaredBirthInput: DeclaredBirthInput;
   revisionOfCaseId: string | null;
+  legacyCaseId: string | null;
 }>> {
   const profileValue = await dependencies.loadProfile(userId);
   const profile = profileRecord(profileValue);
   if (!profile) throw new ConversationalRectificationError("profile_incomplete");
   const declaredBirthInput = declaredBirthInputFromProfile(profile);
   const priorCaseId = text(profile.rectification_case_id);
-  if (!priorCaseId) return { declaredBirthInput, revisionOfCaseId: null };
+  if (!priorCaseId) return {
+    declaredBirthInput,
+    revisionOfCaseId: null,
+    legacyCaseId: null,
+  };
 
   const prior = profileRecord(await dependencies.loadRectificationCase(userId, priorCaseId));
   const terminalV3Revision = prior
     && text(prior.id) === priorCaseId
     && text(prior.journey_protocol) === "conversational-evidence-v3"
     && (text(prior.status) === "completed" || text(prior.status) === "abandoned");
+  const protocol = prior ? text(prior.journey_protocol) : null;
+  const status = prior ? text(prior.status) : null;
+  const unfinishedLegacyStatuses = new Set([
+    "reported",
+    "assessing",
+    "rectifying",
+    "candidate",
+    "confirming",
+  ]);
+  const unfinishedLegacy = prior
+    && text(prior.id) === priorCaseId
+    && (protocol === "legacy-guided-v1" || protocol === "dynamic-choice-v2")
+    && status !== null
+    && unfinishedLegacyStatuses.has(status);
   return {
     declaredBirthInput,
     revisionOfCaseId: terminalV3Revision ? priorCaseId : null,
+    legacyCaseId: unfinishedLegacy ? priorCaseId : null,
   };
 }
 
@@ -428,7 +468,7 @@ export async function buildProductionConversationalRectificationPacket(
         events,
       })
     : null;
-  const selectedRange = eventScore?.winningSegment
+  const selectedRange = !input.preserveCandidateRange && eventScore?.winningSegment
     ? { startTime: eventScore.winningSegment.startTime, endTime: eventScore.winningSegment.endTime }
     : baseRange;
   const questionnaires: RectificationQuestionnaire[] = [];
@@ -474,7 +514,9 @@ export async function buildProductionConversationalRectificationPacket(
     packet: buildRectificationTechnicalPacket({
       scan: questionnaire,
       candidateDifferences,
-      eventScore,
+      eventScore: input.preserveCandidateRange && eventScore
+        ? { ...eventScore, confidence: "low", canApply: false, winningSegment: null }
+        : eventScore,
       consultation: {
         source: "server_consultation_workflow",
         calculationVersion,
@@ -561,6 +603,55 @@ async function createProductionService(
           return data;
         },
       }, userId);
+    },
+    async loadLegacyCase(userId, legacyCaseId) {
+      const { createJourneyLoadClient, loadStoredRectificationCase } = await import(
+        "../../../lib/birth-time-journey-case-loader.ts"
+      );
+      const { data: identity, error } = await admin
+        .from("birth_time_rectification_cases")
+        .select("id,user_id,journey_protocol,status,reported_date,reported_time,reported_period,source,uncertainty_before_minutes,uncertainty_after_minutes")
+        .eq("id", legacyCaseId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (error || !identity
+        || (identity.journey_protocol !== "legacy-guided-v1"
+          && identity.journey_protocol !== "dynamic-choice-v2")) return null;
+      const { data: currentProfile, error: profileError } = await profileClient
+        .from("profiles")
+        .select("birth_date,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset,rectification_case_id")
+        .eq("id", userId)
+        .maybeSingle();
+      if (profileError || !currentProfile) {
+        throw new ConversationalRectificationError("store_unavailable");
+      }
+      const declaredBirthInput = declaredBirthInputForLegacyCase(currentProfile, identity);
+      const loaded = await loadStoredRectificationCase(
+        createJourneyLoadClient(admin),
+        userId,
+        legacyCaseId,
+      );
+      if (!loaded) return null;
+      const winning = loaded.candidateResult?.winningSegment;
+      const snapshotRange = loaded.snapshot.reportedRange;
+      const currentRange = loaded.journeyProtocol === "dynamic-choice-v2"
+        ? loaded.dynamicTurnState.progress.currentRange
+        : winning
+          ? { startTime: winning.startTime, endTime: winning.endTime }
+          : snapshotRange.startTime && snapshotRange.endTime
+            ? { startTime: snapshotRange.startTime, endTime: snapshotRange.endTime }
+            : null;
+      if (!currentRange) throw new ConversationalRectificationError("store_unavailable");
+      return {
+        caseId: loaded.id,
+        userId: loaded.userId,
+        journeyProtocol: loaded.journeyProtocol,
+        status: identity.status,
+        turnVersion: loaded.turnVersion ?? 0,
+        declaredBirthInput,
+        currentRange,
+        lifeEvents: loaded.lifeEvents ?? [],
+      };
     },
     buildTechnicalPacket: (input) => buildProductionConversationalRectificationPacket(engine, input),
     narrativeGenerator,
