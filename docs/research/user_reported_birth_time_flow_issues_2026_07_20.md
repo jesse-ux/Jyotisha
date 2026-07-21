@@ -24,4 +24,7 @@ the tested deployment SHA.
 All five issues remain `verified-local` until the production closure artifacts
 above are attached. A public 200 response, an unverified browser session, or a
 local in-memory test cannot change them to `closed`. The deployment sequence and
-non-destructive rollback are defined in `deploy/README.md`.
+non-destructive rollback are defined in `deploy/README.md`. The executable
+creation policy keeps rollout `smoke_only` for one unlogged synthetic account
+until the smoke SHA matches the exact deployed revision; ordinary users cannot
+incur a new rectification charge during that canary window.

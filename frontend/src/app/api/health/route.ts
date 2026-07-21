@@ -1,4 +1,8 @@
 import { NextResponse } from "next/server";
+import {
+  conversationalRectificationCreationPolicyFromEnvironment,
+  conversationalRectificationDeploymentShaFromEnvironment,
+} from "../../../lib/conversational-rectification/creation-policy.ts";
 
 type Check = {
   status: "ok" | "degraded" | "blocked";
@@ -7,12 +11,6 @@ type Check = {
 };
 
 const jyotishApiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200";
-function deployedGitCommit(): string {
-  return process.env.GITHUB_SHA
-    ?? process.env.VERCEL_GIT_COMMIT_SHA
-    ?? process.env.NEXT_PUBLIC_GIT_COMMIT
-    ?? "unknown";
-}
 
 function envCheck(names: string[]): Check {
   const missing = names.filter((name) => !process.env[name]);
@@ -59,12 +57,10 @@ function aggregate(checks: Record<string, Check>) {
 }
 
 export async function GET() {
-  const gitCommit = deployedGitCommit();
-  const rectificationV3CreationEnabled =
-    process.env.RECTIFICATION_V3_CREATE_ENABLED?.trim().toLowerCase() !== "false";
+  const gitCommit = conversationalRectificationDeploymentShaFromEnvironment();
   const rectificationV3MigrationsReady =
     process.env.RECTIFICATION_V3_MIGRATIONS_READY?.trim().toLowerCase() === "true";
-  const smokeSha = process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA?.trim().toLowerCase() ?? "";
+  const creationPolicy = conversationalRectificationCreationPolicyFromEnvironment();
   const checks = {
     web: { status: "ok" } satisfies Check,
     supabasePublicConfig: envCheck(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]),
@@ -73,12 +69,8 @@ export async function GET() {
     jyotishApi: await jyotishApiCheck(),
   };
   const status = aggregate(checks);
-  const deploymentHasFullSha = /^[0-9a-f]{40}$/.test(gitCommit);
-  const smokeMatchesDeployment = deploymentHasFullSha && smokeSha === gitCommit;
   const rectificationV3Ready = status === "ok"
-    && rectificationV3CreationEnabled
-    && rectificationV3MigrationsReady
-    && smokeMatchesDeployment;
+    && creationPolicy.audience === "public";
   return NextResponse.json(
     {
       status,
@@ -89,9 +81,10 @@ export async function GET() {
       rollout: {
         conversationalRectificationV3: {
           protocol: "conversational-evidence-v3",
-          newCaseCreation: rectificationV3CreationEnabled ? "enabled" : "paused",
+          newCaseCreation: creationPolicy.audience === "paused" ? "paused" : "enabled",
+          creationAudience: creationPolicy.audience,
           migrations: rectificationV3MigrationsReady ? "ready" : "unverified",
-          syntheticSmoke: smokeMatchesDeployment ? "matched" : "pending",
+          syntheticSmoke: creationPolicy.smokeMatchesDeployment ? "matched" : "pending",
           readyForNewCases: rectificationV3Ready,
         },
       },

@@ -42,7 +42,10 @@ function assertWorkflowUsesTestedSha(workflow: string) {
 }
 
 test("health endpoint exposes deployment identity for production verification", () => {
-  const source = readFileSync(new URL("../src/app/api/health/route.ts", import.meta.url), "utf8");
+  const source = [
+    readFileSync(new URL("../src/app/api/health/route.ts", import.meta.url), "utf8"),
+    readFileSync(new URL("../src/lib/conversational-rectification/creation-policy.ts", import.meta.url), "utf8"),
+  ].join("\n");
 
   assert.match(source, /deployment:/);
   assert.match(source, /GITHUB_SHA/);
@@ -90,7 +93,7 @@ test("v3 readiness requires healthy dependencies and smoke proof for the exact f
     "GITHUB_SHA", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY",
     "SUPABASE_SERVICE_ROLE_KEY", "OPENAI_API_KEY",
     "RECTIFICATION_V3_CREATE_ENABLED", "RECTIFICATION_V3_MIGRATIONS_READY",
-    "RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA",
+    "RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA", "RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS",
   ] as const;
   const prior = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
   const originalFetch = globalThis.fetch;
@@ -104,6 +107,7 @@ test("v3 readiness requires healthy dependencies and smoke proof for the exact f
     OPENAI_API_KEY: "synthetic-model-key",
     RECTIFICATION_V3_CREATE_ENABLED: "true",
     RECTIFICATION_V3_MIGRATIONS_READY: "true",
+    RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS: "00000000-0000-4000-8000-000000009001",
   });
   globalThis.fetch = async () => Response.json({ status: "ok" });
 
@@ -113,6 +117,7 @@ test("v3 readiness requires healthy dependencies and smoke proof for the exact f
       status: string;
       rollout: { conversationalRectificationV3: {
         syntheticSmoke: string;
+        creationAudience: string;
         readyForNewCases: boolean;
       } };
     };
@@ -124,6 +129,7 @@ test("v3 readiness requires healthy dependencies and smoke proof for the exact f
     assert.deepEqual((await readiness()).rollout.conversationalRectificationV3, {
       protocol: "conversational-evidence-v3",
       newCaseCreation: "enabled",
+      creationAudience: "smoke_only",
       migrations: "ready",
       syntheticSmoke: "pending",
       readyForNewCases: false,
@@ -131,11 +137,18 @@ test("v3 readiness requires healthy dependencies and smoke proof for the exact f
 
     process.env.GITHUB_SHA = "deadbee";
     process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA = "deadbee";
-    assert.equal((await readiness()).rollout.conversationalRectificationV3.readyForNewCases, false);
+    assert.deepEqual((await readiness()).rollout.conversationalRectificationV3, {
+      protocol: "conversational-evidence-v3",
+      newCaseCreation: "paused",
+      creationAudience: "paused",
+      migrations: "ready",
+      syntheticSmoke: "pending",
+      readyForNewCases: false,
+    });
 
     process.env.GITHUB_SHA = currentSha;
     process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA = oldSha;
-    assert.equal((await readiness()).rollout.conversationalRectificationV3.syntheticSmoke, "pending");
+    assert.equal((await readiness()).rollout.conversationalRectificationV3.creationAudience, "smoke_only");
 
     process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA = currentSha;
     const ready = await readiness();
@@ -143,6 +156,7 @@ test("v3 readiness requires healthy dependencies and smoke proof for the exact f
     assert.deepEqual(ready.rollout.conversationalRectificationV3, {
       protocol: "conversational-evidence-v3",
       newCaseCreation: "enabled",
+      creationAudience: "public",
       migrations: "ready",
       syntheticSmoke: "matched",
       readyForNewCases: true,

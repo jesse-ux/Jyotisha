@@ -23,6 +23,7 @@ import {
 import type { RectificationNarrativeGenerator } from "../../../lib/conversational-rectification/narrative-agent.ts";
 import type { BirthTimeJourneyEngine, RectificationQuestionnaire } from "../../../lib/birth-time-journey-service.ts";
 import type { CandidateResult, LifeEvent } from "../../../lib/birth-time-evidence.ts";
+import { conversationalRectificationCreationPolicyFromEnvironment } from "../../../lib/conversational-rectification/creation-policy.ts";
 import {
   conversationalRectificationLatencyBucket,
   createConversationalRectificationTelemetry,
@@ -589,8 +590,9 @@ async function createProductionService(
     store: createSupabaseConversationalRectificationStore(admin),
     billing: createSupabaseConversationalRectificationBilling(admin),
     get rectificationPriceCredits() { return priceCredits(); },
-    allowNewCaseCreation:
-      process.env.RECTIFICATION_V3_CREATE_ENABLED?.trim().toLowerCase() !== "false",
+    allowNewCaseCreation: conversationalRectificationCreationPolicyFromEnvironment(
+      authenticated.userId,
+    ).allowNewCaseCreation,
     async loadDeclaredProfile(userId) {
       return loadProductionConversationalRectificationProfile({
         async loadProfile(receivedUserId) {

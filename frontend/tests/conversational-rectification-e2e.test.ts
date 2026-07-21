@@ -29,6 +29,7 @@ import type {
 import { createRectificationQuestionHandoffCoordinator } from "../src/lib/rectification-question-handoff.ts";
 import type { ConversationalRectificationTelemetryPayload } from "../src/lib/birth-time-journey-telemetry.ts";
 import { createConversationalRectificationTelemetry } from "../src/lib/birth-time-journey-telemetry.ts";
+import { conversationalRectificationCreationPolicy } from "../src/lib/conversational-rectification/creation-policy.ts";
 
 const userId = "00000000-0000-4000-8000-000000009001";
 const caseId = "00000000-0000-4000-8000-000000009002";
@@ -736,6 +737,7 @@ test("health exposes deployment identity and explicit v3 rollout readiness witho
     RECTIFICATION_V3_CREATE_ENABLED: process.env.RECTIFICATION_V3_CREATE_ENABLED,
     RECTIFICATION_V3_MIGRATIONS_READY: process.env.RECTIFICATION_V3_MIGRATIONS_READY,
     RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA: process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA,
+    RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS: process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
     NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -745,6 +747,7 @@ test("health exposes deployment identity and explicit v3 rollout readiness witho
   process.env.RECTIFICATION_V3_CREATE_ENABLED = "true";
   process.env.RECTIFICATION_V3_MIGRATIONS_READY = "true";
   process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA = deploymentSha;
+  process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS = userId;
   process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.invalid";
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "synthetic-public-key";
   process.env["SUPABASE_SERVICE_ROLE_KEY"] = "synthetic-runtime-secret-never-return";
@@ -759,12 +762,14 @@ test("health exposes deployment identity and explicit v3 rollout readiness witho
       conversationalRectificationV3: {
         protocol: "conversational-evidence-v3",
         newCaseCreation: "enabled",
+        creationAudience: "public",
         migrations: "ready",
         syntheticSmoke: "matched",
         readyForNewCases: true,
       },
     });
     assert.equal(JSON.stringify(body).includes("synthetic-runtime-secret-never-return"), false);
+    assert.equal(JSON.stringify(body).includes(userId), false);
   } finally {
     globalThis.fetch = originalFetch;
     for (const [key, value] of Object.entries(prior)) {
@@ -774,10 +779,87 @@ test("health exposes deployment identity and explicit v3 rollout readiness witho
   }
 });
 
+test("pending smoke policy blocks ordinary paid and legacy starts before billing", async () => {
+  const ordinaryUser = "00000000-0000-4000-8000-000000009099";
+  const policyInput = {
+    creationEnabled: "true",
+    migrationsReady: "true",
+    deploymentSha,
+    smokeSha: "",
+    syntheticSmokeUserIds: userId,
+  } as const;
+  const ordinaryPolicy = conversationalRectificationCreationPolicy({
+    ...policyInput,
+    userId: ordinaryUser,
+  });
+  assert.equal(ordinaryPolicy.audience, "smoke_only");
+  assert.equal(ordinaryPolicy.allowNewCaseCreation, false);
+
+  for (const legacy of [false, true]) {
+    const backend = createSyntheticBackend({
+      legacy,
+      allowNewCaseCreation: ordinaryPolicy.allowNewCaseCreation,
+    });
+    const handler = createBirthTimeConversationPostHandler({
+      authenticate: async () => ({ userId: ordinaryUser, context: {} }),
+      createService: async () => backend.service,
+      telemetry: () => undefined,
+    });
+    const response = await handler(new Request("https://example.invalid/api/birth-time-conversation", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ type: "start", actionId: caseId }),
+    }));
+    assert.equal(response.status, 503);
+    assert.deepEqual(backend.billing(), {
+      reserveCount: 0,
+      chargeCount: 0,
+      releaseCount: 0,
+      state: null,
+    });
+    assert.equal(backend.cases.size, 0);
+  }
+
+  const smokePolicy = conversationalRectificationCreationPolicy({ ...policyInput, userId });
+  const smokeBackend = createSyntheticBackend({
+    allowNewCaseCreation: smokePolicy.allowNewCaseCreation,
+  });
+  await smokeBackend.service.start(userId, { type: "start", actionId: caseId });
+  assert.deepEqual(smokeBackend.billing(), {
+    reserveCount: 1,
+    chargeCount: 1,
+    releaseCount: 0,
+    state: "charged",
+  });
+
+  const publicPolicy = conversationalRectificationCreationPolicy({
+    ...policyInput,
+    userId: ordinaryUser,
+    smokeSha: deploymentSha,
+    syntheticSmokeUserIds: "",
+  });
+  const publicBackend = createSyntheticBackend({
+    allowNewCaseCreation: publicPolicy.allowNewCaseCreation,
+  });
+  await publicBackend.service.start(ordinaryUser, { type: "start", actionId: caseId });
+  assert.equal(publicBackend.billing().chargeCount, 1);
+});
+
 test("rollback flag stops only new cases while existing v3 resume stays readable", async () => {
   const enabled = createSyntheticBackend();
   await enabled.service.start(userId, { type: "start", actionId: caseId });
-  const backend = createSyntheticBackend({ allowNewCaseCreation: false });
+  const pendingPolicy = conversationalRectificationCreationPolicy({
+    userId,
+    creationEnabled: "true",
+    migrationsReady: "true",
+    deploymentSha,
+    smokeSha: "",
+    syntheticSmokeUserIds: "00000000-0000-4000-8000-000000009099",
+  });
+  assert.equal(pendingPolicy.audience, "smoke_only");
+  const backend = createSyntheticBackend({
+    allowNewCaseCreation: pendingPolicy.allowNewCaseCreation,
+  });
   backend.cases.set(caseId, enabled.cases.get(caseId)!);
   const handler = createBirthTimeConversationPostHandler({
     authenticate: async () => ({ userId, context: {} }),
@@ -798,7 +880,30 @@ test("rollback flag stops only new cases while existing v3 resume stays readable
     type: "resume", caseId, actionId: "00000000-0000-4000-8000-000000009051", turnVersion: 0,
   });
   assert.equal(resumed.caseId, caseId);
-  assert.equal(backend.activeTime(), "04:58");
+  let existingTurn = await post(handler, {
+    type: "answer", caseId, actionId: "00000000-0000-4000-8000-000000009052",
+    turnVersion: resumed.turnVersion, domain: "career", answer: "2014年7月第一次正式入职",
+  });
+  existingTurn = await post(handler, {
+    type: "pause", caseId, actionId: "00000000-0000-4000-8000-000000009053",
+    turnVersion: existingTurn.turnVersion,
+  });
+  assert.equal(existingTurn.status, "paused");
+  existingTurn = await post(handler, {
+    type: "answer", caseId, actionId: "00000000-0000-4000-8000-000000009054",
+    turnVersion: existingTurn.turnVersion, domain: "education", answer: "2011年6月大学毕业",
+  });
+  existingTurn = await post(handler, {
+    type: "answer", caseId, actionId: "00000000-0000-4000-8000-000000009055",
+    turnVersion: existingTurn.turnVersion, domain: "relocation", answer: "2018年9月搬到外地生活",
+  });
+  assert.equal(existingTurn.status, "confirming");
+  existingTurn = await post(handler, {
+    type: "confirm", caseId, actionId: "00000000-0000-4000-8000-000000009056",
+    turnVersion: existingTurn.turnVersion, time: "05:18",
+  });
+  assert.equal(existingTurn.status, "completed");
+  assert.equal(backend.activeTime(), "05:18");
 });
 
 test("a throwing injected telemetry sink cannot turn a committed request into failure", async () => {

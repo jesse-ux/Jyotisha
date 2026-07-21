@@ -79,6 +79,8 @@ RECTIFICATION_V3_CREATE_ENABLED=true
 RECTIFICATION_V3_MIGRATIONS_READY=false
 # Set only after the authenticated synthetic smoke passes on this exact image.
 RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA=
+# During canary only: one canonical synthetic account UUID. Never print or log it.
+RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS=
 
 # Recommended multi-model catalog. The JSON references server-only keys.
 LLM_DEFAULT_MODEL_ID=deepseek-pro
@@ -209,25 +211,33 @@ Run `cd frontend && npx supabase db push --linked` with the authorized project
 account. Verify the linked migration ledger contains all six versions. Do not
 print the database URL or any service-role credential. Then set
 `RECTIFICATION_V3_MIGRATIONS_READY=true`, keep
-`RECTIFICATION_V3_CREATE_ENABLED=true`, leave
-`RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA` empty, and deploy the tested Git revision.
-Creation is available for the authorized smoke account, but the revision is not
-ready for general rollout until that smoke is recorded.
+`RECTIFICATION_V3_CREATE_ENABLED=true`, set
+`RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS` to exactly one canonical UUID for
+the synthetic account, leave `RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA` empty, and
+deploy the tested Git revision. Never print, log, copy into a ticket, or return
+that UUID from health or telemetry. Creation is available only for the
+allowlisted smoke account; ordinary authenticated users can still resume and
+finish existing cases but cannot start a paid or legacy-imported case.
 
 Before the smoke, fetch `https://jyotisha.chat/api/health` and verify the full
 deployment SHA, healthy dependencies, enabled creation, ready migrations,
-`syntheticSmoke: pending`, and `readyForNewCases: false`. A missing, abbreviated,
-malformed, or previous-revision smoke SHA must remain pending.
+`creationAudience: smoke_only`, `syntheticSmoke: pending`, and
+`readyForNewCases: false`. A missing, abbreviated, malformed, or
+previous-revision smoke SHA must remain pending. If the create flag, migration
+flag, deployment SHA, or strict UUID allowlist is invalid, creation audience
+must be `paused`, including for the smoke account.
 
 After the smoke sequence below passes, set
 `RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA` to the exact deployed 40-character
-lowercase Git SHA and restart the web container. Then fetch health again and
+lowercase Git SHA, remove `RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS`, and
+restart the web container. Then fetch health again and
 verify all of the following against the revision that passed validation:
 
 - `deployment.gitCommit` exactly equals the tested 40-character Git SHA;
 - `rollout.conversationalRectificationV3.protocol` is
   `conversational-evidence-v3`;
 - `newCaseCreation` and `migrations` are `enabled` and `ready`;
+- `creationAudience` is `public`;
 - `syntheticSmoke` is `matched`;
 - `readyForNewCases` is `true`;
 - ordinary health checks remain healthy. The health response must never contain
@@ -265,7 +275,8 @@ from telemetry.
 
 Rollback is forward-compatible and non-destructive. First set
 `RECTIFICATION_V3_CREATE_ENABLED=false`, clear
-`RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA`, and redeploy a revision that can still
+`RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA` and
+`RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS`, and redeploy a revision that can still
 read/resume v3. Health must report `newCaseCreation: paused`. This stops only
 new v3 starts: keep reads, resume, answer, pause, confirmation, and saved-question
 handoff available for existing cases. Never reverse or delete the v3 migrations,
