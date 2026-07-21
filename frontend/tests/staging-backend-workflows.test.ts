@@ -75,6 +75,13 @@ test("quality gate validates relevant changes once and publishes a digest manife
   assert.doesNotMatch(workflow, /(?:^|:)latest$/m);
 });
 
+test("quality gate builds the Python package with its declared backend dependencies", () => {
+  const workflow = read(qualityWorkflow);
+
+  assert.match(workflow, /^\s+python -m build$/m);
+  assert.doesNotMatch(workflow, /python -m build --no-isolation/);
+});
+
 test("deployment test command includes manifest behavior coverage", () => {
   const packageJson = JSON.parse(
     readFileSync(new URL("../package.json", import.meta.url), "utf8"),
