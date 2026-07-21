@@ -11,6 +11,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from scripts.rectification_input_contract import candidate_input_fingerprint, stability_probe_contract
+
 
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "scripts" / "jyotish_engine.py"
@@ -63,6 +65,7 @@ def scan_candidate_times(payload: dict[str, Any], *, uncertainty_minutes: int = 
             "d1_ascendant": asc.get("sign"),
             "d1_degree_in_sign": asc.get("degree_in_sign"),
             "divisional_ascendants": divisional,
+            "input_fingerprint": candidate_input_fingerprint(point),
         })
     signatures = [tuple([row["d1_ascendant"], *row["divisional_ascendants"].values()]) for row in rows]
     unavailable_vargas = [varga.upper() for varga in _VARGAS if all(row["divisional_ascendants"][varga.upper()] is None for row in rows)]
@@ -88,6 +91,15 @@ def scan_candidate_times(payload: dict[str, Any], *, uncertainty_minutes: int = 
         "uncertainty_minutes": uncertainty_minutes,
         "step_minutes": step_minutes,
         "rows": rows,
+        "input_contract": {
+            "version": "rectification-input-v1",
+            "center_input_fingerprint": candidate_input_fingerprint(payload),
+            "settings": {
+                "ayanamsa": str(payload.get("ayanamsa") or "lahiri").lower(),
+                "node_mode": str(payload.get("node_mode") or "true").lower(),
+            },
+        },
+        "stability_contract": stability_probe_contract(payload),
         "transitions": transitions,
         "supported_vargas": [varga.upper() for varga in supported_vargas],
         "unavailable_vargas": unavailable_vargas,

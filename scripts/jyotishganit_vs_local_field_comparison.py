@@ -143,20 +143,24 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
-def main() -> int:
+def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser()
     ap.add_argument("--year", type=int, default=1955)
     ap.add_argument("--month", type=int, default=2)
     ap.add_argument("--day", type=int, default=24)
     ap.add_argument("--hour", type=int, default=19)
     ap.add_argument("--minute", type=int, default=15)
-    ap.add_argument("--latitude", type=float, default=37.3382)
-    ap.add_argument("--longitude", type=float, default=-122.0383)
+    ap.add_argument("--latitude", type=float, default=37.7749)
+    ap.add_argument("--longitude", type=float, default=-122.4194)
     ap.add_argument("--timezone", type=float, default=-8.0)
     ap.add_argument("--location", default="San Francisco, CA")
     ap.add_argument("--name", default="Steve Jobs public")
     ap.add_argument("--output")
-    args = ap.parse_args()
+    return ap
+
+
+def main() -> int:
+    args = build_parser().parse_args()
     payload = build(args)
     text = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True)
     if args.output:

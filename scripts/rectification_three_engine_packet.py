@@ -1,15 +1,14 @@
 """Build a privacy-safe, request-level three-engine rectification parity packet."""
 from __future__ import annotations
 
-import hashlib
 import importlib
-import json
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from domain_calculation_service import compute_chart
+from scripts.rectification_input_contract import candidate_input_fingerprint, stability_probe_contract
 
 ROOT = Path(__file__).resolve().parents[1]
 JYOTISHGANIT_ROOT = ROOT / "references" / "open_source_sources" / "jyotishganit"
@@ -19,8 +18,7 @@ SIGNS = ("Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpi
 
 def case_hash(case: dict[str, Any]) -> str:
     """Stable identity for evidence correlation; never exposes birth data."""
-    payload = json.dumps(case, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
-    return hashlib.sha256(payload.encode()).hexdigest()
+    return candidate_input_fingerprint(case)
 
 
 def _local_d1(case: dict[str, Any]) -> dict[str, str]:
@@ -121,6 +119,8 @@ def build_packet(
     return {
         "scope": "request_level_three_engine_d1_parity",
         "case_hash": case_hash(case),
+        "input_contract_hash": candidate_input_fingerprint(case),
+        "stability_contract": stability_probe_contract(case),
         "engine_status": engine_status,
         "match_count": sum(row["status"] == "match" for row in rows),
         "mismatch_count": sum(row["status"] == "mismatch" for row in rows),

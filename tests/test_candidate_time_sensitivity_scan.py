@@ -25,3 +25,6 @@ def test_scanner_reports_real_divisional_transitions(monkeypatch):
     assert report["transitions"]
     assert report["pending_layers"] == ["UL", "A7", "A10", "KP_cusp"]
     assert report["rows"][0]["divisional_ascendants"]["D9"] in {"Aries", "Taurus"}
+    assert report["input_contract"]["center_input_fingerprint"]
+    assert report["rows"][0]["input_fingerprint"] != report["rows"][1]["input_fingerprint"]
+    assert report["stability_contract"]["minute_confirmation_allowed"] is False
