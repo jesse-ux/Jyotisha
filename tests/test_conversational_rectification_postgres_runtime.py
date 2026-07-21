@@ -2257,3 +2257,284 @@ def test_import_abandon_then_paid_revision_keeps_active_time_and_charges_normall
         "importedFrom": None,
         "baseline": "04:58",
     }
+
+
+def test_real_database_full_conversational_flow_survives_authenticated_chat_deletion(
+    pg14_database: PgDatabase,
+) -> None:
+    user_id = "00000000-0000-4000-8000-000000003101"
+    case_id = "00000000-0000-4000-8000-000000003102"
+    attach_action = "00000000-0000-4000-8000-000000003103"
+    pause_action = "00000000-0000-4000-8000-000000003104"
+    save_action = "00000000-0000-4000-8000-000000003105"
+    wrong_confirm = "00000000-0000-4000-8000-000000003106"
+    exact_confirm = "00000000-0000-4000-8000-000000003107"
+    claim_action = "00000000-0000-4000-8000-000000003108"
+    chat_id = "00000000-0000-4000-8000-000000003109"
+    question = "2027年是否适合换工作？"
+    question_fingerprint = hashlib.sha256(question.encode("utf-8")).hexdigest()
+    receipt = {"modelId": "synthetic-model", "schemaValidated": True}
+    _create_user(pg14_database, user_id, credits=20)
+
+    assert _reserve(pg14_database, user_id, case_id)["credits"] == 17
+    _create_case(pg14_database, user_id, case_id, _valid_declared_birth_input())
+    assert _complete(pg14_database, user_id, case_id)["billing_state"] == "charged"
+    attached = json.loads(pg14_database.sql(
+        f"""
+        select public.attach_conversational_rectification_question(
+          '{user_id}'::uuid, '{case_id}'::uuid, 0, '{attach_action}'::uuid,
+          {_text(question)}, '{question_fingerprint}'
+        )::text;
+        """
+    ))
+    assert attached["pending_consultation_question"] == question
+
+    paused_turn = {
+        **_valid_turn(case_id),
+        "status": "paused",
+        "turnVersion": 1,
+        "actions": ["answer", "abandon"],
+        "pendingConsultationQuestion": question,
+    }
+    paused = json.loads(pg14_database.sql(
+        f"""
+        select public.pause_conversational_rectification_case(
+          '{user_id}'::uuid, '{case_id}'::uuid, 0, '{pause_action}'::uuid,
+          {_jsonb(paused_turn)}, {_jsonb(receipt)}, '{'a' * 64}'
+        )::text;
+        """
+    ))
+    assert paused["status"] == "paused"
+    loaded = json.loads(pg14_database.sql(
+        f"select public.load_conversational_rectification_case('{user_id}'::uuid, '{case_id}'::uuid)::text"
+    ))
+    assert loaded["status"] == "paused"
+    assert loaded["turn_version"] == 1
+
+    future_evidence = {
+        "id": "00000000-0000-4000-8000-000000003110",
+        "rawText": "2027年计划换工作",
+        "domain": "career",
+        "eventSummary": "计划换工作",
+        "dateValue": "2027",
+        "datePrecision": "year",
+        "extractionStatus": "clear",
+        "scoreable": False,
+        "correctsEvidenceIds": [],
+    }
+    ready_turn = {
+        **_valid_turn(case_id),
+        "status": "confirming",
+        "turnVersion": 2,
+        "candidate": {
+            "status": "ready_for_confirmation",
+            "representativeTime": "05:21",
+            "rangeStart": "05:10",
+            "rangeEnd": "05:30",
+        },
+        "evidenceRequest": None,
+        "evidenceRecap": [{
+            "id": future_evidence["id"],
+            "summary": future_evidence["eventSummary"],
+            "dateLabel": "2027（未来，仅作背景）",
+        }],
+        "actions": ["answer", "pause", "abandon", "confirm"],
+        "pendingConsultationQuestion": question,
+    }
+    saved = json.loads(pg14_database.sql(_save_statement(
+        user_id,
+        case_id,
+        1,
+        save_action,
+        [future_evidence],
+        turn=ready_turn,
+        command_fingerprint="b" * 64,
+    )))
+    assert saved["status"] == "confirming"
+    loaded_ready = json.loads(pg14_database.sql(
+        f"select public.load_conversational_rectification_case('{user_id}'::uuid, '{case_id}'::uuid)::text"
+    ))
+    assert loaded_ready["event_evidence"][0]["scoreable"] is False
+
+    completed_turn = {
+        **ready_turn,
+        "status": "completed",
+        "turnVersion": 3,
+        "candidate": {**ready_turn["candidate"], "status": "confirmed"},
+        "actions": ["continue_original_question"],
+    }
+    mismatch = f"""
+      select public.confirm_conversational_rectification_candidate(
+        '{user_id}'::uuid, '{case_id}'::uuid, 2, '{wrong_confirm}'::uuid,
+        '00000000-0000-4000-8000-000000000991'::uuid, '05:20'::time,
+        'rectification-v3.1', {_jsonb(completed_turn)}, {_jsonb(receipt)}, '{'c' * 64}'
+      );
+    """
+    assert pg14_database.rejects(mismatch)
+    assert pg14_database.sql(
+        f"select pg_catalog.to_char(active_birth_time, 'HH24:MI') from public.profiles where id = '{user_id}'::uuid"
+    ) == "04:58"
+
+    confirmed = json.loads(pg14_database.sql(
+        f"""
+        select public.confirm_conversational_rectification_candidate(
+          '{user_id}'::uuid, '{case_id}'::uuid, 2, '{exact_confirm}'::uuid,
+          '00000000-0000-4000-8000-000000000991'::uuid, '05:21'::time,
+          'rectification-v3.1', {_jsonb(completed_turn)}, {_jsonb(receipt)}, '{'d' * 64}'
+        )::text;
+        """
+    ))
+    assert confirmed["status"] == "completed"
+    assert pg14_database.sql(
+        f"select pg_catalog.to_char(active_birth_time, 'HH24:MI') from public.profiles where id = '{user_id}'::uuid"
+    ) == "05:21"
+
+    claimed = json.loads(pg14_database.sql(
+        f"""
+        select public.claim_conversational_rectification_handoff(
+          '{user_id}'::uuid, '{case_id}'::uuid, 3, '{claim_action}'::uuid,
+          '{question_fingerprint}'
+        )::text;
+        """
+    ))
+    assert claimed["status"] == "claimed"
+    request_id = claimed["requestId"]
+    executing = json.loads(pg14_database.sql(
+        f"""
+        select public.begin_conversational_rectification_handoff_execution(
+          '{user_id}'::uuid, '{case_id}'::uuid, 3, '{claim_action}'::uuid,
+          '{request_id}'::uuid, '{question_fingerprint}'
+        )::text;
+        """
+    ))
+    assert executing["status"] == "ready"
+    reservation = json.loads(pg14_database.sql(
+        f"""
+        select row_to_json(result)::text from public.begin_consultation_credit(
+          '{user_id}'::uuid, '{request_id}'
+        ) result;
+        """
+    ))
+    assert reservation["success"] is True
+    settlement = json.loads(pg14_database.sql(
+        f"""
+        select public.settle_conversational_rectification_handoff(
+          '{user_id}'::uuid, '{case_id}'::uuid, '{claim_action}'::uuid,
+          '{request_id}'::uuid, true
+        )::text;
+        """
+    ))
+    assert settlement["status"] == "consumed"
+
+    pg14_database.sql(
+        f"insert into public.chat_sessions (id, user_id) values ('{chat_id}'::uuid, '{user_id}'::uuid)"
+    )
+    pg14_database.sql(
+        """
+        create or replace function auth.uid() returns uuid
+          language sql stable set search_path = ''
+          as 'select nullif(pg_catalog.current_setting(''request.jwt.claim.sub'', true), '''')::uuid';
+        """
+    )
+    try:
+        pg14_database.sql(
+            f"""
+            begin;
+            set local role authenticated;
+            select pg_catalog.set_config('request.jwt.claim.sub', '{user_id}', true);
+            delete from public.chat_sessions where id = '{chat_id}'::uuid;
+            commit;
+            """
+        )
+    finally:
+        pg14_database.sql(
+            """
+            create or replace function auth.uid() returns uuid
+              language sql stable set search_path = '' as 'select null::uuid';
+            """
+        )
+    durable = json.loads(pg14_database.sql(
+        f"""
+        select pg_catalog.jsonb_build_object(
+          'chatCount', (select pg_catalog.count(*) from public.chat_sessions where id = '{chat_id}'::uuid),
+          'caseCount', (select pg_catalog.count(*) from public.birth_time_rectification_cases where id = '{case_id}'::uuid),
+          'credits', credits,
+          'rectificationCharges', (select pg_catalog.count(*) from public.birth_time_rectification_billing where case_id = '{case_id}'::uuid and state = 'charged'),
+          'handoff', (select state from public.birth_time_rectification_question_handoffs where case_id = '{case_id}'::uuid),
+          'question', (select pending_consultation_question from public.birth_time_rectification_cases where id = '{case_id}'::uuid)
+        )::text
+        from public.profiles where id = '{user_id}'::uuid;
+        """
+    ))
+    assert durable == {
+        "chatCount": 0,
+        "caseCount": 1,
+        "credits": 16,
+        "rectificationCharges": 1,
+        "handoff": "consumed",
+        "question": None,
+    }
+
+
+def test_all_v3_tables_and_public_rpcs_are_service_role_only(pg14_database: PgDatabase) -> None:
+    tables = [
+        "birth_time_rectification_cases",
+        "birth_time_rectification_turns",
+        "birth_time_rectification_event_evidence",
+        "birth_time_rectification_billing",
+        "birth_time_rectification_action_receipts",
+        "birth_time_rectification_question_handoffs",
+        "birth_time_rectification_handoff_attach_receipts",
+        "birth_time_rectification_handoff_settlements",
+    ]
+    for table in tables:
+        privileges = json.loads(pg14_database.sql(
+            f"""
+            select pg_catalog.jsonb_build_object(
+              'anon', pg_catalog.has_table_privilege('anon', 'public.{table}', 'SELECT,INSERT,UPDATE,DELETE'),
+              'authenticated', pg_catalog.has_table_privilege('authenticated', 'public.{table}', 'SELECT,INSERT,UPDATE,DELETE'),
+              'serviceRole', pg_catalog.has_table_privilege('service_role', 'public.{table}', 'SELECT,INSERT,UPDATE,DELETE')
+            )::text;
+            """
+        ))
+        assert privileges == {"anon": False, "authenticated": False, "serviceRole": True}, table
+
+    rpc_names = [
+        "reserve_conversational_rectification_fee",
+        "complete_conversational_rectification_fee",
+        "release_conversational_rectification_fee",
+        "create_conversational_rectification_case",
+        "load_conversational_rectification_case",
+        "replay_conversational_rectification_action",
+        "save_conversational_rectification_turn",
+        "pause_conversational_rectification_case",
+        "abandon_conversational_rectification_case",
+        "confirm_conversational_rectification_candidate",
+        "import_legacy_conversational_rectification_case",
+        "attach_conversational_rectification_question",
+        "load_conversational_rectification_handoff",
+        "claim_conversational_rectification_handoff",
+        "begin_conversational_rectification_handoff_execution",
+        "settle_conversational_rectification_handoff",
+    ]
+    rows = json.loads(pg14_database.sql(
+        f"""
+        select pg_catalog.jsonb_agg(pg_catalog.jsonb_build_object(
+          'name', proc.proname,
+          'anon', pg_catalog.has_function_privilege('anon', proc.oid, 'EXECUTE'),
+          'authenticated', pg_catalog.has_function_privilege('authenticated', proc.oid, 'EXECUTE'),
+          'serviceRole', pg_catalog.has_function_privilege('service_role', proc.oid, 'EXECUTE')
+        ) order by proc.proname)::text
+        from pg_catalog.pg_proc proc
+        join pg_catalog.pg_namespace namespace on namespace.oid = proc.pronamespace
+        where namespace.nspname = 'public'
+          and proc.proname = any({_text('{' + ','.join(rpc_names) + '}')}::text[]);
+        """
+    ))
+    assert {row["name"] for row in rows} == set(rpc_names)
+    assert all(row == {
+        "name": row["name"],
+        "anon": False,
+        "authenticated": False,
+        "serviceRole": True,
+    } for row in rows)

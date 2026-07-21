@@ -178,7 +178,12 @@ type Receipt = Readonly<{
   row: StoredConversationalRectificationCase;
 }>;
 
-function createSyntheticBackend(options: { legacy?: boolean; allowNewCaseCreation?: boolean } = {}) {
+function createSyntheticBackend(options: {
+  legacy?: boolean;
+  allowNewCaseCreation?: boolean;
+  packetFailure?: boolean;
+  packetEvidenceCalls?: string[][];
+} = {}) {
   const cases = new Map<string, LoadedConversationalRectificationCase>();
   const receipts = new Map<string, Receipt>();
   let activeTime = "04:58";
@@ -364,6 +369,8 @@ function createSyntheticBackend(options: { legacy?: boolean; allowNewCaseCreatio
       };
     },
     async buildTechnicalPacket(input) {
+      if (options.packetFailure) throw new Error("synthetic packet failure");
+      options.packetEvidenceCalls?.push(input.evidence.map((item) => item.id));
       const ready = input.evidence.filter((item) => item.scoreable === true && item.extractionStatus !== "needs_clarification").length >= 3;
       const packet = technicalPacket(ready);
       if (input.preserveCandidateRange && input.privateCandidate?.rangeStart && input.privateCandidate.rangeEnd) {
@@ -428,7 +435,8 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
   consent = clearBirthTimeConsultationConsent(consent, "chat-a");
   assert.equal(resolveBirthTimeConsultationRoute(onboardingDraft, consent, "chat-a").kind, "choice");
 
-  const backend = createSyntheticBackend();
+  const packetEvidenceCalls: string[][] = [];
+  const backend = createSyntheticBackend({ packetEvidenceCalls });
   const telemetry: ConversationalRectificationTelemetryPayload[] = [];
   const handler = createBirthTimeConversationPostHandler({
     authenticate: async () => ({ userId, context: {} }),
@@ -450,6 +458,7 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
   assert.equal(JSON.stringify(turn).includes("candidateWeights"), false);
   assert.equal(JSON.stringify(turn).includes("private-synthetic-partition"), false);
   assert.deepEqual(backend.billing(), { reserveCount: 1, chargeCount: 1, releaseCount: 0, state: "charged" });
+  assert.equal(telemetry.at(-1)?.billingState, "charged");
   assert.equal(backend.activeTime(), "04:58", "revision must retain the old active minute");
 
   turn = await post(handler, {
@@ -467,11 +476,23 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
   assert.match(turn.narrative, /还缺少.*明确时间/);
   assert.equal(turn.evidenceRecap.at(-1)?.dateLabel, "日期待补充");
 
+  const futureEvidenceAction = "00000000-0000-4000-8000-000000009050";
+  turn = await post(handler, {
+    type: "answer", caseId, actionId: futureEvidenceAction,
+    turnVersion: turn.turnVersion, domain: "career", answer: "2027年计划换工作",
+  });
+  assert.match(turn.narrative, /未来事件只能作为背景.*不能用于校正评分/);
+  assert.equal(turn.evidenceRecap.at(-1)?.dateLabel, "2027（未来，仅作背景）");
+  const futureEvidenceId = turn.evidenceRecap.at(-1)?.id;
+  assert.ok(futureEvidenceId);
+  const historicalEvidenceIds: string[] = [];
+
   turn = await post(handler, {
     type: "answer", caseId, actionId: "00000000-0000-4000-8000-000000009005",
     turnVersion: turn.turnVersion, domain: "career", answer: "2014年7月第一次正式入职",
   });
   assert.equal(turn.evidenceRecap.at(-1)?.dateLabel, "2014-07");
+  historicalEvidenceIds.push(turn.evidenceRecap.at(-1)!.id);
   turn = await post(handler, {
     type: "pause", caseId, actionId: "00000000-0000-4000-8000-000000009006",
     turnVersion: turn.turnVersion,
@@ -495,13 +516,17 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
     type: "answer", caseId, actionId: "00000000-0000-4000-8000-000000009008",
     turnVersion: turn.turnVersion, domain: "education", answer: "2011年6月大学毕业",
   });
+  historicalEvidenceIds.push(turn.evidenceRecap.at(-1)!.id);
   turn = await post(secondDevice, {
     type: "answer", caseId, actionId: "00000000-0000-4000-8000-000000009009",
     turnVersion: turn.turnVersion, domain: "relocation", answer: "2018年9月搬到外地生活",
   });
+  historicalEvidenceIds.push(turn.evidenceRecap.at(-1)!.id);
   assert.equal(turn.status, "confirming");
   assert.equal(turn.candidate.representativeTime, "05:18");
   assert.equal(backend.activeTime(), "04:58");
+  assert.equal(packetEvidenceCalls.some((ids) => ids.includes(futureEvidenceId)), false);
+  assert.deepEqual(packetEvidenceCalls.at(-1), historicalEvidenceIds);
 
   const wrong = await handler(new Request("https://example.invalid/api/birth-time-conversation", {
     method: "POST",
@@ -513,6 +538,8 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
   }));
   assert.equal(wrong.status, 409);
   assert.equal(backend.activeTime(), "04:58", "a failed confirmation must be atomic");
+  assert.equal(telemetry.at(-1)?.phase, "confirming");
+  assert.equal(telemetry.at(-1)?.billingState, "unchanged");
 
   turn = await post(secondDevice, {
     type: "confirm", caseId, actionId: "00000000-0000-4000-8000-000000009011",
@@ -565,7 +592,13 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
 
 test("legacy unfinished work imports once with migration waiver and no questionnaire or charge", async () => {
   const backend = createSyntheticBackend({ legacy: true });
-  const first = await backend.service.start(userId, { type: "start", actionId: caseId });
+  const telemetry: ConversationalRectificationTelemetryPayload[] = [];
+  const handler = createBirthTimeConversationPostHandler({
+    authenticate: async () => ({ userId, context: {} }),
+    createService: async () => backend.service,
+    telemetry: (payload) => telemetry.push(payload),
+  });
+  const first = await post(handler, { type: "start", actionId: caseId });
   const replay = await backend.service.start(userId, { type: "start", actionId: caseId });
   assert.deepEqual(replay, first);
   assert.equal(backend.cases.get(caseId)?.importedFromCaseId, backend.legacyCaseId);
@@ -575,9 +608,10 @@ test("legacy unfinished work imports once with migration waiver and no questionn
   assert.deepEqual(first.candidate.rangeEnd, "05:50");
   assert.doesNotMatch(first.narrative, /2006-2011|2011-2016|哪个时间段/);
   assert.equal(JSON.stringify(first).includes("choiceAnswers"), false);
+  assert.equal(telemetry.at(-1)?.billingState, "migration_waived");
 });
 
-test("v3 telemetry rejects every field outside the privacy-safe category contract", () => {
+test("v3 telemetry drops invalid payloads without affecting the product request", () => {
   const emitted: unknown[] = [];
   const record = createConversationalRectificationTelemetry((payload) => emitted.push(payload));
   const valid = {
@@ -595,9 +629,64 @@ test("v3 telemetry rejects every field outside the privacy-safe category contrac
     "narrative", "eventText", "birthDate", "birthTime", "email", "userId",
     "accessToken", "refreshToken", "modelPrompt", "caseId", "actionId",
   ]) {
-    assert.throws(() => record({ ...valid, [forbidden]: "private" } as never));
+    assert.doesNotThrow(() => record({ ...valid, [forbidden]: "private" } as never));
   }
   assert.deepEqual(emitted, [valid]);
+});
+
+test("telemetry reports released reservations and authentication rejects before service creation", async () => {
+  const backend = createSyntheticBackend({ packetFailure: true });
+  const telemetry: ConversationalRectificationTelemetryPayload[] = [];
+  const handler = createBirthTimeConversationPostHandler({
+    authenticate: async () => ({ userId, context: {} }),
+    createService: async () => backend.service,
+    telemetry: (payload) => telemetry.push(payload),
+  });
+  const failed = await handler(new Request("https://example.invalid/api/birth-time-conversation", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ type: "start", actionId: caseId }),
+  }));
+  assert.equal(failed.status, 503);
+  assert.deepEqual(backend.billing(), { reserveCount: 1, chargeCount: 0, releaseCount: 1, state: "released" });
+  assert.equal(telemetry.at(-1)?.billingState, "released");
+  assert.equal(telemetry.at(-1)?.errorCategory, "dependency");
+
+  let serviceCreations = 0;
+  const unauthenticated = createBirthTimeConversationPostHandler({
+    authenticate: async () => null,
+    createService: async () => { serviceCreations += 1; return backend.service; },
+    telemetry: () => undefined,
+  });
+  const rejected = await unauthenticated(new Request("https://example.invalid/api/birth-time-conversation", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ type: "start", actionId: caseId }),
+  }));
+  assert.equal(rejected.status, 401);
+  assert.equal(serviceCreations, 0);
+});
+
+test("authenticated route remains owner-bound", async () => {
+  const backend = createSyntheticBackend();
+  const started = await backend.service.start(userId, { type: "start", actionId: caseId });
+  const foreign = createBirthTimeConversationPostHandler({
+    authenticate: async () => ({ userId: "00000000-0000-4000-8000-000000009999", context: {} }),
+    createService: async () => backend.service,
+    telemetry: () => undefined,
+  });
+  const response = await foreign(new Request("https://example.invalid/api/birth-time-conversation", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      type: "resume",
+      caseId,
+      actionId: "00000000-0000-4000-8000-000000009998",
+      turnVersion: started.turnVersion,
+    }),
+  }));
+  assert.equal(response.status, 404);
+  assert.deepEqual(backend.billing(), { reserveCount: 1, chargeCount: 1, releaseCount: 0, state: "charged" });
 });
 
 test("transient 502 replays the same command and terminal failures expose only stable Chinese copy", async () => {
@@ -646,12 +735,20 @@ test("health exposes deployment identity and explicit v3 rollout readiness witho
     GITHUB_SHA: process.env.GITHUB_SHA,
     RECTIFICATION_V3_CREATE_ENABLED: process.env.RECTIFICATION_V3_CREATE_ENABLED,
     RECTIFICATION_V3_MIGRATIONS_READY: process.env.RECTIFICATION_V3_MIGRATIONS_READY,
+    RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA: process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   };
   process.env.GITHUB_SHA = deploymentSha;
   process.env.RECTIFICATION_V3_CREATE_ENABLED = "true";
   process.env.RECTIFICATION_V3_MIGRATIONS_READY = "true";
+  process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA = deploymentSha;
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://example.invalid";
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = "synthetic-public-key";
   process.env["SUPABASE_SERVICE_ROLE_KEY"] = "synthetic-runtime-secret-never-return";
+  process.env.OPENAI_API_KEY = "synthetic-model-key";
   globalThis.fetch = async () => Response.json({ status: "ok" });
   try {
     const { GET: healthGet } = await import(`../src/app/api/health/route.ts?e2e=${Date.now()}`);
@@ -663,7 +760,7 @@ test("health exposes deployment identity and explicit v3 rollout readiness witho
         protocol: "conversational-evidence-v3",
         newCaseCreation: "enabled",
         migrations: "ready",
-        syntheticSmoke: "required",
+        syntheticSmoke: "matched",
         readyForNewCases: true,
       },
     });

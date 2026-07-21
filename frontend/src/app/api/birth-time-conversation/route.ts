@@ -10,6 +10,7 @@ import {
 } from "../../../lib/conversational-rectification/errors.ts";
 import {
   createConversationalRectificationService,
+  conversationalRectificationTelemetryOutcome,
   evidencePredatesBirthDate,
   type ConversationalRectificationPacketBuildInput,
   type ConversationalRectificationService,
@@ -691,7 +692,7 @@ async function dispatch(
 }
 
 function telemetryPhase(
-  turn: ConversationalRectificationTurn | null,
+  turn: Pick<ConversationalRectificationTurn, "status"> | null,
 ): ConversationalRectificationTelemetryPayload["phase"] {
   switch (turn?.status) {
     case "active": return "collecting_evidence";
@@ -740,6 +741,7 @@ export function createBirthTimeConversationPostHandler(
     );
     dependencies.createRequestId?.(request);
     let actionKind: ConversationalRectificationTelemetryPayload["actionKind"] = "unknown";
+    let service: BirthTimeConversationRouteService | null = null;
     try {
       const authenticated = await dependencies.authenticate(request);
       if (!authenticated) throw new ConversationalRectificationError("authentication_required");
@@ -748,29 +750,32 @@ export function createBirthTimeConversationPostHandler(
       if (!parsed.success) throw new ConversationalRectificationError("invalid_command");
       actionKind = parsed.data.type;
 
-      const service = await dependencies.createService(authenticated);
+      service = await dependencies.createService(authenticated);
       const turn = await dispatch(service, authenticated.userId, parsed.data);
+      const outcome = conversationalRectificationTelemetryOutcome(service);
       telemetry({
         protocol: "conversational-evidence-v3",
         phase: telemetryPhase(turn),
         actionKind,
         resultCategory: "success",
         latencyBucket: conversationalRectificationLatencyBucket(now() - startedAt),
-        billingState: actionKind === "start" ? "unknown" : "unchanged",
+        billingState: outcome?.billingState ?? (actionKind === "start" ? "unknown" : "unchanged"),
         errorCategory: "none",
         deploymentSha,
       });
       return Response.json(turn);
     } catch (error) {
       const publicError = toConversationalRectificationPublicError(error);
+      const outcome = service ? conversationalRectificationTelemetryOutcome(service) : null;
       dependencies.log?.({ code: publicError.code });
       telemetry({
         protocol: "conversational-evidence-v3",
-        phase: "entry",
+        phase: telemetryPhase(outcome?.caseStatus ? { status: outcome.caseStatus } : null),
         actionKind,
         resultCategory: telemetryResultCategory(publicError.status),
         latencyBucket: conversationalRectificationLatencyBucket(now() - startedAt),
-        billingState: publicError.code === "billing_failed" ? "unknown" : "not_applicable",
+        billingState: outcome?.billingState
+          ?? (publicError.code === "billing_failed" ? "unknown" : "not_applicable"),
         errorCategory: telemetryErrorCategory(publicError.code),
         deploymentSha,
       });

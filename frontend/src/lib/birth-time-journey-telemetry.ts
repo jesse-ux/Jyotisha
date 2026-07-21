@@ -84,8 +84,8 @@ export function createConversationalRectificationTelemetry(
   sink: ConversationalRectificationTelemetrySink = conversationalRectificationConsoleSink,
 ): ConversationalRectificationTelemetrySink {
   return (input) => {
-    const payload = conversationalRectificationTelemetryPayloadSchema.parse(input);
     try {
+      const payload = conversationalRectificationTelemetryPayloadSchema.parse(input);
       sink(payload);
     } catch { // no-excuse-ok: observability cannot break the product request
       return;

@@ -781,6 +781,43 @@ test("production packet deterministically sends only the latest six supported ev
   );
 });
 
+test("persistable future background evidence never reaches the production scorer", async () => {
+  const scoreCalls: LifeEvent[][] = [];
+  const engine = packetEngine({ scoreCalls });
+  const historical = [
+    syntheticEvidence(61, "education", "2018-06", "month"),
+    syntheticEvidence(62, "relocation", "2020-09", "month"),
+    syntheticEvidence(63, "career", "2024-03", "month"),
+  ];
+  const future = {
+    ...syntheticEvidence(64, "career", "2027", "year"),
+    rawText: "2027年计划换工作",
+    eventSummary: "计划换工作",
+    scoreable: false as const,
+  };
+
+  await buildProductionConversationalRectificationPacket(engine, {
+    userId,
+    caseId,
+    asOfDate: "2026-07-21",
+    declaredBirthInput: {
+      source: "approximate",
+      birthDate: "1990-01-01",
+      reportedTime: "05:20",
+      uncertaintyBeforeMinutes: 30,
+      uncertaintyAfterMinutes: 30,
+      birthTimeClue: null,
+      birthplace: packetBirthplace,
+    },
+    privateCandidate: null,
+    evidence: [...historical, future],
+  });
+
+  assert.deepEqual(scoreCalls.map((events) => events.map((event) => event.id)), [[
+    ...historical.map((item) => item.id),
+  ]]);
+});
+
 test("family evidence stays out of relationship scoring when three real scorer domains exist", async () => {
   const scoreCalls: LifeEvent[][] = [];
   const engine = packetEngine({ scoreCalls });

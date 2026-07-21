@@ -99,6 +99,22 @@ export type ConversationalRectificationService = Readonly<{
   confirm(userId: string, command: CommandOf<"confirm">): Promise<ConversationalRectificationTurn>;
 }>;
 
+export type ConversationalRectificationTelemetryOutcome = Readonly<{
+  billingState: "not_applicable" | "charged" | "released" | "migration_waived" | "unchanged" | "unknown";
+  caseStatus: ConversationalRectificationTurn["status"] | null;
+}>;
+
+const telemetryOutcomes = new WeakMap<
+  ConversationalRectificationService,
+  () => ConversationalRectificationTelemetryOutcome
+>();
+
+export function conversationalRectificationTelemetryOutcome(
+  service: ConversationalRectificationService,
+): ConversationalRectificationTelemetryOutcome | null {
+  return telemetryOutcomes.get(service)?.() ?? null;
+}
+
 const transitionValidatorVersion = "conversational-rectification-orchestrator-v1";
 const explicitDirectionChangePattern = /(?:都不符合|都不是|不符合|换(?:个|一)?(?:方向|领域)|其他方向|别的方向|不想(?:谈|说|回答)|拒绝回答)/;
 const genericUncertaintyPattern = /(?:不知道|不确定)/;
@@ -458,9 +474,25 @@ function requireMutable(current: LoadedConversationalRectificationCase) {
 export function createConversationalRectificationService(
   ports: ConversationalRectificationServicePorts,
 ): ConversationalRectificationService {
+  let lastTelemetryOutcome: ConversationalRectificationTelemetryOutcome = {
+    billingState: "not_applicable",
+    caseStatus: null,
+  };
+  function resetTelemetryOutcome() {
+    lastTelemetryOutcome = { billingState: "not_applicable", caseStatus: null };
+  }
+  function observeCase(
+    value: LoadedConversationalRectificationCase | StoredConversationalRectificationCase,
+    billingState: ConversationalRectificationTelemetryOutcome["billingState"] = "unchanged",
+  ) {
+    lastTelemetryOutcome = { billingState, caseStatus: publicTurn(value).status };
+  }
+
   async function load(userId: string, caseId: string) {
     try {
-      return requireLoaded(await ports.store.loadCase({ userId, caseId }));
+      const current = requireLoaded(await ports.store.loadCase({ userId, caseId }));
+      observeCase(current);
+      return current;
     } catch (error) {
       throw safeFailure(error);
     }
@@ -481,7 +513,9 @@ export function createConversationalRectificationService(
         actionKind,
         commandFingerprint: fingerprint,
       });
-      return receipt ? publicTurn(receipt) : null;
+      if (!receipt) return null;
+      observeCase(receipt);
+      return publicTurn(receipt);
     } catch (error) {
       throw safeFailure(error);
     }
@@ -493,6 +527,7 @@ export function createConversationalRectificationService(
     actionId: string,
     pendingConsultationQuestion: string | null = null,
   ): Promise<ConversationalRectificationTurn> {
+    resetTelemetryOutcome();
     const importer = ports.store.importLegacy;
     const loadLegacy = ports.loadLegacyCase;
     if (!importer || !loadLegacy) {
@@ -502,6 +537,7 @@ export function createConversationalRectificationService(
     try {
       const existingByAction = await ports.store.loadCase({ userId, caseId: actionId });
       if (existingByAction) {
+        observeCase(existingByAction);
         if (existingByAction.importedFromCaseId !== legacyCaseId
           || existingByAction.billingState !== "migration_waived"
           || existingByAction.pendingConsultationQuestion !== pendingConsultationQuestion) {
@@ -513,6 +549,7 @@ export function createConversationalRectificationService(
       if (current?.importedFromCaseId === legacyCaseId
         && current.billingState === "migration_waived"
         && current.pendingConsultationQuestion === pendingConsultationQuestion) {
+        observeCase(current);
         return publicTurn(current);
       }
       if (current?.importedFromCaseId === legacyCaseId
@@ -579,6 +616,7 @@ export function createConversationalRectificationService(
         validationReceipt: narrative.validationReceipt,
         privateCandidate,
       });
+      observeCase(imported, "migration_waived");
       return publicTurn(imported);
     } catch (error) {
       if (error instanceof ConversationalRectificationError
@@ -588,6 +626,7 @@ export function createConversationalRectificationService(
           if (winner?.importedFromCaseId === legacyCaseId
             && winner.billingState === "migration_waived"
             && winner.pendingConsultationQuestion === pendingConsultationQuestion) {
+            observeCase(winner);
             return publicTurn(winner);
           }
         } catch {
@@ -623,9 +662,10 @@ export function createConversationalRectificationService(
     return extracted;
   }
 
-  return Object.freeze({
+  const service: ConversationalRectificationService = Object.freeze({
     importLegacyCase,
     async start(userId, rawCommand) {
+      resetTelemetryOutcome();
       const command = parseCommand("start", rawCommand);
       let profile: ConversationalRectificationProfile;
       try {
@@ -663,6 +703,7 @@ export function createConversationalRectificationService(
         throw safeFailure(error);
       }
       if (existing) {
+        observeCase(existing);
         if (existing.pendingConsultationQuestion !== (command.pendingConsultationQuestion ?? null)) {
           throw new ConversationalRectificationError("action_conflict");
         }
@@ -674,6 +715,7 @@ export function createConversationalRectificationService(
               expectedVersion: 0,
               actionId: command.actionId,
             });
+            observeCase(existing, "charged");
           } catch (error) {
             try {
               await ports.billing.release({
@@ -683,6 +725,7 @@ export function createConversationalRectificationService(
                 actionId: command.actionId,
                 price,
               });
+              observeCase(existing, "released");
             } catch {
               throw new ConversationalRectificationError("billing_failed");
             }
@@ -708,6 +751,7 @@ export function createConversationalRectificationService(
           price,
         });
         reserved = reservation.billingState === "reserved";
+        if (reserved) lastTelemetryOutcome = { billingState: "unknown", caseStatus: null };
         const computed = await ports.buildTechnicalPacket({
           userId,
           caseId,
@@ -746,12 +790,14 @@ export function createConversationalRectificationService(
           validationReceipt: narrative.validationReceipt,
           privateCandidate,
         });
+        observeCase(created, "unknown");
         await ports.billing.complete({
           userId,
           caseId,
           expectedVersion: 0,
           actionId: command.actionId,
         });
+        observeCase(created, "charged");
         return publicTurn(created);
       } catch (error) {
         if (reserved) {
@@ -763,6 +809,10 @@ export function createConversationalRectificationService(
               actionId: command.actionId,
               price,
             });
+            lastTelemetryOutcome = {
+              billingState: "released",
+              caseStatus: lastTelemetryOutcome.caseStatus,
+            };
           } catch {
             throw new ConversationalRectificationError("billing_failed");
           }
@@ -772,12 +822,14 @@ export function createConversationalRectificationService(
     },
 
     async resume(userId, rawCommand) {
+      resetTelemetryOutcome();
       const command = parseCommand("resume", rawCommand);
       const current = await load(userId, command.caseId);
       return publicTurn(current);
     },
 
     async answer(userId, rawCommand) {
+      resetTelemetryOutcome();
       const command = parseCommand("answer", rawCommand);
       const fingerprint = commandFingerprint(command);
       const receipt = await replayMutation(userId, command, "save_turn", fingerprint);
@@ -1035,6 +1087,7 @@ export function createConversationalRectificationService(
     },
 
     async pause(userId, rawCommand) {
+      resetTelemetryOutcome();
       const command = parseCommand("pause", rawCommand);
       const fingerprint = commandFingerprint(command);
       const receipt = await replayMutation(userId, command, "pause", fingerprint);
@@ -1081,6 +1134,7 @@ export function createConversationalRectificationService(
     },
 
     async abandon(userId, rawCommand) {
+      resetTelemetryOutcome();
       const command = parseCommand("abandon", rawCommand);
       const fingerprint = commandFingerprint(command);
       const receipt = await replayMutation(userId, command, "abandon", fingerprint);
@@ -1124,6 +1178,7 @@ export function createConversationalRectificationService(
     },
 
     async confirm(userId, rawCommand) {
+      resetTelemetryOutcome();
       const command = parseCommand("confirm", rawCommand);
       const fingerprint = commandFingerprint(command);
       const receipt = await replayMutation(userId, command, "confirm", fingerprint);
@@ -1186,4 +1241,6 @@ export function createConversationalRectificationService(
       }
     },
   });
+  telemetryOutcomes.set(service, () => lastTelemetryOutcome);
+  return service;
 }

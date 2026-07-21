@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { GET as healthGet } from "../src/app/api/health/route.ts";
 
 function serviceBlock(compose: string, service: string) {
   const match = compose.match(new RegExp(`^  ${service}:\\n([\\s\\S]*?)(?=^  [a-z][a-z0-9_-]*:|^volumes:)`, "m"));
@@ -82,4 +83,82 @@ test("production workflow rejects a SHA mismatch in verification", () => {
     () => assertWorkflowUsesTestedSha(workflow.replace(verification, mismatchedVerification)),
     /Verify production must use the tested SHA/,
   );
+});
+
+test("v3 readiness requires healthy dependencies and smoke proof for the exact full deployment SHA", async () => {
+  const keys = [
+    "GITHUB_SHA", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "SUPABASE_SERVICE_ROLE_KEY", "OPENAI_API_KEY",
+    "RECTIFICATION_V3_CREATE_ENABLED", "RECTIFICATION_V3_MIGRATIONS_READY",
+    "RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA",
+  ] as const;
+  const prior = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
+  const originalFetch = globalThis.fetch;
+  const currentSha = "0123456789abcdef0123456789abcdef01234567";
+  const oldSha = "89abcdef0123456789abcdef0123456789abcdef";
+  Object.assign(process.env, {
+    GITHUB_SHA: currentSha,
+    NEXT_PUBLIC_SUPABASE_URL: "https://example.invalid",
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: "synthetic-public-key",
+    SUPABASE_SERVICE_ROLE_KEY: "synthetic-service-key",
+    OPENAI_API_KEY: "synthetic-model-key",
+    RECTIFICATION_V3_CREATE_ENABLED: "true",
+    RECTIFICATION_V3_MIGRATIONS_READY: "true",
+  });
+  globalThis.fetch = async () => Response.json({ status: "ok" });
+
+  async function readiness() {
+    const response = await healthGet();
+    const body = await response.json() as {
+      status: string;
+      rollout: { conversationalRectificationV3: {
+        syntheticSmoke: string;
+        readyForNewCases: boolean;
+      } };
+    };
+    return body;
+  }
+
+  try {
+    delete process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA;
+    assert.deepEqual((await readiness()).rollout.conversationalRectificationV3, {
+      protocol: "conversational-evidence-v3",
+      newCaseCreation: "enabled",
+      migrations: "ready",
+      syntheticSmoke: "pending",
+      readyForNewCases: false,
+    });
+
+    process.env.GITHUB_SHA = "deadbee";
+    process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA = "deadbee";
+    assert.equal((await readiness()).rollout.conversationalRectificationV3.readyForNewCases, false);
+
+    process.env.GITHUB_SHA = currentSha;
+    process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA = oldSha;
+    assert.equal((await readiness()).rollout.conversationalRectificationV3.syntheticSmoke, "pending");
+
+    process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA = currentSha;
+    const ready = await readiness();
+    assert.equal(ready.status, "ok");
+    assert.deepEqual(ready.rollout.conversationalRectificationV3, {
+      protocol: "conversational-evidence-v3",
+      newCaseCreation: "enabled",
+      migrations: "ready",
+      syntheticSmoke: "matched",
+      readyForNewCases: true,
+    });
+
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const blocked = await readiness();
+    assert.equal(blocked.status, "blocked");
+    assert.equal(blocked.rollout.conversationalRectificationV3.syntheticSmoke, "matched");
+    assert.equal(blocked.rollout.conversationalRectificationV3.readyForNewCases, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const key of keys) {
+      const value = prior[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
 });

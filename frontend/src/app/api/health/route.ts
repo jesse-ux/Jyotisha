@@ -7,15 +7,12 @@ type Check = {
 };
 
 const jyotishApiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200";
-const gitCommit =
-  process.env.GITHUB_SHA
-  ?? process.env.VERCEL_GIT_COMMIT_SHA
-  ?? process.env.NEXT_PUBLIC_GIT_COMMIT
-  ?? "unknown";
-const rectificationV3CreationEnabled =
-  process.env.RECTIFICATION_V3_CREATE_ENABLED?.trim().toLowerCase() !== "false";
-const rectificationV3MigrationsReady =
-  process.env.RECTIFICATION_V3_MIGRATIONS_READY?.trim().toLowerCase() === "true";
+function deployedGitCommit(): string {
+  return process.env.GITHUB_SHA
+    ?? process.env.VERCEL_GIT_COMMIT_SHA
+    ?? process.env.NEXT_PUBLIC_GIT_COMMIT
+    ?? "unknown";
+}
 
 function envCheck(names: string[]): Check {
   const missing = names.filter((name) => !process.env[name]);
@@ -62,6 +59,12 @@ function aggregate(checks: Record<string, Check>) {
 }
 
 export async function GET() {
+  const gitCommit = deployedGitCommit();
+  const rectificationV3CreationEnabled =
+    process.env.RECTIFICATION_V3_CREATE_ENABLED?.trim().toLowerCase() !== "false";
+  const rectificationV3MigrationsReady =
+    process.env.RECTIFICATION_V3_MIGRATIONS_READY?.trim().toLowerCase() === "true";
+  const smokeSha = process.env.RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA?.trim().toLowerCase() ?? "";
   const checks = {
     web: { status: "ok" } satisfies Check,
     supabasePublicConfig: envCheck(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]),
@@ -70,9 +73,12 @@ export async function GET() {
     jyotishApi: await jyotishApiCheck(),
   };
   const status = aggregate(checks);
-  const rectificationV3Ready = rectificationV3CreationEnabled
+  const deploymentHasFullSha = /^[0-9a-f]{40}$/.test(gitCommit);
+  const smokeMatchesDeployment = deploymentHasFullSha && smokeSha === gitCommit;
+  const rectificationV3Ready = status === "ok"
+    && rectificationV3CreationEnabled
     && rectificationV3MigrationsReady
-    && gitCommit !== "unknown";
+    && smokeMatchesDeployment;
   return NextResponse.json(
     {
       status,
@@ -85,7 +91,7 @@ export async function GET() {
           protocol: "conversational-evidence-v3",
           newCaseCreation: rectificationV3CreationEnabled ? "enabled" : "paused",
           migrations: rectificationV3MigrationsReady ? "ready" : "unverified",
-          syntheticSmoke: "required",
+          syntheticSmoke: smokeMatchesDeployment ? "matched" : "pending",
           readyForNewCases: rectificationV3Ready,
         },
       },
