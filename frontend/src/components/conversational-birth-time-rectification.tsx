@@ -4,7 +4,6 @@ import {
   useEffect,
   useRef,
   useState,
-  type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
 import { ChatMessageContent } from "./chat-message-content.tsx";
 import {
@@ -20,6 +19,7 @@ type EvidenceDomain = NonNullable<
 const domainLabels = {
   career: "事业与身份",
   education: "学业与学习",
+  finance: "收入与资产",
   relocation: "搬迁与居住地",
   relationship: "重要关系",
   family: "家庭变化",
@@ -42,6 +42,8 @@ function CandidateSummary({ turn }: { readonly turn: ConversationalRectification
   const confirmed = candidate.status === "confirmed" && turn.status === "completed";
   const status = confirmed
     ? "已明确确认"
+    : turn.status === "completed"
+      ? "范围已保存 · 分钟未确认"
     : candidate.status === "ready_for_confirmation"
       ? "待确认 · 未验证"
       : "待验证 · 未确认";
@@ -71,94 +73,25 @@ function CandidateSummary({ turn }: { readonly turn: ConversationalRectification
   );
 }
 
-function TechnicalReceipt({ turn }: { readonly turn: ConversationalRectificationTurn }) {
-  const receipt = turn.technicalReceipt;
-  return (
-    <details className="conversational-technical-receipt">
-      <summary>本轮技术回执</summary>
-      <dl>
-        <div><dt>计算版本</dt><dd><code>{receipt.calculationVersion}</code></dd></div>
-        <div><dt>稳定层</dt><dd>{receipt.stableLayers.join("、") || "无"}</dd></div>
-        <div><dt>分钟敏感层</dt><dd>{receipt.sensitiveLayers.join("、") || "无"}</dd></div>
-        <div><dt>候选差异引用</dt><dd>{receipt.candidateDifferenceRefs.join("、") || "无"}</dd></div>
-      </dl>
-    </details>
-  );
-}
-
 export function ConversationalRectificationSurface({
   controller,
   pendingConsultationQuestion,
   continuationPending = false,
   onContinueOriginalQuestion,
 }: SurfaceProps) {
-  const [abandonArmedFor, setAbandonArmedFor] = useState<string | null>(null);
-  const [localAnnouncement, setLocalAnnouncement] = useState<Readonly<{
-    identity: string;
-    message: string;
-  }> | null>(null);
   const composer = useRef<HTMLTextAreaElement>(null);
-  const abandonTrigger = useRef<HTMLButtonElement>(null);
-  const abandonCancel = useRef<HTMLButtonElement>(null);
-  const abandonConfirm = useRef<HTMLButtonElement>(null);
-  const terminalStatus = useRef<HTMLDivElement>(null);
-  const restoreAbandonFocus = useRef(false);
-  const focusTerminalForCase = useRef<string | null>(null);
+  const [eventYear, setEventYear] = useState("");
+  const [eventMonth, setEventMonth] = useState("");
+  const currentYear = new Date().getFullYear();
+  const eventYears = Array.from({ length: 101 }, (_, index) => currentYear - index);
   const turn = controller.turn;
   const pendingQuestion = turn?.status === "completed"
     ? turn.pendingConsultationQuestion
     : turn?.pendingConsultationQuestion ?? pendingConsultationQuestion ?? null;
-  const abandonIdentity = turn
-    ? `${turn.caseId}:${turn.turnVersion}:${turn.status}`
-    : null;
-  const canAbandon = Boolean(
-    turn?.actions.includes("abandon")
-    && turn.status !== "abandoned"
-    && turn.status !== "completed",
-  );
-  const abandonArmed = canAbandon && abandonArmedFor === abandonIdentity;
-  const statusAnnouncement = localAnnouncement?.identity === abandonIdentity
-    ? localAnnouncement.message
-    : "";
-
-  useEffect(() => {
-    if (abandonArmed) {
-      abandonCancel.current?.focus();
-      return;
-    }
-    if (restoreAbandonFocus.current) {
-      restoreAbandonFocus.current = false;
-      abandonTrigger.current?.focus();
-    }
-  }, [abandonArmed]);
-
-  useEffect(() => {
-    const requestedCase = focusTerminalForCase.current;
-    if (!requestedCase) return;
-    if (!turn || turn.caseId !== requestedCase) {
-      focusTerminalForCase.current = null;
-      return;
-    }
-    if (turn.status === "abandoned") {
-      focusTerminalForCase.current = null;
-      terminalStatus.current?.focus();
-    }
-  }, [turn]);
-
   if (!turn) {
     return (
       <section className="conversational-rectification" aria-busy={controller.pending} aria-label="生时校正对话">
-        <div className="conversational-empty-state" aria-live="polite">
-          <p>系统会先说明候选边界，再邀请你提供已经发生的真实经历。</p>
-          <button
-            className="button-primary"
-            disabled={controller.pending}
-            type="button"
-            onClick={() => safely(controller.start(pendingQuestion))}
-          >
-            {controller.pending ? "正在建立校正记录…" : "开始生时校正"}
-          </button>
-        </div>
+        <p className="conversational-empty-state" aria-live="polite" role="status">正在建立校正记录…</p>
         {controller.error && <p className="form-error" role="alert">{controller.error}</p>}
       </section>
     );
@@ -166,46 +99,21 @@ export function ConversationalRectificationSurface({
 
   const canAnswer = turn.actions.includes("answer") && turn.status !== "abandoned" && turn.status !== "completed";
   const requestedDomains = turn.evidenceRequest?.domains ?? [];
-  const submit = () => {
-    if (canAnswer && controller.draft.trim() && !controller.pending) safely(controller.answer());
+  const submit = async () => {
+    if (!canAnswer || !controller.draft.trim() || controller.pending) return;
+    const dateLabel = eventYear
+      ? `${eventYear} 年${eventMonth ? ` ${Number(eventMonth)} 月` : ""}`
+      : "时间不确定";
+    const answer = `发生时间：${dateLabel}\n事件详情：${controller.draft.trim()}`;
+    try {
+      await controller.answer(undefined, answer);
+      setEventYear("");
+      setEventMonth("");
+    } catch {
+      // The controller owns the visible request error and keeps the draft available for retry.
+    }
   };
   const focusComposer = () => composer.current?.focus();
-  const continueLocally = () => {
-    if (abandonIdentity) {
-      setLocalAnnouncement({
-        identity: abandonIdentity,
-        message: "现在可以继续填写真实经历，输入框已就绪；发送后才会推进校正进度。",
-      });
-    }
-    focusComposer();
-  };
-  const closeAbandonDialog = () => {
-    restoreAbandonFocus.current = true;
-    setAbandonArmedFor(null);
-  };
-  const handleAbandonDialogKey = (event: ReactKeyboardEvent<HTMLElement>) => {
-    if (event.key === "Escape") {
-      event.preventDefault();
-      closeAbandonDialog();
-      return;
-    }
-    if (event.key !== "Tab") return;
-    if (event.shiftKey && document.activeElement === abandonCancel.current) {
-      event.preventDefault();
-      abandonConfirm.current?.focus();
-    } else if (!event.shiftKey && document.activeElement === abandonConfirm.current) {
-      event.preventDefault();
-      abandonCancel.current?.focus();
-    }
-  };
-  const confirmAbandon = () => {
-    focusTerminalForCase.current = turn.caseId;
-    void controller.abandon().catch(() => {
-      if (focusTerminalForCase.current === turn.caseId) {
-        focusTerminalForCase.current = null;
-      }
-    });
-  };
 
   return (
     <section
@@ -213,13 +121,17 @@ export function ConversationalRectificationSurface({
       aria-busy={controller.pending}
       aria-label="生时校正对话"
     >
+      <CandidateSummary turn={turn} />
+
       <article className="conversational-narrative" aria-label="校正分析">
-        <ChatMessageContent text={turn.narrative} />
+        <div className="conversational-narrative-body">
+          <ChatMessageContent text={turn.narrative} />
+        </div>
       </article>
 
       {requestedDomains.length > 0 && (
         <fieldset className="conversational-domain-picker">
-          <legend>这轮想先补充哪个领域？</legend>
+          <legend className="conversational-domain-question">这轮想先补充哪个领域？</legend>
           <div>
             {requestedDomains.map((domain) => (
               <button
@@ -240,11 +152,11 @@ export function ConversationalRectificationSurface({
         </fieldset>
       )}
 
-      <form
+      {canAnswer && <form
         className="conversational-composer"
         onSubmit={(event) => {
           event.preventDefault();
-          submit();
+          void submit();
         }}
       >
         {controller.correctionTarget && (
@@ -267,13 +179,44 @@ export function ConversationalRectificationSurface({
           {controller.correctionTarget ? "填写更正后的真实经历" : "补充真实经历"}
           <span>大概年份也可以；不确定的部分请直接说不确定。</span>
         </label>
+        <div className="conversational-event-date" role="group" aria-label="经历发生时间">
+          <label>
+            年份
+            <select
+              aria-label="经历发生年份"
+              disabled={controller.pending || !canAnswer}
+              value={eventYear}
+              onChange={(event) => {
+                setEventYear(event.target.value);
+                if (!event.target.value) setEventMonth("");
+              }}
+            >
+              <option value="">不确定</option>
+              {eventYears.map((year) => <option key={year} value={year}>{year} 年</option>)}
+            </select>
+          </label>
+          <label>
+            月份（可选）
+            <select
+              aria-label="经历发生月份"
+              disabled={controller.pending || !canAnswer || !eventYear}
+              value={eventMonth}
+              onChange={(event) => setEventMonth(event.target.value)}
+            >
+              <option value="">不确定</option>
+              {Array.from({ length: 12 }, (_, index) => index + 1).map((month) => (
+                <option key={month} value={month}>{month} 月</option>
+              ))}
+            </select>
+          </label>
+        </div>
         <textarea
           id="conversational-rectification-answer"
           disabled={controller.pending || !canAnswer}
           maxLength={4_000}
           placeholder={controller.correctionTarget
             ? "例如：其实是 2020 年 11 月离职"
-            : "请描述一件已经发生的事，并尽量写明年份或月份"}
+            : "请描述一件已经发生的具体事件"}
           ref={composer}
           rows={4}
           value={controller.draft}
@@ -281,7 +224,7 @@ export function ConversationalRectificationSurface({
           onKeyDown={(event) => {
             if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
               event.preventDefault();
-              submit();
+              void submit();
             }
           }}
         />
@@ -295,7 +238,7 @@ export function ConversationalRectificationSurface({
             {controller.pending ? "正在核对…" : "发送这段经历"}
           </button>
         </div>
-      </form>
+      </form>}
 
       {turn.evidenceRecap.length > 0 && (
         <section className="conversational-evidence-recap" aria-labelledby="conversational-evidence-title">
@@ -328,9 +271,6 @@ export function ConversationalRectificationSurface({
         </section>
       )}
 
-      <CandidateSummary turn={turn} />
-      <TechnicalReceipt turn={turn} />
-
       {turn.actions.includes("confirm")
         && turn.candidate.status === "ready_for_confirmation"
         && turn.candidate.representativeTime && (
@@ -351,17 +291,15 @@ export function ConversationalRectificationSurface({
         )}
 
       <div
-        aria-label={turn.status === "abandoned" ? "生时校正终态" : undefined}
         aria-live="polite"
         className="conversational-status"
-        ref={terminalStatus}
-        tabIndex={turn.status === "abandoned" ? -1 : undefined}
       >
         {turn.status === "paused" && <p>校正已暂停，输入与现有证据都已保留。</p>}
         {turn.status === "abandoned" && <p>本次校正已放弃，候选时间没有应用。</p>}
         {turn.status === "completed" && turn.candidate.status === "confirmed"
           && <p>候选时间已经过你的明确确认。</p>}
-        {statusAnnouncement && <p>{statusAnnouncement}</p>}
+        {turn.status === "completed" && turn.candidate.status !== "confirmed"
+          && <p>本次校正已结束并保存候选范围；没有把候选代表时间设为当前排盘时间。</p>}
         {controller.error && <p className="form-error" role="alert">{controller.error}</p>}
       </div>
 
@@ -378,85 +316,13 @@ export function ConversationalRectificationSurface({
           >
             {continuationPending
               ? "正在继续回答原问题…"
-              : "使用新确认时间继续回答原问题"}
+              : turn.candidate.status === "confirmed"
+                ? "使用新确认时间继续回答原问题"
+                : "返回原对话并继续回答"}
           </button>
         </section>
       )}
 
-      <footer className="conversational-session-actions">
-        {turn.status === "paused" ? (
-          <button
-            className="button-secondary"
-            disabled={controller.pending}
-            type="button"
-            onClick={continueLocally}
-          >
-            继续校正
-          </button>
-        ) : turn.actions.includes("pause") ? (
-          <button
-            className="button-secondary"
-            disabled={controller.pending}
-            type="button"
-            onClick={() => safely(controller.pause())}
-          >
-            暂停，稍后继续
-          </button>
-        ) : null}
-
-        {canAbandon && !abandonArmed && (
-          <button
-            className="conversational-abandon"
-            disabled={controller.pending}
-            ref={abandonTrigger}
-            type="button"
-            onClick={() => {
-              setLocalAnnouncement(null);
-              setAbandonArmedFor(abandonIdentity);
-            }}
-          >
-            放弃本次校正
-          </button>
-        )}
-      </footer>
-
-      {abandonArmed && (
-        <div className="conversational-abandon-scrim">
-          <section
-            aria-describedby="conversational-abandon-description"
-            aria-labelledby="conversational-abandon-title"
-            aria-modal="true"
-            className="conversational-abandon-confirmation"
-            onKeyDown={handleAbandonDialogKey}
-            role="alertdialog"
-          >
-            <h3 id="conversational-abandon-title">确认放弃本次校正？</h3>
-            <p id="conversational-abandon-description">
-              放弃后会保留审计记录，但不会应用任何候选时间。
-            </p>
-            <div>
-              <button
-                className="button-secondary"
-                disabled={controller.pending}
-                ref={abandonCancel}
-                type="button"
-                onClick={closeAbandonDialog}
-              >
-                返回校正
-              </button>
-              <button
-                className="conversational-abandon is-confirm"
-                disabled={controller.pending}
-                ref={abandonConfirm}
-                type="button"
-                onClick={confirmAbandon}
-              >
-                确认放弃且不应用候选
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
     </section>
   );
 }

@@ -5,6 +5,7 @@ from datetime import date, datetime
 import pytest
 
 from scripts import dynamic_rectification
+from scripts import dynamic_rectification_opportunities
 
 
 def _base_request() -> dict:
@@ -22,6 +23,7 @@ def _base_request() -> dict:
         "question_fingerprints": [],
         "partition_fingerprints": [],
         "recent_ranges": [],
+        "events": [],
     }
 
 
@@ -34,6 +36,10 @@ def _fake_rows(_request: dict) -> list[dict]:
             "window_end": "2017-12-31",
             "activations": {"05:30": 5.0, "05:31": 1.0, "05:32": 0.0, "05:33": 0.0},
             "missing_layers": [],
+            "fact_selection_priority": 0.0,
+            "fact_priority_version": "birth-time-question-fact-priority-v1",
+            "event_fact_selection_priority": 0.0,
+            "event_fact_priority_version": "birth-time-question-event-fact-priority-v1",
         },
         {
             "window_group": "periods-3",
@@ -42,6 +48,10 @@ def _fake_rows(_request: dict) -> list[dict]:
             "window_end": "2021-12-31",
             "activations": {"05:30": 0.0, "05:31": 5.0, "05:32": 4.0, "05:33": 0.0},
             "missing_layers": [],
+            "fact_selection_priority": 0.0,
+            "fact_priority_version": "birth-time-question-fact-priority-v1",
+            "event_fact_selection_priority": 0.0,
+            "event_fact_priority_version": "birth-time-question-event-fact-priority-v1",
         },
         {
             "window_group": "periods-3",
@@ -50,6 +60,10 @@ def _fake_rows(_request: dict) -> list[dict]:
             "window_end": "2026-07-18",
             "activations": {"05:30": 0.0, "05:31": 0.0, "05:32": 1.0, "05:33": 5.0},
             "missing_layers": [],
+            "fact_selection_priority": 0.0,
+            "fact_priority_version": "birth-time-question-fact-priority-v1",
+            "event_fact_selection_priority": 0.0,
+            "event_fact_priority_version": "birth-time-question-event-fact-priority-v1",
         },
     ]
 
@@ -57,7 +71,8 @@ def _fake_rows(_request: dict) -> list[dict]:
 def _fake_model() -> dict:
     return {
         "version": "birth-time-choice-scoring-v2",
-        "opportunity_model_version": "birth-time-opportunity-model-v2",
+        "opportunity_model_version": "birth-time-opportunity-model-v4",
+        "historical_event_fingerprint": dynamic_rectification_opportunities.historical_event_fingerprint(_base_request()),
         "birth_date": "1990-01-01",
         "as_of_date": "2026-07-18",
         "range": {"start_time": "05:30", "end_time": "05:33"},
@@ -102,6 +117,41 @@ def test_period_range_offers_multiple_distinct_evidence_domains() -> None:
     assert len(dimensions) >= 4
 
 
+def test_real_historical_event_changes_next_question_order_not_public_gain() -> None:
+    request = {
+        **_base_request(),
+        "birth_date": "1993-04-17",
+        "as_of_date": "2026-07-21",
+        "start_time": "14:20",
+        "end_time": "14:40",
+        "lat": 36.683333,
+        "lon": 114.35,
+        "tz": 8.0,
+    }
+    without_event = dynamic_rectification.build_difference_packet(request)
+    with_event = dynamic_rectification.build_difference_packet({
+        **request,
+        "events": [{
+            "id": "11111111-1111-4111-8111-111111111111",
+            "domain": "education",
+            "date": "2018",
+            "precision": "year",
+        }],
+    })
+
+    assert without_event["opportunities"][0]["dimension_code"] == "career"
+    assert with_event["opportunities"][0]["dimension_code"] == "education"
+    gains_without = {
+        item["opportunity_id"]: item["estimated_information_gain"]
+        for item in without_event["opportunities"]
+    }
+    gains_with = {
+        item["opportunity_id"]: item["estimated_information_gain"]
+        for item in with_event["opportunities"]
+    }
+    assert gains_with == gains_without
+
+
 def test_packet_excludes_used_opportunity_and_partition_fingerprints(monkeypatch) -> None:
     monkeypatch.setattr(dynamic_rectification, "_candidate_window_rows", _fake_rows)
     first = dynamic_rectification.build_difference_packet(_base_request())
@@ -134,6 +184,58 @@ def test_packet_reuses_the_persisted_candidate_model(monkeypatch) -> None:
 
     assert len(calls) == 1
     assert second["candidate_model"] == first["candidate_model"]
+
+
+def test_legacy_v2_candidate_model_is_recomputed_instead_of_blocking_resume(monkeypatch) -> None:
+    calls: list[dict] = []
+    replacement = _fake_model()
+    legacy = {**replacement, "opportunity_model_version": "birth-time-opportunity-model-v2"}
+    monkeypatch.setattr(
+        dynamic_rectification,
+        "_compute_candidate_model",
+        lambda request: calls.append(request) or replacement,
+    )
+
+    packet = dynamic_rectification.build_difference_packet({
+        **_base_request(), "candidate_model": legacy,
+    })
+
+    assert len(calls) == 1
+    assert packet["candidate_model"]["opportunity_model_version"] == "birth-time-opportunity-model-v4"
+
+
+def test_new_or_corrected_historical_event_recomputes_the_private_candidate_model(monkeypatch) -> None:
+    changed_request = {
+        **_base_request(),
+        "events": [{
+            "id": "11111111-1111-4111-8111-111111111111",
+            "domain": "career",
+            "date": "2020",
+            "precision": "year",
+        }],
+    }
+    replacement = {
+        **_fake_model(),
+        "historical_event_fingerprint": dynamic_rectification_opportunities.historical_event_fingerprint(
+            changed_request,
+        ),
+    }
+    calls: list[dict] = []
+    monkeypatch.setattr(
+        dynamic_rectification,
+        "_compute_candidate_model",
+        lambda request: calls.append(request) or replacement,
+    )
+
+    packet = dynamic_rectification.build_difference_packet({
+        **changed_request,
+        "candidate_model": _fake_model(),
+    })
+
+    assert len(calls) == 1
+    assert packet["candidate_model"]["historical_event_fingerprint"] == replacement[
+        "historical_event_fingerprint"
+    ]
 
 
 def test_candidate_model_rejects_wrong_range_and_non_finite_activation() -> None:
@@ -205,11 +307,29 @@ def test_candidate_charts_are_computed_once_and_missing_layers_are_dimension_sco
         }
 
     monkeypatch.setattr(active_rectification_event_engine, "_candidate_row", fake_candidate_row)
+    monkeypatch.setattr(
+        "scripts.dynamic_rectification_opportunities.build_domain_fact_priorities",
+        lambda _: {
+            dimension: {"selection_priority": 0.0}
+            for dimension in ["education", "relocation", "relationship", "career", "health_pressure"]
+        },
+    )
+    monkeypatch.setattr(
+        "scripts.dynamic_rectification_opportunities.build_historical_event_priorities",
+        lambda _: {
+            dimension: {"selection_priority": 0.0}
+            for dimension in ["education", "relocation", "relationship", "career", "health_pressure"]
+        },
+    )
     rows = dynamic_rectification._candidate_window_rows(_base_request())
 
     assert calls == candidates
     assert {tuple(row["missing_layers"]) for row in rows if row["dimension_code"] == "career"} == {("D10",)}
     assert {tuple(row["missing_layers"]) for row in rows if row["dimension_code"] != "career"} == {()}
+    assert {row["fact_priority_version"] for row in rows} == {"birth-time-question-fact-priority-v1"}
+    assert {row["event_fact_priority_version"] for row in rows} == {
+        "birth-time-question-event-fact-priority-v1",
+    }
 
 
 def test_window_edges_and_under_age_cases_do_not_create_invalid_calculation(monkeypatch) -> None:

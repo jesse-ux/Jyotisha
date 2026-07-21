@@ -63,6 +63,27 @@ test("changed profile cannot wait on the previous profile's active pending claim
   });
 });
 
+test("period-only declaration fields participate in the onboarding cache identity", () => {
+  const earlyMorning = {
+    ...profileA,
+    birthTime: null,
+    activeBirthTime: null,
+    birthTimeStatus: "reported",
+    reportedBirthTime: null,
+    birthTimeSource: "period_only",
+    birthTimePeriod: "early_morning",
+    birthTimeClue: "凌晨或清晨",
+    uncertaintyBeforeMinutes: null,
+    uncertaintyAfterMinutes: null,
+  };
+  const morning = { ...earlyMorning, birthTimePeriod: "morning" };
+
+  assert.notEqual(
+    createOnboardingCacheIdentity(earlyMorning).readyVersion,
+    createOnboardingCacheIdentity(morning).readyVersion,
+  );
+});
+
 test("current profile accepts only valid ready content and an active current pending claim", () => {
   // Given: one current profile identity and a valid cached payload.
   const identity = createOnboardingCacheIdentity(profileA);

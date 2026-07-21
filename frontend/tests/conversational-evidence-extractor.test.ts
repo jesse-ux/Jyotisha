@@ -58,6 +58,19 @@ test("never invents a missing month or day", () => {
   assert.equal(evidence?.eventSummary, "毕业");
 });
 
+test("classifies dated income and asset changes as finance evidence", () => {
+  const [evidence] = extractLifeEventEvidence({
+    rawText: "2022年8月收入大幅增加并开始投资",
+    sourceTurnId,
+    asOfDate: "2026-07-20",
+  });
+
+  assert.equal(evidence?.domain, "finance");
+  assert.equal(evidence?.dateValue, "2022-08");
+  assert.equal(evidence?.scoreable, true);
+  assert.equal(lifeEventEvidenceSchema.safeParse(evidence).success, true);
+});
+
 test("keeps a bare year as non-scoreable clarification instead of an event summary", () => {
   const rawText = "2021年";
   const [evidence] = extractLifeEventEvidence({

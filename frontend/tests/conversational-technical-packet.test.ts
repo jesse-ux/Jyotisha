@@ -22,7 +22,7 @@ const scan = {
       samples: [
         { time: "2000-01-01 05:10", ascendant: { sign: "Cancer" } },
         { time: "2000-01-01 05:16", ascendant: { sign: "Cancer" } },
-        { time: "2000-01-01 05:24", ascendant: { sign: "Cancer" } },
+        { time: "2000-01-01 05:17", ascendant: { sign: "Cancer" } },
         { time: "2000-01-01 05:30", ascendant: { sign: "Cancer" } },
       ],
     },
@@ -116,7 +116,7 @@ export function syntheticTechnicalPacket() {
       timeLinkedScanSamples: [
         { sampleIndex: 0, time: "05:10" },
         { sampleIndex: 1, time: "05:16" },
-        { sampleIndex: 2, time: "05:24" },
+        { sampleIndex: 2, time: "05:17" },
         { sampleIndex: 3, time: "05:30" },
       ],
       boundaryDistanceMinutes: 4,
@@ -145,7 +145,7 @@ test("builds a deterministic private packet from server-computed engine receipts
     source: "time_linked_candidate_scan_samples",
     rangeStart: "05:16",
     rangeEnd: "05:24",
-    sampleTimes: ["05:16", "05:24"],
+    sampleTimes: ["05:16", "05:17"],
   });
   assert.equal(first.candidateDifferenceRefs.includes("difference-d9-relationship"), false);
   assert.ok(first.candidateDifferenceRefs.includes("consult-d9-candidate-difference"));
@@ -172,6 +172,64 @@ test("builds a deterministic private packet from server-computed engine receipts
     endDate: "2028-05-31",
     scoreable: false,
   }]);
+});
+
+test("chooses one strongest technical layer per domain from actual candidate switches", () => {
+  const differenceDrivenScan = {
+    ...scan,
+    samples: [
+      { ...scan.samples[0], d2Sign: "Aries", d11Sign: "Taurus", d9Sign: "Aries", d10Sign: "Taurus", a10Sign: "Cancer" },
+      { ...scan.samples[1], d2Sign: "Leo", d11Sign: "Taurus", d9Sign: "Leo", d10Sign: "Taurus", a10Sign: "Leo" },
+      { ...scan.samples[2], d2Sign: "Aries", d11Sign: "Virgo", d9Sign: "Virgo", d10Sign: "Virgo", a10Sign: "Cancer" },
+      { ...scan.samples[3], d2Sign: "Leo", d11Sign: "Virgo", d9Sign: "Sagittarius", d10Sign: "Virgo", a10Sign: "Leo" },
+    ],
+  } satisfies RectificationQuestionnaire;
+  const fullRangeScore = {
+    ...eventScore,
+    winningSegment: {
+      startTime: "05:10",
+      endTime: "05:30",
+      representativeTime: "05:20",
+      widthMinutes: 21,
+    },
+  } satisfies CandidateResult;
+
+  const packet = buildRectificationTechnicalPacket({
+    scan: differenceDrivenScan,
+    candidateDifferences,
+    eventScore: fullRangeScore,
+    consultation: {
+      source: "server_consultation_workflow",
+      calculationVersion: "rectification-technical-v1",
+      availableLayers: ["D1", "D2", "D9", "D10", "D11", "A10"],
+      layerReferences: {
+        D1: ["consult-d1-ascendant"],
+        D2: ["consult-d2-candidate-difference"],
+        D9: ["consult-d9-candidate-difference"],
+        D10: ["consult-d10-candidate-difference"],
+        D11: ["consult-d11-candidate-difference"],
+        A10: ["consult-a10-candidate-difference"],
+      },
+      timeLinkedScanSamples: [
+        { sampleIndex: 0, time: "05:10" },
+        { sampleIndex: 1, time: "05:11" },
+        { sampleIndex: 2, time: "05:12" },
+        { sampleIndex: 3, time: "05:13" },
+      ],
+      boundaryDistanceMinutes: 4,
+      futureWindows: [],
+    },
+  });
+
+  const careerDomains = packet.suggestedDomains.filter((item) => item.domain === "career");
+  assert.equal(careerDomains.length, 1);
+  assert.equal(careerDomains[0]?.layer, "A10");
+  assert.match(careerDomains[0]?.reason ?? "", /3 次实际切换/);
+  assert.equal(packet.suggestedDomains.some((item) => item.layer === "D10"), false);
+  const financeDomains = packet.suggestedDomains.filter((item) => item.domain === "finance");
+  assert.equal(financeDomains.length, 1);
+  assert.equal(financeDomains[0]?.layer, "D2");
+  assert.equal(packet.suggestedDomains.some((item) => item.layer === "D11"), false);
 });
 
 test("does not claim scan-wide 05:10-05:30 differences inside a 05:16-05:24 candidate", () => {
@@ -212,6 +270,35 @@ test("does not claim scan-wide 05:10-05:30 differences inside a 05:16-05:24 cand
   }), /two time-linked scan samples inside the selected candidate range/);
 });
 
+test("does not describe sparse in-range samples as adjacent-minute switches", () => {
+  const sparseScan = {
+    ...scan,
+    samples: [scan.samples[1], scan.samples[2]],
+  } satisfies RectificationQuestionnaire;
+
+  assert.throws(() => buildRectificationTechnicalPacket({
+    scan: sparseScan,
+    candidateDifferences,
+    eventScore,
+    consultation: {
+      source: "server_consultation_workflow",
+      calculationVersion: "rectification-technical-v1",
+      availableLayers: ["D1", "D9", "D10"],
+      layerReferences: {
+        D1: ["consult-d1-ascendant"],
+        D9: ["consult-d9-candidate-difference"],
+        D10: ["consult-d10-candidate-difference"],
+      },
+      timeLinkedScanSamples: [
+        { sampleIndex: 0, time: "05:16" },
+        { sampleIndex: 1, time: "05:24" },
+      ],
+      boundaryDistanceMinutes: 4,
+      futureWindows: [],
+    },
+  }), /two time-linked discriminating domains/);
+});
+
 test("uses typed server time links when normalized scan raw metadata omits sample times", () => {
   const normalizedScan = {
     ...scan,
@@ -236,7 +323,7 @@ test("uses typed server time links when normalized scan raw metadata omits sampl
       timeLinkedScanSamples: [
         { sampleIndex: 0, time: "05:10" },
         { sampleIndex: 1, time: "05:16" },
-        { sampleIndex: 2, time: "05:24" },
+        { sampleIndex: 2, time: "05:17" },
         { sampleIndex: 3, time: "05:30" },
       ],
       boundaryDistanceMinutes: 4,
@@ -244,7 +331,7 @@ test("uses typed server time links when normalized scan raw metadata omits sampl
     },
   });
 
-  assert.deepEqual(packet.sensitivityScope.sampleTimes, ["05:16", "05:24"]);
+  assert.deepEqual(packet.sensitivityScope.sampleTimes, ["05:16", "05:17"]);
   assert.deepEqual(packet.sensitiveLayers.map((item) => item.values), [
     ["Leo", "Virgo"],
     ["Libra", "Scorpio"],
@@ -265,7 +352,7 @@ test("public projection strips weights, partition identifiers, and private finge
     source: "time_linked_candidate_scan_samples",
     rangeStart: "05:16",
     rangeEnd: "05:24",
-    sampleTimes: ["05:16", "05:24"],
+    sampleTimes: ["05:16", "05:17"],
   });
   assert.deepEqual(projected.evidenceRequest.domains, ["relationship", "career"]);
   assert.equal(projected.futureWindows[0]?.scoreable, false);

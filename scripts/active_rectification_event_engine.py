@@ -13,6 +13,7 @@ import json
 import sys
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
+from collections.abc import Sequence
 from typing import Final, assert_never
 
 from scripts.active_rectification_events import (
@@ -39,6 +40,10 @@ import jaimini  # noqa: E402
 import shadbala  # noqa: E402
 import narayana_dasha  # noqa: E402
 import varga  # noqa: E402
+
+AYANAMSA: Final = "lahiri"
+NODE_MODE: Final = "mean"
+INPUT_CONTRACT_VERSION: Final = "rectification-candidate-input-v1"
 
 DomainConfig = tuple[tuple[str, ...], tuple[int, ...]]
 DOMAIN_CONFIG: Final[dict[EventDomain, DomainConfig]] = {
@@ -254,7 +259,7 @@ def _controlled_transit_rules(
     transit_chart = domain_calculation_service.compute_chart({
         "year": event_at.year, "month": event_at.month, "day": event_at.day,
         "hour": 12, "minute": 0, "lat": request["lat"], "lon": request["lon"],
-        "tz": request["tz"], "ayanamsa": "lahiri", "node_mode": "true",
+        "tz": request["tz"], "ayanamsa": AYANAMSA, "node_mode": NODE_MODE,
     })
     rules: list[str] = []
     for planet in ("Jupiter", "Saturn"):
@@ -324,8 +329,8 @@ def _candidate_row(
         "lat": request["lat"],
         "lon": request["lon"],
         "tz": request["tz"],
-        "ayanamsa": "lahiri",
-        "node_mode": "true",
+        "ayanamsa": AYANAMSA,
+        "node_mode": NODE_MODE,
     })
     planet_longitudes = {
         name: float(data["lon"])
@@ -334,7 +339,11 @@ def _candidate_row(
     }
     ascendant_longitude = float(chart["ascendant"]["lon"])
     ascendant_index = int(ascendant_longitude // 30)
-    arudha_padas = (jaimini.calc_arudha_padas(ascendant_index, planet_longitudes).get("padas") or {})
+    arudha = jaimini.calc_arudha_padas(ascendant_index, planet_longitudes)
+    arudha_padas = {
+        **(arudha.get("padas") or {}),
+        "UL": arudha.get("upapada") or {},
+    }
     charts = varga.calc_all_vargas(
         planet_longitudes,
         ascendant_longitude,
@@ -352,13 +361,24 @@ def _candidate_row(
         if any(chart is None for chart in domain_vargas):
             missing_layers.extend(prefixes)
             continue
-        vimshottari = _active_vimshottari(request["birth_date"], moon_longitude, event_at)
-        narayana = _active_narayana(
-            ascendant_index,
-            planet_longitudes,
-            candidate_at,
-            event_at,
-        )
+        try:
+            vimshottari = _active_vimshottari(candidate_at.date().isoformat(), moon_longitude, event_at)
+        except (KeyError, TypeError, ValueError):
+            missing_layers.append("Vimshottari_MD_AD_PD")
+            continue
+        try:
+            narayana = _active_narayana(
+                ascendant_index,
+                planet_longitudes,
+                candidate_at,
+                event_at,
+            )
+        except (KeyError, TypeError, ValueError):
+            missing_layers.append("Narayana_MD_AD")
+            continue
+        if narayana[0] is None or narayana[1] is None:
+            missing_layers.append("Narayana_MD_AD")
+            continue
         evidence.append(_score_event(
             candidate_time=candidate_at.strftime("%H:%M"),
             event=event,
@@ -391,14 +411,90 @@ def _candidate_row(
     }
 
 
+def _canonical_input_contract(request: RectificationEventRequest) -> tuple[dict, str]:
+    payload = {
+        "schema_version": INPUT_CONTRACT_VERSION,
+        "birth_date": request["birth_date"],
+        "candidate_range": {
+            "start_time": request["start_time"],
+            "end_time": request["end_time"],
+            "step_minutes": 1,
+        },
+        "location": {
+            "latitude": float(request["lat"]),
+            "longitude": float(request["lon"]),
+            "timezone_offset": float(request["tz"]),
+            "timezone_source": "explicit_offset",
+        },
+        "calculation": {
+            "ayanamsa": AYANAMSA,
+            "node_mode": NODE_MODE,
+            "ephemeris_source": "swisseph_calc_ut",
+        },
+    }
+    normalized = json.dumps(payload, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
+    return payload, hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _leave_one_event_out(rows: list[CandidateScoreRow], events: list[LifeEvent]) -> dict:
+    if len(events) < 2:
+        return {"status": "blocked", "runs": [], "reason": "insufficient_events"}
+    original_top = max(row["score"] for row in rows)
+    original_times = {row["time"] for row in rows if row["score"] == original_top}
+    runs = []
+    all_stable = True
+    for event in events:
+        rescored = []
+        for row in rows:
+            removed = sum(item["points"] for item in row["evidence"] if item["event_id"] == event["id"])
+            rescored.append((row["time"], round(row["score"] - removed, 4)))
+        top_score = max(score for _, score in rescored)
+        top_times = [candidate_time for candidate_time, score in rescored if score == top_score]
+        stable = len(top_times) == 1 and set(top_times) == original_times
+        all_stable = all_stable and stable
+        runs.append({
+            "removed_event_id": event["id"],
+            "top_times": top_times,
+            "top_score": top_score,
+            "original_leader_retained": stable,
+        })
+    return {
+        "status": "pass" if all_stable else "fail",
+        "runs": runs,
+        "boundary": "Leave-one-event-out must retain the same unique leading minute.",
+    }
+
+
 def compute_event_candidate_result(request: RectificationEventRequest) -> CandidateResult:
     """Compute actual minute candidates locally and return a guarded result."""
+    return adjudicate_event_candidate_rows(request, compute_event_candidate_rows(request))
+
+
+def adjudicate_event_candidate_rows(
+    request: RectificationEventRequest,
+    rows: list[CandidateScoreRow],
+) -> CandidateResult:
+    """Adjudicate already-computed rows using the production evidence gates."""
     normalized = json.dumps(request, ensure_ascii=True, sort_keys=True, separators=(",", ":"))
     fingerprint = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
-    rows = [_candidate_row(request, candidate) for candidate in _candidate_datetimes(request)]
+    input_contract, input_hash = _canonical_input_contract(request)
+    leave_one_out = _leave_one_event_out(rows, request["events"])
     return adjudicate_candidate_rows(
         rows,
         event_count=len(request["events"]),
         domain_count=len({event["domain"] for event in request["events"]}),
         request_fingerprint=fingerprint,
+        canonical_input_hash=input_hash,
+        calculation_contract=input_contract,
+        leave_one_event_out=leave_one_out,
     )
+
+
+def compute_event_candidate_rows(
+    request: RectificationEventRequest,
+    *,
+    candidates: Sequence[datetime] | None = None,
+) -> list[CandidateScoreRow]:
+    """Return every computed minute row without performing release adjudication."""
+    candidate_datetimes = list(candidates) if candidates is not None else _candidate_datetimes(request)
+    return [_candidate_row(request, candidate) for candidate in candidate_datetimes]

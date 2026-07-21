@@ -441,3 +441,9 @@ def test_high_rigor_event_rectification_queues_vedastro_packet(monkeypatch) -> N
     assert receipt["status"] == "queued"
     assert receipt["job_id"] == "vgw_rectification"
     assert "1993" not in str(receipt)
+    contract = result["technique_contract"]
+    assert result["can_apply"] is False
+    assert contract["confirmation_allowed"] is False
+    assert contract["decision"] == "continue_rectification"
+    assert contract["canonical_input_hash"]
+    assert contract["gates"]["public_holdout_release"]["status"] == "blocked"

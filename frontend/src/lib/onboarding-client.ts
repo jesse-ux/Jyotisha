@@ -41,7 +41,7 @@ const onboardingResponseSchema = z.object({
 });
 
 const defaultPolicy = {
-  requestTimeoutMs: 12_000,
+  requestTimeoutMs: 25_000,
   retryDelayMs: 4_000,
   maxAttempts: 3,
 } as const;

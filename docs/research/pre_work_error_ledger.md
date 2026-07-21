@@ -122,7 +122,17 @@ The replayable public-case manifest currently contains 10 events: 5 career and 5
 
 Prevention: add a new domain only after its public cases satisfy the same source/replay contract; never substitute loosely sourced celebrity notes or absence of a match for a negative conclusion.
 
+## ERR-083 | Duplicate Supabase migration versions skipped required schema | resolved 2026-07-19
+Four migration pairs reused the same timestamp prefix, while Supabase records that prefix as the migration identity. The remote ledger therefore recorded only one file from each pair: `chart_profiles`, `synastry_reports`, and part of the profile recovery contract were absent even though their SQL files existed locally. Dynamic birth-time migrations were also still pending after the application branch was merged.
+
+Prevention: `tests/test_supabase_migration_versions.py` requires every migration prefix to be unique. Preserve already-recorded versions, move skipped SQL into later uniquely numbered repair migrations, run `supabase db push --linked --dry-run`, and verify the remote migration ledger plus live schema before deploying dependent application code.
+
 ## Fragment Sweep Command Set
+
+## ERR-086 | Steve Jobs jyotishganit artifacts used non-San-Francisco coordinates | mitigated 2026-07-21
+The jyotishganit Shadbala and field-comparison artifacts labelled the public case as San Francisco while using `37.3382, -122.0383`, unlike the canonical parity runner input `37.7749, -122.4194`. The affected artifacts are invalidated and production tuning remains blocked. Probe defaults now use the canonical coordinates; regeneration is still blocked in the active project virtualenv because `skyfield` is unavailable.
+
+Prevention: hash only normalized calculation-bearing input, require the location label and canonical coordinates to share one input contract, and reject an oracle artifact when its canonical input hash differs from the comparison packet.
 
 ## ERR-084 | Pre-work fragment test assumes zero candidates despite current audited candidates | active 2026-07-19
 `scripts/pre_work_check.py` reported `fragment_audit.candidate_count=2` on 2026-07-19 and reports `3` in the 2026-07-20 run, while `tests/test_preflight_fragment_scan.py` requires exactly zero. The pre-work command therefore cannot be reported green until the candidates are classified or the test is updated to validate the reviewed state rather than a hard-coded count.

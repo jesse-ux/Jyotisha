@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Script from "next/script";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import "./birth-time-choice.css";
 
@@ -30,7 +31,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           </>
         )}
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

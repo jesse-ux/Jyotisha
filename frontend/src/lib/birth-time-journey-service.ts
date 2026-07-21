@@ -81,6 +81,7 @@ export type DifferencePacketInput = {
   readonly lon: number;
   readonly tz: number;
   readonly evidence: readonly ServerChoiceEvidence[];
+  readonly events: readonly LifeEvent[];
   readonly dismissedOpportunityIds: readonly string[];
   readonly questionFingerprints: readonly string[];
   readonly partitionFingerprints: readonly string[];

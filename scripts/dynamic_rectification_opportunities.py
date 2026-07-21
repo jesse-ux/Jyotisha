@@ -22,9 +22,15 @@ from scripts.dynamic_rectification_copy import (
     SUPPORTED_DIMENSIONS,
     visible_range_labels,
 )
+from scripts.dynamic_rectification_fact_priority import (
+    EVENT_FACT_PRIORITY_VERSION,
+    FACT_PRIORITY_VERSION,
+    build_domain_fact_priorities,
+    build_historical_event_priorities,
+)
 
 ALGORITHM_VERSION: Final = "birth-time-choice-scoring-v2"
-OPPORTUNITY_MODEL_VERSION: Final = "birth-time-opportunity-model-v2"
+OPPORTUNITY_MODEL_VERSION: Final = "birth-time-opportunity-model-v4"
 MIN_INFORMATION_GAIN: Final = 0.15
 
 
@@ -121,6 +127,11 @@ def candidate_window_rows(request: dict) -> list[dict]:
     }
     candidates = _candidate_datetimes(calculation_request)
     rows = [_candidate_row(calculation_request, candidate) for candidate in candidates]
+    fact_priorities = build_domain_fact_priorities(calculation_request)
+    event_priorities = build_historical_event_priorities({
+        **calculation_request,
+        "historical_events": request.get("events") or [],
+    })
     activations = {
         event_id: {row["time"]: 0.0 for row in rows} for event_id in event_windows
     }
@@ -135,8 +146,11 @@ def candidate_window_rows(request: dict) -> list[dict]:
             "window_start": window_start.isoformat(),
             "window_end": window_end.isoformat(),
             "activations": activations[event_id],
-            "missing_layers": [DOMAIN_CONFIG[dimension][0]]
-            if DOMAIN_CONFIG[dimension][0] in missing else [],
+            "missing_layers": sorted(set(DOMAIN_CONFIG[dimension][0]) & missing),
+            "fact_selection_priority": fact_priorities[dimension]["selection_priority"],
+            "fact_priority_version": FACT_PRIORITY_VERSION,
+            "event_fact_selection_priority": event_priorities[dimension]["selection_priority"],
+            "event_fact_priority_version": EVENT_FACT_PRIORITY_VERSION,
         }
         for event_id, (window_group, dimension, window_start, window_end) in event_windows.items()
     ]
@@ -146,6 +160,7 @@ def compute_candidate_model(request: dict, row_builder: Callable[[dict], list[di
     return {
         "version": ALGORITHM_VERSION,
         "opportunity_model_version": OPPORTUNITY_MODEL_VERSION,
+        "historical_event_fingerprint": historical_event_fingerprint(request),
         "birth_date": request["birth_date"],
         "as_of_date": request["as_of_date"],
         "range": {"start_time": request["start_time"], "end_time": request["end_time"]},
@@ -164,7 +179,7 @@ def compute_candidate_model(request: dict, row_builder: Callable[[dict], list[di
 def validate_candidate_model(model: dict, request: dict) -> dict:
     expected = {
         "version", "opportunity_model_version", "birth_date", "as_of_date", "range", "location",
-        "candidate_times", "windows",
+        "candidate_times", "windows", "historical_event_fingerprint",
     }
     candidates = candidate_times(request["birth_date"], request["start_time"], request["end_time"])
     try:
@@ -172,6 +187,7 @@ def validate_candidate_model(model: dict, request: dict) -> dict:
             set(model) == expected
             and model["version"] == ALGORITHM_VERSION
             and model["opportunity_model_version"] == OPPORTUNITY_MODEL_VERSION
+            and model["historical_event_fingerprint"] == historical_event_fingerprint(request)
             and model["birth_date"] == request["birth_date"]
             and model["as_of_date"] == request["as_of_date"]
             and model["range"] == {
@@ -203,7 +219,9 @@ def _validate_windows(windows: list, request: dict, candidates: list[str]) -> bo
     return len(keys) == len(set(keys)) and all(
         isinstance(row, dict)
         and set(row) == {
-            "window_group", "dimension_code", "window_start", "window_end", "activations", "missing_layers"
+            "window_group", "dimension_code", "window_start", "window_end", "activations", "missing_layers",
+            "fact_selection_priority", "fact_priority_version",
+            "event_fact_selection_priority", "event_fact_priority_version",
         }
         and row["window_group"] in groups
         and row["dimension_code"] in SUPPORTED_DIMENSIONS
@@ -220,6 +238,16 @@ def _validate_windows(windows: list, request: dict, candidates: list[str]) -> bo
         )
         and isinstance(row["missing_layers"], list)
         and all(isinstance(layer, str) and layer for layer in row["missing_layers"])
+        and not isinstance(row["fact_selection_priority"], bool)
+        and isinstance(row["fact_selection_priority"], int | float)
+        and math.isfinite(row["fact_selection_priority"])
+        and 0 <= row["fact_selection_priority"] <= 1
+        and row["fact_priority_version"] == FACT_PRIORITY_VERSION
+        and not isinstance(row["event_fact_selection_priority"], bool)
+        and isinstance(row["event_fact_selection_priority"], int | float)
+        and math.isfinite(row["event_fact_selection_priority"])
+        and 0 <= row["event_fact_selection_priority"] <= 1
+        and row["event_fact_priority_version"] == EVENT_FACT_PRIORITY_VERSION
         for row in windows
     )
 
@@ -236,16 +264,40 @@ def opportunities(model: dict) -> list[dict]:
         )
         if opportunity is not None:
             variants[dimension].append(opportunity)
-    result = [
+    selected = [
         sorted(items, key=lambda item: (-item["estimated_information_gain"], item["opportunity_id"]))[0]
         for items in variants.values()
     ]
-    return sorted(result, key=lambda item: (-item["estimated_information_gain"], item["opportunity_id"]))
+    result = sorted(selected, key=lambda item: (
+        -item["_event_fact_selection_priority"],
+        -item["_fact_selection_priority"],
+        -item["estimated_information_gain"],
+        item["opportunity_id"],
+    ))
+    return [
+        {
+            key: value for key, value in item.items()
+            if key not in {"_fact_selection_priority", "_event_fact_selection_priority"}
+        }
+        for item in result
+    ]
 
 
 def _dimension_opportunity(
-    dimension: str, window_group: str, windows: list[dict], candidates: list[str],
+    dimension: str,
+    window_group: str | list[dict],
+    windows: list[dict] | list[str],
+    candidates: list[str] | None = None,
 ) -> dict | None:
+    # Preserve the original three-argument helper contract for frozen fixtures;
+    # production calls always supply an explicit period-window group.
+    legacy_contract = candidates is None
+    if legacy_contract:
+        candidates = list(windows)
+        windows = list(window_group)
+        resolved_window_group: str | None = None
+    else:
+        resolved_window_group = str(window_group)
     neutral_context = DIMENSION_CONTEXT[dimension]
     memberships: dict[int, list[str]] = defaultdict(list)
     for candidate in candidates:
@@ -264,7 +316,6 @@ def _dimension_opportunity(
     basis = [
         {
             "version": ALGORITHM_VERSION,
-            "window_group": window_group,
             "dimension": dimension,
             "window_start": window["window_start"],
             "window_end": window["window_end"],
@@ -272,6 +323,8 @@ def _dimension_opportunity(
         }
         for window, members in populated
     ]
+    if resolved_window_group is not None:
+        basis = [{**item, "window_group": resolved_window_group} for item in basis]
     labels = visible_range_labels([
         {"window_start": item["window_start"], "window_end": item["window_end"]}
         for item in basis
@@ -299,4 +352,29 @@ def _dimension_opportunity(
         "candidate_partition_fingerprint": fingerprint,
         "fallback_prompt": f"哪一个时间段更接近{neutral_context}？",
         "partitions": partitions,
+        "_fact_selection_priority": max(
+            (float(window.get("fact_selection_priority", 0.0)) for window in windows),
+            default=0.0,
+        ),
+        "_event_fact_selection_priority": max(
+            (float(window.get("event_fact_selection_priority", 0.0)) for window in windows),
+            default=0.0,
+        ),
     }
+
+
+def historical_event_fingerprint(request: dict) -> str:
+    """Bind reusable private models to the exact normalized historical events."""
+    events = sorted(
+        (
+            {
+                "id": item["id"],
+                "domain": item["domain"],
+                "date": item["date"],
+                "precision": item["precision"],
+            }
+            for item in (request.get("events") or [])
+        ),
+        key=lambda item: (item["id"], item["domain"], item["date"], item["precision"]),
+    )
+    return canonical_hash(events)

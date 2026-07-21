@@ -37,7 +37,7 @@ test("medium and high results must satisfy deterministic confidence gates", () =
     candidate: {
       ...result.candidate,
       confidence: "high",
-      canApply: true,
+      canApply: false,
       eventCount: 4,
       domainCount: 3,
       marginPercent: 20,

@@ -184,7 +184,7 @@ export function parseDynamicChoiceScoring(value: unknown): DynamicChoiceScoringR
   const candidate = candidateResultSchema.parse({
     resultId: parsed.result_id,
     confidence: parsed.confidence,
-    canApply: parsed.can_apply,
+    canApply: false,
     winningSegment: segment && {
       startTime: segment.start_time,
       endTime: segment.end_time,
@@ -196,7 +196,7 @@ export function parseDynamicChoiceScoring(value: unknown): DynamicChoiceScoringR
     topScore: parsed.top_score,
     secondScore: parsed.second_score,
     marginPercent: parsed.margin_percent,
-    reasons: parsed.reasons,
+    reasons: [...new Set([...parsed.reasons, "minute_holdout_not_ready"])],
     evidence: [],
     algorithmVersion: parsed.algorithm_version,
   });

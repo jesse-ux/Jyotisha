@@ -84,6 +84,7 @@ function classifyDomain(summary: string): RectificationEvidenceDomain {
   if (/搬家|迁居|外地|异地|离乡|移居|出国|住所|居住/.test(summary)) return "relocation";
   if (/结婚|恋爱|分手|离婚|订婚|伴侣|关系/.test(summary)) return "relationship";
   if (/生育|孩子|父亲|母亲|父母|家人|家庭|亲人/.test(summary)) return "family";
+  if (/收入|工资|薪资|奖金|财富|财务|投资|亏损|盈利|负债|债务|资产/.test(summary)) return "finance";
   if (/工作|入职|离职|辞职|升职|创业|职业|公司|项目/.test(summary)) return "career";
   return "other";
 }

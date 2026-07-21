@@ -435,3 +435,9 @@ test("v3 readiness requires healthy dependencies and smoke proof for the exact f
     }
   }
 });
+
+test("production API probes health rapidly while a replacement container starts", () => {
+  const compose = readFileSync(new URL("../../deploy/docker-compose.server.yml", import.meta.url), "utf8");
+
+  assert.match(compose, /healthcheck:[\s\S]*start_period:\s*30s[\s\S]*start_interval:\s*1s/);
+});

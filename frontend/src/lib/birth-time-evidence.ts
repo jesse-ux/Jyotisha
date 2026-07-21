@@ -92,6 +92,13 @@ const rectificationTechniqueReceiptSchema = z.object({
   missingLayers: z.array(z.string()),
   auxiliaryLayers: z.array(z.string()).default([]),
   hardBlockers: z.array(z.string()),
+  canonicalInputHash: z.string().optional(),
+  confirmationAllowed: z.boolean().optional(),
+  decision: z.enum(["continue_rectification", "confirm_minute"]).optional(),
+  gates: z.record(z.string(), z.object({
+    status: z.enum(["pass", "fail", "blocked", "not_evaluated"]),
+    reason: z.string(),
+  }).strict()).optional(),
 }).strict().readonly();
 
 export const candidateResultSchema = z.object({
@@ -150,11 +157,11 @@ export const candidateResultSchema = z.object({
       message: "high candidates require at least twenty percent margin",
     });
   }
-  if (value.canApply !== eligible) {
+  if (value.canApply && !eligible) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["canApply"],
-      message: "only a high candidate with a winning segment can be confirmed",
+      message: "only a high candidate with a winning segment may enter confirmation",
     });
   }
 });
@@ -206,6 +213,17 @@ export function withCandidateResult(
         activeTime: null,
       };
     case "high":
+      if (!result.canApply) {
+        return {
+          ...snapshot,
+          state: "candidate",
+          assistantIntent: "present_candidate_result",
+          input: "candidate_actions",
+          confidence: "high",
+          canApply: false,
+          activeTime: null,
+        };
+      }
       return {
         ...snapshot,
         state: "confirming",

@@ -144,6 +144,20 @@ test("unverified consent resolves to a chart request and confirmed profiles need
   });
 });
 
+test("minute-free mode ignores an unverified reported minute", () => {
+  const general = grantBirthTimeConsultationConsent(
+    createBirthTimeConsultationConsentState(),
+    "chat-a",
+    "general_no_birth_time",
+  );
+
+  assert.deepEqual(resolveBirthTimeConsultationRoute(reportedExactTime, general, "chat-a"), {
+    kind: "consult",
+    mode: "general_no_birth_time",
+    time: null,
+  });
+});
+
 test("confirmed time does not request unverified-use consent", () => {
   const confirmed = {
     ...reportedExactTime,
@@ -194,15 +208,19 @@ test("account refresh identities reject an older response after a newer case req
   assert.equal(guard.isCurrent(newCaseRequest), true);
 });
 
-test("soft choice announces itself and locks every action while rectification opens", () => {
-  const source = readFileSync(new URL("../src/components/unverified-birth-time-choice.tsx", import.meta.url), "utf8");
+test("unverified birth time uses a self-dismissing notice instead of a modal", () => {
+  const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const notice = readFileSync(new URL("../src/components/birth-time-soft-notice.tsx", import.meta.url), "utf8");
+  const layout = readFileSync(new URL("../src/app/layout.tsx", import.meta.url), "utf8");
+  const sonner = readFileSync(new URL("../src/components/ui/sonner.tsx", import.meta.url), "utf8");
 
-  assert.match(source, /aria-live="polite"/);
-  assert.match(source, /role="alertdialog"/);
-  assert.match(source, /aria-modal="true"/);
-  assert.match(source, /keepFocusWithin/);
-  assert.match(source, /继续不依赖出生分钟的一般咨询/);
-  assert.ok((source.match(/disabled=\{pending\}/g) ?? []).length >= 3);
+  assert.match(page, /<BirthTimeSoftNotice/);
+  assert.match(notice, /toast\("出生时间尚未校正"/);
+  assert.match(notice, /durationMs = 4_500/);
+  assert.match(notice, /window\.setTimeout\(onDismiss, durationMs\)/);
+  assert.match(layout, /<Toaster \/>/);
+  assert.match(sonner, /from "sonner"/);
+  assert.doesNotMatch(page, /role="alertdialog"[\s\S]{0,300}出生时间还没有完成校正/);
 });
 
 test("homepage and profile result copy use the source-aware consultation options", () => {

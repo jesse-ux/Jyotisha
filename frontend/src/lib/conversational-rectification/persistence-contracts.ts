@@ -121,6 +121,7 @@ export type DeclaredBirthInput = z.infer<typeof declaredBirthInputSchema>;
 const evidenceDomainSchema = z.enum([
   "career",
   "education",
+  "finance",
   "relocation",
   "relationship",
   "family",

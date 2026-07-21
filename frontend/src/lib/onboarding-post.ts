@@ -8,13 +8,24 @@ import {
   parseOnboardingPayload,
   parseOnboardingText,
 } from "./onboarding-payload.ts";
+import {
+  isDeclaredBirthProfileComplete,
+  type BirthTimeSource,
+  type BirthTimeStatus,
+} from "./birth-time-intake-model.ts";
 
 export type OnboardingProfileRow = {
   readonly id: string;
   readonly name: string | null;
   readonly birth_date: string | null;
   readonly birth_time: string | null;
+  readonly reported_birth_time: string | null;
   readonly active_birth_time: string | null;
+  readonly birth_time_source: string | null;
+  readonly birth_time_period: string | null;
+  readonly birth_time_clue: string | null;
+  readonly uncertainty_before_minutes: number | null;
+  readonly uncertainty_after_minutes: number | null;
   readonly birth_time_status: string | null;
   readonly country_code: string | null;
   readonly province_code: string | null;
@@ -60,23 +71,49 @@ type OnboardingSession = {
 
 type OnboardingPostDependencies = {
   readonly openSession: () => Promise<OnboardingSession>;
-  readonly generateText: (name: string) => Promise<string | null>;
+  readonly generateText: (name: string, signal: AbortSignal) => Promise<string | null>;
+  readonly generationTimeoutMs?: number;
   readonly now: () => Date;
   readonly warn: (message: string, detail: string) => void;
 };
 
+const DEFAULT_GENERATION_TIMEOUT_MS = 18_000;
+
 function hasCompleteBirthProfile(profile: OnboardingProfileRow): boolean {
-  return Boolean(
-    profile.name
-    && profile.birth_date
-    && (profile.active_birth_time || profile.birth_time)
-    && (profile.birth_time_status === "confirmed"
-      || profile.birth_time_status === "candidate"
-      || (!profile.birth_time_status && profile.birth_time))
+  const persistedTime = profile.active_birth_time || profile.birth_time || "";
+  const knownSources: readonly BirthTimeSource[] = [
+    "hospital_record", "family_exact", "approximate", "period_only", "unknown", "legacy_import",
+  ];
+  const source = knownSources.find((item) => item === profile.birth_time_source)
+    ?? (persistedTime ? "legacy_import" : "");
+  const knownStatuses: readonly BirthTimeStatus[] = [
+    "reported", "assessing", "rectifying", "candidate", "confirmed",
+  ];
+  const status = knownStatuses.find((item) => item === profile.birth_time_status)
+    ?? (persistedTime ? "confirmed" : "");
+  const clock = (value: string | null) => value ? value.slice(0, 5) : "";
+  return Boolean(profile.name
     && profile.country_code
     && profile.province_code
-    && profile.city_code,
-  );
+    && profile.city_code
+    && isDeclaredBirthProfileComplete({
+      date: profile.birth_date ?? "",
+      time: clock(persistedTime),
+      reportedTime: clock(profile.reported_birth_time)
+        || (source === "legacy_import" ? clock(persistedTime) : ""),
+      birthTimeSource: source,
+      birthTimePeriod: profile.birth_time_period === "early_morning"
+        || profile.birth_time_period === "morning"
+        || profile.birth_time_period === "afternoon"
+        || profile.birth_time_period === "evening"
+        || profile.birth_time_period === "late_night"
+        ? profile.birth_time_period
+        : "",
+      birthTimeClue: profile.birth_time_clue ?? "",
+      uncertaintyBeforeMinutes: profile.uncertainty_before_minutes,
+      uncertaintyAfterMinutes: profile.uncertainty_after_minutes,
+      birthTimeStatus: status,
+    }));
 }
 
 export function createOnboardingPost(dependencies: OnboardingPostDependencies): () => Promise<Response> {
@@ -117,7 +154,13 @@ export function createOnboardingPost(dependencies: OnboardingPostDependencies): 
       name: profile.name,
       birthDate: profile.birth_date,
       birthTime: profile.birth_time,
+      reportedBirthTime: profile.reported_birth_time,
       activeBirthTime: profile.active_birth_time,
+      birthTimeSource: profile.birth_time_source,
+      birthTimePeriod: profile.birth_time_period,
+      birthTimeClue: profile.birth_time_clue,
+      uncertaintyBeforeMinutes: profile.uncertainty_before_minutes,
+      uncertaintyAfterMinutes: profile.uncertainty_after_minutes,
       birthTimeStatus: profile.birth_time_status,
       countryCode: profile.country_code,
       provinceCode: profile.province_code,
@@ -166,8 +209,19 @@ export function createOnboardingPost(dependencies: OnboardingPostDependencies): 
 
     let payload = fallbackOnboardingPayload;
     let source: "agent" | "fallback" = "fallback";
+    const generationController = new AbortController();
+    let generationTimer: ReturnType<typeof setTimeout> | undefined;
     try {
-      const text = await dependencies.generateText(profile.name ?? "");
+      const timeout = new Promise<null>((resolve) => {
+        generationTimer = setTimeout(() => {
+          resolve(null);
+          generationController.abort(new DOMException("Onboarding generation timed out", "TimeoutError"));
+        }, dependencies.generationTimeoutMs ?? DEFAULT_GENERATION_TIMEOUT_MS);
+      });
+      const text = await Promise.race([
+        dependencies.generateText(profile.name ?? "", generationController.signal),
+        timeout,
+      ]);
       const parsed = text === null ? null : parseOnboardingText(text);
       if (parsed) {
         payload = parsed;
@@ -178,6 +232,8 @@ export function createOnboardingPost(dependencies: OnboardingPostDependencies): 
         "[onboarding] agent generation failed; using safe fallback",
         error instanceof Error ? error.message : "unknown error",
       );
+    } finally {
+      if (generationTimer !== undefined) clearTimeout(generationTimer);
     }
 
     const completed = await session.repository.completeProfile({

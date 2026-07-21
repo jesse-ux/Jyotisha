@@ -808,6 +808,27 @@ test("generic date uncertainty does not suppress clear historical evidence", asy
     .some((item) => item.eventSummary.includes("毕业") && item.scoreable === true));
 });
 
+test("a rejected professional narrative falls back safely while the first scoreable answer still narrows", async () => {
+  const value = harness({ invalidNarrativeFromGeneration: 2 });
+  await start(value, null);
+
+  const turn = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2021年7月开始第一份长期工作",
+  });
+
+  const stored = value.cases.get(startActionId)?.row;
+  assert.equal(turn.status, "confirming");
+  assert.equal(turn.candidate.status, "ready_for_confirmation");
+  assert.equal(stored?.privateCandidate.resultId, resultId);
+  assert.equal(stored?.validationReceipts.at(-1)?.fallbackUsed, true);
+  assert.match(turn.narrative, /下一步|当前证据已形成候选总结/);
+  assert.doesNotMatch(turn.narrative, /候选没有推进|请稍后重试/);
+});
+
 test("one and two supported events save and narrate before the third accumulated event ranks", async () => {
   const value = harness({ readyAfterEvidenceCount: 3 });
   await start(value, null);
@@ -833,6 +854,35 @@ test("one and two supported events save and narrate before the third accumulated
 
   assert.equal(value.counts().packetBuilds, 4);
   assert.equal(value.events.filter((event) => event === "narrative").length, 4);
+});
+
+test("a non-confirmable conversational case completes with its saved range instead of asking forever", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99 });
+  await start(value, "请继续回答原来的事业问题");
+  const answers = [
+    [answerActionId, "2019年7月毕业"],
+    [secondAnswerActionId, "2020年8月搬家"],
+    [thirdAnswerActionId, "2021年9月换工作"],
+  ] as const;
+  let latest = value.cases.get(startActionId)?.row.latestTurn;
+
+  for (const [index, [receivedActionId, answer]] of answers.entries()) {
+    latest = await value.service.answer(userId, {
+      type: "answer",
+      caseId: startActionId,
+      actionId: receivedActionId,
+      turnVersion: index,
+      answer,
+    });
+  }
+
+  assert.equal(latest?.status, "completed");
+  assert.equal(latest?.candidate.status, "pending_validation");
+  assert.deepEqual(latest?.actions, ["continue_original_question"]);
+  assert.equal(latest?.evidenceRequest, null);
+  assert.match(latest?.narrative ?? "", /候选范围.*不会替换当前排盘时间/);
+  assert.equal(value.cases.get(startActionId)?.row.status, "completed");
+  assert.equal(value.cases.get(startActionId)?.row.privateCandidate.representativeTime, "05:20");
 });
 
 test("family evidence remains stored and public without changing its domain", async () => {

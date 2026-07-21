@@ -17,14 +17,35 @@ PLANETS = ("Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn")
 SIGNS = ("Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces")
 
 
+def canonical_case_input(case: dict[str, Any]) -> dict[str, Any]:
+    """Normalize only calculation-bearing fields before hashing or engine dispatch."""
+    required = ("year", "month", "day", "hour", "minute", "lat", "lon", "tz")
+    missing = [key for key in required if key not in case]
+    if missing:
+        raise ValueError("case is missing required birth fields")
+    return {
+        "year": int(case["year"]),
+        "month": int(case["month"]),
+        "day": int(case["day"]),
+        "hour": int(case["hour"]),
+        "minute": int(case["minute"]),
+        "second": int(case.get("second", 0)),
+        "lat": float(case["lat"]),
+        "lon": float(case["lon"]),
+        "tz": float(case["tz"]),
+        "ayanamsa": str(case.get("ayanamsa", "lahiri")).strip().lower(),
+        "node_mode": str(case.get("node_mode", case.get("nodeMode", "mean"))).strip().lower(),
+    }
+
+
 def case_hash(case: dict[str, Any]) -> str:
     """Stable identity for evidence correlation; never exposes birth data."""
-    payload = json.dumps(case, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    payload = json.dumps(canonical_case_input(case), sort_keys=True, ensure_ascii=True, separators=(",", ":"))
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
 def _local_d1(case: dict[str, Any]) -> dict[str, str]:
-    chart = compute_chart({**case, "ayanamsa": case.get("ayanamsa", "lahiri"), "node_mode": case.get("node_mode", "true")})
+    chart = compute_chart(canonical_case_input(case))
     return {planet: str(chart["planets"][planet]["sign"]) for planet in PLANETS}
 
 
@@ -90,9 +111,7 @@ def build_packet(
     vedastro_reference_date: str = "",
 ) -> dict[str, Any]:
     """Compare local/PyJHora/jyotishganit D1 without persisting private input."""
-    required = {"year", "month", "day", "hour", "minute", "lat", "lon", "tz"}
-    if not required <= set(case):
-        raise ValueError("case is missing required birth fields")
+    case = canonical_case_input(case)
     outputs: dict[str, dict[str, str]] = {"local": _local_d1(case)}
     engine_status: dict[str, str] = {"local": "ok"}
     for name, runner in (("pyjhora", _pyjhora_d1), ("jyotishganit", _jyotishganit_d1)):

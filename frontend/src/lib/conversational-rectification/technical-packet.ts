@@ -5,6 +5,7 @@ import type { RectificationQuestionnaire } from "../birth-time-journey-service.t
 export type RectificationEvidenceDomain =
   | "career"
   | "education"
+  | "finance"
   | "relocation"
   | "relationship"
   | "family"
@@ -93,23 +94,34 @@ type TimeLinkedVargaSample = {
 
 const layerFields = [
   ["D1", "ascendantSign"],
+  ["D2", "d2Sign"],
   ["D4", "d4Sign"],
   ["D9", "d9Sign"],
   ["D10", "d10Sign"],
+  ["D11", "d11Sign"],
   ["D24", "d24Sign"],
   ["D30", "d30Sign"],
+  ["A7", "a7Sign"],
+  ["UL", "ulSign"],
+  ["A10", "a10Sign"],
 ] as const;
 
 const domainByLayer = {
   D9: "relationship",
+  D2: "finance",
   D10: "career",
+  D11: "finance",
   D24: "education",
   D4: "relocation",
+  A7: "relationship",
+  UL: "relationship",
+  A10: "career",
 } as const satisfies Readonly<Record<string, RectificationEvidenceDomain>>;
 
 const domainLabels = {
   career: "事业",
   education: "教育",
+  finance: "财富",
   relocation: "迁居",
   relationship: "关系",
   family: "家庭",
@@ -145,6 +157,10 @@ function timeIsInsideRange(time: string, startTime: string, endTime: string): bo
   return end >= start
     ? minute >= start && minute <= end
     : minute >= start || minute <= end;
+}
+
+function isNextMinute(previous: string, current: string): boolean {
+  return timeToMinute(current) === (timeToMinute(previous) + 1) % 1_440;
 }
 
 function timeLinkedSamples(
@@ -188,7 +204,7 @@ function candidateWeights(model: Readonly<Record<string, unknown>>): Readonly<Re
 }
 
 function eventDomain(domain: CandidateResult["evidence"][number]["domain"]): RectificationEvidenceDomain {
-  return domain === "finance" || domain === "health_pressure" ? "other" : domain;
+  return domain === "health_pressure" ? "other" : domain;
 }
 
 function layerEvidence(
@@ -202,15 +218,38 @@ function layerEvidence(
   })).filter((item) => item.values.length > 0);
 }
 
-function suggestedDomains(layers: readonly RectificationLayerEvidence[]): SuggestedEvidenceDomain[] {
-  return layers.flatMap((item) => {
+function suggestedDomains(
+  layers: readonly RectificationLayerEvidence[],
+  samples: readonly TimeLinkedVargaSample[],
+): SuggestedEvidenceDomain[] {
+  const ranked = layers.flatMap((item) => {
     const domain = domainByLayer[item.layer as keyof typeof domainByLayer];
     if (!domain) return [];
+    const field = layerFields.find(([layer]) => layer === item.layer)?.[1];
+    const values = field ? samples.map(({ sample }) => sample[field] ?? "") : [];
+    const adjacentChanges = values.slice(1).filter((value, index) => (
+      isNextMinute(samples[index]?.time ?? "", samples[index + 1]?.time ?? "")
+      && value.length > 0
+      && Boolean(values[index]?.length)
+      && value !== values[index]
+    )).length;
+    if (adjacentChanges === 0) return [];
     return [{
       domain,
       layer: item.layer,
-      reason: `${item.layer} 在候选范围内呈现 ${item.values.join(" / ")} 差异，可用已发生的${domainLabels[domain]}事件区分。`,
+      adjacentChanges,
+      valueCount: item.values.length,
+      reason: `${item.layer} 在相邻候选分钟中发生 ${adjacentChanges} 次实际切换，并呈现 ${item.values.join(" / ")} 差异，可用已发生的${domainLabels[domain]}事件区分。`,
     }];
+  }).sort((left, right) => right.adjacentChanges - left.adjacentChanges
+    || right.valueCount - left.valueCount
+    || layerFields.findIndex(([layer]) => layer === left.layer)
+      - layerFields.findIndex(([layer]) => layer === right.layer));
+  const selected = new Set<RectificationEvidenceDomain>();
+  return ranked.flatMap((item) => {
+    if (selected.has(item.domain)) return [];
+    selected.add(item.domain);
+    return [{ domain: item.domain, layer: item.layer, reason: item.reason }];
   });
 }
 
@@ -225,7 +264,11 @@ export function buildRectificationTechnicalPacket(input: PacketInput): Rectifica
   const representativeTime = eventSegment?.representativeTime
     ?? midpoint(range.startTime, range.endTime);
   const selectedSamples = timeLinkedSamples(input.scan, input.consultation.timeLinkedScanSamples)
-    .filter((item) => timeIsInsideRange(item.time, range.startTime, range.endTime));
+    .filter((item) => timeIsInsideRange(item.time, range.startTime, range.endTime))
+    .sort((left, right) => (
+      (timeToMinute(left.time) - timeToMinute(range.startTime) + 1_440) % 1_440
+      - (timeToMinute(right.time) - timeToMinute(range.startTime) + 1_440) % 1_440
+    ));
   if (selectedSamples.length < 2) {
     throw new TypeError(
       "rectification packet requires two time-linked scan samples inside the selected candidate range",
@@ -238,7 +281,7 @@ export function buildRectificationTechnicalPacket(input: PacketInput): Rectifica
   const sensitiveLayers = layers.filter((item) => item.layer !== "D1"
     && item.values.length > 1
     && available.has(item.layer));
-  const domains = suggestedDomains(sensitiveLayers);
+  const domains = suggestedDomains(sensitiveLayers, selectedSamples);
   if (domains.length < 2) {
     throw new TypeError(
       "rectification packet requires two time-linked discriminating domains inside the selected candidate range",

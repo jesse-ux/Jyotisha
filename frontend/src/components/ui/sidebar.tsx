@@ -91,11 +91,15 @@ export function SidebarProvider({
   const open = controlledOpen ?? uncontrolledOpen;
   const isMobile = viewport === "mobile";
 
-  const setOpen = useCallback((nextOpen: boolean) => {
+  const commitOpen = useCallback((nextOpen: boolean) => {
     userChangedDesktopState.current = true;
     if (!isControlled) setUncontrolledOpen(nextOpen);
     onOpenChange?.(nextOpen);
   }, [isControlled, onOpenChange]);
+
+  const setOpen = useCallback((nextOpen: boolean) => {
+    commitOpen(nextOpen);
+  }, [commitOpen]);
 
   const setOpenMobile = useCallback((nextOpen: boolean) => {
     if (openMobileRef.current === nextOpen) return;
@@ -121,7 +125,7 @@ export function SidebarProvider({
       if (shouldHandleSidebarShortcut(event)) {
         event.preventDefault();
         if (isMobile) setOpenMobile(!openMobile);
-        else setOpen(!open);
+        else commitOpen(!open);
       }
       if (event.key === "Escape" && isMobile && openMobile && !escapeBlocked) {
         event.preventDefault();
@@ -131,7 +135,7 @@ export function SidebarProvider({
 
     window.addEventListener("keydown", handleKeydown);
     return () => window.removeEventListener("keydown", handleKeydown);
-  }, [escapeBlocked, isMobile, open, openMobile, setOpen, setOpenMobile]);
+  }, [commitOpen, escapeBlocked, isMobile, open, openMobile, setOpenMobile]);
 
   useEffect(() => {
     if (openMobile && !wasMobileOpen.current) {

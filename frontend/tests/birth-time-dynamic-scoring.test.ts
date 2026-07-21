@@ -180,6 +180,72 @@ test("high confidence requires explicit confirmation without applying a time", (
   assert.equal(result.dynamicTurnState.permissions.canConfirmCandidate, true);
 });
 
+test("release-blocked high confidence continues instead of showing a dead confirmation", () => {
+  const stored = dynamicCase();
+  const candidate = {
+    ...lowCandidate,
+    resultId: "a97b7b4c-60f3-4ed8-b290-64b2084182e7",
+    confidence: "high" as const,
+    canApply: false,
+    winningSegment: {
+      startTime: "05:11",
+      endTime: "05:11",
+      representativeTime: "05:11",
+      widthMinutes: 1,
+    },
+    eventCount: 4,
+    domainCount: 3,
+    marginPercent: 20,
+    reasons: ["minute_holdout_not_ready"],
+  };
+
+  const result = completeDynamicScoreTransition({
+    stored: { ...stored, currentChoiceQuestion: null },
+    candidate,
+    usefulOpportunityCount: 1,
+    repeatedOnly: false,
+    nextVersion: 8,
+  });
+
+  assert.equal(result.dynamicTurnState.nextAction.kind, "generate_dynamic_question");
+  assert.equal(result.dynamicTurnState.permissions.canConfirmCandidate, false);
+  assert.equal(result.snapshot.activeTime, null);
+});
+
+test("release-blocked high confidence ends as a saved range when no question remains", () => {
+  const stored = dynamicCase();
+  const candidate = {
+    ...lowCandidate,
+    resultId: "b97b7b4c-60f3-4ed8-b290-64b2084182e7",
+    confidence: "high" as const,
+    canApply: false,
+    winningSegment: {
+      startTime: "05:10",
+      endTime: "05:12",
+      representativeTime: "05:11",
+      widthMinutes: 3,
+    },
+    eventCount: 4,
+    domainCount: 3,
+    marginPercent: 20,
+    reasons: ["minute_holdout_not_ready"],
+  };
+
+  const result = completeDynamicScoreTransition({
+    stored: { ...stored, currentChoiceQuestion: null },
+    candidate,
+    usefulOpportunityCount: 0,
+    repeatedOnly: false,
+    nextVersion: 8,
+  });
+
+  assert.deepEqual(result.dynamicTurnState.nextAction, {
+    kind: "present_medium_result",
+    resultId: candidate.resultId,
+  });
+  assert.equal(result.dynamicTurnState.permissions.canConfirmCandidate, false);
+});
+
 test("dynamic scoring claims once, completes atomically, and replays", async () => {
   const flow = scoringFlow();
   const pending = await flow.service.answerDynamicChoice(ownerId, {

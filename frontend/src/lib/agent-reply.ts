@@ -48,3 +48,11 @@ export function parseAgentReply(value: string, theme: ReplyTheme) {
     title,
   };
 }
+
+export function resolveSessionTitle(question: string, modelTitle?: string): string {
+  if (modelTitle && modelTitle !== "一般占星咨询") return modelTitle;
+  const normalized = question.replace(/\s+/g, " ").trim().replace(/[？?！!。．，,；;：:]+$/u, "");
+  if (!normalized) return "新对话";
+  const characters = Array.from(normalized);
+  return characters.length > 14 ? `${characters.slice(0, 14).join("")}…` : normalized;
+}

@@ -28,6 +28,11 @@ test("keeps starter questions visible while the user edits a draft", () => {
   assert.doesNotMatch(starterVisibilityGuard, /\bdraft\b/);
 });
 
+test("completed account initialization switches directly to the home cards", () => {
+  assert.doesNotMatch(pageSource, /setOnboardingJustCompleted\(true\)/);
+  assert.doesNotMatch(pageSource, /!profileComplete \|\| onboardingJustCompleted/);
+});
+
 test("keeps follow-up suggestions visible while the user edits a draft", () => {
   // Given: the follow-up suggestion block and its render guard.
   const suggestionGuard = sourceBetween(

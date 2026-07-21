@@ -12,6 +12,8 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "references/open_source_sources/jyotishganit"
+PUBLIC_CASE_LATITUDE = 37.7749
+PUBLIC_CASE_LONGITUDE = -122.4194
 
 
 def clean(v: Any) -> Any:
@@ -77,8 +79,8 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--datetime", default="1955-02-24T19:15:00")
-    ap.add_argument("--latitude", type=float, default=37.3382)
-    ap.add_argument("--longitude", type=float, default=-122.0383)
+    ap.add_argument("--latitude", type=float, default=PUBLIC_CASE_LATITUDE)
+    ap.add_argument("--longitude", type=float, default=PUBLIC_CASE_LONGITUDE)
     ap.add_argument("--timezone", type=float, default=-8.0)
     ap.add_argument("--location", default="San Francisco, CA")
     ap.add_argument("--name", default="Steve Jobs public")

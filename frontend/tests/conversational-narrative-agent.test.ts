@@ -172,7 +172,7 @@ test("rejects duplicated generic domain reasons that omit a packet discriminatio
   assert.ok(result.issues.some((issue) => issue.includes("packet discrimination pairs")));
 });
 
-test("rejects a generic broad-year choice questionnaire and falls back without scoring", async () => {
+test("rejects a generic broad-year choice questionnaire and uses a safe scoring-compatible fallback", async () => {
   const invalid = {
     ...richOutput(),
     narrative: [
@@ -198,7 +198,7 @@ test("rejects a generic broad-year choice questionnaire and falls back without s
   });
   assert.equal(result.attempts, 2);
   assert.equal(result.fallbackUsed, true);
-  assert.equal(result.allowEvidenceScoringAdvance, false);
+  assert.equal(result.allowEvidenceScoringAdvance, true);
 });
 
 test("rejects generic individual-year options even without a written range", () => {
@@ -320,7 +320,7 @@ test("retries expression exactly once with the same grounded packet", async () =
   assert.equal(prompts.some((prompt) => prompt.includes("private-partition")), false);
 });
 
-test("uses a deterministic rich Chinese fallback after the second mismatch and holds scoring", async () => {
+test("uses a deterministic rich Chinese fallback after the second mismatch without blocking scoring", async () => {
   const packet = syntheticTechnicalPacket();
   const invalid = { ...richOutput(), sensitiveLayers: ["D60"] };
   const first = await generateRectificationNarrative({
@@ -336,7 +336,7 @@ test("uses a deterministic rich Chinese fallback after the second mismatch and h
 
   assert.equal(first.attempts, 2);
   assert.equal(first.fallbackUsed, true);
-  assert.equal(first.allowEvidenceScoringAdvance, false);
+  assert.equal(first.allowEvidenceScoringAdvance, true);
   assert.equal(first.narrative, second.narrative);
   assert.match(first.narrative, /05:20[\s\S]*待验证/);
   assert.match(first.narrative, /D1[\s\S]*稳定/);

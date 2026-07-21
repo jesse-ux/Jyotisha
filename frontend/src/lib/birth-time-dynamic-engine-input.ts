@@ -8,10 +8,15 @@ import type { ServerChoiceEvidence } from "./birth-time-dynamic-choice-internal.
 import type { TimeRange } from "./birth-time-dynamic-choice.ts";
 
 const reusableCandidateModelSchema = z.object({
-  opportunity_model_version: z.literal("birth-time-opportunity-model-v2"),
+  opportunity_model_version: z.literal("birth-time-opportunity-model-v4"),
+  historical_event_fingerprint: z.string().trim().min(1),
   range: z.object({ start_time: z.string(), end_time: z.string() }),
   windows: z.array(z.object({
     activations: z.record(z.string(), z.number().finite().nonnegative()),
+    fact_selection_priority: z.number().finite().min(0).max(1),
+    fact_priority_version: z.literal("birth-time-question-fact-priority-v1"),
+    event_fact_selection_priority: z.number().finite().min(0).max(1),
+    event_fact_priority_version: z.literal("birth-time-question-event-fact-priority-v1"),
   }).passthrough()),
 }).passthrough();
 
@@ -102,6 +107,7 @@ export function dynamicDifferenceInput(
     caseId: stored.id,
     asOfDate: stored.dynamicControl.asOfDate,
     ...dynamicChoiceScoreInputForRange(stored, range),
+    events: stored.lifeEvents ?? [],
     dismissedOpportunityIds: stored.dynamicControl.dismissedOpportunityIds,
     questionFingerprints: stored.dynamicControl.questionFingerprints,
     partitionFingerprints: stored.dynamicControl.partitionFingerprints,

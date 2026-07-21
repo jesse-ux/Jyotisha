@@ -113,11 +113,11 @@ export function resolveBirthTimeConsultationRoute(
   }
   const reportedTime = unverifiedBirthTime(profile);
   const consentMode = consultationModeForSession(state, sessionId);
+  if (consentMode === "general_no_birth_time") {
+    return { kind: "consult", mode: "general_no_birth_time", time: null };
+  }
   if (reportedTime && consentMode === "unverified_birth_time") {
     return { kind: "consult", mode: "unverified_birth_time", time: reportedTime };
-  }
-  if (!reportedTime && consentMode === "general_no_birth_time") {
-    return { kind: "consult", mode: "general_no_birth_time", time: null };
   }
   return { kind: "choice", canUseUnverifiedTime: reportedTime !== null };
 }

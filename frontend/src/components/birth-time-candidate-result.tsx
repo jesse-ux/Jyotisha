@@ -16,6 +16,23 @@ const confidenceLabels = {
   high: "较高置信",
 } as const;
 
+const gateLabels: Readonly<Record<string, string>> = {
+  event_quality: "经历质量",
+  cross_domain_coverage: "跨领域覆盖",
+  required_layers: "必需计算层",
+  neighbor_stability: "相邻分钟稳定性",
+  leave_one_event_out: "删除单条经历复算",
+  three_engine_input_parity: "三引擎同输入对照",
+  public_holdout_release: "公开 AA 盲测",
+};
+
+const gateStatusLabels: Readonly<Record<string, string>> = {
+  pass: "通过",
+  fail: "未通过",
+  blocked: "尚未具备条件",
+  not_evaluated: "尚未执行",
+};
+
 export function BirthTimeCandidateResult({ journey, controller, error }: CandidateResultProps) {
   const result = journey.candidateResult;
   const action = journey.nextAction;
@@ -66,7 +83,14 @@ export function BirthTimeCandidateResult({ journey, controller, error }: Candida
           <p>已用：{[...receipt.usedDivisionalCharts, ...receipt.usedArudha, ...receipt.dashaTracks].join("、") || "无"}</p>
           <p>辅助：{receipt.auxiliaryLayers.join("、") || "无"}</p>
           <p>未完成：{receipt.missingLayers.join("、") || "无"}</p>
-          {receipt.hardBlockers.length > 0 && <p>阻止确认：{receipt.hardBlockers.join("、")}</p>}
+          {receipt.gates && (
+            <ul>
+              {Object.entries(receipt.gates).map(([name, gate]) => (
+                <li key={name}>{gateLabels[name] ?? name}：{gateStatusLabels[gate.status] ?? gate.status}</li>
+              ))}
+            </ul>
+          )}
+          {receipt.confirmationAllowed === false && <p>当前仅保留候选范围，分钟确认尚未开放。</p>}
         </details>
       )}
 

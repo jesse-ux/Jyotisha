@@ -26,6 +26,13 @@ import {
   type RectificationEvidenceDomain,
   type RectificationTechnicalPacket,
 } from "./technical-packet.ts";
+import {
+  convergenceNotes,
+  nextPlateauCount,
+  rangeCompletionCopy,
+  rangeCompletionReason,
+  type RangeCompletionReason,
+} from "./convergence.ts";
 import type { ConversationalRectificationBilling } from "./billing.ts";
 import {
   projectLegacyCaseForConversationalImport,
@@ -287,6 +294,7 @@ function privateCandidateFromPacket(input: {
   readonly resultId: string | null;
   readonly iteration: number;
   readonly forceCollecting?: boolean;
+  readonly notes?: readonly string[];
 }): PrivateCandidate {
   const packet = input.packet;
   const parsed = privateCandidateSchema.safeParse({
@@ -310,8 +318,25 @@ function privateCandidateFromPacket(input: {
         ? "collecting_evidence"
         : packet.candidate.status === "ready_for_confirmation" ? "ready" : "collecting_evidence",
       iteration: input.iteration,
-      notes: [],
+      notes: [...(input.notes ?? [])],
     },
+  });
+  if (!parsed.success) throw new ConversationalRectificationError("service_unavailable");
+  return parsed.data;
+}
+
+function completedRangeTurn(
+  turn: ConversationalRectificationTurn,
+  reason: RangeCompletionReason,
+): ConversationalRectificationTurn {
+  const suffix = `${rangeCompletionCopy(reason)} 本次校正已结束并保存当前候选范围；候选代表时间不会替换当前排盘时间。`;
+  const parsed = conversationalRectificationTurnSchema.safeParse({
+    ...turn,
+    status: "completed",
+    narrative: boundedNarrative(turn.narrative, suffix),
+    candidate: { ...turn.candidate, status: "pending_validation" },
+    evidenceRequest: null,
+    actions: turn.pendingConsultationQuestion ? ["continue_original_question"] : [],
   });
   if (!parsed.success) throw new ConversationalRectificationError("service_unavailable");
   return parsed.data;
@@ -391,7 +416,6 @@ function nonScoringTurn(input: {
   readonly newEvidence: ReadonlyArray<LifeEventEvidenceInput>;
   readonly domain?: RectificationEvidenceDomain;
   readonly directionChange: boolean;
-  readonly scoringFallback?: boolean;
   readonly correctionReset?: Readonly<{
     packet: RectificationTechnicalPacket;
     reason: CorrectionResetReason;
@@ -401,7 +425,7 @@ function nonScoringTurn(input: {
   const hasFuture = input.newEvidence.some((item) => item.extractionStatus !== "needs_clarification"
     && item.scoreable === false && item.dateValue !== null);
   const correctionNarrative = input.correctionReset?.reason === "validation_fallback"
-    ? "这条更正已保存，原记录已经停止参与候选评分。候选已从声明范围重新计算，但新的专业解释未通过事实一致性校验；本轮不会保留旧候选的确认资格，请稍后重试或继续补充真实事件。"
+    ? "这条更正已保存，原记录已经停止参与候选评分，候选范围也已重新计算。为避免只凭一次修订直接确认出生分钟，本轮先保持待验证；请继续补充另一件已经发生的真实经历。"
     : input.correctionReset?.reason === "direction_change"
       ? "这条更正已保存，原记录已经停止参与候选评分。我们会从声明范围重新开始核对，你可以换一个真实事件方向并尽量写明年月；本轮不会沿用旧候选推进确认。"
       : input.correctionReset?.reason === "non_scoreable"
@@ -409,8 +433,6 @@ function nonScoringTurn(input: {
         : "这条更正已保存，原记录已经停止参与候选评分。更正后的事件时间还不够清楚，候选已从声明范围重新计算；请补充大约年份、月份和发生了什么。";
   const narrative = input.correctionReset
     ? correctionNarrative
-    : input.scoringFallback
-    ? "本轮原文已安全保存，但新的专业解释未通过事实一致性校验，因此候选没有推进。请稍后重试，或继续补充一件已经发生并带有年月的事件。"
     : input.directionChange
       ? "好的，我们不沿用不符合你的方向。你可以自由描述另一件已经发生的生活变化，尽量写明年月；我会根据事实继续，而不是让你选择宽泛年份。"
       : hasFuture
@@ -446,9 +468,7 @@ function nonScoringTurn(input: {
   if (!parsed.success) throw new ConversationalRectificationError("service_unavailable");
   return {
     turn: parsed.data,
-    receipt: transitionReceipt(input.scoringFallback
-      ? "deterministic-scoring-safety-fallback"
-      : "deterministic-evidence-clarification"),
+    receipt: transitionReceipt("deterministic-evidence-clarification"),
   };
 }
 
@@ -933,7 +953,7 @@ export function createConversationalRectificationService(
             packet: computed.packet,
             generator: ports.narrativeGenerator,
           });
-          if (!narrative.allowEvidenceScoringAdvance) {
+          if (narrative.fallbackUsed) {
             const next = nonScoringTurn({
               current,
               newEvidence: evidence,
@@ -963,7 +983,6 @@ export function createConversationalRectificationService(
             });
             return publicTurn(saved);
           }
-
           const privateCandidate = privateCandidateFromPacket({
             packet: computed.packet,
             resultId: computed.resultId,
@@ -1035,33 +1054,19 @@ export function createConversationalRectificationService(
           packet: computed.packet,
           generator: ports.narrativeGenerator,
         });
-        if (!narrative.allowEvidenceScoringAdvance) {
-          const next = nonScoringTurn({
-            current,
-            newEvidence: evidence,
-            domain: command.domain,
-            directionChange: false,
-            scoringFallback: true,
-          });
-          const saved = await ports.store.saveTurn({
-            userId,
-            caseId: command.caseId,
-            expectedVersion: command.turnVersion,
-            actionId: command.actionId,
-            commandFingerprint: fingerprint,
-            turn: next.turn,
-            evidence,
-            validationReceipt: narrative.validationReceipt,
-            privateCandidate: current.privateCandidate,
-          });
-          return publicTurn(saved);
-        }
+        const plateauCount = nextPlateauCount(current.privateCandidate, computed.packet);
+        const completionReason = rangeCompletionReason({
+          packet: computed.packet,
+          scoreableEventCount: allScoreable.length,
+          plateauCount,
+        });
         const privateCandidate = privateCandidateFromPacket({
           packet: computed.packet,
           resultId: computed.resultId,
           iteration: (current.privateCandidate.workingState?.iteration ?? 0) + 1,
+          notes: convergenceNotes(current.privateCandidate, plateauCount),
         });
-        const turn = turnFromNarrative({
+        const narratedTurn = turnFromNarrative({
           caseId: command.caseId,
           turnVersion: command.turnVersion + 1,
           pendingConsultationQuestion: current.pendingConsultationQuestion,
@@ -1069,6 +1074,9 @@ export function createConversationalRectificationService(
           narrative,
           evidence: [...current.eventEvidence, ...evidence],
         });
+        const turn = completionReason
+          ? completedRangeTurn(narratedTurn, completionReason)
+          : narratedTurn;
         const saved = await ports.store.saveTurn({
           userId,
           caseId: command.caseId,

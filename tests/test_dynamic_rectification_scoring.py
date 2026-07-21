@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
@@ -17,6 +18,26 @@ def _score_request() -> dict:
         "lon": 121.47,
         "tz": 8.0,
         "choice_evidence": [],
+    }
+
+
+def _opportunity_request(**changes) -> dict:
+    return {
+        "case_id": str(uuid4()),
+        "birth_date": "1990-01-01",
+        "as_of_date": "2026-07-21",
+        "start_time": "05:30",
+        "end_time": "05:33",
+        "lat": 31.23,
+        "lon": 121.47,
+        "tz": 8.0,
+        "candidate_model": None,
+        "evidence": [],
+        "dismissed_opportunity_ids": [],
+        "question_fingerprints": [],
+        "partition_fingerprints": [],
+        "recent_ranges": [],
+        **changes,
     }
 
 
@@ -90,6 +111,82 @@ def test_unauthenticated_forged_scores_cannot_obtain_an_applicable_result(monkey
         _handler()._compute_dynamic_rectification_score({
             **_score_request(), "choice_evidence": evidence,
         })
+
+
+def test_authenticated_dynamic_questionnaire_cannot_open_minute_confirmation(monkeypatch) -> None:
+    monkeypatch.setenv("JYOTISH_DYNAMIC_RECTIFICATION_TOKEN", "server-secret")
+    handler = _handler()
+    handler.headers = {"Authorization": "Bearer server-secret"}
+    scores = {"05:30": 10_000.0, "05:31": 0.0, "05:32": 0.0, "05:33": 0.0}
+    evidence = [
+        _evidence(
+            question_id=f"question-{index}",
+            opportunity_id=f"opportunity-{index}",
+            partition_id=f"partition-{index}",
+            dimension_code=dimension,
+            candidate_scores=scores,
+            information_gain=1.0,
+        )
+        for index, dimension in enumerate(
+            ["career", "relationship", "education", "relocation"], start=1
+        )
+    ]
+
+    result = handler._compute_dynamic_rectification_score({
+        **_score_request(), "choice_evidence": evidence,
+    })
+
+    assert result["confidence"] == "high"
+    assert result["can_apply"] is False
+    assert "minute_holdout_not_ready" in result["reasons"]
+
+
+def test_opportunity_route_defaults_legacy_missing_events_to_empty(monkeypatch) -> None:
+    monkeypatch.setenv("JYOTISH_DYNAMIC_RECTIFICATION_TOKEN", "server-secret")
+    handler = _handler()
+    handler.headers = {"Authorization": "Bearer server-secret"}
+    received = []
+    monkeypatch.setattr(api_server, "_load_local_module", lambda _name: SimpleNamespace(
+        build_difference_packet=lambda request: received.append(request)
+        or {"packet": {}, "candidate_model": {}},
+    ))
+
+    handler._compute_dynamic_rectification_opportunities(_opportunity_request())
+
+    assert received[0]["events"] == []
+
+
+def test_opportunity_route_validates_and_forwards_historical_events(monkeypatch) -> None:
+    monkeypatch.setenv("JYOTISH_DYNAMIC_RECTIFICATION_TOKEN", "server-secret")
+    handler = _handler()
+    handler.headers = {"Authorization": "Bearer server-secret"}
+    event_id = str(uuid4())
+    received = []
+    monkeypatch.setattr(api_server, "_load_local_module", lambda _name: SimpleNamespace(
+        build_difference_packet=lambda request: received.append(request)
+        or {"packet": {}, "candidate_model": {}},
+    ))
+
+    handler._compute_dynamic_rectification_opportunities(_opportunity_request(events=[{
+        "id": event_id,
+        "domain": "career",
+        "date": "2020-06",
+        "precision": "month",
+    }]))
+
+    assert received[0]["events"] == [{
+        "id": event_id,
+        "domain": "career",
+        "date": "2020-06",
+        "precision": "month",
+    }]
+    with pytest.raises(api_server.BadRequest, match="date does not match"):
+        handler._compute_dynamic_rectification_opportunities(_opportunity_request(events=[{
+            "id": event_id,
+            "domain": "career",
+            "date": "2020",
+            "precision": "month",
+        }]))
 
 
 def test_dynamic_routes_are_not_browser_runnable_technique_examples() -> None:

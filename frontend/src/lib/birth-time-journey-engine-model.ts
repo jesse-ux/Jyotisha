@@ -87,7 +87,7 @@ export function eventScorePayload(input: JourneyEventScoreInput) {
     lat: input.lat,
     lon: input.lon,
     tz: input.tz,
-    events: input.events.map((event) => ({
+    events: (input.events ?? []).map((event) => ({
       id: event.id,
       domain: event.domain,
       date: event.date,
@@ -118,6 +118,12 @@ export function differencePacketPayload(input: DifferencePacketInput) {
     lon: input.lon,
     tz: input.tz,
     evidence: choiceEvidencePayload(input.evidence),
+    events: (input.events ?? []).map((event) => ({
+      id: event.id,
+      domain: event.domain,
+      date: event.date,
+      precision: event.precision,
+    })),
     dismissed_opportunity_ids: input.dismissedOpportunityIds,
     question_fingerprints: input.questionFingerprints,
     partition_fingerprints: input.partitionFingerprints,

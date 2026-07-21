@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from datetime import datetime
+
+from scripts import active_rectification_event_engine as event_engine
 from scripts.active_rectification_events import (
     CandidateScoreRow,
     adjudicate_candidate_rows,
@@ -17,7 +20,7 @@ def _row(time: str, score: float) -> CandidateScoreRow:
     }
 
 
-def test_high_confidence_requires_four_events_three_domains_and_narrow_leader() -> None:
+def test_high_evidence_candidate_remains_blocked_until_public_holdout_release() -> None:
     result = adjudicate_candidate_rows(
         [
             _row("14:22", 16),
@@ -33,7 +36,8 @@ def test_high_confidence_requires_four_events_three_domains_and_narrow_leader() 
     )
 
     assert result["confidence"] == "high"
-    assert result["can_apply"] is True
+    assert result["can_apply"] is False
+    assert "minute_holdout_not_ready" in result["reasons"]
     assert result["winning_segment"] == {
         "start_time": "14:22",
         "end_time": "14:26",
@@ -41,6 +45,7 @@ def test_high_confidence_requires_four_events_three_domains_and_narrow_leader() 
         "width_minutes": 5,
     }
     assert result["margin_percent"] == 37.5
+    assert result["stability_diagnostics"]["neighbor_stability"]["all_required_passed"] is False
 
 
 def test_tied_disjoint_candidates_abstain() -> None:
@@ -55,6 +60,21 @@ def test_tied_disjoint_candidates_abstain() -> None:
     assert result["can_apply"] is False
     assert "tied_leader" in result["reasons"]
     assert result["winning_segment"] is None
+
+
+def test_neighbor_diagnostics_require_both_sides_at_1_2_and_5_minutes() -> None:
+    rows = [_row(f"10:{minute:02d}", 20 if minute == 5 else 10) for minute in range(11)]
+    result = adjudicate_candidate_rows(
+        rows,
+        event_count=4,
+        domain_count=3,
+        request_fingerprint="two-sided-neighbor-fixture",
+        leave_one_event_out={"status": "pass", "runs": []},
+    )
+
+    diagnostics = result["stability_diagnostics"]["neighbor_stability"]
+    assert diagnostics["all_required_passed"] is True
+    assert [item["radius_minutes"] for item in diagnostics["neighborhoods"]] == [1, 2, 5]
 
 
 def test_medium_confidence_never_allows_application() -> None:
@@ -146,5 +166,116 @@ def test_real_local_scoring_uses_dated_events_and_actual_candidate_minutes() -> 
     assert result["result_id"]
     assert result["event_count"] == 3
     assert result["domain_count"] == 3
-    assert result["algorithm_version"] == "birth-time-event-scoring-v1"
+    assert result["algorithm_version"] == "birth-time-event-scoring-v2"
     assert result["confidence"] in {"low", "medium"}
+    assert result["canonical_input_hash"]
+    assert result["calculation_contract"]["calculation"] == {
+        "ayanamsa": "lahiri",
+        "node_mode": "mean",
+        "ephemeris_source": "swisseph_calc_ut",
+    }
+    assert len(result["stability_diagnostics"]["leave_one_event_out"]["runs"]) == 3
+
+
+def test_finance_events_use_d2_d11_and_recompute_both_dashas_per_minute(monkeypatch) -> None:
+    calls = {"vimshottari": 0, "narayana": 0, "varga_counts": []}
+    original_score_event = event_engine._score_event
+
+    def vimshottari(*_args):
+        calls["vimshottari"] += 1
+        return "Sun", "Moon", "Mars"
+
+    def narayana(*_args):
+        calls["narayana"] += 1
+        return 0, 1
+
+    def score_event(**kwargs):
+        calls["varga_counts"].append(len(kwargs["varga_charts"]))
+        return original_score_event(**kwargs)
+
+    monkeypatch.setattr(event_engine, "_active_vimshottari", vimshottari)
+    monkeypatch.setattr(event_engine, "_active_narayana", narayana)
+    monkeypatch.setattr(event_engine, "_score_event", score_event)
+    result = event_engine.compute_event_candidate_result({
+        "birth_date": "1993-04-17",
+        "start_time": "14:29",
+        "end_time": "14:31",
+        "lat": 36.683333,
+        "lon": 114.35,
+        "tz": 8.0,
+        "events": [{
+            "id": "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5",
+            "domain": "finance",
+            "date": "2020-08",
+            "precision": "month",
+        }],
+    })
+
+    assert result["event_count"] == 1
+    assert calls == {"vimshottari": 3, "narayana": 3, "varga_counts": [2, 2, 2]}
+
+
+def test_missing_narayana_blocks_the_candidate_event_instead_of_using_partial_timing(monkeypatch) -> None:
+    monkeypatch.setattr(event_engine, "_active_narayana", lambda *_args: (None, None))
+    row = event_engine._candidate_row({
+        "birth_date": "1993-04-17",
+        "start_time": "14:29",
+        "end_time": "14:29",
+        "lat": 36.683333,
+        "lon": 114.35,
+        "tz": 8.0,
+        "events": [{
+            "id": "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5",
+            "domain": "career",
+            "date": "2019-07-01",
+            "precision": "day",
+        }],
+    }, datetime(1993, 4, 17, 14, 29))
+
+    assert row["evidence"] == []
+    assert row["score"] == 0
+    assert row["missing_layers"] == ["Narayana_MD_AD"]
+
+    result = event_engine.compute_event_candidate_result({
+        "birth_date": "1993-04-17",
+        "start_time": "14:29",
+        "end_time": "14:30",
+        "lat": 36.683333,
+        "lon": 114.35,
+        "tz": 8.0,
+        "events": [{
+            "id": "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5",
+            "domain": "career",
+            "date": "2019-07-01",
+            "precision": "day",
+        }],
+    })
+    assert result["missing_layers"] == ["Narayana_MD_AD"]
+    assert "missing_mandatory_layers" in result["reasons"]
+
+
+def test_relationship_scoring_receives_computed_ul(monkeypatch) -> None:
+    seen_ul = []
+    original_score_event = event_engine._score_event
+
+    def score_event(**kwargs):
+        seen_ul.append(kwargs["arudha_padas"].get("UL"))
+        return original_score_event(**kwargs)
+
+    monkeypatch.setattr(event_engine, "_score_event", score_event)
+    event_engine._candidate_row({
+        "birth_date": "1993-04-17",
+        "start_time": "14:29",
+        "end_time": "14:29",
+        "lat": 36.683333,
+        "lon": 114.35,
+        "tz": 8.0,
+        "events": [{
+            "id": "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5",
+            "domain": "relationship",
+            "date": "2021",
+            "precision": "year",
+        }],
+    }, datetime(1993, 4, 17, 14, 29))
+
+    assert seen_ul and seen_ul[0]["sign_idx"] >= 0

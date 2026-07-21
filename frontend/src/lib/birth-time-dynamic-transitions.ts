@@ -170,11 +170,12 @@ export function completeDynamicScoreTransition(input: {
     effectiveAnswerCount: stored.dynamicControl.effectiveAnswerCount,
     forcedReason: null,
   });
-  const action: DynamicNextAction = input.candidate.confidence === "high"
+  const mayConfirm = input.candidate.confidence === "high" && input.candidate.canApply;
+  const action: DynamicNextAction = mayConfirm
     ? { kind: "request_candidate_confirmation", resultId: input.candidate.resultId }
     : decision.kind === "continue"
       ? { kind: "generate_dynamic_question" }
-      : input.candidate.confidence === "medium"
+      : input.candidate.confidence !== "low"
         ? { kind: "present_medium_result", resultId: input.candidate.resultId }
         : { kind: "present_low_result", resultId: input.candidate.resultId };
   const priorRange = stored.dynamicTurnState.progress.currentRange;
@@ -209,7 +210,7 @@ export function completeDynamicScoreTransition(input: {
         previousRange,
         plateauCount: decision.plateauCount,
       },
-      permissions: { canConfirmCandidate: input.candidate.confidence === "high" },
+      permissions: { canConfirmCandidate: mayConfirm },
     },
   };
 }

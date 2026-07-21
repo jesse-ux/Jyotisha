@@ -8,6 +8,7 @@ const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const evidenceDomainSchema = z.enum([
   "career",
   "education",
+  "finance",
   "relocation",
   "relationship",
   "family",

@@ -6984,7 +6984,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             event_count=result.get('event_count', 0),
             domain_count=result.get('domain_count', 0),
             high_rigor=high_rigor,
+            stability_diagnostics=result.get('stability_diagnostics'),
+            required_layers_complete='missing_mandatory_layers' not in result.get('reasons', []),
+            canonical_input_hash=result.get('canonical_input_hash', ''),
+            missing_required_layers=result.get('missing_layers', []),
         )
+        result['can_apply'] = bool(result['technique_contract']['confirmation_allowed'])
         if high_rigor:
             from scripts.rectification_three_engine_packet import build_packet
             result['three_engine_packet'] = build_packet({
@@ -7044,6 +7049,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         allowed_fields = {
             'case_id', 'birth_date', 'as_of_date', 'start_time', 'end_time',
             'lat', 'lon', 'tz', 'candidate_model', 'evidence',
+            'events',
             'dismissed_opportunity_ids', 'question_fingerprints',
             'partition_fingerprints', 'recent_ranges',
         }
@@ -7073,6 +7079,43 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 raise BadRequest('recent_ranges must contain valid HH:MM times') from exc
         if normalized.get('candidate_model') is not None and not isinstance(normalized['candidate_model'], dict):
             raise BadRequest('candidate_model must be an object')
+        # Older stored clients did not send historical events. Treat omission as
+        # an empty evidence set so resuming an unfinished case never fails just
+        # because its cached request predates event-aware question selection.
+        events = normalized.get('events', [])
+        if not isinstance(events, list) or len(events) > 6:
+            raise BadRequest('events must be an array with at most 6 items')
+        parsed_birth_date = datetime.strptime(normalized['birth_date'], '%Y-%m-%d')
+        allowed_domains = {'education', 'relocation', 'relationship', 'career', 'finance', 'health_pressure'}
+        formats = {'year': '%Y', 'month': '%Y-%m', 'day': '%Y-%m-%d'}
+        normalized_events = []
+        for raw_event in events:
+            if not isinstance(raw_event, dict) or set(raw_event) != {'id', 'domain', 'date', 'precision'}:
+                raise BadRequest('each event must contain only id, domain, date, and precision')
+            try:
+                event_id = str(uuid.UUID(str(raw_event['id'])))
+            except (ValueError, TypeError, AttributeError) as exc:
+                raise BadRequest('event id must be a UUID') from exc
+            domain = raw_event['domain']
+            precision = raw_event['precision']
+            event_date = raw_event['date']
+            if domain not in allowed_domains:
+                raise BadRequest('event domain is unsupported')
+            if precision not in formats or not isinstance(event_date, str):
+                raise BadRequest('event precision is unsupported')
+            try:
+                parsed_event_date = datetime.strptime(event_date, formats[precision])
+            except ValueError as exc:
+                raise BadRequest('event date does not match its precision') from exc
+            if parsed_event_date.year < parsed_birth_date.year or parsed_event_date > datetime.now():
+                raise BadRequest('event date must be between birth and today')
+            normalized_events.append({
+                'id': event_id,
+                'domain': domain,
+                'date': event_date,
+                'precision': precision,
+            })
+        normalized['events'] = normalized_events
         module = _load_local_module('dynamic_rectification')
         try:
             result = module.build_difference_packet(normalized)
@@ -7096,6 +7139,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             result = module.score_choice_evidence(normalized)
         except (KeyError, TypeError, ValueError) as exc:
             raise BadRequest(str(exc)) from exc
+        result['can_apply'] = False
+        result.setdefault('reasons', []).append('minute_holdout_not_ready')
         return {'success': True, 'endpoint': 'dynamic_rectification_score', **result}
 
     def _compute_case_validation(self, body):

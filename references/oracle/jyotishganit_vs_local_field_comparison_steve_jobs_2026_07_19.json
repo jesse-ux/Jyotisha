@@ -1,6 +1,10 @@
 {
-  "boundary": "Sign-level comparison only. Mismatch rows require field-level formula/ayanamsa/node/rounding attribution; do not majority-vote truth.",
-  "claim_status": "observation_only",
+  "boundary": "Invalidated because both engines were compared under coordinates that do not match the San Francisco case label. Replay both engines with the canonical input before using these rows.",
+  "claim_status": "invalidated_input_mismatch",
+  "invalidation": {
+    "reason": "location_label_coordinate_mismatch",
+    "replacement_status": "blocked_until_both_engines_are_replayed_with_37.7749_-122.4194"
+  },
   "comparison_hash": "76558f3067672a5fcaf8d587ae5f6957d1b6eedff066d3aa244ae76b15cbfbe0",
   "coverage": {
     "BAV_SAV_jyotishganit": true,

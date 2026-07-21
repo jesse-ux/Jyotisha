@@ -1,0 +1,102 @@
+{
+  "schema_version": "minute-rectification-holdout-v2",
+  "benchmark_id": "minute_rectification_holdout_v2",
+  "scope": "public_birth_minute_rectification",
+  "truth_hidden_from_ranker": true,
+  "frozen_before_replay": true,
+  "frozen_scoring": {
+    "algorithm_version": "birth-time-event-scoring-v2",
+    "implementation_sha256": "153fea0f69d47a241f6692325f254eca8833a8efd529f81493cdea6ee36528aa",
+    "files": [
+      "scripts/active_rectification_events.py",
+      "scripts/active_rectification_event_engine.py",
+      "scripts/domain_calculation_service.py",
+      "scripts/dasha_analyzer.py",
+      "scripts/narayana_dasha.py",
+      "scripts/varga.py",
+      "scripts/jaimini.py",
+      "scripts/ashtakavarga.py",
+      "scripts/shadbala.py"
+    ],
+    "tie_breaker": "sha256(benchmark_id:case_id:candidate_time); published minute is never used"
+  },
+  "truth_policy": "Only independently published Rodden AA birth-minute records and independently sourced dated life events qualify.",
+  "negative_control_policy": "Every case includes blinded false-minute candidates on both sides of the published minute, including +/-1 and +/-2 minutes.",
+  "minimum_gate": {
+    "public_aa_cases": 20,
+    "events_per_case": 3,
+    "domains_per_case": 2,
+    "independent_event_sources_per_case": 2,
+    "negative_minutes_per_case": 4
+  },
+  "release_metrics": {
+    "top_1_rate_minimum": 0.6,
+    "top_3_rate_minimum": 0.85,
+    "mean_absolute_minute_error_maximum": 2.0,
+    "false_confirmation_rate_maximum": 0.05,
+    "correct_insufficient_evidence_rejection_rate_minimum": 0.9
+  },
+  "cases": [
+    {
+      "case_id": "barack_obama_1961_aa",
+      "subject_label": "Barack Obama",
+      "holdout_partition": "sealed_evaluation",
+      "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10,
+      "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1961-08-04",
+        "time": "19:24",
+        "place": "Honolulu, Hawaii, United States",
+        "latitude": 21.3069,
+        "longitude": -157.8583,
+        "timezone_offset": -10.0,
+        "source": {
+          "publisher": "Astro-Databank",
+          "url": "https://www.astro.com/adbvip/adbvip_08_04.htm?lang=r&nho2=161&nhor=1",
+          "rodden_rating": "AA",
+          "record_type": "birth_record"
+        }
+      },
+      "events": [
+        {
+          "id": "obama_wedding_1992",
+          "domain": "relationship",
+          "date": "1992-10-03",
+          "precision": "day",
+          "description": "Married Michelle Robinson.",
+          "source": {
+            "publisher": "Obama Foundation",
+            "url": "https://obama.org/about/administration/chicago-where-it-began/",
+            "independent_of_birth_source": true
+          }
+        },
+        {
+          "id": "obama_illinois_senate_1996",
+          "domain": "career",
+          "date": "1996-11-05",
+          "precision": "day",
+          "description": "Elected to the Illinois State Senate.",
+          "source": {
+            "publisher": "Obama Foundation",
+            "url": "https://obama.org/about/administration/chicago-where-it-began/",
+            "independent_of_birth_source": true
+          }
+        },
+        {
+          "id": "obama_presidential_election_2008",
+          "domain": "career",
+          "date": "2008-11-04",
+          "precision": "day",
+          "description": "Elected President of the United States.",
+          "source": {
+            "publisher": "The White House (archived)",
+            "url": "https://obamawhitehouse.archives.gov/1600/presidents/barackobama/",
+            "independent_of_birth_source": true
+          }
+        }
+      ]
+    }
+  ],
+  "boundary": "One seeded case is protocol plumbing, not evidence of accuracy. Verified-minute claims remain blocked until at least 20 sealed public AA cases pass all frozen metrics without tuning on their outcomes."
+}

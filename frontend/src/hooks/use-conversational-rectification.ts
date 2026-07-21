@@ -39,7 +39,7 @@ export type ConversationalRectificationController = ConversationalRectificationC
   cancelEvidenceCorrection(): void;
   start(pendingConsultationQuestion?: string | null): MutationResult;
   resume(): MutationResult;
-  answer(domain?: EvidenceDomain): MutationResult;
+  answer(domain?: EvidenceDomain, answerOverride?: string): MutationResult;
   pause(): MutationResult;
   abandon(): MutationResult;
   confirm(time?: string): MutationResult;
@@ -339,9 +339,12 @@ export function createConversationalRectificationController(
         turnVersion: turn.turnVersion,
       }));
     },
-    answer(domain: EvidenceDomain | undefined = snapshot.selectedDomain ?? undefined) {
+    answer(
+      domain: EvidenceDomain | undefined = snapshot.selectedDomain ?? undefined,
+      answerOverride?: string,
+    ) {
       const turn = currentTurn();
-      const answer = snapshot.draft.trim();
+      const answer = (answerOverride ?? snapshot.draft).trim();
       if (!turn || !answer || !turn.actions.includes("answer")) return Promise.resolve(turn);
       const correctsEvidenceId = snapshot.correctionTarget?.id;
       const payload = {

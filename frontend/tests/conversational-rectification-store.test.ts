@@ -362,6 +362,37 @@ test("save, pause, abandon, confirm, and import carry owner/version/action guard
   assert.equal("outputValidationReceipt" in (calls[0]?.[1].p_turn as object), false);
 });
 
+test("a completed unverified range uses the non-confirming completion RPC", async () => {
+  let called = "";
+  const completedTurn = {
+    ...firstTurn,
+    status: "completed" as const,
+    turnVersion: 1,
+    evidenceRequest: null,
+    actions: [] as const,
+  };
+  const store = new ConversationalRectificationStore(rpcClient((name) => {
+    called = name;
+    return { ...storedRow, status: "completed", turn_version: 1, latest_turn: completedTurn };
+  }));
+
+  const result = await store.saveTurn({
+    userId,
+    caseId,
+    actionId,
+    expectedVersion: 0,
+    commandFingerprint,
+    turn: completedTurn,
+    evidence: [],
+    validationReceipt,
+    privateCandidate: { resultId, calculationVersion: "rectification-v3.1" },
+  });
+
+  assert.equal(called, "complete_conversational_rectification_with_range");
+  assert.equal(result.status, "completed");
+  assert.equal(result.latestTurn.candidate.status, "pending_validation");
+});
+
 test("maps only exact allowlisted database failures to stable domain codes", () => {
   const exact = [
     ["conversational_case_not_found", "case_not_found"],

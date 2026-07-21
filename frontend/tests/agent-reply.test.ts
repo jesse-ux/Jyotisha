@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { parseAgentReply } from "../src/lib/agent-reply.ts";
+import { parseAgentReply, resolveSessionTitle } from "../src/lib/agent-reply.ts";
 
 test("extracts a model-generated session title without exposing hidden metadata", () => {
   // Given
@@ -50,4 +50,10 @@ test("hides an incomplete metadata block while a reply is streaming", () => {
 
   // Then
   assert.equal(reply.text, "回答正文");
+});
+
+test("general no-birth-time replies keep a question-specific session title", () => {
+  assert.equal(resolveSessionTitle("工作变化的重点是什么？", "一般占星咨询"), "工作变化的重点是什么");
+  assert.equal(resolveSessionTitle("如何理解印度占星里的行星关系？"), "如何理解印度占星里的行星关系");
+  assert.equal(resolveSessionTitle("工作变化的重点是什么？", "事业方向与工作变化"), "事业方向与工作变化");
 });

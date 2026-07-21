@@ -217,18 +217,34 @@ test("selects desktop and tablet shell widths from provider data", () => {
   assert.match(globalStyles, /\[data-viewport="desktop"\]\[data-state="expanded"\]\s+\.chat-app\s*\{[^}]*grid-template-columns:\s*var\(--sidebar-width-desktop\)\s+minmax\(0,\s*1fr\)/);
   assert.match(globalStyles, /\[data-viewport="tablet"\]\[data-state="expanded"\]\s+\.chat-app\s*\{[^}]*grid-template-columns:\s*var\(--sidebar-width-tablet\)\s+minmax\(0,\s*1fr\)/);
   assert.match(globalStyles, /\[data-state="collapsed"\]\s+\.chat-app\s*\{[^}]*grid-template-columns:\s*var\(--sidebar-width-icon\)\s+minmax\(0,\s*1fr\)/);
-  assert.doesNotMatch(globalStyles, /transition:[^;}]*(?:width|grid-template-columns)/);
+  assert.doesNotMatch(globalStyles, /transition:[^;}]*\b(?:width|grid-template-columns)\b/);
 });
 
 test("changes sidebar state without transition frames", () => {
+  const sidebar = readProjectFile("src/components/ui/sidebar.tsx");
+  const design = readProjectFile("DESIGN.md");
+
+  assert.doesNotMatch(sidebar, /document\.startViewTransition/);
+  assert.doesNotMatch(sidebar, /skipMotion/);
+  assert.match(sidebar, /const setOpen = useCallback\(\(nextOpen: boolean\) => \{\s*commitOpen\(nextOpen\);/);
+  assert.match(sidebar, /else commitOpen\(!open\);/);
+  assert.doesNotMatch(globalStyles, /view-transition-name/);
+  assert.doesNotMatch(globalStyles, /::view-transition-/);
   assert.match(globalStyles, /\[data-sidebar="trigger"\]\s+svg\s*\{[^}]*width:\s*18px[^}]*height:\s*18px/);
-  assert.doesNotMatch(cssBlock('[data-sidebar="sidebar"]'), /transition:/);
+  assert.doesNotMatch(cssBlock('[data-sidebar="trigger"]'), /transition:/);
+  assert.match(globalStyles, /\[data-sidebar="sidebar"\]\[data-mobile-open="false"\][^{]*\{[^}]*visibility:\s*hidden[^}]*transform:\s*translateX\(-100%\)/);
+  assert.match(design, /Sidebar state changes are immediate/);
 });
 
 test("keeps the chat title in the flexible left-aligned header column", () => {
   assert.match(cssBlock(".chat-header"), /grid-template-columns:\s*auto\s+minmax\(0,\s*1fr\)\s+auto/);
   assert.match(cssBlock(".chat-header"), /text-align:\s*left/);
   assert.doesNotMatch(cssBlock(".chat-header"), /justify-content:\s*space-between/);
+});
+
+test("anchors the account footer to the bottom edge without trailing sidebar padding", () => {
+  assert.match(globalStyles, /\.sidebar \{ position:[^}]*padding:\s*var\(--space-5\)\s+var\(--space-3\)\s+0/);
+  assert.match(cssBlock(".sidebar-footer"), /margin-top:\s*0/);
 });
 
 test("makes SidebarContent the only sidebar scroll owner", () => {

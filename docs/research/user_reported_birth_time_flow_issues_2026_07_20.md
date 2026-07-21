@@ -19,6 +19,33 @@ the tested deployment SHA.
 | ISSUE-BT-004 | Choosing `都不符合` surfaced the same raw English pattern error. | verified-local | The actual orchestrator treats `都不符合` as a normal direction change; Task 12 E2E advances the durable turn and preserves the single fee; client maps terminal 502/non-JSON failures to stable Chinese copy. | Authenticated production `都不符合` action followed by reload/resume, tied to the deployed SHA. |
 | ISSUE-BT-005 | Initialization used generic broad-year choices and lost the rich card/chat rectification analysis. | verified-local | Task 9 onboarding soft gate; v3 narrative grounding rejects broad-year questionnaires; Task 12 asserts candidate boundary, D1/D9/D10 layers, three domain rationales, free text, and year/month event request; PG14 proves future background persists without scoring and the legacy suite imports old unfinished work once with `migration_waived`. | Authenticated synthetic first-turn snapshot and one legacy import smoke tied to the deployed SHA. |
 
+## Initial production diagnosis (preserved)
+
+The original issue record captured these causes before implementation:
+
+- Chat deletion lacked both an authenticated `DELETE` grant and an owner-only
+  RLS policy.
+- `startNewChat()` created only a chat session; the birth profile and
+  rectification case were account-scoped, so a new chat could not start an
+  explicit re-rectification while preserving the active chart.
+- `dynamic-choice-v2` emitted `request_candidate_confirmation`, but the client
+  sent the legacy `confirm_guided_candidate` mutation, which rejected dynamic
+  cases and left them in `confirming` without applying the candidate.
+- The reported `都不符合` failure coincided with a deployment replacement in
+  which Caddy returned HTTP 502 while Docker could not resolve the temporarily
+  unavailable `web` service.
+- WebKit can represent a non-JSON parse failure as a `DOMException` named
+  `SyntaxError`; the old transport recognized JavaScript `SyntaxError` only and
+  could expose `The string did not match the expected pattern.` instead of
+  stable Chinese product copy.
+
+The original closure checklist required owner-only deletion, explicit
+account-level re-rectification, atomic idempotent candidate confirmation,
+deployment availability or bounded retry behavior, stable localized WebKit
+errors, and authenticated end-to-end coverage for `都不符合`, confirmation,
+re-rectification, and deletion. The table above maps each requirement to the
+implemented local evidence and the remaining production proof.
+
 ## Release decision
 
 All five issues remain `verified-local` until the production closure artifacts

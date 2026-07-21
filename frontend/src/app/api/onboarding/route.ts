@@ -17,7 +17,7 @@ function createProfileRepository(
     async loadProfile(userId) {
       return admin
         .from("profiles")
-        .select("id,name,birth_date,birth_time,active_birth_time,birth_time_status,country_code,province_code,city_code,onboarding_payload,onboarding_version,onboarding_generated_at")
+        .select("id,name,birth_date,birth_time,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_time_status,country_code,province_code,city_code,onboarding_payload,onboarding_version,onboarding_generated_at")
         .eq("id", userId)
         .maybeSingle();
     },
@@ -64,7 +64,7 @@ export const POST = createOnboardingPost({
       repository: createProfileRepository(admin),
     };
   },
-  generateText: async (name) => {
+  generateText: async (name, signal) => {
     const model = defaultLanguageModel();
     if (!model) return null;
     const result = await getOnboardingAgent(model).generate([
@@ -75,7 +75,7 @@ export const POST = createOnboardingPost({
           "请生成首次欢迎语和三个入门问题。欢迎语直接邀请用户提问，不要提到出生资料、资料准备或系统处理过程。",
         ].join("\n"),
       },
-    ]);
+    ], { abortSignal: signal });
     return result.text;
   },
   now: () => new Date(),

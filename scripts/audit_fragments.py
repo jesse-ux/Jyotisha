@@ -13,10 +13,8 @@ import argparse
 import json
 import re
 import subprocess
-import sys
 from pathlib import Path
 from typing import Any
-
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = ROOT / "references" / "technique_registry.json"
@@ -87,6 +85,7 @@ FRONTEND_MARKERS = {
 SCRIPT_IGNORE = {
     "__init__.py",
     "_compute_one_chart.py",
+    "active_rectification_scoring.py",
     "add_d60_to_test_charts.py",
     "add_high_confidence_yogas_batch1.py",
     "analyze_yoga_errors.py",

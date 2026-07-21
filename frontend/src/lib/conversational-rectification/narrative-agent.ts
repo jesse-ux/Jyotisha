@@ -10,7 +10,7 @@ export type RectificationNarrativePhase = "first" | "intermediate" | "final";
 const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const modelIdSchema = z.string().trim().min(1).max(120);
 const validatorVersion = "rectification-narrative-grounding-v2";
-const domainSchema = z.enum(["career", "education", "relocation", "relationship", "family", "other"]);
+const domainSchema = z.enum(["career", "education", "finance", "relocation", "relationship", "family", "other"]);
 const stableSemanticsPattern = /(?:稳定|保持|不变|一致|stable|unchanged)/i;
 const sensitiveSemanticsPattern = /(?:敏感|变化|差异|切换|不同|sensitive|changes?|differs?)/i;
 const discriminationSemanticsPattern = /(?:区分|辨别|判别|验证|差异|变化|discriminat|distinguish)/i;
@@ -21,6 +21,7 @@ const choiceQuestionPattern = /(?:哪(?:一|个)?(?:年|年份|年代|时间段|
 const domainSemantics = {
   career: /(?:事业|工作|职业|career)/i,
   education: /(?:教育|学业|学校|education)/i,
+  finance: /(?:财富|财务|收入|投资|finance)/i,
   relocation: /(?:搬迁|搬家|迁居|异地|居住|relocation)/i,
   relationship: /(?:关系|婚恋|伴侣|relationship)/i,
   family: /(?:家庭|家人|父母|孩子|family)/i,
@@ -29,6 +30,7 @@ const domainSemantics = {
 const domainLabels = {
   career: "事业",
   education: "学业",
+  finance: "财富",
   relocation: "迁居",
   relationship: "关系",
   family: "家庭",
@@ -427,7 +429,9 @@ export async function generateRectificationNarrative(input: {
     output,
     attempts: 2,
     fallbackUsed: true,
-    allowEvidenceScoringAdvance: false,
+    // The fallback is rendered entirely from the validated deterministic packet.
+    // A prose-model failure must not discard scoreable evidence or block narrowing.
+    allowEvidenceScoringAdvance: true,
     validationReceipt: {
       modelId,
       schemaValidated: false,

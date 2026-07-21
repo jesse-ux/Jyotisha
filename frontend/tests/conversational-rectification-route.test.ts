@@ -8,7 +8,10 @@ import {
   type BirthTimeConversationRouteService,
 } from "../src/app/api/birth-time-conversation/route.ts";
 import { ConversationalRectificationError } from "../src/lib/conversational-rectification/errors.ts";
-import type { BirthTimeJourneyEngine } from "../src/lib/birth-time-journey-service.ts";
+import type {
+  BirthTimeJourneyEngine,
+  DifferencePacketInput,
+} from "../src/lib/birth-time-journey-service.ts";
 import type { LifeEventEvidence } from "../src/lib/conversational-rectification/persistence-contracts.ts";
 import type { CandidateResult, LifeEvent } from "../src/lib/birth-time-evidence.ts";
 
@@ -89,6 +92,7 @@ function syntheticEvidence(
 
 function packetEngine(options: {
   readonly scoreCalls?: LifeEvent[][];
+  readonly differenceCalls?: DifferencePacketInput[];
   readonly scanTimes?: readonly string[];
   readonly scanCalls?: Array<{ readonly birthTime: string; readonly uncertaintyMinutes: number }>;
   readonly scoreResults?: readonly CandidateResult[];
@@ -109,11 +113,10 @@ function packetEngine(options: {
         uncertaintyMinutes: input.uncertaintyMinutes,
       });
       const center = minute(input.birthTime);
-      const times = options.scanTimes ?? [
-        clock(center - input.uncertaintyMinutes),
-        clock(center),
-        clock(center + input.uncertaintyMinutes),
-      ];
+      const times = options.scanTimes ?? Array.from(
+        { length: input.uncertaintyMinutes * 2 + 1 },
+        (_, index) => clock(center - input.uncertaintyMinutes + index),
+      );
       return {
         questionnaire: {
           questions: [],
@@ -164,6 +167,7 @@ function packetEngine(options: {
       };
     },
     async buildDifferencePacket(input) {
+      options.differenceCalls?.push(input);
       return {
         packet: {
           caseId: input.caseId,
@@ -463,8 +467,10 @@ test("production unknown-time adapter covers the declared full day with bounded 
     async scan(input) {
       scanCalls.push({ birthTime: input.birthTime, uncertaintyMinutes: input.uncertaintyMinutes });
       const center = minute(input.birthTime);
-      const times = [center - input.uncertaintyMinutes, center, center + input.uncertaintyMinutes]
-        .map(clock);
+      const times = Array.from(
+        { length: input.uncertaintyMinutes * 2 + 1 },
+        (_, index) => clock(center - input.uncertaintyMinutes + index),
+      );
       return {
         questionnaire: {
           questions: [],
@@ -547,7 +553,8 @@ test("production unknown-time adapter covers the declared full day with bounded 
 
 test("production packet waits for three supported events and then scores the accumulated evidence", async () => {
   const scoreCalls: LifeEvent[][] = [];
-  const engine = packetEngine({ scoreCalls });
+  const differenceCalls: DifferencePacketInput[] = [];
+  const engine = packetEngine({ scoreCalls, differenceCalls });
   const evidence = [
     syntheticEvidence(1, "education"),
     syntheticEvidence(2, "relocation"),
@@ -580,6 +587,11 @@ test("production packet waits for three supported events and then scores the acc
 
   assert.equal(scoreCalls.length, 1);
   assert.deepEqual(scoreCalls[0]?.map((event) => event.id), evidence.map((item) => item.id));
+  assert.deepEqual(
+    differenceCalls.map((input) => input.events.map((event) => event.id)),
+    [evidence.slice(0, 1), evidence.slice(0, 2), evidence].map((items) => items.map((item) => item.id)),
+    "every next-question request receives the historical evidence available at that turn",
+  );
 });
 
 test("legacy import scores inherited events without silently replacing the inherited candidate range", async () => {
@@ -752,7 +764,8 @@ test("production rescans the declared range after correction while ordinary evid
 
 test("production packet deterministically sends only the latest six supported events", async () => {
   const scoreCalls: LifeEvent[][] = [];
-  const engine = packetEngine({ scoreCalls });
+  const differenceCalls: DifferencePacketInput[] = [];
+  const engine = packetEngine({ scoreCalls, differenceCalls });
   const domains = ["education", "relocation", "career", "relationship"] as const;
   const evidence = Array.from({ length: 8 }, (_, index) =>
     syntheticEvidence(index + 1, domains[index % domains.length] ?? "career"));
@@ -777,6 +790,10 @@ test("production packet deterministically sends only the latest six supported ev
   assert.equal(scoreCalls.length, 1);
   assert.deepEqual(
     scoreCalls[0]?.map((event) => event.id),
+    evidence.slice(-6).map((item) => item.id),
+  );
+  assert.deepEqual(
+    differenceCalls.at(-1)?.events.map((event) => event.id),
     evidence.slice(-6).map((item) => item.id),
   );
 });
@@ -855,8 +872,41 @@ test("family evidence stays out of relationship scoring when three real scorer d
   assert.equal(scoreCalls[0]?.some((event) => event.domain === "relationship"), false);
 });
 
+test("dated finance evidence reaches the minute scorer without being downgraded to other", async () => {
+  const scoreCalls: LifeEvent[][] = [];
+  const engine = packetEngine({ scoreCalls });
+
+  await buildProductionConversationalRectificationPacket(engine, {
+    userId,
+    caseId,
+    asOfDate: "2026-07-21",
+    declaredBirthInput: {
+      source: "approximate",
+      birthDate: "1990-01-01",
+      reportedTime: "05:20",
+      uncertaintyBeforeMinutes: 30,
+      uncertaintyAfterMinutes: 30,
+      birthTimeClue: null,
+      birthplace: packetBirthplace,
+    },
+    privateCandidate: null,
+    evidence: [
+      syntheticEvidence(71, "education"),
+      syntheticEvidence(72, "relocation"),
+      syntheticEvidence(73, "finance"),
+    ],
+  });
+
+  assert.equal(scoreCalls.length, 1);
+  assert.deepEqual(scoreCalls[0]?.map((event) => event.domain), [
+    "education",
+    "relocation",
+    "finance",
+  ]);
+});
+
 test("a single period-only scan filters duplicate and out-of-range samples from the exact :59 range", async () => {
-  const engine = packetEngine({ scanTimes: ["08:00", "10:00", "10:00", "12:00"] });
+  const engine = packetEngine({ scanTimes: ["08:00", "08:01", "10:00", "10:00", "12:00"] });
   const built = await buildProductionConversationalRectificationPacket(engine, {
     userId,
     caseId,
@@ -873,7 +923,7 @@ test("a single period-only scan filters duplicate and out-of-range samples from 
   });
 
   assert.deepEqual(built.packet.candidate.range, { startTime: "08:00", endTime: "11:59" });
-  assert.deepEqual(built.packet.sensitivityScope.sampleTimes, ["08:00", "10:00"]);
+  assert.deepEqual(built.packet.sensitivityScope.sampleTimes, ["08:00", "08:01", "10:00"]);
 });
 
 test("year-precision evidence before birth waits while the birth year can become the valid third event", async () => {

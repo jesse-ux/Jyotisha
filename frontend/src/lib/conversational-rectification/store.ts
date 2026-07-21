@@ -348,7 +348,10 @@ export class ConversationalRectificationStore {
   async saveTurn(
     input: SaveConversationalRectificationTurnInput,
   ): Promise<StoredConversationalRectificationCase> {
-    const result = await this.callCaseRpc("save_conversational_rectification_turn", {
+    const functionName = input.turn.status === "completed"
+      ? "complete_conversational_rectification_with_range"
+      : "save_conversational_rectification_turn";
+    const result = await this.callCaseRpc(functionName, {
       ...mutationArgs(input),
       p_command_fingerprint: commandFingerprint(input),
       p_turn: requirePublicTurn(input.turn),

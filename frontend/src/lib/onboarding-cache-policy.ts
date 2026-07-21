@@ -7,7 +7,13 @@ type OnboardingProfileInput = {
   readonly name: string | null;
   readonly birthDate: string | null;
   readonly birthTime: string | null;
+  readonly reportedBirthTime?: string | null;
   readonly activeBirthTime: string | null;
+  readonly birthTimeSource?: string | null;
+  readonly birthTimePeriod?: string | null;
+  readonly birthTimeClue?: string | null;
+  readonly uncertaintyBeforeMinutes?: number | null;
+  readonly uncertaintyAfterMinutes?: number | null;
   readonly birthTimeStatus: string | null;
   readonly countryCode: string | null;
   readonly provinceCode: string | null;
@@ -44,7 +50,13 @@ export function createOnboardingCacheIdentity(
       profile.name,
       profile.birthDate,
       profile.birthTime,
+      profile.reportedBirthTime,
       profile.activeBirthTime,
+      profile.birthTimeSource,
+      profile.birthTimePeriod,
+      profile.birthTimeClue,
+      profile.uncertaintyBeforeMinutes,
+      profile.uncertaintyAfterMinutes,
       profile.birthTimeStatus,
       profile.countryCode,
       profile.provinceCode,

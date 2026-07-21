@@ -85,6 +85,53 @@ test("rectification adapter normalizes Python questionnaire samples and options"
     d10Sign: "Virgo",
     d24Sign: null,
     d30Sign: null,
+    a7Sign: null,
+    ulSign: null,
+    a10Sign: null,
+  });
+});
+
+test("rectification adapter preserves real engine sample times and named Varga keys", () => {
+  const questionnaire = parseRectificationQuestionnaire({
+    questions: [],
+    candidate_scan: {
+      samples: [{
+        time: "1997-08-08 06:00",
+        ascendant: { sign: "Cancer" },
+        varga_lagna: {
+          D2_Hora: { sign: "Cancer" },
+          D4_Turyamsa: { sign: "Aries" },
+          D9_Navamsa: { sign: "Aquarius" },
+          D10_Dasamsa: { sign: "Scorpio" },
+          D11_Rudramsa: { sign: "Libra" },
+          D24_Siddhamsa: { sign: "Pisces" },
+          D30_Trimsamsa: { sign: "Pisces" },
+        },
+        arudha: {
+          A7: { sign: "Scorpio" },
+          UL: { sign: "Virgo" },
+          A10: { sign: "Capricorn" },
+        },
+      }],
+    },
+  });
+
+  const rawScan = questionnaire.raw.candidate_scan as {
+    samples: Array<{ time?: unknown }>;
+  };
+  assert.equal(rawScan.samples[0]?.time, "1997-08-08 06:00");
+  assert.deepEqual(questionnaire.samples[0], {
+    ascendantSign: "Cancer",
+    d2Sign: "Cancer",
+    d4Sign: "Aries",
+    d9Sign: "Aquarius",
+    d10Sign: "Scorpio",
+    d11Sign: "Libra",
+    d24Sign: "Pisces",
+    d30Sign: "Pisces",
+    a7Sign: "Scorpio",
+    ulSign: "Virgo",
+    a10Sign: "Capricorn",
   });
 });
 
@@ -119,6 +166,9 @@ test("rectification adapter normalizes all evidence-domain Varga signs", () => {
     d10Sign: "Virgo",
     d24Sign: "Gemini",
     d30Sign: "Pisces",
+    a7Sign: null,
+    ulSign: null,
+    a10Sign: null,
   });
 });
 
@@ -203,6 +253,7 @@ test("rectification adapter normalizes an event-scored candidate result", () => 
 
   assert.equal(result.resultId, "1d8ee348-61a3-433d-8907-ff6d281b9992");
   assert.equal(result.winningSegment?.representativeTime, "14:24");
+  assert.equal(result.canApply, false, "an old or incomplete engine receipt cannot open minute confirmation");
   assert.deepEqual(result.evidence[0]?.ruleIds, ["vim_md_domain_house"]);
   assert.equal("legacy_server_metadata" in (result.evidence[0] ?? {}), false);
 });

@@ -429,8 +429,13 @@ function layerMetadata(scan: RectificationQuestionnaire, calculationVersion: str
     ["D4", "d4Sign"],
     ["D9", "d9Sign"],
     ["D10", "d10Sign"],
+    ["D2", "d2Sign"],
+    ["D11", "d11Sign"],
     ["D24", "d24Sign"],
     ["D30", "d30Sign"],
+    ["A7", "a7Sign"],
+    ["UL", "ulSign"],
+    ["A10", "a10Sign"],
   ] as const;
   const availableLayers = layers
     .filter(([, key]) => scan.samples.some((sample) => typeof sample[key] === "string" && sample[key]?.trim()))
@@ -504,6 +509,7 @@ export async function buildProductionConversationalRectificationPacket(
     lon: place.longitude,
     tz: place.timezoneOffset,
     evidence: [],
+    events,
     dismissedOpportunityIds: [],
     questionFingerprints: [],
     partitionFingerprints: [],
