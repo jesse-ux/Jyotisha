@@ -15,6 +15,7 @@ def test_chat_history_management_actions_are_exposed() -> None:
         "deleteSession",
         "pendingSessionDeletion",
         "确认删除",
+        "session-delete-overlay",
         "togglePinnedSession",
         "toggleArchivedSession",
         "showArchivedSessions",

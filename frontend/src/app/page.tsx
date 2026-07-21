@@ -2320,16 +2320,19 @@ export default function Home() {
           onOpenLogout={() => openAccountDialog("logout")}
         />
         {pendingSessionDeletion ? (
-          <div className="session-delete-confirmation" role="alertdialog" aria-modal="true" aria-label="确认删除聊天记录">
-            <p>删除“{pendingSessionDeletion.title}”？此操作不可恢复。</p>
-            <div>
-              <button type="button" onClick={() => setPendingSessionDeletion(null)}>取消</button>
-              <button className="danger-button" type="button" onClick={() => {
-                const session = pendingSessionDeletion;
-                setPendingSessionDeletion(null);
-                void deleteSession(session);
-              }}>确认删除</button>
-            </div>
+          <div className="session-delete-overlay" role="presentation" onMouseDown={() => setPendingSessionDeletion(null)}>
+            <section className="session-delete-confirmation" role="alertdialog" aria-modal="true" aria-label="确认删除聊天记录" onMouseDown={(event) => event.stopPropagation()}>
+              <h2>删除聊天记录？</h2>
+              <p>“{pendingSessionDeletion.title}”将被永久删除，无法恢复。</p>
+              <div className="session-delete-actions">
+                <button type="button" onClick={() => setPendingSessionDeletion(null)}>取消</button>
+                <button className="danger-button" type="button" onClick={() => {
+                  const session = pendingSessionDeletion;
+                  setPendingSessionDeletion(null);
+                  void deleteSession(session);
+                }}>确认删除</button>
+              </div>
+            </section>
           </div>
         ) : null}
         <SidebarInset className="chat-panel" inert={activeAccountDialog !== null}>
