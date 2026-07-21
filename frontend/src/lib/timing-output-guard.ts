@@ -25,7 +25,7 @@ const chineseOwnedChartSubjectPattern = new RegExp(
   "iu",
 );
 const chineseUserHasChartPattern = new RegExp(
-  String.raw`(?:你|您)\s*(?:为|是|有)\s*(?:一(?:个|颗)\s*)?${chineseChartObjectSource}`,
+  String.raw`(?:你|您)\s*(?:为|是|有|拥有)\s*(?:一(?:个|颗)\s*)?${chineseChartObjectSource}`,
   "iu",
 );
 const chinesePersonalChartContextPattern = /(?:对(?:你|您)而言|基于(?:你|您)(?:的)?(?:盘面?|星盘|命盘|出生盘|本命盘)|在(?:你|您)(?:的)?(?:盘面?|星盘|命盘|出生盘|本命盘)(?:中|里)?)/iu;
@@ -42,8 +42,8 @@ const englishOwnedChartSubjectPattern = new RegExp(
   String.raw`\b(?:your|the\s+user(?:'s)?)\s+(?:personal\s+)?${englishChartObjectSource}\b`,
   "iu",
 );
-const englishUserHasChartPattern = new RegExp(
-  String.raw`\byou\s+have\s+(?:an?\s+)?(?:${englishZodiacSignSource}\s+rising|${englishChartObjectSource})\b`,
+const englishUserIsOrHasChartPattern = new RegExp(
+  String.raw`\byou\s+(?:are|have)\s+(?:an?\s+)?(?:${englishZodiacSignSource}\s+(?:rising|ascendant)|${englishChartObjectSource})\b`,
   "iu",
 );
 const englishPersonalChartContextPattern = /\b(?:for\s+you|(?:in|from|based\s+on|according\s+to)\s+your\s+(?:natal\s+|birth\s+)?chart)\b/iu;
@@ -54,6 +54,10 @@ const englishChartAddressesUserPattern = new RegExp(
 
 const chineseEducationalFramePattern = /^(?:(?:你|您)(?:的)?问题(?:是|为)|(?:你|您)(?:所)?问(?:的)?(?:是)?)[\s,，:：]*/iu;
 const chineseAboutGeneralMeaningPattern = /^关于\s*(?:你|您)(?:的)?\s*(.+?(?:一般含义|一般意义))$/iu;
+const chineseChartMetaReferencePattern = new RegExp(
+  String.raw`${chineseChartObjectSource}\s*(?:(?:的\s*)?一般问题|方面的问题|问题(?:的\s*)?提问者|(?:的\s*)?提问者)`,
+  "giu",
+);
 const englishEducationalFramePattern = /^(?:your\s+question\s+is|you\s+asked\s+about)\s*/iu;
 
 function normalizeClaimClause(clause: string) {
@@ -64,7 +68,8 @@ function normalizeClaimClause(clause: string) {
     .trim();
   normalized = normalized
     .replace(chineseEducationalFramePattern, "")
-    .replace(englishEducationalFramePattern, "");
+    .replace(englishEducationalFramePattern, "")
+    .replace(chineseChartMetaReferencePattern, "咨询问题");
   const aboutGeneralMeaning = chineseAboutGeneralMeaningPattern.exec(normalized);
   return aboutGeneralMeaning?.[1] ?? normalized;
 }
@@ -78,7 +83,7 @@ function isPersonalChartConclusion(clause: string) {
     && chineseChartObjectPattern.test(normalized)
     && chineseChartPredicatePattern.test(normalized);
   const englishStructure = (englishOwnedChartSubjectPattern.test(normalized)
-      || englishUserHasChartPattern.test(normalized)
+      || englishUserIsOrHasChartPattern.test(normalized)
       || englishPersonalChartContextPattern.test(normalized)
       || englishChartAddressesUserPattern.test(normalized))
     && englishChartObjectPattern.test(normalized)
