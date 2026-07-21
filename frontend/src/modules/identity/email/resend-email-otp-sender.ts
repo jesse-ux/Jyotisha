@@ -11,6 +11,7 @@ const subjectByType: Record<EmailOtpType, string> = {
   "sign-in": "Your Jyotisha sign-in code",
   "email-verification": "Verify your Jyotisha email",
   "forget-password": "Reset your Jyotisha password",
+  "change-email": "Confirm your new Jyotisha email",
 };
 
 function escapeHtml(value: string): string {

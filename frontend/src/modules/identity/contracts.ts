@@ -3,7 +3,8 @@ export type IdentitySurface = "user" | "admin";
 export type EmailOtpType =
   | "sign-in"
   | "email-verification"
-  | "forget-password";
+  | "forget-password"
+  | "change-email";
 
 export interface EmailOtpMessage {
   email: string;
