@@ -501,17 +501,17 @@ test("clear historical evidence is extracted, scored, narrated, recapped, and at
     caseId: startActionId,
     actionId: answerActionId,
     turnVersion: 0,
-    answer: "2021年7月毕业，并在2022年3月去外地工作",
+    answer: "2018年6月毕业，2020年3月去外地工作，2022年8月结婚",
   });
 
   assert.equal(value.counts().packetBuilds, 2);
   assert.equal(turn.status, "confirming");
   assert.equal(turn.candidate.status, "ready_for_confirmation");
   assert.equal(turn.turnVersion, 1);
-  assert.equal(turn.evidenceRecap.length, 2);
+  assert.equal(turn.evidenceRecap.length, 3);
   const saved = value.cases.get(startActionId)?.row.eventEvidence ?? [];
-  assert.equal(saved.length, 2);
-  assert.ok(saved.every((item) => item.rawText === "2021年7月毕业，并在2022年3月去外地工作"));
+  assert.equal(saved.length, 3);
+  assert.ok(saved.every((item) => item.rawText === "2018年6月毕业，2020年3月去外地工作，2022年8月结婚"));
   assert.ok(saved.every((item) => item.scoreable === true));
   assert.ok(value.events.includes("score-packet"));
 });
@@ -642,7 +642,7 @@ test("every non-confirmable correction rescans the declared range and withdraws 
       caseId: startActionId,
       actionId: answerActionId,
       turnVersion: 0,
-      answer: "2019年7月开始第一份工作",
+      answer: "2018年6月毕业，2019年7月开始第一份工作，2021年3月搬家",
     });
     assert.equal(prior.status, "confirming", scenario.name);
     const wrongId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
@@ -673,11 +673,12 @@ test("every non-confirmable correction rescans the declared range and withdraws 
     assert.equal(corrected.evidenceRecap.some((item) => item.id === replacement.id), true, scenario.name);
     assert.equal(value.counts().reserveCount, 1, scenario.name);
 
-    if (scenario.name === "narrative validation fallback") {
-      assert.deepEqual(value.packetEvidenceIds.at(-1), [replacement.id]);
-    } else {
-      assert.deepEqual(value.packetEvidenceIds.at(-1), []);
-    }
+    const expectedPacketEvidenceIds = stored.eventEvidence
+      .filter((item) => item.id !== wrongId
+        && item.scoreable === true
+        && item.extractionStatus !== "needs_clarification")
+      .map((item) => item.id);
+    assert.deepEqual(value.packetEvidenceIds.at(-1), expectedPacketEvidenceIds);
   }
 });
 
@@ -686,7 +687,7 @@ test("a clear one-to-one correction can form a new confirmation candidate only a
   await start(value, null);
   await value.service.answer(userId, {
     type: "answer", caseId: startActionId, actionId: answerActionId,
-    turnVersion: 0, answer: "2019年7月开始第一份工作",
+    turnVersion: 0, answer: "2018年6月毕业，2019年7月开始第一份工作，2021年3月搬家",
   });
   const wrongId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
   assert.ok(wrongId);
@@ -701,7 +702,14 @@ test("a clear one-to-one correction can form a new confirmation candidate only a
   assert.ok(stored && replacementId);
 
   assert.equal(value.packetPrivateCandidates.at(-1), null);
-  assert.deepEqual(value.packetEvidenceIds.at(-1), [replacementId]);
+  assert.deepEqual(
+    value.packetEvidenceIds.at(-1),
+    stored.eventEvidence
+      .filter((item) => item.id !== wrongId
+        && item.scoreable === true
+        && item.extractionStatus !== "needs_clarification")
+      .map((item) => item.id),
+  );
   assert.equal(corrected.status, "confirming");
   assert.equal(corrected.candidate.status, "ready_for_confirmation");
   assert.equal(corrected.actions.includes("confirm"), true);
@@ -753,7 +761,7 @@ test("ordinary new evidence continues incrementally from the current candidate r
   assert.deepEqual(value.packetPrivateCandidates, [
     null,
     { rangeStart: "04:50", rangeEnd: "05:50", resultId: null },
-    { rangeStart: "05:16", rangeEnd: "05:20", resultId },
+    { rangeStart: "05:16", rangeEnd: "05:20", resultId: null },
   ]);
 });
 
@@ -804,7 +812,8 @@ test("generic date uncertainty does not suppress clear historical evidence", asy
     answer: "2021年7月毕业，具体日期不确定",
   });
 
-  assert.equal(turn.status, "confirming");
+  assert.equal(turn.status, "active");
+  assert.equal(turn.candidate.status, "pending_validation");
   assert.equal(value.counts().packetBuilds, 2);
   assert.ok(value.events.includes("score-packet"));
   assert.ok((value.cases.get(startActionId)?.row.eventEvidence ?? [])
@@ -824,9 +833,9 @@ test("a rejected professional narrative falls back safely while the first scorea
   });
 
   const stored = value.cases.get(startActionId)?.row;
-  assert.equal(turn.status, "confirming");
-  assert.equal(turn.candidate.status, "ready_for_confirmation");
-  assert.equal(stored?.privateCandidate.resultId, resultId);
+  assert.equal(turn.status, "active");
+  assert.equal(turn.candidate.status, "pending_validation");
+  assert.equal(stored?.privateCandidate.resultId, null);
   assert.equal(stored?.validationReceipts.at(-1)?.fallbackUsed, true);
   assert.match(turn.narrative, /已记录：|本轮区分重点/);
   assert.doesNotMatch(turn.narrative, /候选没有推进|请稍后重试/);
@@ -1045,7 +1054,7 @@ test("receipt-first delayed retries replay the original answer, pause, abandon, 
           caseId: startActionId,
           actionId: answerActionId,
           turnVersion: 0,
-          answer: "2021年7月毕业，并在2022年3月去外地工作",
+          answer: "2018年6月毕业，2020年3月去外地工作，2022年8月结婚",
         };
         return { command, first: await value.service.answer(userId, command) };
       },
@@ -1082,7 +1091,7 @@ test("receipt-first delayed retries replay the original answer, pause, abandon, 
           caseId: startActionId,
           actionId: answerActionId,
           turnVersion: 0,
-          answer: "2021年7月毕业，并在2022年3月去外地工作",
+          answer: "2018年6月毕业，2020年3月去外地工作，2022年8月结婚",
         });
         const command = {
           type: "confirm" as const,
@@ -1138,7 +1147,7 @@ test("confirm delegates to the atomic store call, preserves the old baseline unt
   await start(value, "请继续回答原来的事业问题");
   const ready = await value.service.answer(userId, {
     type: "answer", caseId: startActionId, actionId: answerActionId,
-    turnVersion: 0, answer: "2021年7月毕业，并在2022年3月去外地工作",
+    turnVersion: 0, answer: "2018年6月毕业，2020年3月去外地工作，2022年8月结婚",
   });
   assert.equal(value.cases.get(startActionId)?.row.baselineActiveTime, "04:58");
   const before = value.mutations.length;

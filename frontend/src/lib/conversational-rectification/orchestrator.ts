@@ -316,6 +316,19 @@ function actionsFor(status: "active" | "confirming") {
   return ["answer", "pause", "abandon"] as const;
 }
 
+function confirmationGatedPacket(
+  packet: RectificationTechnicalPacket,
+  scoreableEventCount: number,
+): RectificationTechnicalPacket {
+  if (packet.candidate.status !== "ready_for_confirmation"
+    || scoreableEventCount >= MINIMUM_SCOREABLE_EVENTS) return packet;
+  return {
+    ...packet,
+    candidate: { ...packet.candidate, status: "pending_validation" },
+    useBoundary: `当前候选仍需至少 ${MINIMUM_SCOREABLE_EVENTS} 条时间明确、可评分的真实经历验证，不能作为已经校正完成的出生分钟。`,
+  };
+}
+
 function turnFromNarrative(input: {
   readonly caseId: string;
   readonly turnVersion: number;
@@ -671,21 +684,23 @@ export function createConversationalRectificationService(
         evidence: projected.evidence,
         preserveCandidateRange: true,
       });
+      const gatedPacket = confirmationGatedPacket(computed.packet, 0);
       const narrative = await generateRectificationNarrative({
         phase: "first",
-        packet: computed.packet,
+        packet: gatedPacket,
         generator: ports.narrativeGenerator,
       });
       const privateCandidate = privateCandidateFromPacket({
-        packet: computed.packet,
-        resultId: computed.resultId,
+        packet: gatedPacket,
+        resultId: null,
         iteration: 0,
+        forceCollecting: true,
       });
       const firstTurn = turnFromNarrative({
         caseId: actionId,
         turnVersion: 0,
         pendingConsultationQuestion,
-        packet: computed.packet,
+        packet: gatedPacket,
         narrative,
         evidence: projected.evidence,
       });
@@ -847,21 +862,23 @@ export function createConversationalRectificationService(
           privateCandidate: null,
           evidence: [],
         });
+        const gatedPacket = confirmationGatedPacket(computed.packet, 0);
         const narrative = await generateRectificationNarrative({
           phase: "first",
-          packet: computed.packet,
+          packet: gatedPacket,
           generator: ports.narrativeGenerator,
         });
         const privateCandidate = privateCandidateFromPacket({
-          packet: computed.packet,
-          resultId: computed.resultId,
+          packet: gatedPacket,
+          resultId: null,
           iteration: 0,
+          forceCollecting: true,
         });
         const firstTurn = turnFromNarrative({
           caseId,
           turnVersion: 0,
           pendingConsultationQuestion: command.pendingConsultationQuestion ?? null,
-          packet: computed.packet,
+          packet: gatedPacket,
           narrative,
           evidence: [],
         });
@@ -977,6 +994,10 @@ export function createConversationalRectificationService(
             privateCandidate: null,
             evidence: allScoreable,
           });
+          const gatedPacket = confirmationGatedPacket(
+            computed.packet,
+            allScoreable.length,
+          );
           const replacement = evidence[0];
           if (!replacement) throw new ConversationalRectificationError("invalid_command");
           const resetReason: CorrectionResetReason | null = directionChange
@@ -993,7 +1014,7 @@ export function createConversationalRectificationService(
               correctionReset: { packet: computed.packet, reason: resetReason },
             });
             const privateCandidate = privateCandidateFromPacket({
-              packet: computed.packet,
+              packet: gatedPacket,
               resultId: null,
               iteration: (current.privateCandidate.workingState?.iteration ?? 0) + 1,
               forceCollecting: true,
@@ -1012,12 +1033,12 @@ export function createConversationalRectificationService(
             return publicTurn(saved);
           }
 
-          const phase = computed.packet.candidate.status === "ready_for_confirmation"
+          const phase = gatedPacket.candidate.status === "ready_for_confirmation"
             ? "final" as const
             : "intermediate" as const;
           const narrative = await generateRectificationNarrative({
             phase,
-            packet: computed.packet,
+            packet: gatedPacket,
             generator: ports.narrativeGenerator,
           });
           if (narrative.fallbackUsed) {
@@ -1027,12 +1048,12 @@ export function createConversationalRectificationService(
               domain: command.domain,
               directionChange: false,
               correctionReset: {
-                packet: computed.packet,
+                packet: gatedPacket,
                 reason: "validation_fallback",
               },
             });
             const privateCandidate = privateCandidateFromPacket({
-              packet: computed.packet,
+              packet: gatedPacket,
               resultId: null,
               iteration: (current.privateCandidate.workingState?.iteration ?? 0) + 1,
               forceCollecting: true,
@@ -1051,15 +1072,18 @@ export function createConversationalRectificationService(
             return publicTurn(saved);
           }
           const privateCandidate = privateCandidateFromPacket({
-            packet: computed.packet,
-            resultId: computed.resultId,
+            packet: gatedPacket,
+            resultId: gatedPacket.candidate.status === "ready_for_confirmation"
+              ? computed.resultId
+              : null,
             iteration: (current.privateCandidate.workingState?.iteration ?? 0) + 1,
+            forceCollecting: gatedPacket.candidate.status !== "ready_for_confirmation",
           });
           const turn = turnFromNarrative({
             caseId: command.caseId,
             turnVersion: command.turnVersion + 1,
             pendingConsultationQuestion: current.pendingConsultationQuestion,
-            packet: computed.packet,
+            packet: gatedPacket,
             narrative,
             evidence: [...current.eventEvidence, ...evidence],
           });
@@ -1113,17 +1137,21 @@ export function createConversationalRectificationService(
           privateCandidate: current.privateCandidate,
           evidence: allScoreable,
         });
-        const phase = computed.packet.candidate.status === "ready_for_confirmation"
+        const gatedPacket = confirmationGatedPacket(
+          computed.packet,
+          allScoreable.length,
+        );
+        const phase = gatedPacket.candidate.status === "ready_for_confirmation"
           ? "final" as const
           : "intermediate" as const;
         const narrative = await generateRectificationNarrative({
           phase,
-          packet: computed.packet,
+          packet: gatedPacket,
           generator: ports.narrativeGenerator,
         });
-        const plateauCount = nextPlateauCount(current.privateCandidate, computed.packet);
+        const plateauCount = nextPlateauCount(current.privateCandidate, gatedPacket);
         const completionReason = rangeCompletionReason({
-          packet: computed.packet,
+          packet: gatedPacket,
           scoreableEventCount: allScoreable.length,
           plateauCount,
         });
@@ -1131,24 +1159,27 @@ export function createConversationalRectificationService(
           ...narrative,
           narrative: evidenceProgressNarrative({
             previousCandidate: current.privateCandidate,
-            packet: computed.packet,
+            packet: gatedPacket,
             newEvidence: evidence,
             scoreableEventCount: allScoreable.length,
             willContinue: completionReason === null
-              && computed.packet.candidate.status !== "ready_for_confirmation",
+              && gatedPacket.candidate.status !== "ready_for_confirmation",
           }),
         } satisfies RectificationNarrativeResult;
         const privateCandidate = privateCandidateFromPacket({
-          packet: computed.packet,
-          resultId: computed.resultId,
+          packet: gatedPacket,
+          resultId: gatedPacket.candidate.status === "ready_for_confirmation"
+            ? computed.resultId
+            : null,
           iteration: (current.privateCandidate.workingState?.iteration ?? 0) + 1,
           notes: convergenceNotes(current.privateCandidate, plateauCount),
+          forceCollecting: gatedPacket.candidate.status !== "ready_for_confirmation",
         });
         const narratedTurn = turnFromNarrative({
           caseId: command.caseId,
           turnVersion: command.turnVersion + 1,
           pendingConsultationQuestion: current.pendingConsultationQuestion,
-          packet: computed.packet,
+          packet: gatedPacket,
           narrative: narrativeWithProgress,
           evidence: [...current.eventEvidence, ...evidence],
         });

@@ -183,6 +183,7 @@ function createSyntheticBackend(options: {
   legacy?: boolean;
   allowNewCaseCreation?: boolean;
   packetFailure?: boolean;
+  initialReady?: boolean;
   packetEvidenceCalls?: string[][];
 } = {}) {
   const cases = new Map<string, LoadedConversationalRectificationCase>();
@@ -372,7 +373,8 @@ function createSyntheticBackend(options: {
     async buildTechnicalPacket(input) {
       if (options.packetFailure) throw new Error("synthetic packet failure");
       options.packetEvidenceCalls?.push(input.evidence.map((item) => item.id));
-      const ready = input.evidence.filter((item) => item.scoreable === true && item.extractionStatus !== "needs_clarification").length >= 3;
+      const ready = options.initialReady === true
+        || input.evidence.filter((item) => item.scoreable === true && item.extractionStatus !== "needs_clarification").length >= 3;
       const packet = technicalPacket(ready);
       if (input.preserveCandidateRange && input.privateCandidate?.rangeStart && input.privateCandidate.rangeEnd) {
         return {
@@ -406,6 +408,27 @@ function createSyntheticBackend(options: {
     legacyCaseId,
   };
 }
+
+test("technical readiness cannot bypass the three-event confirmation gate on the first turn", async () => {
+  const backend = createSyntheticBackend({ initialReady: true });
+  const handler = createBirthTimeConversationPostHandler({
+    authenticate: async () => ({ userId, context: {} }),
+    createService: async () => backend.service,
+    deploymentSha,
+  });
+
+  const turn = await post(handler, {
+    type: "start",
+    actionId: caseId,
+    pendingConsultationQuestion: originalQuestion,
+  });
+
+  assert.equal(turn.status, "active");
+  assert.equal(turn.candidate.status, "pending_validation");
+  assert.equal(turn.actions.includes("confirm"), false);
+  assert.equal(backend.cases.get(caseId)?.privateCandidate.resultId, null);
+  assert.equal(backend.cases.get(caseId)?.privateCandidate.workingState?.phase, "collecting_evidence");
+});
 
 async function post(
   handler: (request: Request) => Promise<Response>,

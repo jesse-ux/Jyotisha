@@ -173,3 +173,9 @@ Prevention: resolve the packaged repository root by default, deploy only an atte
 The journey trigger copied `birth_time` into `reported_birth_time` and then raised `reported_birth_time_is_immutable` on a later account edit. This both changed the meaning of the user's original declaration and surfaced as a generic `PATCH /api/account` 500.
 
 Prevention: keep reported declarations editable, never derive them from active/candidate time, repair impossible `period_only`/`unknown` rows, and enforce the source/time consistency constraint in the database.
+
+## ERR-089 | Technical readiness bypassed the three-event business gate on a first turn | mitigated 2026-07-21
+
+A real production scan could return `ready_for_confirmation` before any historical evidence existed. The application then built a `confirming` first turn, while the database correctly accepts only an `active` first turn, producing a delayed `action_conflict` after the fee reservation and calculation.
+
+Prevention: gate every technical packet by `MINIMUM_SCOREABLE_EVENTS`; until three effective, historical, scoreable events exist, persist no result ID and expose only an active `pending_validation` turn. Keep the production smoke in `smoke_only` until this path completes against the deployed SHA.
