@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import {
   parseRectificationPriceCredits,
-  type AccountRectificationCaseState,
 } from "@/lib/birth-time-consultation-consent";
+import { resolveAccountRectificationCase } from "@/lib/account-rectification-case";
 import {
   accountProfilePatchSchema,
   applyAccountProfileConcurrencyGuards,
@@ -16,7 +16,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
-const rectificationStatuses = ["starting", "active", "paused", "confirming", "completed", "abandoned"] as const;
+const unfinishedRectificationStatuses = ["starting", "active", "paused", "confirming"] as const;
 
 function isMissingProfileColumn(error: { code?: string; message?: string } | null) {
   const message = error?.message?.toLowerCase() ?? "";
@@ -24,28 +24,6 @@ function isMissingProfileColumn(error: { code?: string; message?: string } | nul
     || error?.code === "42703"
     || message.includes("schema cache")
     || message.includes("column");
-}
-
-function projectRectificationCase(value: unknown): AccountRectificationCaseState | null {
-  if (value === null || typeof value !== "object") return null;
-  const row = value as Record<string, unknown>;
-  const status = rectificationStatuses.find((candidate) => candidate === row.status);
-  if (typeof row.id !== "string"
-    || row.journey_protocol !== "conversational-evidence-v3"
-    || !status
-    || typeof row.turn_version !== "number"
-    || !Number.isSafeInteger(row.turn_version)
-    || row.turn_version < 0) {
-    throw new Error("invalid rectification case projection");
-  }
-  return Object.freeze({
-    caseId: row.id,
-    journeyProtocol: "conversational-evidence-v3",
-    status,
-    turnVersion: row.turn_version,
-    isRevision: typeof row.revision_of_case_id === "string",
-    preservesActiveTime: typeof row.baseline_active_time === "string",
-  });
 }
 
 export async function GET() {
@@ -61,29 +39,35 @@ export async function GET() {
     const rectificationPriceCredits = parseRectificationPriceCredits(
       process.env.RECTIFICATION_PRICE_CREDITS,
     );
+    const admin = createAdminSupabaseClient();
+    const { data: rectificationCaseRows, error: rectificationCaseError } = await admin
+      .from("birth_time_rectification_cases")
+      .select("id,journey_protocol,status,turn_version,revision_of_case_id,baseline_active_time,declared_birth_input,updated_at")
+      .eq("user_id", user.id)
+      .eq("journey_protocol", "conversational-evidence-v3")
+      .in("status", [...unfinishedRectificationStatuses])
+      .order("updated_at", { ascending: false })
+      .limit(50);
+    if (rectificationCaseError) {
+      return NextResponse.json({ error: "暂时无法读取生时校正状态" }, { status: 500 });
+    }
+
+    // Read the profile after the case snapshot. If a declaration edit races
+    // with this request, matching uses the later profile and cannot resurrect
+    // an older case. A concurrently created case simply appears on refresh.
     const { data: profile, error } = await supabase
       .from("profiles")
-      .select("credits,active_birth_time,birth_time_status")
+      .select("credits,active_birth_time,birth_time_status,birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset")
       .eq("id", userId)
       .single();
 
     if (error) {
       return NextResponse.json({ error: "暂时无法读取账户余额" }, { status: 500 });
     }
-
-    const admin = createAdminSupabaseClient();
-    const { data: rectificationCaseRow, error: rectificationCaseError } = await admin
-      .from("birth_time_rectification_cases")
-      .select("id,journey_protocol,status,turn_version,revision_of_case_id,baseline_active_time,updated_at")
-      .eq("user_id", user.id)
-      .eq("journey_protocol", "conversational-evidence-v3")
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (rectificationCaseError) {
-      return NextResponse.json({ error: "暂时无法读取生时校正状态" }, { status: 500 });
-    }
-    const rectificationCase = projectRectificationCase(rectificationCaseRow);
+    const rectificationCase = resolveAccountRectificationCase(
+      profile,
+      Array.isArray(rectificationCaseRows) ? rectificationCaseRows : [],
+    );
 
     return NextResponse.json({
       user: { id: user.id, email: user.email ?? null },

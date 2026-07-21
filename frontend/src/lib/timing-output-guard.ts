@@ -11,19 +11,32 @@ const guaranteeConclusionPatterns = [
   /(?:^|[.?!\n])[^.?!\n]*\b(?:will definitely|guaranteed? to|certain to|without doubt)\b[^.?!\n]*/gi,
 ];
 
-const personalChartClaimMarkers = [
-  String.raw`(?:基于|根据|从|结合)\s*(?:你|您)\s*(?:的\s*)?(?:个人\s*)?(?:星盘|命盘|出生盘|本命盘|盘)`,
-  String.raw`(?:你|您)\s*的\s*(?:(?:D\s*\d+)(?:\s*上升)?|上升(?:星座)?|月亮星座|太阳星座|太阳|月亮|火星|水星|木星|金星|土星|罗喉|凯图|Rahu|Ketu|第\s*[一二三四五六七八九十百0-9]+\s*宫|星盘|命盘|出生盘|本命盘|盘)`,
-  String.raw`(?:你|您)\s*(?:的\s*)?(?:(?:D\s*\d+)(?:\s*上升)?|上升(?:星座)?|月亮星座|太阳星座|太阳|月亮|火星|水星|木星|金星|土星|罗喉|凯图|Rahu|Ketu|第\s*[一二三四五六七八九十百0-9]+\s*宫|星盘|命盘|本命盘|盘)\s*(?:(?:一定|必然|肯定|必定|绝对)\s*)?(?:是|在|落(?:在|入)?|位于|显示|表明|说明|意味着|主宰)`,
-  String.raw`(?:你|您)\s*(?:的\s*)?(?:星盘|命盘|出生盘|本命盘|盘)\s*(?:中|里|内)`,
-  String.raw`(?:D\s*\d+|上升(?:星座)?)\s*(?:显示|表明|说明|意味着)\s*(?:你|您)`,
-  String.raw`(?:your|the user's)\s+(?:natal\s+|birth\s+)?(?:chart|ascendant|D\s*\d+|\d+(?:st|nd|rd|th)\s+house)`,
-];
+// The boundary is structural: first require a personalized subject, then a
+// chart object and a placement/conclusion predicate. Planet names are a finite
+// vocabulary supplement, not the primary detection mechanism.
+const chineseChartObjectPattern = /(?:盘面?|星盘|命盘|出生盘|本命盘|D\s*\d+|上升(?:星座)?|[\p{Script=Han}A-Za-z0-9]{0,8}宫|行星|星体|太阳|月亮|火星|水星|木星|金星|土星|罗喉|凯图|Rahu|Ketu)/iu;
+const chineseChartConclusionPattern = /(?:落(?:在|入|座)?|位于|进入|是|在|显示|表明|说明|意味着|主宰|很?强|很?弱|旺|受克|有力|无力|[:：])/iu;
+const englishChartObjectPattern = /\b(?:natal\s+chart|birth\s+chart|chart|ascendant|rising\s+sign|D\s*\d+|(?:\d+(?:st|nd|rd|th)|[a-z]+)\s+house|house|planet|sun|moon|mars|mercury|jupiter|venus|saturn|rahu|ketu)\b/iu;
+const englishChartConclusionPattern = /(?:\b(?:is|are|falls?|lands?|sits?|placed?|located?|shows?|indicates?|means?|rules?|strong|weak)\b|[:：])/iu;
+const chinesePossessiveChartSubjectPattern = /(?:你|您)\s*(?:的|个人(?:的)?)\s*(?:盘面?|星盘|命盘|出生盘|本命盘|D\s*\d+|上升(?:星座)?|[\p{Script=Han}A-Za-z0-9]{0,8}宫|行星|星体|太阳|月亮|火星|水星|木星|金星|土星|罗喉|凯图|Rahu|Ketu)/iu;
+const chineseBareChartSubjectPattern = /(?:你|您)\s*(?:盘面?|星盘|命盘|出生盘|本命盘|D\s*\d+|上升(?:星座)?|(?:第\s*)?[一二三四五六七八九十百0-9]+\s*宫|行星|星体|太阳|月亮|火星|水星|木星|金星|土星|罗喉|凯图|Rahu|Ketu)/iu;
+const chineseChartAddressesUserPattern = /(?:盘面?|星盘|命盘|出生盘|本命盘|D\s*\d+|上升(?:星座)?)\s*(?:显示|表明|说明|意味着)\s*(?:你|您)/iu;
+const englishPersonalChartSubjectPattern = /\b(?:your|the\s+user(?:'s)?)\s+(?:personal\s+)?(?:natal\s+chart|birth\s+chart|chart|ascendant|rising\s+sign|D\s*\d+|(?:\d+(?:st|nd|rd|th)|[a-z]+)\s+house|house|planet|sun|moon|mars|mercury|jupiter|venus|saturn|rahu|ketu)\b/iu;
+const englishChartAddressesUserPattern = /\b(?:the\s+)?(?:natal\s+|birth\s+)?chart\s+(?:shows?|indicates?|means?)\s+(?:that\s+)?you\b/iu;
 
-const personalChartClaimPatterns = personalChartClaimMarkers.map((marker) => new RegExp(
-  String.raw`(^|[。！？.!?\n])[^。！？.!?\n]*${marker}[^。！？.!?\n]*`,
-  "giu",
-));
+function isPersonalChartConclusion(clause: string) {
+  const normalized = clause.normalize("NFKC");
+  const chineseStructure = (chinesePossessiveChartSubjectPattern.test(normalized)
+      || chineseBareChartSubjectPattern.test(normalized)
+      || chineseChartAddressesUserPattern.test(normalized))
+    && chineseChartObjectPattern.test(normalized)
+    && chineseChartConclusionPattern.test(normalized);
+  const englishStructure = (englishPersonalChartSubjectPattern.test(normalized)
+      || englishChartAddressesUserPattern.test(normalized))
+    && englishChartObjectPattern.test(normalized)
+    && englishChartConclusionPattern.test(normalized);
+  return chineseStructure || englishStructure;
+}
 
 export const GENERAL_NO_BIRTH_TIME_REFUSAL =
   "当前一般咨询模式不能生成个人星盘结论；你可以改问一般知识，或先完成生时校正";
@@ -44,11 +57,13 @@ export function guardPreciseTimingOutput(text: string) {
 
 /** A deterministic post-model boundary for the zero-chart general mode. */
 export function guardGeneralNoBirthTimeOutput(text: string) {
-  let guarded = guardPreciseTimingOutput(text);
-  for (const pattern of personalChartClaimPatterns) {
-    guarded = guarded.replace(pattern, (_sentence, prefix: string) => (
-      `${prefix}${GENERAL_NO_BIRTH_TIME_REFUSAL}`
-    ));
-  }
-  return guarded;
+  const guarded = guardPreciseTimingOutput(text);
+  return guarded
+    .split(/([。！？.!?\n]+)/u)
+    .map((part, index) => (
+      index % 2 === 0 && isPersonalChartConclusion(part)
+        ? GENERAL_NO_BIRTH_TIME_REFUSAL
+        : part
+    ))
+    .join("");
 }

@@ -30,51 +30,110 @@ function longestOpenerPrefixSuffix(value: string) {
 
 /** Sends only visible prose through the output guard and preserves metadata bytes. */
 function createVisibleTextTransformer(transform: (text: string) => string) {
-  let buffered = "";
+  let rawBuffer = "";
+  let visibleBuffer = "";
+  let hiddenBuffer = "";
+  let hiddenBlocks: Array<{ readonly offset: number; readonly text: string }> = [];
   let hidden = false;
 
-  function consume(value: string, final: boolean) {
-    buffered += value;
-    let output = "";
-    while (buffered) {
+  function parse(value: string, final: boolean) {
+    rawBuffer += value;
+    while (rawBuffer) {
       if (hidden) {
-        const closeIndex = buffered.indexOf("-->");
+        const closeIndex = rawBuffer.indexOf("-->");
         if (closeIndex < 0) {
           if (final) {
-            output += buffered;
-            buffered = "";
+            hiddenBlocks.push({
+              offset: visibleBuffer.length,
+              text: hiddenBuffer + rawBuffer,
+            });
+            hiddenBuffer = "";
+            rawBuffer = "";
+            hidden = false;
+          } else {
+            hiddenBuffer += rawBuffer;
+            rawBuffer = "";
           }
           break;
         }
-        output += buffered.slice(0, closeIndex + 3);
-        buffered = buffered.slice(closeIndex + 3);
+        hiddenBuffer += rawBuffer.slice(0, closeIndex + 3);
+        rawBuffer = rawBuffer.slice(closeIndex + 3);
+        hiddenBlocks.push({ offset: visibleBuffer.length, text: hiddenBuffer });
+        hiddenBuffer = "";
         hidden = false;
         continue;
       }
 
       const openerIndex = hiddenBlockOpeners.reduce<number>((earliest, opener) => {
-        const index = buffered.indexOf(opener);
+        const index = rawBuffer.indexOf(opener);
         return index >= 0 && (earliest < 0 || index < earliest) ? index : earliest;
       }, -1);
       if (openerIndex >= 0) {
-        if (openerIndex > 0) output += transform(buffered.slice(0, openerIndex));
-        buffered = buffered.slice(openerIndex);
+        visibleBuffer += rawBuffer.slice(0, openerIndex);
+        rawBuffer = rawBuffer.slice(openerIndex);
+        hiddenBuffer = "";
         hidden = true;
         continue;
       }
 
       if (final) {
-        output += transform(buffered);
-        buffered = "";
+        visibleBuffer += rawBuffer;
+        rawBuffer = "";
         break;
       }
-      const retainedLength = longestOpenerPrefixSuffix(buffered);
-      const visibleLength = buffered.length - retainedLength;
-      if (visibleLength > 0) output += transform(buffered.slice(0, visibleLength));
-      buffered = buffered.slice(visibleLength);
+      const retainedLength = longestOpenerPrefixSuffix(rawBuffer);
+      const visibleLength = rawBuffer.length - retainedLength;
+      if (visibleLength > 0) visibleBuffer += rawBuffer.slice(0, visibleLength);
+      rawBuffer = rawBuffer.slice(visibleLength);
       break;
     }
+  }
+
+  function renderVisiblePrefix(length: number) {
+    if (length === 0) return "";
+    const visible = visibleBuffer.slice(0, length);
+    const included = hiddenBlocks.filter((block) => block.offset <= length);
+    const remaining = hiddenBlocks
+      .filter((block) => block.offset > length)
+      .map((block) => ({ ...block, offset: block.offset - length }));
+    const transformed = transform(visible);
+    let output = "";
+    if (transformed === visible) {
+      let start = 0;
+      for (const block of included) {
+        output += visible.slice(start, block.offset) + block.text;
+        start = block.offset;
+      }
+      output += visible.slice(start);
+    } else {
+      // A refusal may replace the whole sentence, so an in-sentence byte offset
+      // no longer has meaning. Keep metadata exact and in order after the safe
+      // visible replacement; the frontend parser accepts metadata at any point.
+      output = transformed + included.map((block) => block.text).join("");
+    }
+    visibleBuffer = visibleBuffer.slice(length);
+    hiddenBlocks = remaining;
     return output;
+  }
+
+  function lastCompleteClauseBoundary() {
+    let boundary = 0;
+    for (const match of visibleBuffer.matchAll(/[。！？.!?\n]+/gu)) {
+      boundary = (match.index ?? 0) + match[0].length;
+    }
+    return boundary;
+  }
+
+  function consume(value: string, final: boolean) {
+    parse(value, final);
+    if (final) {
+      const output = renderVisiblePrefix(visibleBuffer.length);
+      if (hiddenBlocks.length === 0) return output;
+      const metadata = hiddenBlocks.map((block) => block.text).join("");
+      hiddenBlocks = [];
+      return output + metadata;
+    }
+    return renderVisiblePrefix(lastCompleteClauseBoundary());
   }
 
   return Object.freeze({

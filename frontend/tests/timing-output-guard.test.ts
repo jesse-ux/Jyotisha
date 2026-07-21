@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { guardPreciseTimingOutput } from "../src/lib/timing-output-guard.ts";
+import {
+  GENERAL_NO_BIRTH_TIME_REFUSAL,
+  guardGeneralNoBirthTimeOutput,
+  guardPreciseTimingOutput,
+} from "../src/lib/timing-output-guard.ts";
 import { streamTextResponse } from "../src/lib/stream-text-response.ts";
 import { parseAgentReply } from "../src/lib/agent-reply.ts";
 import { createBirthTimeModeOutputGuard } from "../src/lib/consultation-birth-time-mode.ts";
@@ -71,4 +75,64 @@ test("guards only visible prose and preserves AYANAM blocks across arbitrary chu
   assert.doesNotMatch(text, /<!\[/);
   assert.deepEqual(parsed.suggestions, ["你一定会升职吗？", "D9 是什么？", "先完成生时校正"]);
   assert.equal(parsed.title, "一般占星咨询");
+});
+
+test("general mode structurally rejects personalized chart placements in Chinese and English", () => {
+  const unsafeClaims = [
+    "你的七宫落入摩羯。",
+    "盘面显示你的事业宫很强。",
+    "你的金星落第七宫。",
+    "你的上升落在巨蟹座。",
+    "你的 D9 显示婚姻会晚一些。",
+    "Your Venus is in the 7th house.",
+    "Your ascendant falls in Cancer.",
+    "Your D9 chart shows a strong marriage house.",
+  ];
+
+  for (const claim of unsafeClaims) {
+    const guarded = guardGeneralNoBirthTimeOutput(claim);
+    assert.equal(guarded.includes(GENERAL_NO_BIRTH_TIME_REFUSAL), true, claim);
+    assert.equal(guarded.includes(claim.replace(/[。.]$/, "")), false, claim);
+  }
+
+  assert.equal(
+    guardGeneralNoBirthTimeOutput("第七宫在占星概念中常与关系相关。"),
+    "第七宫在占星概念中常与关系相关。",
+  );
+  assert.equal(
+    guardGeneralNoBirthTimeOutput("Venus is generally associated with relating and values."),
+    "Venus is generally associated with relating and values.",
+  );
+  assert.equal(
+    guardGeneralNoBirthTimeOutput("你问的第七宫，在占星概念中常与关系相关。"),
+    "你问的第七宫，在占星概念中常与关系相关。",
+  );
+});
+
+test("hidden AYANAM comments cannot split a personalized claim around the guard", async () => {
+  const title = "<!--AYANAM_TITLE:一般占星咨询-->";
+  const suggestions = '<!--AYANAM_SUGGESTIONS:["了解第七宫的一般概念","先完成生时校正","改问一般知识"]-->';
+  async function* reply() {
+    yield "一般知识可以说明概念。你的<!";
+    yield "--AYANAM_TITLE:一般占星咨询--";
+    yield ">金星落";
+    yield "第七宫。\n<!--AYANAM_SUGGEST";
+    yield 'IONS:["了解第七宫的一般概念","先完成生时校正","改问一般知识"]-->';
+  }
+
+  const response = streamTextResponse(reply(), {
+    mode: "mastra",
+    requestId: "00000000-0000-4000-8000-000000000097",
+    transformText: createBirthTimeModeOutputGuard("general_no_birth_time", false),
+  });
+  const text = await response.text();
+  const parsed = parseAgentReply(text, "general");
+
+  assert.match(text, /一般知识可以说明概念/);
+  assert.match(text, new RegExp(GENERAL_NO_BIRTH_TIME_REFUSAL));
+  assert.doesNotMatch(text, /你的\s*金星落第七宫/);
+  assert.equal(text.includes(title), true);
+  assert.equal(text.includes(suggestions), true);
+  assert.equal(parsed.title, "一般占星咨询");
+  assert.deepEqual(parsed.suggestions, ["了解第七宫的一般概念", "先完成生时校正", "改问一般知识"]);
 });

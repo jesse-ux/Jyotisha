@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   canUseUnverifiedBirthTime,
+  birthTimeConsultationOptionsCopy,
   consultationModeForSession,
   createLatestAccountRequestGuard,
   createBirthTimeConsultationConsentState,
@@ -60,6 +61,11 @@ test("period-only and unknown declarations never pretend to provide an unverifie
   assert.equal(canUseUnverifiedBirthTime(unknown), false);
   assert.equal(requiresBirthTimeConsent(periodOnly), false);
   assert.equal(requiresBirthTimeConsent(unknown), false);
+  assert.match(birthTimeConsultationOptionsCopy(periodOnly), /一般咨询.*校正/);
+  assert.match(birthTimeConsultationOptionsCopy(unknown), /一般咨询.*校正/);
+  assert.doesNotMatch(birthTimeConsultationOptionsCopy(periodOnly), /使用.*原始填报时间|具体原始时间/);
+  assert.doesNotMatch(birthTimeConsultationOptionsCopy(unknown), /使用.*原始填报时间|具体原始时间/);
+  assert.match(birthTimeConsultationOptionsCopy(reportedExactTime), /原始填报时间.*校正/);
 });
 
 test("the current reported minute wins over an old candidate and never falls back to it", () => {
@@ -197,4 +203,24 @@ test("soft choice announces itself and locks every action while rectification op
   assert.match(source, /keepFocusWithin/);
   assert.match(source, /继续不依赖出生分钟的一般咨询/);
   assert.ok((source.match(/disabled=\{pending\}/g) ?? []).length >= 3);
+});
+
+test("homepage and profile result copy use the source-aware consultation options", () => {
+  const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const intake = readFileSync(new URL("../src/components/birth-time-intake.tsx", import.meta.url), "utf8");
+
+  assert.match(page, /birthTimeConsultationOptionsCopy\(profileDraft\)/);
+  assert.match(page, /birthTimeConsultationOptionsCopy\(profile\)/);
+  assert.match(intake, /birthTimeConsultationOptionsCopy\(value\)/);
+});
+
+test("a saved declaration edit cannot leave the old resumable case in local account state", () => {
+  const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const saveProfile = page.slice(
+    page.indexOf("async function saveProfile"),
+    page.indexOf("async function saveOnboardingName"),
+  );
+
+  assert.match(saveProfile, /declarationChanged[\s\S]*setAccount\(\(current\)[\s\S]*rectificationCase:\s*null/);
+  assert.match(saveProfile, /declarationChanged[\s\S]*void refreshAccount\(\)/);
 });

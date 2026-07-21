@@ -256,5 +256,5 @@ test("candidate copy does not claim an unconfirmed minute is automatically in us
   const source = readFileSync(new URL("../src/components/birth-time-intake.tsx", import.meta.url), "utf8");
 
   assert.doesNotMatch(source, /已用于当前排盘/);
-  assert.match(source, /普通咨询只能临时使用上面的原始填报时间/);
+  assert.match(source, /birthTimeConsultationOptionsCopy\(value\)/);
 });

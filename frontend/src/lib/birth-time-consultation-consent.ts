@@ -89,6 +89,12 @@ export function requiresBirthTimeConsent(profile: BirthTimeDraft): boolean {
   return canUseUnverifiedBirthTime(profile);
 }
 
+export function birthTimeConsultationOptionsCopy(profile: BirthTimeDraft): string {
+  return canUseUnverifiedBirthTime(profile)
+    ? "你可以在当前聊天临时使用原始填报时间询问，也可以先校正。"
+    : "你可以继续不依赖出生分钟的一般咨询，也可以先校正；系统不会替你生成具体出生分钟。";
+}
+
 export type BirthTimeConsultationRoute =
   | Readonly<{ kind: "choice"; canUseUnverifiedTime: boolean }>
   | Readonly<{

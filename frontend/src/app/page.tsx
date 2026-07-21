@@ -34,6 +34,7 @@ import {
   type BirthTimeSource,
 } from "@/lib/birth-time-intake-model";
 import {
+  birthTimeConsultationOptionsCopy,
   canUseUnverifiedBirthTime,
   clearBirthTimeConsultationConsent,
   createLatestAccountRequestGuard,
@@ -1584,10 +1585,12 @@ export default function Home() {
       setProfileDraft(profileDraft);
       if (declarationChanged) {
         setBirthTimeConsultationConsent(createBirthTimeConsultationConsentState());
+        setAccount((current) => current ? { ...current, rectificationCase: null } : current);
+        void refreshAccount();
       }
       setProfileNotice(profileDraft.birthTimeStatus === "confirmed"
         ? "出生资料已保存到云端，可在同一账号的其他设备使用。"
-        : "出生资料已保存。你可以先使用填报时间询问，也可以从首页卡片开始校正。");
+        : `出生资料已保存。${birthTimeConsultationOptionsCopy(profileDraft)}`);
     } catch (caught) {
       setAccountError(friendlyError(caught instanceof Error ? caught.message : "出生资料保存失败"));
     } finally {
@@ -2638,7 +2641,7 @@ export default function Home() {
                         {birthTimeDisplay ? (
                           <>
                             <div><dt>{birthTimeDisplay.kind === "candidate" ? "待验证候选时间" : "当前排盘时间"}</dt><dd>{birthTimeDisplay.activeTime}</dd></div>
-                            <div><dt>结果状态</dt><dd>{birthTimeDisplay.kind === "candidate" ? "未确认；咨询时仅可临时使用原始填报时间" : "已确认"}</dd></div>
+                            <div><dt>结果状态</dt><dd>{birthTimeDisplay.kind === "candidate" ? `未确认；${birthTimeConsultationOptionsCopy(profile)}` : "已确认"}</dd></div>
                             <div><dt>原始填报</dt><dd>{birthTimeDisplay.reportedLabel}</dd></div>
                           </>
                         ) : (
