@@ -324,11 +324,24 @@ test("ordinary declaration edits clear stale candidate application but never ove
     birth_time_status: "reported",
     rectification_case_id: null,
   });
+  assert.deepEqual(resolveAccountBirthTimeApplicationPatch({
+    ...candidate,
+    active_birth_time: null,
+    birth_time: null,
+    birth_time_status: null,
+    rectification_case_id: null,
+  }, edited), {
+    active_birth_time: null,
+    birth_time: null,
+    birth_time_status: "reported",
+    rectification_case_id: null,
+  });
 });
 
 test("account PATCH uses the shared validator and never writes client birth_time over account truth", () => {
   assert.match(source, /accountProfilePatchSchema\.safeParse/);
   assert.match(source, /resolveAccountBirthTimeApplicationPatch/);
+  assert.match(source, /payload\.birth_time_source[\s\S]*birth_time_status: "reported"/);
   assert.doesNotMatch(source, /birth_time:\s*nullableString\(payload\.birth_time\)/);
   assert.match(source, /invalidatesUnconfirmedApplication/);
   assert.match(patchSource, /"birth_time_status"/);

@@ -132,7 +132,14 @@ export async function PATCH(request: Request) {
     }
     const applicationPatch = currentProfile
       ? resolveAccountBirthTimeApplicationPatch(currentProfile, payload)
-      : {};
+      : payload.birth_time_source
+        ? {
+          active_birth_time: null,
+          birth_time: null,
+          birth_time_status: "reported" as const,
+          rectification_case_id: null,
+        }
+        : {};
     const baseProfile = {
       id: userId,
       ...(payload.name !== undefined ? { name: payload.name } : {}),

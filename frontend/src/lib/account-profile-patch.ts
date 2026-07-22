@@ -217,10 +217,6 @@ export function resolveAccountBirthTimeApplicationPatch(
   const confirmed = current.birth_time_status === "confirmed"
     || (current.birth_time_status === null && isBirthClockTime(current.birth_time ?? ""));
   if (confirmed) return {};
-  if (!current.active_birth_time
-    && !current.birth_time
-    && current.birth_time_status !== "candidate"
-    && !current.rectification_case_id) return {};
   return {
     active_birth_time: null,
     birth_time: null,
