@@ -1,0 +1,303 @@
+{
+  "boundary": "Same-input probe only. UL/A7/A10/KP cusp external three-engine parity remains blocked.",
+  "claim_status": "blocked",
+  "created_at": "2026-07-22",
+  "field_rows": [
+    {
+      "claim_boundary": "UL remains observation-only until same-input external raw from at least two independent legal sources is captured.",
+      "external_ready_count": 0,
+      "external_ready_engines": [],
+      "field": "UL",
+      "local_ready": true,
+      "three_engine_parity_status": "blocked"
+    },
+    {
+      "claim_boundary": "A7 remains observation-only until same-input external raw from at least two independent legal sources is captured.",
+      "external_ready_count": 0,
+      "external_ready_engines": [],
+      "field": "A7",
+      "local_ready": true,
+      "three_engine_parity_status": "blocked"
+    },
+    {
+      "claim_boundary": "A10 remains observation-only until same-input external raw from at least two independent legal sources is captured.",
+      "external_ready_count": 0,
+      "external_ready_engines": [],
+      "field": "A10",
+      "local_ready": true,
+      "three_engine_parity_status": "blocked"
+    },
+    {
+      "claim_boundary": "KP_cusps remains observation-only until same-input external raw from at least two independent legal sources is captured.",
+      "external_ready_count": 0,
+      "external_ready_engines": [],
+      "field": "KP_cusps",
+      "local_ready": true,
+      "three_engine_parity_status": "blocked"
+    }
+  ],
+  "observations": [
+    {
+      "engine": "local",
+      "fields": {
+        "A10": {
+          "distance": 8,
+          "exception_triggered": false,
+          "house_num": 10,
+          "lord": "Moon",
+          "lord_sign": "Sagittarius",
+          "name": "Karma Pada (A10)",
+          "sign": "Cancer",
+          "sign_idx": 3,
+          "source_house_lord": "Venus",
+          "source_house_sign": "Taurus"
+        },
+        "A7": {
+          "distance": 9,
+          "exception_triggered": false,
+          "house_num": 7,
+          "lord": "Mercury",
+          "lord_sign": "Libra",
+          "name": "Dara Pada (A7)",
+          "sign": "Gemini",
+          "sign_idx": 2,
+          "source_house_lord": "Saturn",
+          "source_house_sign": "Aquarius"
+        },
+        "KP_cusps": {
+          "house_1": {
+            "cusp_degree": 149.342,
+            "nakshatra": "Uttara Phalguni",
+            "nakshatra_lord": "Sun",
+            "rasi_lord": "Sun",
+            "sign": "Leo",
+            "sub_lord": "Rahu",
+            "sub_sub_lord": "Rahu"
+          },
+          "house_10": {
+            "cusp_degree": 59.342,
+            "nakshatra": "Mrigashira",
+            "nakshatra_lord": "Mars",
+            "rasi_lord": "Venus",
+            "sign": "Taurus",
+            "sub_lord": "Saturn",
+            "sub_sub_lord": "Mars"
+          },
+          "house_4": {
+            "cusp_degree": 239.342,
+            "nakshatra": "Jyeshtha",
+            "nakshatra_lord": "Mercury",
+            "rasi_lord": "Mars",
+            "sign": "Scorpio",
+            "sub_lord": "Saturn",
+            "sub_sub_lord": "Mars"
+          },
+          "house_7": {
+            "cusp_degree": 329.342,
+            "nakshatra": "Purva Bhadrapada",
+            "nakshatra_lord": "Jupiter",
+            "rasi_lord": "Saturn",
+            "sign": "Aquarius",
+            "sub_lord": "Sun",
+            "sub_sub_lord": "Venus"
+          }
+        },
+        "UL": {
+          "distance": 9,
+          "exception_triggered": false,
+          "house_num": 12,
+          "lord": "Mars",
+          "lord_sign": "Pisces",
+          "name": "Upapada (UL)",
+          "sign": "Scorpio",
+          "sign_idx": 7,
+          "source_house_lord": "Moon",
+          "source_house_sign": "Cancer"
+        }
+      },
+      "raw": {
+        "arudha": {
+          "A10": {
+            "distance": 8,
+            "exception_triggered": false,
+            "house_num": 10,
+            "lord": "Moon",
+            "lord_sign": "Sagittarius",
+            "name": "Karma Pada (A10)",
+            "sign": "Cancer",
+            "sign_idx": 3,
+            "source_house_lord": "Venus",
+            "source_house_sign": "Taurus"
+          },
+          "A7": {
+            "distance": 9,
+            "exception_triggered": false,
+            "house_num": 7,
+            "lord": "Mercury",
+            "lord_sign": "Libra",
+            "name": "Dara Pada (A7)",
+            "sign": "Gemini",
+            "sign_idx": 2,
+            "source_house_lord": "Saturn",
+            "source_house_sign": "Aquarius"
+          },
+          "UL": {
+            "distance": 9,
+            "exception_triggered": false,
+            "house_num": 12,
+            "lord": "Mars",
+            "lord_sign": "Pisces",
+            "name": "Upapada (UL)",
+            "sign": "Scorpio",
+            "sign_idx": 7,
+            "source_house_lord": "Moon",
+            "source_house_sign": "Cancer"
+          }
+        },
+        "ascendant": {
+          "degree_in_sign": 29.342,
+          "lon": 149.342,
+          "sign": "Leo"
+        },
+        "kp_cusps": {
+          "house_1": {
+            "cusp_degree": 149.342,
+            "nakshatra": "Uttara Phalguni",
+            "nakshatra_lord": "Sun",
+            "rasi_lord": "Sun",
+            "sign": "Leo",
+            "sub_lord": "Rahu",
+            "sub_sub_lord": "Rahu"
+          },
+          "house_10": {
+            "cusp_degree": 59.342,
+            "nakshatra": "Mrigashira",
+            "nakshatra_lord": "Mars",
+            "rasi_lord": "Venus",
+            "sign": "Taurus",
+            "sub_lord": "Saturn",
+            "sub_sub_lord": "Mars"
+          },
+          "house_4": {
+            "cusp_degree": 239.342,
+            "nakshatra": "Jyeshtha",
+            "nakshatra_lord": "Mercury",
+            "rasi_lord": "Mars",
+            "sign": "Scorpio",
+            "sub_lord": "Saturn",
+            "sub_sub_lord": "Mars"
+          },
+          "house_7": {
+            "cusp_degree": 329.342,
+            "nakshatra": "Purva Bhadrapada",
+            "nakshatra_lord": "Jupiter",
+            "rasi_lord": "Saturn",
+            "sign": "Aquarius",
+            "sub_lord": "Sun",
+            "sub_sub_lord": "Venus"
+          }
+        },
+        "varga_lagna": {
+          "D10_Dasamsa": {
+            "degree_in_sign": 23.42,
+            "lord": "Venus",
+            "part_index": 9,
+            "sign": "Taurus",
+            "sign_idx": 1
+          },
+          "D24_Siddhamsa": {
+            "degree_in_sign": 14.208,
+            "lord": "Moon",
+            "part_index": 23,
+            "sign": "Cancer",
+            "sign_idx": 3
+          },
+          "D30_Trimsamsa": {
+            "degree_in_sign": 10.26,
+            "lord": "Venus",
+            "part_index": 29,
+            "sign": "Libra",
+            "sign_idx": 6
+          },
+          "D4_Turyamsa": {
+            "degree_in_sign": 27.368,
+            "lord": "Venus",
+            "part_index": 3,
+            "sign": "Taurus",
+            "sign_idx": 1
+          },
+          "D60_Shashtyamsa": {
+            "degree_in_sign": 20.52,
+            "lord": "Mercury",
+            "part_index": 58,
+            "sign": "Gemini",
+            "sign_idx": 2
+          },
+          "D9_Navamsa": {
+            "degree_in_sign": 24.078,
+            "lord": "Jupiter",
+            "pada": 9,
+            "part_index": 8,
+            "sign": "Sagittarius",
+            "sign_idx": 8
+          }
+        }
+      },
+      "raw_hash": "4e36fc7517f611ed21f20091541e61fc9e482f7e2d22add22c01331beca2a138",
+      "status": "complete"
+    },
+    {
+      "engine": "VedicAstro",
+      "error": "No module named 'flatlib'",
+      "error_type": "ModuleNotFoundError",
+      "status": "blocked_runtime_error"
+    },
+    {
+      "boundary": "AGPL black-box capture required; no same-input raw packet exists.",
+      "engine": "PyJHora",
+      "missing_fields": [
+        "UL",
+        "A7",
+        "A10",
+        "KP_cusps"
+      ],
+      "status": "not_captured"
+    },
+    {
+      "boundary": "No mapped same-input Arudha/KP cusp field contract exists.",
+      "engine": "jyotishganit",
+      "missing_fields": [
+        "UL",
+        "A7",
+        "A10",
+        "KP_cusps"
+      ],
+      "status": "no_field_contract"
+    }
+  ],
+  "packet_hash": "f84294c402b9fe9c5fc065f81a21d750fac878886dadedd72d6839dfe3edabde",
+  "production_tuning_allowed": false,
+  "request": {
+    "day": 24,
+    "hour": 19,
+    "house_system": "Placidus",
+    "kp_ayanamsa": "Krishnamurti",
+    "latitude": 37.3382,
+    "local_ayanamsa": "lahiri",
+    "longitude": -122.0383,
+    "minute": 15,
+    "month": 2,
+    "second": 0,
+    "timezone": "America/Los_Angeles",
+    "tz_offset": -8,
+    "year": 1955
+  },
+  "scope": "ul_a7_a10_kp_cusp_same_input_parity_probe",
+  "summary": {
+    "external_ready_field_count": 0,
+    "field_count": 4,
+    "local_ready_count": 4,
+    "three_engine_parity_ready_count": 0
+  },
+  "truth_matrix_allowed": false
+}

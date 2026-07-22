@@ -1,0 +1,53 @@
+{
+  "scope": "timing_rectification_public_holdout_candidate_queue",
+  "created_at": "2026-07-22",
+  "claim_status": "blocked_until_human_labels",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "summary": {
+    "public_positive_event_candidate_count": 3,
+    "frozen_negative_window_count": 0,
+    "blind_ranking_allowed": false,
+    "day_month_claim_upgrade_allowed": false
+  },
+  "positive_event_candidates": [
+    {
+      "person_id": "steve_jobs",
+      "event_domain": "career",
+      "event": "Apple Computer Company founded",
+      "date": "1976-04-01",
+      "source_url": "https://www.ebsco.com/research-starters/computer-science/jobs-and-wozniak-found-apple-computer",
+      "source_note": "Public source states Apple Computer was founded on April 1, 1976 by Steve Jobs and Stephen Wozniak.",
+      "label_status": "positive_candidate_requires_human_freeze"
+    },
+    {
+      "person_id": "steve_jobs",
+      "event_domain": "career",
+      "event": "Apple partnership founding at Jobs family home",
+      "date": "1976-04-01",
+      "source_url": "https://en.wikipedia.org/wiki/Steve_Jobs",
+      "source_note": "Secondary public source gives the same founding date and context.",
+      "label_status": "corroborating_positive_candidate_not_independent_negative"
+    },
+    {
+      "person_id": "marilyn_monroe",
+      "event_domain": "health_death",
+      "event": "Found dead in Los Angeles home",
+      "date": "1962-08-05",
+      "source_url": "https://www.history.com/this-day-in-history/august-5/marilyn-monroe-is-found-dead",
+      "source_note": "Public source states Monroe was found dead on August 5, 1962.",
+      "label_status": "positive_candidate_requires_human_freeze"
+    }
+  ],
+  "negative_window_requirements": [
+    "Each person requires two human-reviewed non-event windows in the same event domain.",
+    "Negative windows must be frozen before any model/scoring run.",
+    "Existing observed control dates must not be used for tuning."
+  ],
+  "next_steps": [
+    "human reviewer selects 3-10 public people and freezes labels",
+    "add two negative windows per person with source/reason",
+    "hash the sorted label packet before blind ranking"
+  ],
+  "boundary": "This queue improves source intake only. It does not provide negative labels and cannot upgrade timing or birth-time rectification claims."
+}

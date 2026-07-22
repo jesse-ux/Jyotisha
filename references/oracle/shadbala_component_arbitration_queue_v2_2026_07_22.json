@@ -1,0 +1,120 @@
+{
+  "boundary": "This queue makes component-level blockers explicit. Naisargika is same-unit closed; Dig/Drik/Kala/Sthana/Chesta remain arbitration items and do not upgrade absolute Shadbala truth.",
+  "claim_status": "partial",
+  "component_rows": [
+    {
+      "arbitration_status": "method_variant_arbitration_required",
+      "closure_bucket_counts": {
+        "formula_or_unit_mismatch": 1,
+        "method_variant": 6
+      },
+      "component": "chesta",
+      "next_evidence": "compare mean-motion, retrograde/stationary and Seeghrochcha variants without copying AGPL code",
+      "row_count": 7,
+      "sample_tickets": [
+        "shadbala.sun.chesta",
+        "shadbala.moon.chesta",
+        "shadbala.mars.chesta"
+      ],
+      "unresolved_row_count": 7
+    },
+    {
+      "arbitration_status": "formula_model_arbitration_required",
+      "closure_bucket_counts": {
+        "formula_or_unit_mismatch": 7
+      },
+      "component": "dig",
+      "next_evidence": "compare angular-distance, house-midpoint and bhava-madhya models against more raw-backed cases",
+      "row_count": 7,
+      "sample_tickets": [
+        "shadbala.sun.dig",
+        "shadbala.moon.dig",
+        "shadbala.mars.dig"
+      ],
+      "unresolved_row_count": 7
+    },
+    {
+      "arbitration_status": "aspect_model_arbitration_required",
+      "closure_bucket_counts": {
+        "formula_or_unit_mismatch": 7
+      },
+      "component": "drik",
+      "next_evidence": "fix graha drishti/aspect strength scale and benefic-malefic aggregation source",
+      "row_count": 7,
+      "sample_tickets": [
+        "shadbala.sun.drik",
+        "shadbala.moon.drik",
+        "shadbala.mars.drik"
+      ],
+      "unresolved_row_count": 7
+    },
+    {
+      "arbitration_status": "subcomponent_arbitration_required",
+      "closure_bucket_counts": {
+        "formula_or_unit_mismatch": 7
+      },
+      "component": "kala",
+      "next_evidence": "split natonnata, paksha, ayana, day/night and hora subcomponents before tuning",
+      "row_count": 7,
+      "sample_tickets": [
+        "shadbala.sun.kala",
+        "shadbala.moon.kala",
+        "shadbala.mars.kala"
+      ],
+      "unresolved_row_count": 7
+    },
+    {
+      "arbitration_status": "component_closed_same_unit",
+      "closure_bucket_counts": {
+        "within_tolerance": 7
+      },
+      "component": "naisargika",
+      "next_evidence": "preserve regression coverage; no formula change",
+      "row_count": 7,
+      "sample_tickets": [
+        "shadbala.sun.naisargika",
+        "shadbala.moon.naisargika",
+        "shadbala.mars.naisargika"
+      ],
+      "unresolved_row_count": 0
+    },
+    {
+      "arbitration_status": "saptavarga_dignity_arbitration_required",
+      "closure_bucket_counts": {
+        "formula_or_unit_mismatch": 5,
+        "method_variant": 2
+      },
+      "component": "sthana",
+      "next_evidence": "resolve Sapta/D3/D4/D7/D12/D30 dignity branches only with raw-backed third case",
+      "row_count": 7,
+      "sample_tickets": [
+        "shadbala.sun.sthana",
+        "shadbala.moon.sthana",
+        "shadbala.mars.sthana"
+      ],
+      "unresolved_row_count": 7
+    }
+  ],
+  "created_at": "2026-07-22",
+  "oss_reference_candidates": [
+    {
+      "boundary": "Simplified Chesta/Dig/Saptavarga model; do not treat as numeric oracle truth.",
+      "id": "dashaflow_shadbala",
+      "path": "references/open_source_sources/dashaflow/shadbala.py",
+      "use": "permissive/reference candidate only"
+    }
+  ],
+  "production_tuning_allowed": false,
+  "queue_hash": "62dcf024255e3fcbef50cd4653817d98439e1a267622143515289b7883d81e82",
+  "scope": "shadbala_component_arbitration_queue_v2",
+  "source_packet": "references/oracle/shadbala_component_joined_closure_packet_2026_07_21.json",
+  "source_packet_sha256": "98ea50de9edbec32e2cd0fef2ec037f4a226da51e8413c2ef428c42a4f004593",
+  "summary": {
+    "absolute_truth_upgrade_count": 0,
+    "arbitration_required_count": 5,
+    "component_closed_count": 1,
+    "component_count": 6,
+    "same_unit_row_count": 42
+  },
+  "truth_matrix_allowed": false
+}

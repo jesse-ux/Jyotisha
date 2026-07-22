@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import argparse
+import hashlib
 import json
 import math
 import os
@@ -33,6 +35,15 @@ def _load_oracle(path: str) -> dict[str, Any]:
     if not resolved.is_absolute():
         resolved = ROOT / resolved
     return oracle_boundary_audit._load_oracle(str(resolved))
+
+
+def _resolve_path(path: str) -> Path:
+    candidate = Path(path)
+    return candidate if candidate.is_absolute() else ROOT / candidate
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _iter_external_verified_template_cases(oracle: dict[str, Any]) -> list[dict[str, Any]]:
@@ -102,6 +113,7 @@ def _best_bhava_madhya_lon(chart: dict[str, Any], planet: str) -> float:
 def build_report(oracle_file: str) -> dict[str, Any]:
     oracle = _load_oracle(oracle_file)
     cases = _iter_external_verified_template_cases(oracle)
+    resolved_oracle = _resolve_path(oracle_file)
     rows: list[dict[str, Any]] = []
     model_diffs: dict[str, list[float]] = {name: [] for name in MODEL_NAMES}
 
@@ -153,6 +165,22 @@ def build_report(oracle_file: str) -> dict[str, Any]:
         "scope": "shadbala_dig_source_of_truth_audit",
         "schema_version": 1,
         "candidate_models": MODEL_NAMES,
+        "inputs": {
+            "oracle_file": str(resolved_oracle.relative_to(ROOT)),
+            "oracle_file_sha256": _sha256(resolved_oracle),
+            "external_case_count": len(cases),
+            "external_case_sources": [
+                {
+                    "case_id": case.get("id") or case.get("case_id"),
+                    "source_artifact": case.get("evidence_packet", {}).get("metadata", {}).get("source_artifact", ""),
+                    "source_artifact_sha256": _sha256(source_path)
+                    if (source_artifact := case.get("evidence_packet", {}).get("metadata", {}).get("source_artifact"))
+                    and (source_path := _resolve_path(source_artifact)).exists()
+                    else None,
+                }
+                for case in cases
+            ],
+        },
         "summary": {
             "case_count": len(cases),
             "row_count": len(rows),
@@ -168,8 +196,18 @@ def build_report(oracle_file: str) -> dict[str, Any]:
 
 
 def main() -> None:
-    report = build_report("references/oracle/dasha_shadbala_oracle_cases.json")
-    print(json.dumps(report, ensure_ascii=False, indent=2))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--oracle-file",
+        default="references/oracle/dasha_shadbala_oracle_cases.json",
+    )
+    parser.add_argument("--output", help="Optional JSON snapshot path.")
+    args = parser.parse_args()
+    report = build_report(args.oracle_file)
+    rendered = json.dumps(report, ensure_ascii=False, indent=2)
+    if args.output:
+        Path(args.output).write_text(rendered + "\n", encoding="utf-8")
+    print(rendered)
 
 
 if __name__ == "__main__":

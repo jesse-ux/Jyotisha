@@ -39,6 +39,10 @@ def build_report() -> dict[str, Any]:
     kp_contract = _load(ORACLE / "kp_cusp_precision_contract_2026_07_19.json")
     prashna_packet = _load(ORACLE / "prashna_tajika_saham_gulika_sphuta_oracle_packet_2026_07_19.json")
     formula_kb = _load(ORACLE / "formula_source_knowledge_base_2026_07_19.json")
+    raman_replay = _load(ORACLE / "raman_shadbala_raw_replay_and_input_drift_2026_07_22.json")
+    shadbala_component_queue = _load(ORACLE / "shadbala_component_arbitration_queue_v2_2026_07_22.json")
+    rectification_external_parity = _load(ORACLE / "ul_a7_a10_kp_cusp_three_engine_parity_gap_2026_07_22.json")
+    rectification_same_input_probe = _load(ORACLE / "ul_a7_a10_kp_cusp_same_input_parity_probe_2026_07_22.json")
     holdout = _load(ROOT / "references/real_case_calibration/day_level_holdout_v3_human_annotation_packet_2026_07_19.json")
 
     full_scoring = []
@@ -85,6 +89,27 @@ def build_report() -> dict[str, Any]:
             "evidence": full_scoring,
             "claim_boundary": "KP, Muhurta, advanced Ashtakavarga and advanced compatibility have registries/probes, but full scoring remains blocked or partial.",
         },
+        {
+            "gate_id": "raman_shadbala_raw_identity",
+            "status": "blocked",
+            "evidence": raman_replay,
+            "claim_boundary": "Raman Shadbala remains blocked because the declared 2026-06-27 stdout is absent and fresh replay proves input-contract drift.",
+        },
+        {
+            "gate_id": "shadbala_component_arbitration",
+            "status": "partial",
+            "evidence": shadbala_component_queue,
+            "claim_boundary": "Only Naisargika is same-unit closed; Chesta, Dig, Drik, Kala and Sthana remain component arbitration items.",
+        },
+        {
+            "gate_id": "rectification_external_parity",
+            "status": "blocked",
+            "evidence": {
+                "gap_packet": rectification_external_parity,
+                "same_input_probe": rectification_same_input_probe,
+            },
+            "claim_boundary": "UL/A7/A10/KP cusp same-input external three-engine parity is not closed, so rectification can use these as local candidate signals only.",
+        },
     ]
 
     return {
@@ -116,6 +141,21 @@ def build_report() -> dict[str, Any]:
                 "action": "promote_full_scoring_only_after_oracle",
                 "blocked_by": ["full_scoring_contracts", "external_numeric_oracle", "independent_negative_holdout"],
                 "target": "KP/Muhurta/AV/compatibility scoring",
+            },
+            {
+                "action": "recapture_or_replace_raman_shadbala_sample",
+                "blocked_by": ["raman_shadbala_raw_identity"],
+                "target": "raw-backed third Shadbala case for D3/Sapta/Sthana audits",
+            },
+            {
+                "action": "arbitrate_shadbala_components",
+                "blocked_by": ["shadbala_component_arbitration", "external_numeric_oracle"],
+                "target": "Chesta mean-motion/retrograde/Seeghrochcha plus Dig/Drik/Kala/Sthana variants",
+            },
+            {
+                "action": "capture_ul_a7_a10_kp_cusp_external_parity",
+                "blocked_by": ["rectification_external_parity"],
+                "target": "same-input UL/A7/A10/KP cusp external raw and field comparison",
             },
         ],
     }
