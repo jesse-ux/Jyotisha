@@ -1,20 +1,48 @@
+"use client";
+
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { useRef } from "react";
+
 import { AgentActivityStatus } from "@/components/agent-activity-status";
 import { ChatMessageContent } from "@/components/chat-message-content";
 import type { ChatMessageView } from "@/lib/chat-message-view";
+
+gsap.registerPlugin(useGSAP);
 
 export function AgentAvatar() {
   return <span className="agent-avatar" aria-hidden="true" />;
 }
 
 export function ChatMessageRow({ message }: { readonly message: ChatMessageView }) {
+  const messageRow = useRef<HTMLElement>(null);
   const assistantLabel = message.state === "thinking"
     ? "Jyotisha 正在分析"
     : message.state === "streaming"
       ? "Jyotisha 正在回答"
       : "Jyotisha";
 
+  useGSAP(() => {
+    if (!messageRow.current) return;
+    const motion = gsap.matchMedia();
+    motion.add("(prefers-reduced-motion: no-preference)", () => {
+      gsap.fromTo(messageRow.current, {
+        autoAlpha: 0,
+        y: message.role === "user" ? 8 : 12,
+      }, {
+        autoAlpha: 1,
+        clearProps: "opacity,transform,visibility",
+        duration: message.role === "user" ? 0.3 : 0.42,
+        ease: "power3.out",
+        y: 0,
+      });
+    });
+    return () => motion.revert();
+  }, { scope: messageRow });
+
   return (
     <article
+      ref={messageRow}
       className={`message message-${message.role}`}
       aria-label={message.role === "assistant" ? assistantLabel : "你"}
     >
