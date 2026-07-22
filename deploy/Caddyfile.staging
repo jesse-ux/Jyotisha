@@ -1,13 +1,20 @@
 {$SITE_ADDRESS:https://staging.jyotisha.chat} {
     encode zstd gzip
+
+    @adminPaths path /admin /admin/* /api/admin/*
+    respond @adminPaths "Not found" 404
+
     reverse_proxy web:3000
 }
 
 {$ADMIN_SITE_ADDRESS:https://admin.staging.jyotisha.chat} {
     encode zstd gzip
 
-    @identity path /login /api/auth/* /_next/* /jyotish-logo.png /favicon.ico
-    handle @identity {
+    @adminRoot path /
+    redir @adminRoot /admin/codes 302
+
+    @adminSurface path /login /admin /admin/* /api/admin/* /api/auth/* /_next/* /jyotish-logo.png /favicon.ico
+    handle @adminSurface {
         reverse_proxy web:3000
     }
     respond "Not found" 404

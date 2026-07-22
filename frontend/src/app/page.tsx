@@ -89,6 +89,7 @@ import {
   resolveSessionModelId,
   type PublicLanguageModelCatalog,
 } from "@/lib/public-models";
+import { selfHostedOtpActions } from "@/modules/identity/client";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 const BirthTimeRectification = dynamic(
@@ -158,6 +159,8 @@ type BirthPlace = { label: string; lat: number; lon: number; tz: number };
 type Account = {
   user: { id: string; email: string | null };
   credits: number;
+  profile: unknown;
+  authProvider: "supabase" | "self-hosted";
   isAdmin: boolean;
   rectificationPriceCredits: number;
   hasConfirmedBirthTime: boolean;
@@ -738,6 +741,32 @@ async function fetchModelCatalog(signal?: AbortSignal) {
   return parsePublicModelCatalog(payload);
 }
 
+async function fetchSessions(signal?: AbortSignal) {
+  const response = await fetch("/api/sessions", { signal, cache: "no-store" });
+  if (response.status === 401) {
+    window.location.assign("/login");
+    throw new Error("请先登录");
+  }
+  const payload = await response.json().catch(() => null) as { sessions?: unknown; error?: string } | null;
+  if (!response.ok) throw new Error(payloadMessage(payload, "暂时无法读取聊天记录"));
+  return payload?.sessions ?? [];
+}
+
+async function patchSessionModel(sessionId: string, modelId: string, signal?: AbortSignal) {
+  const response = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}`, {
+    method: "PATCH",
+    headers: { "content-type": "application/json" },
+    credentials: "same-origin",
+    signal,
+    body: JSON.stringify({ model_id: modelId }),
+  });
+  const payload = await response.json().catch(() => null);
+  return {
+    found: response.ok,
+    error: response.ok ? null : payloadMessage(payload, "模型选择暂时无法同步"),
+  };
+}
+
 export default function Home() {
   const [profile, setProfile] = useState<Profile>(emptyProfile);
   const [profileDraft, setProfileDraft] = useState<Profile>(emptyProfile);
@@ -1075,6 +1104,8 @@ export default function Home() {
           setAccount({
             user: { id: "preview-user", email: "preview@local.test" },
             credits: 8,
+            profile: previewProfile,
+            authProvider: "self-hosted",
             isAdmin: false,
             rectificationPriceCredits: 1,
             hasConfirmedBirthTime: previewProfile.birthTimeStatus === "confirmed",
@@ -1101,16 +1132,7 @@ export default function Home() {
           return;
         }
 
-        const supabase = createBrowserSupabaseClient();
-        const { data: authData, error: authError } = await supabase.auth.getSession();
-        if (authError) throw authError;
-        if (controller.signal.aborted) return;
-        if (!authData.session) {
-          window.location.assign("/login");
-          return;
-        }
-
-        const [nextAccount, modelCatalogResult] = await Promise.all([
+        const [nextAccount, modelCatalogResult, sessionsPayload] = await Promise.all([
           fetchAccount(controller.signal),
           fetchModelCatalog(controller.signal)
             .then((catalog) => ({ catalog, unavailable: false }))
@@ -1118,50 +1140,30 @@ export default function Home() {
               if (caught instanceof Error && caught.name === "AbortError") throw caught;
               return { catalog: null, unavailable: true };
             }),
+          fetchSessions(controller.signal),
         ]);
         const nextModelCatalog = modelCatalogResult.catalog;
-        const [profileResult, sessionsResult] = await Promise.all([
-          supabase
-            .from("profiles")
-            .select("name,birth_date,birth_time,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_time_status,rectification_case_id,country_code,province_code,city_code,district_code")
-            .eq("id", nextAccount.user.id)
-            .abortSignal(controller.signal)
-            .maybeSingle(),
-          supabase
-            .from("chat_sessions")
-            .select("id,title,theme,model_id,messages,session_type,rectification_case_id,updated_at")
-            .abortSignal(controller.signal)
-            .order("updated_at", { ascending: false }),
-        ]);
-
-        if (profileResult.error) throw profileResult.error;
-        if (sessionsResult.error) throw sessionsResult.error;
-
-        const parsedSessions = readSessions(sessionsResult.data, nextModelCatalog);
+        const parsedSessions = readSessions(sessionsPayload, nextModelCatalog);
         let nextSessions = parsedSessions.sessions;
         if (nextSessions.length === 0) {
           if (controller.signal.aborted) return;
           const initialSession = createSession(nextModelCatalog?.defaultModelId ?? "");
-          const { error } = await supabase
-            .from("chat_sessions")
-            .insert({
-              id: initialSession.id,
-              user_id: nextAccount.user.id,
+          if (initialSession.modelId) {
+            await writeChatSession(initialSession.id, {
               title: initialSession.title,
               theme: initialSession.theme,
-              model_id: initialSession.modelId || null,
+              model_id: initialSession.modelId,
               messages: initialSession.messages,
               session_type: initialSession.sessionType,
               rectification_case_id: initialSession.rectificationCaseId,
               updated_at: new Date(initialSession.updatedAt).toISOString(),
-            })
-            .abortSignal(controller.signal);
-          if (error) throw error;
+            }, "create");
+          }
           nextSessions = [initialSession];
         }
 
         if (controller.signal.aborted) return;
-        const nextProfile = readProfile(profileResult.data);
+        const nextProfile = readProfile(nextAccount.profile);
         setAccount(nextAccount);
         setModelCatalog(nextModelCatalog);
         setProfile(nextProfile);
@@ -1178,13 +1180,9 @@ export default function Home() {
         setAccountError("");
 
         if (nextModelCatalog && parsedSessions.fallbackSessionIds.length > 0) {
-          const { error } = await supabase
-            .from("chat_sessions")
-            .update({ model_id: nextModelCatalog.defaultModelId })
-            .eq("user_id", nextAccount.user.id)
-            .in("id", parsedSessions.fallbackSessionIds)
-            .abortSignal(controller.signal);
-          if (error && !controller.signal.aborted) {
+          const results = await Promise.all(parsedSessions.fallbackSessionIds.map((sessionId) =>
+            patchSessionModel(sessionId, nextModelCatalog.defaultModelId, controller.signal)));
+          if (results.some((result) => result.error) && !controller.signal.aborted) {
             setComposerNotice("已在当前页面切换为默认模型，但云端同步失败；刷新后可能需要重新选择。");
           }
         }
@@ -1491,14 +1489,8 @@ export default function Home() {
           if (process.env.NODE_ENV === "development" && uiPreview.current) {
             return { found: true, error: null };
           }
-          const { data, error } = await createBrowserSupabaseClient()
-            .from("chat_sessions")
-            .update(values)
-            .eq("id", sessionId)
-            .eq("user_id", ownerId)
-            .select("id")
-            .maybeSingle();
-          return { found: Boolean(data), error: error?.message ?? null };
+          void ownerId;
+          return patchSessionModel(sessionId, values.model_id);
         },
         userId,
         nextSession.id,
@@ -1834,8 +1826,12 @@ export default function Home() {
     setSigningOut(true);
     setAccountError("");
     try {
-      const { error } = await createBrowserSupabaseClient().auth.signOut();
-      if (error) throw error;
+      if (account?.authProvider === "self-hosted") {
+        await selfHostedOtpActions.signOut();
+      } else {
+        const { error } = await createBrowserSupabaseClient().auth.signOut();
+        if (error) throw error;
+      }
       window.location.assign("/login");
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "退出失败";

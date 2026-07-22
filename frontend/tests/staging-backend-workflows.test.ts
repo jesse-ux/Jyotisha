@@ -72,6 +72,7 @@ test("quality gate validates relevant changes once and publishes a digest manife
   assert.match(workflow, /node frontend\/scripts\/staging-image-manifest\.mjs/);
   assert.match(workflow, /name: staging-image-manifest-\$\{\{ github\.sha \}\}/);
   assert.match(workflow, /uses: actions\/upload-artifact@v4/);
+  assert.doesNotMatch(workflow, /STAGING_SUPABASE|NEXT_PUBLIC_SUPABASE/);
   assert.doesNotMatch(workflow, /(?:^|:)latest$/m);
 });
 
@@ -337,6 +338,11 @@ test("manual migration uses only PostgreSQL and the digest-pinned migrator", () 
   assert.match(runner, /docker pull "\$WEB_IMAGE"/);
   assert.match(runner, /up -d --no-build --pull never --wait postgres/);
   assert.match(runner, /-f deploy\/docker-compose\.postgres\.yml/);
+  assertOrder(runner, [
+    "up -d --no-build --pull never --wait postgres",
+    "002-ensure-business-compatibility-roles.sql",
+    "--profile migration run --rm migrator",
+  ]);
   assert.match(runner, /--profile migration run --rm migrator/);
   assert.match(runner, /select filename from migration\.schema_migrations order by filename/);
   assert.doesNotMatch(runner, /docker-compose\.server\.yml/);

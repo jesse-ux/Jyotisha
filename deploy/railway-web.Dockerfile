@@ -9,6 +9,7 @@ COPY frontend/public ./public
 COPY frontend/next.config.ts frontend/postcss.config.mjs frontend/tsconfig.json ./
 COPY frontend/scripts ./scripts
 COPY frontend/db ./db
+COPY frontend/supabase/migrations ./supabase/migrations
 
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY

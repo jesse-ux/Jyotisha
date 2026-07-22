@@ -3,6 +3,26 @@ import { chatSessionCreateSchema } from "@/lib/chat-session-write-contract";
 import { isSupabaseConfigurationError } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
+export async function GET() {
+  try {
+    const supabase = await createServerSupabaseClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    const { data, error } = await supabase
+      .from("chat_sessions")
+      .select("id,title,theme,model_id,messages,session_type,rectification_case_id,updated_at")
+      .eq("user_id", user.id)
+      .order("updated_at", { ascending: false });
+    if (error) return NextResponse.json({ error: "聊天记录暂时无法读取" }, { status: 500 });
+    return NextResponse.json({ sessions: data ?? [] });
+  } catch (error) {
+    if (isSupabaseConfigurationError(error)) {
+      return NextResponse.json({ error: "数据库尚未配置", code: "DATABASE_NOT_CONFIGURED" }, { status: 503 });
+    }
+    return NextResponse.json({ error: "聊天记录暂时无法读取" }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createServerSupabaseClient();

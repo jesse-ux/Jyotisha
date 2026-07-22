@@ -74,6 +74,8 @@ export DATABASE_ENV_FILE='../.env.staging.database'
 compose=(docker compose -p jyotisha-staging -f deploy/docker-compose.postgres.yml)
 docker pull "$WEB_IMAGE"
 "${compose[@]}" up -d --no-build --pull never --wait postgres
+"${compose[@]}" exec -T postgres psql -v ON_ERROR_STOP=1 -U postgres -d jyotisha \
+  -f /dev/stdin < deploy/postgres/002-ensure-business-compatibility-roles.sql
 "${compose[@]}" --profile migration run --rm migrator
 "${compose[@]}" exec -T postgres psql -U postgres -d jyotisha -Atc \
   'select filename from migration.schema_migrations order by filename'

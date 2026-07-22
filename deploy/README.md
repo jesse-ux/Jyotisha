@@ -152,12 +152,11 @@ Staging is isolated from production:
 | Runtime app env | `/opt/jyotisha-staging/.env.staging` (`0600`) |
 | Runtime database env | `/opt/jyotisha-staging/.env.staging.database` (`0600`) |
 | PostgreSQL | private Compose network; no published host port |
-| Supabase | separate `Jyotisha Staging` project |
+| Business database | local private PostgreSQL (`jyotisha-staging` Compose project) |
+| Identity | Better Auth + Resend OTP on the same private PostgreSQL cluster |
 | GitHub Environment | `staging` |
 
-The GitHub `staging` Environment contains the secret `STAGING_SSH_PRIVATE_KEY` and the variables `STAGING_HOST`, `STAGING_PORT`, `STAGING_USER`, `STAGING_PATH`, `STAGING_URL`, and `STAGING_KNOWN_HOSTS`. Its deployment branch policy allows the `main` controller branch: GitHub's `workflow_run` event executes from the default branch while the workflow separately requires the successfully tested upstream branch to be `staging`. The controller checks out only `main` with full history, requires the requested staging SHA to be an ancestor of that reviewed history, and uploads only the allowlisted `deploy/` control files. It never executes deployment validators or remote orchestration scripts from the target/rollback revision. The staging key, database, Supabase keys, and model-provider keys must not be shared with production.
-
-The repository-level public build inputs are configured at GitHub **Settings -> Secrets and variables -> Actions -> Variables** (the UI is also shown as **Settings → Secrets and variables → Actions → Variables**): `STAGING_SUPABASE_URL` and `STAGING_SUPABASE_ANON_KEY`. They are public build inputs, required for publish, and exposed to the browser; keep them staging-only and never print their values in workflow output, summaries, or support messages. The workflow passes them only as the `NEXT_PUBLIC_*` build arguments after non-empty/HTTPS validation.
+The GitHub `staging` Environment contains the secret `STAGING_SSH_PRIVATE_KEY` and the variables `STAGING_HOST`, `STAGING_PORT`, `STAGING_USER`, `STAGING_PATH`, `STAGING_URL`, and `STAGING_KNOWN_HOSTS`. Its deployment branch policy allows the `main` controller branch: GitHub's `workflow_run` event executes from the default branch while the workflow separately requires the successfully tested upstream branch to be `staging`. The controller checks out only `main` with full history, requires the requested staging SHA to be an ancestor of that reviewed history, and uploads only the allowlisted `deploy/` control files. It never executes deployment validators or remote orchestration scripts from the target/rollback revision. The staging key, database, Resend key, and model-provider keys must not be shared with production. Staging image publishing has no Supabase build variables.
 
 `Staging Backend Quality Gate` runs for relevant `pull_request` paths, pushes to `staging`, and `workflow_dispatch`. It validates the Python/database/frontend contract; only a successful push to `staging` publishes the API/web images and a run-bound manifest containing their `sha256` digests. `.github/workflows/deploy-staging.yml` consumes that exact successful run, validates its manifest against the full 40-character commit, and deploys digest references rather than trusting the discoverability tags.
 
@@ -170,13 +169,13 @@ SITE_ADDRESS=https://staging.jyotisha.chat
 ADMIN_SITE_ADDRESS=https://admin.staging.jyotisha.chat
 ```
 
-The self-hosted identity milestone runs in coexistence mode: keep `AUTH_PROVIDER=supabase` and set `SELF_HOSTED_IDENTITY_ENABLED=true`. Add the server-only identity database, separate user/admin Better Auth secrets, origins, and staging-only Resend settings listed in `deploy/.env.staging.identity.example`. The public login remains on Supabase while the admin host and identity API are exercised. Do not set `AUTH_PROVIDER=self-hosted` until the Supabase-backed business modules have migrated. See `docs/operations/self-hosted-identity.md` for validation, import, smoke, and rollback commands.
+Staging is fully self-hosted: set `AUTH_PROVIDER=self-hosted` and `SELF_HOSTED_IDENTITY_ENABLED=true`. Add the three role-specific server-only database URLs, separate user/admin Better Auth secrets, origins, and staging-only Resend settings listed in `deploy/.env.staging.identity.example`. Browser code uses same-origin APIs; it receives neither database credentials nor Supabase keys. Production remains on Supabase and is not changed by the staging workflow. See `docs/operations/self-hosted-identity.md` for validation and rollback commands.
 
 After source sync and before `up`, the workflow validates `.env.staging` mode/selectors, explicitly pins the three staging selectors against ambient shell overrides, and runs `docker compose --env-file .env.staging -f deploy/docker-compose.server.yml config --quiet`. For later manual inspections, run the same checks only after the tracked deployment files exist on the server. Do not use a manual gate run from `main` as the first publishing path: publishing requires a successful push to `staging`, while manual `Deploy staging` requires a successful gate run for the exact SHA.
 
 ### First-deploy sequence
 
-1. Complete the server and GitHub bootstrap: create both mode-`0600` env files, preload the reviewed `postgres:17-alpine` image, configure the staging Environment variables/secrets, and configure the repository staging build variables. Deployment and migration workflows use `--pull never` for PostgreSQL, so database image upgrades remain an explicit operator-controlled maintenance action rather than an application-deploy side effect.
+1. Complete the server and GitHub bootstrap: create both mode-`0600` env files, preload the reviewed `postgres:17-alpine` image, and configure the staging Environment variables/secrets. No repository-level Supabase variables are required. Deployment and migration workflows use `--pull never` for PostgreSQL, so database image upgrades remain an explicit operator-controlled maintenance action rather than an application-deploy side effect.
 2. Merge the reviewed change to `main`, then fast-forward/push that exact reviewed SHA to `staging`; do not create a staging-only target or rely on a `main` workflow dispatch to publish images.
 3. The `Staging Backend Quality Gate` runs for that push and, when successful, publishes API/web images plus an artifact binding the exact SHA to both immutable image digests.
 4. The automatic `Deploy staging` workflow downloads that gate-run artifact, syncs only the trusted `main` controller's allowlisted `deploy/` files under the shared staging host lock, and validates both `.env.staging` and `.env.staging.database` before any app change. The target application's code is carried only by the digest-pinned images.
@@ -196,7 +195,7 @@ docker compose --env-file .env.staging -f deploy/docker-compose.server.yml logs 
 curl -fsS https://staging.jyotisha.chat/api/health
 ```
 
-The normal application deployment workflow never runs database migrations. Apply migrations to the separate staging project first, verify them, and only then deploy application code that depends on them.
+The normal application deployment workflow never runs database migrations. Apply migrations to the private staging PostgreSQL cluster first, verify them, and only then deploy application code that depends on them.
 
 ## Staging PostgreSQL operations
 

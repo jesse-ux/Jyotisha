@@ -57,7 +57,7 @@ export async function GET() {
     // an older case. A concurrently created case simply appears on refresh.
     const { data: profile, error } = await supabase
       .from("profiles")
-      .select("credits,active_birth_time,birth_time_status,birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset")
+      .select("credits,name,birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset,birth_time,active_birth_time,birth_time_status,rectification_case_id")
       .eq("id", userId)
       .single();
 
@@ -72,6 +72,8 @@ export async function GET() {
     return NextResponse.json({
       user: { id: user.id, email: user.email ?? null },
       credits: profile.credits,
+      profile,
+      authProvider: process.env.AUTH_PROVIDER?.trim() === "self-hosted" ? "self-hosted" : "supabase",
       isAdmin: isAdminEmail(user.email),
       rectificationPriceCredits,
       hasConfirmedBirthTime: profile.birth_time_status === "confirmed"

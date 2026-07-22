@@ -34,6 +34,14 @@ test("database roles have no cluster privileges", () => {
       ].join("\n"),
     );
     assert.equal(
+      fixture.psql(`
+        select rolcanlogin || ':' || rolbypassrls
+        from pg_roles
+        where rolname = 'service_role'
+      `),
+      "f:true",
+    );
+    assert.equal(
       fixture.psql(
         "select nspowner::regrole::text from pg_namespace where nspname = 'public'",
       ),

@@ -1,21 +1,33 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { isSupabaseConfigurationError } from "@/lib/supabase/config";
-import { chatSessionWriteSchema } from "@/lib/chat-session-write-contract";
+import {
+  chatSessionModelPatchSchema,
+  chatSessionWriteSchema,
+} from "@/lib/chat-session-write-contract";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
-    const parsed = chatSessionWriteSchema.safeParse(await request.json().catch(() => null));
-    if (!parsed.success) return NextResponse.json({ error: "聊天记录格式不正确" }, { status: 400 });
+    const payload = await request.json().catch(() => null);
+    const fullWrite = chatSessionWriteSchema.safeParse(payload);
+    const modelPatch = chatSessionModelPatchSchema.safeParse(payload);
+    let values: Record<string, unknown>;
+    if (fullWrite.success) {
+      values = fullWrite.data;
+    } else if (modelPatch.success) {
+      values = modelPatch.data;
+    } else {
+      return NextResponse.json({ error: "聊天记录格式不正确" }, { status: 400 });
+    }
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) return NextResponse.json({ error: "请先登录" }, { status: 401 });
     const { data, error } = await supabase
       .from("chat_sessions")
-      .update(parsed.data)
+      .update(values)
       .eq("id", id)
       .eq("user_id", user.id)
       .select("id")

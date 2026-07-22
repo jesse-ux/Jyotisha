@@ -42,7 +42,7 @@ require_selector APP_ENV_FILE ../.env.staging
 require_selector CADDYFILE_PATH ./Caddyfile.staging
 require_selector SITE_ADDRESS https://staging.jyotisha.chat
 require_selector ADMIN_SITE_ADDRESS https://admin.staging.jyotisha.chat
-require_selector AUTH_PROVIDER supabase
+require_selector AUTH_PROVIDER self-hosted
 require_selector SELF_HOSTED_IDENTITY_ENABLED true
 require_selector AUTH_USER_ORIGIN https://staging.jyotisha.chat
 require_selector AUTH_ADMIN_ORIGIN https://admin.staging.jyotisha.chat
@@ -73,6 +73,20 @@ if ! [[ "$identity_database_url" =~ ^postgresql://identity_runtime:([A-Za-z0-9._
   exit 1
 fi
 
+require_literal APP_DATABASE_URL 45
+app_database_url="$LITERAL_VALUE"
+if ! [[ "$app_database_url" =~ ^postgresql://app_runtime:([A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+@postgres:5432/jyotisha$ ]]; then
+  echo "invalid staging database setting: APP_DATABASE_URL" >&2
+  exit 1
+fi
+
+require_literal ADMIN_DATABASE_URL 45
+admin_database_url="$LITERAL_VALUE"
+if ! [[ "$admin_database_url" =~ ^postgresql://admin_runtime:([A-Za-z0-9._~-]|%[0-9A-Fa-f]{2})+@postgres:5432/jyotisha$ ]]; then
+  echo "invalid staging database setting: ADMIN_DATABASE_URL" >&2
+  exit 1
+fi
+
 require_literal BETTER_AUTH_USER_SECRET 32
 user_secret="$LITERAL_VALUE"
 require_literal BETTER_AUTH_ADMIN_SECRET 32
@@ -87,5 +101,11 @@ if [[ "$LITERAL_VALUE" != *@* ]]; then
   echo "invalid staging identity setting: RESEND_FROM_EMAIL" >&2
   exit 1
 fi
+require_literal ADMIN_EMAILS 3
+if [[ "$LITERAL_VALUE" != *@* ]]; then
+  echo "invalid staging identity setting: ADMIN_EMAILS" >&2
+  exit 1
+fi
+require_literal JYOTISH_DYNAMIC_RECTIFICATION_TOKEN 32
 
 echo "staging environment selectors: valid"

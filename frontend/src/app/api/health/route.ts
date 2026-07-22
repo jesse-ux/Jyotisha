@@ -64,10 +64,19 @@ export async function GET() {
     process.env.RECTIFICATION_V3_MIGRATIONS_READY?.trim().toLowerCase() === "true";
   const creationPolicy = conversationalRectificationCreationPolicyFromEnvironment();
   const truthSourceIdentity = getTruthSourceRuntimeIdentity();
+  const selfHosted = process.env.AUTH_PROVIDER?.trim() === "self-hosted";
+  const databaseChecks: Record<string, Check> = selfHosted
+    ? {
+        localBusinessDatabase: envCheck(["APP_DATABASE_URL", "ADMIN_DATABASE_URL"]),
+        localIdentityDatabase: envCheck(["IDENTITY_DATABASE_URL"]),
+      }
+    : {
+        supabasePublicConfig: envCheck(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]),
+        supabaseServiceRole: envCheck(["SUPABASE_SERVICE_ROLE_KEY"]),
+      };
   const checks = {
     web: { status: "ok" } satisfies Check,
-    supabasePublicConfig: envCheck(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]),
-    supabaseServiceRole: envCheck(["SUPABASE_SERVICE_ROLE_KEY"]),
+    ...databaseChecks,
     modelProvider: anyEnvCheck(["LLM_MODELS_JSON", "OPENAI_API_KEY", "LLM_API_KEY", "DEEPSEEK_API_KEY"]),
     jyotishApi: await jyotishApiCheck(),
     researchTruthSource: {
