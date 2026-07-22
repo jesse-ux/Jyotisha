@@ -1913,18 +1913,27 @@ export default function Home() {
       rectificationCase: account.rectificationCase,
       hasConfirmedBirthTime: account.hasConfirmedBirthTime,
     });
-    const resumableSession = action === "resume" && account.rectificationCase
+    const sourceBoundCaseId = sourceSession.sessionType === "birth_time_rectification"
+      ? sourceSession.rectificationCaseId
+      : null;
+    const accountResumeCase = action === "resume" ? account.rectificationCase : null;
+    const resumeTarget = sourceBoundCaseId
+      ? {
+          caseId: sourceBoundCaseId,
+          turnVersion: accountResumeCase?.caseId === sourceBoundCaseId
+            ? accountResumeCase.turnVersion
+            : 0,
+        }
+      : accountResumeCase;
+    const resumableSession = !sourceBoundCaseId && accountResumeCase
       ? sessions.find((session) => session.sessionType === "birth_time_rectification"
-        && session.rectificationCaseId === account.rectificationCase?.caseId)
+        && session.rectificationCaseId === accountResumeCase.caseId)
         ?? sessions.find((session) => session.sessionType === "birth_time_rectification"
           && session.rectificationCaseId === null)
         ?? null
       : null;
-    const canReuseSourceRectificationSession = action === "resume"
-      && sourceSession.sessionType === "birth_time_rectification"
-      && account.rectificationCase !== null
-      && (sourceSession.rectificationCaseId === account.rectificationCase.caseId
-        || sourceSession.rectificationCaseId === null);
+    const canReuseSourceRectificationSession = sourceSession.sessionType === "birth_time_rectification"
+      && (sourceBoundCaseId !== null || accountResumeCase !== null);
     const rectificationSession = canReuseSourceRectificationSession
       ? sourceSession
       : resumableSession ?? createSession(modelCatalog.defaultModelId, "birth_time_rectification");
@@ -1957,7 +1966,7 @@ export default function Home() {
     setActiveSessionId(rectificationSession.id);
     try {
       let turn: ConversationalRectificationTurn;
-      if (action !== "resume" || !account.rectificationCase) {
+      if (!resumeTarget) {
         const durable = await durableRectificationQuestionHandoff.current.load();
         turn = durable && durable.status !== "consumed"
           ? durable.turn
@@ -1967,8 +1976,10 @@ export default function Home() {
               pendingConsultationQuestion: requestedQuestion,
             });
       } else {
-        let current = account.rectificationCase;
-        if (pendingConsultationQuestion) {
+        let current = resumeTarget;
+        const canAttachQuestion = pendingConsultationQuestion
+          && accountResumeCase?.caseId === current.caseId;
+        if (canAttachQuestion) {
           try {
             turn = await durableRectificationQuestionHandoff.current.attach({
               caseId: current.caseId,
@@ -2063,16 +2074,22 @@ export default function Home() {
       ...current,
       hasConfirmedBirthTime: current.hasConfirmedBirthTime
         || (turn.status === "completed" && turn.candidate.status === "confirmed"),
-      rectificationCase: {
-        caseId: turn.caseId,
-        journeyProtocol: "conversational-evidence-v3",
-        status: turn.status,
-        turnVersion: turn.turnVersion,
-        isRevision: current.rectificationCase?.isRevision
-          ?? current.hasConfirmedBirthTime,
-        preservesActiveTime: current.rectificationCase?.preservesActiveTime
-          ?? current.hasConfirmedBirthTime,
-      },
+      rectificationCase: ["active", "paused", "confirming"].includes(turn.status)
+        ? {
+            caseId: turn.caseId,
+            journeyProtocol: "conversational-evidence-v3",
+            status: turn.status,
+            turnVersion: turn.turnVersion,
+            isRevision: current.rectificationCase?.caseId === turn.caseId
+              ? current.rectificationCase.isRevision
+              : current.hasConfirmedBirthTime,
+            preservesActiveTime: current.rectificationCase?.caseId === turn.caseId
+              ? current.rectificationCase.preservesActiveTime
+              : current.hasConfirmedBirthTime,
+          }
+        : current.rectificationCase?.caseId === turn.caseId
+          ? null
+          : current.rectificationCase,
     } : current);
     if (turn.status === "completed"
       && turn.candidate.status === "confirmed"
@@ -2094,6 +2111,7 @@ export default function Home() {
       .then((latest) => {
         if (!accountRefreshGuard.current.isCurrent(requestIdentity)) return;
         setAccount((current) => {
+          if (turn.status === "completed" || turn.status === "abandoned") return latest;
           if (latest.rectificationCase?.caseId !== turn.caseId
             || latest.rectificationCase.turnVersion < turn.turnVersion) return current;
           return latest;

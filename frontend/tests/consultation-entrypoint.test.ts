@@ -149,21 +149,33 @@ test("homepage reuses the session bound to an unfinished rectification case", ()
   const end = source.indexOf("function handleConversationalRectificationTurn", start);
   const handler = source.slice(start, end);
 
-  assert.match(handler, /action === "resume" && account\.rectificationCase/);
-  assert.match(handler, /session\.rectificationCaseId === account\.rectificationCase\?\.caseId/);
+  assert.match(handler, /const accountResumeCase = action === "resume" \? account\.rectificationCase : null/);
+  assert.match(handler, /session\.rectificationCaseId === accountResumeCase\.caseId/);
   assert.match(handler, /resumableSession \?\? createSession/);
 });
 
-test("starting again after a completed rectification creates a new dedicated session", () => {
+test("a bound rectification session resumes its own case while a homepage restart stays dedicated", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   const start = source.indexOf("async function openBirthTimeRectification");
   const end = source.indexOf("function handleConversationalRectificationTurn", start);
   const handler = source.slice(start, end);
 
-  assert.match(handler, /const canReuseSourceRectificationSession = action === "resume"/);
-  assert.match(handler, /sourceSession\.rectificationCaseId === account\.rectificationCase\.caseId/);
+  assert.match(handler, /const sourceBoundCaseId = sourceSession\.sessionType === "birth_time_rectification"/);
+  assert.match(handler, /const resumeTarget = sourceBoundCaseId/);
+  assert.match(handler, /caseId: sourceBoundCaseId/);
+  assert.match(handler, /if \(!resumeTarget\) \{[\s\S]*?type: "start"/);
   assert.match(handler, /const rectificationSession = canReuseSourceRectificationSession[\s\S]*?: resumableSession \?\? createSession/);
-  assert.doesNotMatch(handler, /const rectificationSession = sourceSession\.sessionType === "birth_time_rectification"/);
+  assert.match(handler, /type: "resume",[\s\S]*?caseId: current\.caseId/);
+});
+
+test("historical completed rectification does not replace the account's unfinished case", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("function handleConversationalRectificationTurn");
+  const end = source.indexOf("async function draftSynastryQuestionFromChart", start);
+  const handler = source.slice(start, end);
+
+  assert.match(handler, /current\.rectificationCase\?\.caseId === turn\.caseId[\s\S]*?\? null[\s\S]*?: current\.rectificationCase/);
+  assert.match(handler, /turn\.status === "completed" \|\| turn\.status === "abandoned"\) return latest/);
 });
 
 test("rectify-first suggestions hand the source question to a dedicated rectification session", () => {
