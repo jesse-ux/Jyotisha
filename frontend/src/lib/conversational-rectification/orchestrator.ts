@@ -255,6 +255,7 @@ const progressDomainLabels = {
   career: "事业",
   education: "学业",
   finance: "财务",
+  health_pressure: "健康与重大压力",
   relocation: "搬迁",
   relationship: "重要关系",
   family: "家庭",

@@ -257,6 +257,14 @@ test("makes SidebarContent the only sidebar scroll owner", () => {
   assert.match(globalStyles, /\[data-active="true"\][^{]*\{[^}]*background:\s*var\(--sidebar-accent\)/);
 });
 
+test("renders each session title and menu as one unified row surface", () => {
+  assert.match(cssBlock(".session-row"), /grid-template-columns:\s*minmax\(0,\s*1fr\)\s+44px/);
+  assert.match(globalStyles, /\.session-row:has\(\.session-main\[data-active="true"\]\)[^{]*\{[^}]*background:\s*var\(--sidebar-accent\)/);
+  assert.match(cssBlock('.session-main[data-active="true"]'), /background:\s*transparent/);
+  assert.match(cssBlock(".session-menu-trigger"), /border-radius:\s*0/);
+  assert.doesNotMatch(cssBlock(".session-menu-trigger"), /border-radius:\s*50%/);
+});
+
 test("styles the non-mobile collapsed rail without repeated session rows", () => {
   assert.match(globalStyles, /@media\s*\(min-width:\s*768px\)[\s\S]*\[data-state="collapsed"\][^{]*\.brand-row/);
   assert.match(globalStyles, /\[data-state="collapsed"\][^{]*\[data-sidebar="menu-button"\][^{]*\{[^}]*width:\s*44px/);

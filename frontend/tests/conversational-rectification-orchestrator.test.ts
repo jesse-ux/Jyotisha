@@ -120,15 +120,12 @@ function validGenerator(
         };
       };
       const value = request.packet;
-      const domains = value.suggestedDomains.map((item) => item.domain);
+      const domains = value.suggestedDomains.slice(0, 1).map((item) => item.domain);
+      const nextDomain = domains[0] === "relationship" ? "重要关系" : "事业";
       const narrative = [
-        `${value.candidate.representativeTime} 是待验证候选。`,
-        "D1（Cancer）保持稳定。",
-        "D9（Aries / Leo）呈现分钟敏感差异，关系事件可区分 D9。",
-        "D10（Taurus / Libra）呈现分钟敏感差异，事业事件可区分 D10。",
+        `当前仍在核对 ${value.candidate.rangeStart}–${value.candidate.rangeEnd} 的候选范围，不能视为已经确认的出生分钟。`,
         varyNarrative ? `这是第 ${generation} 次合成措辞。` : "",
-        request.phase === "final" ? "当前证据已形成候选总结。" : "请提供已经发生的真实事件，写明哪一年、哪一月以及发生了什么。",
-        "这仅是候选，必须由你确认后才会替换当前排盘时间。",
+        request.phase === "final" ? "当前证据已形成候选总结。" : `先说一件已经发生的${nextDomain}经历好吗？请写明哪一年、哪一月以及发生了什么。`,
       ].join("");
       return { text: JSON.stringify({
         narrative,
@@ -144,7 +141,7 @@ function validGenerator(
         evidenceRequest: request.phase === "final" ? null : {
           domains,
           datePrecision: "month_preferred",
-          prompt: "请提供已经发生的真实事件，并写明哪一年、哪一月以及发生了什么。",
+          prompt: `请说一件已经发生的${nextDomain}经历，并写明哪一年、哪一月以及发生了什么。`,
         },
       }) };
     },

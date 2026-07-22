@@ -6,6 +6,7 @@ export type RectificationEvidenceDomain =
   | "career"
   | "education"
   | "finance"
+  | "health_pressure"
   | "relocation"
   | "relationship"
   | "family"
@@ -120,6 +121,7 @@ const domainByLayer = {
   D11: "finance",
   D24: "education",
   D4: "relocation",
+  D30: "health_pressure",
   A7: "relationship",
   UL: "relationship",
   A10: "career",
@@ -129,6 +131,7 @@ const domainLabels = {
   career: "事业",
   education: "教育",
   finance: "财富",
+  health_pressure: "健康与重大压力",
   relocation: "迁居",
   relationship: "关系",
   family: "家庭",
@@ -211,7 +214,7 @@ function candidateWeights(model: Readonly<Record<string, unknown>>): Readonly<Re
 }
 
 function eventDomain(domain: CandidateResult["evidence"][number]["domain"]): RectificationEvidenceDomain {
-  return domain === "health_pressure" ? "other" : domain;
+  return domain;
 }
 
 function layerEvidence(

@@ -49,6 +49,7 @@ const domainLabels = {
   career: "事业",
   education: "学业",
   finance: "财富",
+  health_pressure: "健康与重大压力",
   relocation: "迁居",
   relationship: "关系",
   family: "家庭",
@@ -56,7 +57,7 @@ const domainLabels = {
 } as const;
 
 function importedDomain(domain: LifeEvent["domain"]): LifeEventEvidence["domain"] {
-  return domain === "health_pressure" ? "other" : domain;
+  return domain;
 }
 
 function eventIsWithinHistoricalWindow(

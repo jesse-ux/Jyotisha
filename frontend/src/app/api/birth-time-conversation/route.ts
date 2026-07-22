@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import path from "node:path";
 import {
   conversationalRectificationCommandSchema,
   type ConversationalRectificationCommand,
@@ -25,6 +26,7 @@ import type { BirthTimeJourneyEngine, RectificationQuestionnaire } from "../../.
 import type { CandidateResult, LifeEvent } from "../../../lib/birth-time-evidence.ts";
 import type { CandidateDifferenceBuild } from "../../../lib/birth-time-dynamic-choice-internal.ts";
 import { conversationalRectificationCreationPolicyFromEnvironment } from "../../../lib/conversational-rectification/creation-policy.ts";
+import { MAXIMUM_SCOREABLE_EVENTS } from "../../../lib/conversational-rectification/convergence.ts";
 import {
   conversationalRectificationLatencyBucket,
   createConversationalRectificationTelemetry,
@@ -36,6 +38,9 @@ import {
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+const jyotishSkillPath = process.env.JYOTISH_SKILL_PATH?.trim()
+  || path.resolve(process.cwd(), "..", "skills", "jyotish-vedic-astrology");
 
 type AuthenticatedRequest = Readonly<{
   userId: string;
@@ -349,7 +354,7 @@ function scoreableLifeEvents(
       precision: item.datePrecision as "day" | "month" | "year",
       date: item.dateValue,
     } as LifeEvent];
-  }).slice(-6);
+  }).slice(-MAXIMUM_SCOREABLE_EVENTS);
 }
 
 function sampleTimes(scan: RectificationQuestionnaire): readonly { readonly sampleIndex: number; readonly time: string }[] {
@@ -665,7 +670,8 @@ async function productionNarrativeGenerator(): Promise<RectificationNarrativeGen
     id: `conversational-rectification-${model.id}`,
     name: "Conversational Rectification Narrator",
     model: model.model,
-    instructions: "Return only the exact JSON object requested by the user prompt. Use only supplied packet facts. Never invent times, layers, references, scores, dates, or confirmation state.",
+    skills: [jyotishSkillPath],
+    instructions: "Return only the exact JSON object requested by the user prompt. Use the Jyotish Skill only to choose a natural, one-question-at-a-time evidence strategy and wording. Treat supplied packet facts as the exclusive source of candidate times, status, dates, layers, scores, references, and confirmation permissions. Never invent, recalculate, or confirm candidate data.",
   });
   return {
     modelId: model.id,

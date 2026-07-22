@@ -1,4 +1,4 @@
-export type BirthTimeAssessmentPhase = "saving_profile" | "assessing";
+export type BirthTimeAssessmentPhase = "saving_profile" | "assessing" | "entering_home";
 
 const progressCopy = {
   saving_profile: {
@@ -8,6 +8,10 @@ const progressCopy = {
   assessing: {
     title: "正在生成生时评估",
     detail: "正在读取已有资料并准备下一步，不需要重复操作。",
+  },
+  entering_home: {
+    title: "正在进入首页",
+    detail: "出生资料已保存，正在为你准备首页。",
   },
 } as const satisfies Record<BirthTimeAssessmentPhase, { readonly title: string; readonly detail: string }>;
 

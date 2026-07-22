@@ -100,22 +100,24 @@ test("homepage birth-time card starts the first rectification turn without a sec
   assert.match(handler, /sendConversationalRectificationCommand\(\{[\s\S]*?type:\s*"start"/);
 });
 
-test("homepage birth-time card waits for the first turn before opening its dedicated session", () => {
+test("homepage birth-time card opens its dedicated session before the first turn resolves", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   const start = source.indexOf("async function openBirthTimeRectification");
   const end = source.indexOf("function handleConversationalRectificationTurn", start);
   const handler = source.slice(start, end);
   const create = handler.indexOf('createSession(modelCatalog.defaultModelId, "birth_time_rectification")');
-  const request = handler.indexOf("sendConversationalRectificationCommand");
-  const reveal = handler.indexOf("setActiveSessionId(boundSession.id)");
+  const firstAwait = handler.indexOf("await ");
+  const reveal = handler.indexOf("setActiveSessionId(rectificationSession.id)");
 
   assert.ok(create >= 0);
-  assert.ok(request > create);
-  assert.ok(reveal > request);
-  assert.doesNotMatch(handler.slice(0, request), /setActiveSessionId\(/);
-  assert.doesNotMatch(handler.slice(0, request), /setSessions\(/);
+  assert.ok(firstAwait > create);
+  assert.ok(reveal > create && reveal < firstAwait);
+  assert.ok(handler.indexOf("setSessions((current) => [") < firstAwait);
+  assert.match(handler, /rectificationOpenInFlight\.current/);
+  assert.match(handler, /rectificationOpenInFlight\.current = true;[\s\S]*?finally \{[\s\S]*?rectificationOpenInFlight\.current = false;/);
   assert.match(handler, /setRectificationReturnSessionId\(sourceSession\.id\)/);
-  assert.match(handler, /setRectificationInitialTurn\(turn\);[\s\S]*?setActiveSessionId\(boundSession\.id\)/);
+  assert.match(source, /const rectificationSurfaceOpen = activeRectificationSession\s*&& activeSession\.id === rectificationSessionId/);
+  assert.match(source, /rectificationSurfaceOpen && \(!visibleRectificationTurn && rectificationError \? \([\s\S]*?<ConversationalBirthTimeRectification[\s\S]*?initialTurn=\{visibleRectificationTurn\}/);
 });
 
 test("rectification cards render only inside the active rectification session", () => {
@@ -244,4 +246,22 @@ test("homepage entrypoints use two whole-card native actions", () => {
 
   assert.equal(wholeCardActions.length, 2);
   assert.doesNotMatch(source, /className="daily-starlanguage-heading">[\s\S]{0,180}<button/);
+});
+
+test("starter homepage stays editorial and hides technical chart parameters", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const styles = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
+  const start = source.indexOf('<div className="starter-list starter-workbench"');
+  const end = source.indexOf("{onboardingError &&", start);
+  const starterHomepage = source.slice(start, end);
+
+  assert.ok(start >= 0 && end > start);
+  assert.match(starterHomepage, /className="starter-hero"/);
+  assert.match(starterHomepage, /className="starter-theme-accordion"/);
+  assert.match(starterHomepage, /starterSuggestions\.map/);
+  assert.doesNotMatch(starterHomepage, /evidencePreview|birthTimeDisplay|Vimshottari|D1|D9/);
+  assert.match(source, /const starterSuggestions = themes\.map/);
+  assert.match(source, /composer-wrap-starter/);
+  assert.match(styles, /\/\* Starter workbench \*\/[\s\S]*?\.starter-list \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);/);
+  assert.match(styles, /\.starter-hero,[\s\S]*?\.product-entrypoints,[\s\S]*?\.starter-themes \{[\s\S]*?width: 100%;/);
 });

@@ -6,6 +6,8 @@ import { chatMessageViews } from "../src/lib/chat-message-view.ts";
 
 const pageSource = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 const globalStyles = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
+const messageRowSource = readFileSync(new URL("../src/components/chat-message-row.tsx", import.meta.url), "utf8");
+const activitySource = readFileSync(new URL("../src/components/agent-activity-status.tsx", import.meta.url), "utf8");
 
 const previousMessages = [
   { role: "user", text: "问题" },
@@ -40,6 +42,14 @@ test("does not duplicate a completed assistant answer while loading state settle
   // Then: only the persisted answer is rendered.
   assert.equal(views.length, completedMessages.length);
   assert.equal(views.at(-1)?.state, "settled");
+});
+
+test("shows honest agent activity states before and during streamed text", () => {
+  assert.match(messageRowSource, /state="working" label="正在核对星盘信息…"/);
+  assert.match(messageRowSource, /message\.state === "streaming" && <AgentActivityStatus state="composing"/);
+  assert.match(activitySource, /<ThinkingOrb aria-hidden="true" state=\{state\} size=\{20\}/);
+  assert.match(activitySource, /satisfies Record<OrbState, string>/);
+  assert.doesNotMatch(globalStyles, /\.thinking\b/);
 });
 
 test("keeps the suggestion row height stable while an answer streams", () => {

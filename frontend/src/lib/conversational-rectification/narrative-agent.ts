@@ -10,27 +10,16 @@ export type RectificationNarrativePhase = "first" | "intermediate" | "final";
 const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const modelIdSchema = z.string().trim().min(1).max(120);
 const validatorVersion = "rectification-narrative-grounding-v2";
-const domainSchema = z.enum(["career", "education", "finance", "relocation", "relationship", "family", "other"]);
-const stableSemanticsPattern = /(?:稳定|保持|不变|一致|stable|unchanged)/i;
-const sensitiveSemanticsPattern = /(?:敏感|变化|差异|切换|不同|sensitive|changes?|differs?)/i;
-const discriminationSemanticsPattern = /(?:区分|辨别|判别|验证|差异|变化|discriminat|distinguish)/i;
+const domainSchema = z.enum(["career", "education", "finance", "health_pressure", "relocation", "relationship", "family", "other"]);
 const broadYearRangePattern = /(?:19|20)\d{2}\s*年?\s*(?:[-–—~～至到\/]|\.\.)\s*(?:19|20)\d{2}\s*年?/i;
 const explicitYearPattern = /(?:19|20)\d{2}\s*年?/g;
 const proposedYearAlternativesPattern = /(?:19|20)\d{2}\s*年?\s*(?:还是|或者|或是|或|、|,|，)\s*(?:19|20)\d{2}\s*年?/i;
 const choiceQuestionPattern = /(?:哪(?:一|个)?(?:年|年份|年代|时间段|区间|时期)|哪个时间段|还是|选择|选项|更符合|更匹配|A\s*[.、:：)]|B\s*[.、:：)]|which\s+(?:year|period|range)|options?)/i;
-const domainSemantics = {
-  career: /(?:事业|工作|职业|career)/i,
-  education: /(?:教育|学业|学校|education)/i,
-  finance: /(?:财富|财务|收入|投资|finance)/i,
-  relocation: /(?:搬迁|搬家|迁居|异地|居住|relocation)/i,
-  relationship: /(?:关系|婚恋|伴侣|relationship)/i,
-  family: /(?:家庭|家人|父母|孩子|family)/i,
-  other: /(?:其他|其它|other)/i,
-} as const satisfies Readonly<Record<RectificationEvidenceDomain, RegExp>>;
 const domainLabels = {
   career: "事业",
   education: "学业",
   finance: "财富",
+  health_pressure: "健康与重大压力",
   relocation: "迁居",
   relationship: "关系",
   family: "家庭",
@@ -52,7 +41,7 @@ const narrativeOutputSchema = z.object({
     reason: z.string().trim().min(8).max(1_000),
   }).strict()).max(6),
   evidenceRequest: z.object({
-    domains: z.array(domainSchema).min(2).max(4),
+    domains: z.array(domainSchema).min(1).max(4),
     datePrecision: z.enum(["month_preferred", "year_accepted"]),
     prompt: z.string().trim().min(1).max(1_000),
   }).strict().nullable(),
@@ -88,12 +77,6 @@ export type RectificationNarrativeResult = {
 
 function unique(values: readonly string[]): string[] {
   return [...new Set(values)];
-}
-
-function sameMembers(actual: readonly string[], expected: readonly string[]): boolean {
-  const left = [...new Set(actual)].sort();
-  const right = [...new Set(expected)].sort();
-  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 function parseModelOutput(text: string): RectificationNarrativeModelOutput {
@@ -148,27 +131,6 @@ function pairKey(value: { readonly domain: RectificationEvidenceDomain; readonly
   return `${value.domain}\0${value.layer}`;
 }
 
-function narrativeHasDomainDiscrimination(
-  narrative: string,
-  domain: RectificationEvidenceDomain,
-  layer: string,
-): boolean {
-  return narrative.split(/[。！？!?；;\n]/).some((clause) => domainSemantics[domain].test(clause)
-    && clause.includes(layer)
-    && discriminationSemanticsPattern.test(clause));
-}
-
-function narrativeHasLayerEvidence(
-  narrative: string,
-  item: RectificationTechnicalPacket["stableLayers"][number],
-  semantics: RegExp,
-  requiredValueCount: number,
-): boolean {
-  return narrative.split(/[。！？!?；;\n]/).some((clause) => clause.includes(item.layer)
-    && item.values.filter((value) => clause.includes(value)).length >= requiredValueCount
-    && semantics.test(clause));
-}
-
 export function validateNarrativeAgainstPacket(
   output: RectificationNarrativeModelOutput,
   packet: RectificationTechnicalPacket,
@@ -195,12 +157,6 @@ export function validateNarrativeAgainstPacket(
   for (const layer of output.sensitiveLayers) {
     if (!allowedSensitive.includes(layer)) issues.push(`sensitive layer ${layer} is not packet-grounded`);
   }
-  if (phase === "first" && !sameMembers(output.stableLayers, allowedStable)) {
-    issues.push("first turn must carry every stable layer");
-  }
-  if (phase === "first" && !sameMembers(output.sensitiveLayers, allowedSensitive)) {
-    issues.push("first turn must carry every sensitive layer");
-  }
 
   for (const reference of output.referenceIds) {
     if (!packet.referenceIds.includes(reference)) issues.push(`reference ${reference} is not packet-grounded`);
@@ -215,22 +171,9 @@ export function validateNarrativeAgainstPacket(
       issues.push(`domainReasons[${index}].reason must use the packet discrimination explanation`);
     }
   }
-  if (phase === "first") {
-    const expectedPairs = packet.suggestedDomains.map(pairKey);
-    const actualPairs = output.domainReasons.map(pairKey);
-    if (expectedPairs.length < 2 || !sameMembers(actualPairs, expectedPairs)) {
-      issues.push("first turn must carry at least two unique packet discrimination pairs");
-    }
-  }
   if (output.evidenceRequest) {
     for (const domain of output.evidenceRequest.domains) {
       if (!allowedDomains.has(domain)) issues.push(`evidence domain ${domain} is not packet-grounded`);
-    }
-    if (phase === "first" && !sameMembers(
-      output.evidenceRequest.domains,
-      packet.suggestedDomains.map((item) => item.domain),
-    )) {
-      issues.push("first evidence request must match the packet discrimination domains");
     }
     if (!/(?:已经发生|已发生|过去)/.test(output.evidenceRequest.prompt)
       || !/年/.test(output.evidenceRequest.prompt)
@@ -260,37 +203,21 @@ export function validateNarrativeAgainstPacket(
       issues.push(`${field.path} is a forbidden generic broad-year choice questionnaire`);
     }
   }
-  if (phase === "first") {
-    if (!output.narrative.includes(candidate.representativeTime)
-      || !/(?:待验证|候选)/.test(output.narrative)) {
-      issues.push("first narrative must state the pending candidate time");
+  if (phase !== "final") {
+    if (!output.narrative.includes(candidate.range.startTime)
+      || !output.narrative.includes(candidate.range.endTime)
+      || !/(?:待验证|候选|核对)/.test(output.narrative)) {
+      issues.push("first narrative must state the pending candidate range");
     }
-    for (const item of packet.stableLayers) {
-      if (!narrativeHasLayerEvidence(output.narrative, item, stableSemanticsPattern, 1)) {
-        issues.push(`first narrative lacks stable evidence semantics for ${item.layer}`);
-      }
-    }
-    for (const item of packet.sensitiveLayers) {
-      if (!narrativeHasLayerEvidence(
-        output.narrative,
-        item,
-        sensitiveSemanticsPattern,
-        Math.min(2, item.values.length),
-      )) {
-        issues.push(`first narrative lacks sensitive evidence semantics for ${item.layer}`);
-      }
-    }
-    for (const item of packet.suggestedDomains) {
-      if (!narrativeHasDomainDiscrimination(output.narrative, item.domain, item.layer)) {
-        issues.push(`first narrative must explain how ${item.domain}/${item.layer} discriminates`);
-      }
+    if (narrativeLayers(output.narrative).length > 0) {
+      issues.push("visible evidence narrative must not expose technical layer tokens");
     }
     if (!/(?:已经发生|已发生|过去)/.test(output.narrative)
       || !/年/.test(output.narrative)
       || !/月/.test(output.narrative)) {
       issues.push("first narrative must request real past events by year and month");
     }
-    if (!/(?:不是[\s\S]*确认|不能[\s\S]*确定|仅[\s\S]*候选|必须[\s\S]*确认)/.test(output.narrative)) {
+    if (!/(?:不是[\s\S]*确认|不能[\s\S]*(?:确定|确认)|仅[\s\S]*候选|必须[\s\S]*确认)/.test(output.narrative)) {
       issues.push("first narrative must state the candidate use boundary");
     }
   }
@@ -333,7 +260,8 @@ function promptFor(
       candidateFactsMustMatch: true,
       onlyListedLayersAndReferences: true,
       everyAuthoredStringMustBeGrounded: true,
-      includeStableAndSensitiveLayerValues: phase === "first",
+      keepTechnicalLayerValuesOutOfVisibleNarrative: phase !== "final",
+      askExactlyOneHighInformationQuestion: phase !== "final",
       usePacketDomainReasonTextExactly: true,
       requestRealPastEventsByYearAndMonth: phase !== "final",
       futureWindowsAreContextOnly: true,
@@ -345,24 +273,14 @@ function promptFor(
 
 function fallbackNarrative(packet: RectificationTechnicalPacket, phase: RectificationNarrativePhase): string {
   const candidate = packet.candidate;
-  const stable = packet.stableLayers
-    .map((item) => `${item.layer}（${item.values.join(" / ")}）保持稳定`)
-    .join("；");
-  const sensitive = packet.sensitiveLayers
-    .map((item) => `${item.layer}（${item.values.join(" / ")}）呈现分钟敏感差异`)
-    .join("；");
-  const reasons = packet.suggestedDomains
-    .map((item) => `${domainLabels[item.domain]}事件可区分 ${item.layer}`)
-    .join("；");
+  const nextDomain = packet.suggestedDomains[0]?.domain;
+  const nextLabel = nextDomain ? domainLabels[nextDomain] : "重要经历";
   const phaseLine = phase === "final"
     ? "当前证据已形成候选总结，但仍有残余不确定性；只有明确确认后才会替换当前排盘时间。"
-    : `下一步请提供上述领域已经发生的真实事件，尽量写明哪一年、哪一月以及发生了什么；${reasons}。`;
+    : `先说一件已经发生的${nextLabel}事件好吗？尽量写明哪一年、哪一月以及发生了什么。`;
   return [
-    `${candidate.representativeTime} 是 ${candidate.range.startTime}–${candidate.range.endTime} 范围内的待验证候选。`,
-    packet.useBoundary,
-    `${stable || "D1 稳定性暂不可用"}；${sensitive} 是当前支持的分钟敏感层。`,
+    `当前仍在核对 ${candidate.range.startTime}–${candidate.range.endTime} 的候选范围，还不能把其中某一分钟当作确定出生时间。`,
     phaseLine,
-    "未来窗口只能作为背景，不能计入既成事件评分。",
   ].join("\n");
 }
 
@@ -382,7 +300,7 @@ function fallbackOutput(
     referenceIds: [],
     domainReasons: packet.suggestedDomains.map((item) => ({ ...item })),
     evidenceRequest: phase === "final" ? null : {
-      domains: packet.suggestedDomains.slice(0, 4).map((item) => item.domain),
+      domains: packet.suggestedDomains.slice(0, 1).map((item) => item.domain),
       datePrecision: "month_preferred",
       prompt: "请提供已经发生的真实事件，并尽量写明哪一年、哪一月以及发生了什么。",
     },

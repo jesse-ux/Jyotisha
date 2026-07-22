@@ -25,15 +25,15 @@ type ParsedDate = {
   readonly precision: "day" | "month" | "year";
 };
 
-const chineseDatePattern = /(?:19|20)\d{2}\s*年(?:\s*\d{1,2}\s*月(?:\s*\d{1,2}\s*(?:日|号))?)?/g;
-const isoDatePattern = /(?:19|20)\d{2}-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12]\d|3[01]))?/g;
+const chineseDatePattern = /(?:1\d{3}|20\d{2})\s*年(?:\s*\d{1,2}\s*月(?:\s*\d{1,2}\s*(?:日|号))?)?/g;
+const isoDatePattern = /(?:1\d{3}|20\d{2})-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12]\d|3[01]))?/g;
 const unresolvedRelativeTimePattern = /(?:次年|第二年|后来|此前|同年|当年|那年|随后|先前|然后|之前|之后|今年|去年|前年|明年)/;
 const leadingRelativeTimePattern = /^\s*(?:(?:次年|第二年|后来(?:又)?|此前|同年|当年|那年|随后|先前|然后|之前|之后|今年|去年|前年|明年)\s*)+/;
 const missingEventSummary = "事件内容待补充";
 
 function normalizedDate(value: string): ParsedDate | null {
-  const chinese = value.match(/^((?:19|20)\d{2})\s*年(?:\s*(\d{1,2})\s*月(?:\s*(\d{1,2})\s*(?:日|号))?)?$/);
-  const iso = value.match(/^((?:19|20)\d{2})-(\d{2})(?:-(\d{2}))?$/);
+  const chinese = value.match(/^((?:1\d{3}|20\d{2}))\s*年(?:\s*(\d{1,2})\s*月(?:\s*(\d{1,2})\s*(?:日|号))?)?$/);
+  const iso = value.match(/^((?:1\d{3}|20\d{2}))-(\d{2})(?:-(\d{2}))?$/);
   const match = chinese ?? iso;
   if (!match) return null;
   const year = Number(match[1]);
@@ -81,7 +81,8 @@ function eventSummary(fragment: string): string {
 }
 
 function classifyDomain(summary: string): RectificationEvidenceDomain {
-  if (/毕业|入学|升学|转学|学校|专业|考试|留学|学业/.test(summary)) return "education";
+  if (/确诊|疾病|癌症|肿瘤|手术|住院|受伤|事故|车祸|交通事故|创伤|康复|病危|去世|离世|死亡|丧亲|健康/.test(summary)) return "health_pressure";
+  if (/毕业|入学|升学|转学|学校|大学|专业|考试|留学|学业|学习/.test(summary)) return "education";
   if (/搬家|迁居|外地|异地|离乡|移居|出国|住所|居住/.test(summary)) return "relocation";
   if (/结婚|恋爱|分手|离婚|订婚|伴侣|关系/.test(summary)) return "relationship";
   if (/生育|孩子|父亲|母亲|父母|家人|家庭|亲人/.test(summary)) return "family";
