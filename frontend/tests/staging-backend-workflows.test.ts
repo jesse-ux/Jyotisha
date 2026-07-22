@@ -316,6 +316,7 @@ test("first immutable deployment rolls back to validated local image IDs", () =>
 
 test("normal deployment checks migrations but never applies them", () => {
   const runner = read(deployScript);
+  assert.match(runner, /-f deploy\/docker-compose\.staging\.yml/);
   assertOrder(runner, [
     "pull api web",
     "up -d --no-build --pull never --wait postgres",
@@ -327,6 +328,8 @@ test("normal deployment checks migrations but never applies them", () => {
   assert.doesNotMatch(runner, /--profile migration run --rm migrator/);
   assert.doesNotMatch(runner, /npm\s+run\s+db:migrate(?!:check)/);
   assert.doesNotMatch(runner, /pull api web postgres/);
+  assert.match(runner, /adminRoot\.status !== 302/);
+  assert.match(runner, /adminRoot\.headers\.get\("location"\) !== "\/admin\/codes"/);
 });
 
 test("manual migration uses only PostgreSQL and the digest-pinned migrator", () => {

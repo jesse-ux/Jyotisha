@@ -5,9 +5,11 @@ import { startPostgresFixture } from "./helpers/postgres-fixture";
 
 test("staging postgres is private and CI binds loopback only", () => {
   const staging = readFileSync("../deploy/docker-compose.postgres.yml", "utf8");
+  const application = readFileSync("../deploy/docker-compose.staging.yml", "utf8");
   const ci = readFileSync("../deploy/docker-compose.postgres-ci.yml", "utf8");
   assert.match(staging, /image:\s*postgres:17-alpine/);
   assert.doesNotMatch(staging, /^\s+ports:/m);
+  assert.match(application, /web:\s*\n\s+networks:\s*\n\s+- default\s*\n\s+- app/);
   assert.match(ci, /127\.0\.0\.1:\$\{POSTGRES_HOST_PORT:-55432\}:5432/);
 });
 
