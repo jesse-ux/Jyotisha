@@ -1,0 +1,35 @@
+{
+  "scope": "muhurta_full_scoring_closure_queue_v2",
+  "created_at": "2026-07-22",
+  "claim_status": "partial",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "source_matrix": "references/oracle/muhurta_full_scoring_matrix_queue_2026_07_22.json",
+  "summary": {
+    "factor_count": 12,
+    "observation_ready_count": 6,
+    "gate_only_count": 3,
+    "blocked_gap_count": 3,
+    "final_verdict_allowed": false
+  },
+  "factor_rows": [
+    {"factor": "Tarabala", "status": "observation_ready", "claim": "factor_only", "missing_for_verdict": ["activity weight", "public worked example", "negative example"]},
+    {"factor": "Chandrabala", "status": "observation_ready", "claim": "factor_only", "missing_for_verdict": ["birth Moon contract", "activity weight", "public worked example"]},
+    {"factor": "Rahu Kalam", "status": "observation_ready", "claim": "avoidance_window_only", "missing_for_verdict": ["location-aware public interval replay", "override policy"]},
+    {"factor": "Yamaganda", "status": "observation_ready_from_local_formula", "claim": "avoidance_window_only", "missing_for_verdict": ["public interval packet", "activity override policy"]},
+    {"factor": "Gulika Kalam", "status": "observation_ready_from_local_formula", "claim": "avoidance_window_only", "missing_for_verdict": ["public interval packet", "variant convention"]},
+    {"factor": "Abhijit Muhurta", "status": "observation_ready", "claim": "reference_window_only", "missing_for_verdict": ["public interval packet", "exception policy"]},
+    {"factor": "Panchaka", "status": "blocked_gap", "claim": "not_computed", "missing_for_verdict": ["formula source", "runtime implementation", "worked example"]},
+    {"factor": "Vyatipata", "status": "gate_only_from_panchanga_yoga", "claim": "avoidance_gate_candidate", "missing_for_verdict": ["activity weight", "worked example"]},
+    {"factor": "Vaidhriti", "status": "gate_only_from_panchanga_yoga", "claim": "avoidance_gate_candidate", "missing_for_verdict": ["activity weight", "worked example"]},
+    {"factor": "Sankranti", "status": "blocked_gap", "claim": "not_computed", "missing_for_verdict": ["solar ingress runtime", "public ingress example", "weight rule"]},
+    {"factor": "Bhadra/Vishti Karana", "status": "gate_only_from_panchanga", "claim": "avoidance_gate_candidate", "missing_for_verdict": ["activity-specific override", "worked example"]},
+    {"factor": "Muhurta worked examples", "status": "blocked_gap", "claim": "source_hunt_only", "missing_for_verdict": ["complete public input", "expected interval values", "raw/hash replay"]}
+  ],
+  "oss_candidates": [
+    {"id": "panchang_core", "url": "https://github.com/basraven/panchang-core", "license_target": "MIT", "allowed_use": "formula/API reference after license verification"},
+    {"id": "roxyapi_panchang_api", "url": "https://github.com/RoxyAPI/panchang-api", "allowed_use": "source/API candidate only until license and output contract are fixed"},
+    {"id": "vedastro_muhurta_surface", "allowed_use": "external observation candidate; not hosted truth"}
+  ],
+  "boundary": "Muhurta factors can be shown as transparent observations and avoidance windows. Full scoring or a final electional verdict remains blocked until public worked examples and factor weights close."
+}

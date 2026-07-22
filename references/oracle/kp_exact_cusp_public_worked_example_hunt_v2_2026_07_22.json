@@ -1,0 +1,63 @@
+{
+  "scope": "kp_exact_cusp_public_worked_example_hunt_v2",
+  "created_at": "2026-07-22",
+  "claim_status": "blocked",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "summary": {
+    "candidate_source_count": 6,
+    "complete_numeric_oracle_count": 0,
+    "runtime_observation_sync_allowed": true
+  },
+  "required_numeric_oracle_fields": [
+    "birth_or_query_input",
+    "ayanamsa",
+    "house_system_or_kp_cusp_method",
+    "exact_cusp_longitudes",
+    "cusp_star_lord",
+    "cusp_sub_lord",
+    "cusp_sub_sub_lord"
+  ],
+  "candidate_sources": [
+    {
+      "id": "archive_kp_reader_candidate",
+      "status": "partial_numeric_fragment",
+      "local_packet": "references/oracle/kp_archive_numeric_extraction_result_2026_07_21.json",
+      "gap": "partial cusp degree only; no full input plus star/sub/sub-sub table"
+    },
+    {
+      "id": "vedicastro_python_surface",
+      "status": "runtime_api_surface_candidate",
+      "gap": "API surface can help compute observation raw; not a public expected-value worked example"
+    },
+    {
+      "id": "roxyapi_kp_astrology_api",
+      "status": "oss_or_api_candidate_needs_license_contract",
+      "url": "https://github.com/RoxyAPI/kp-astrology-api",
+      "gap": "candidate implementation/API reference; not yet verified as permissive numeric oracle"
+    },
+    {
+      "id": "logicastro_kp_charts",
+      "status": "oss_candidate_needs_source_review",
+      "url": "https://github.com/logicAstro/logicAstroKPCharts",
+      "gap": "candidate KP chart implementation; expected worked-example rows not captured"
+    },
+    {
+      "id": "jathakam_candidate",
+      "status": "oss_candidate_needs_license_and_api_review",
+      "gap": "potential KP/panchanga source; not yet tied to exact cusp numeric packet"
+    },
+    {
+      "id": "public_kp_pdf_web_hunt",
+      "status": "reference_only",
+      "gap": "public PDFs explain cuspal sub theory, but current pass did not find complete exact cusp/star/sub/sub-sub replay table"
+    }
+  ],
+  "allowed_use": "KP runtime may be displayed as observation-only with exact cusp raw from local/VedicAstro probes; it cannot be used as verified event-timing oracle.",
+  "next_steps": [
+    "capture VedicAstro/runtime KP exact cusp raw for at least three public charts",
+    "continue source hunt for a public worked example with complete expected cusp table",
+    "only promote rows whose input, settings, raw hash and replay comparison are all present"
+  ],
+  "boundary": "KP exact cusp remains blocked as an external oracle. Public/API candidates can support observation sync only; no verified KP prediction claim is allowed."
+}

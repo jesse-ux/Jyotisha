@@ -5,9 +5,9 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 142,
-    "blocked_or_partial_count": 52,
-    "human_review_required_count": 3
+    "packet_count": 162,
+    "blocked_or_partial_count": 66,
+    "human_review_required_count": 4
   },
   "packets": [
     {
@@ -1225,6 +1225,86 @@
       "claim_status": "open_queue",
       "consumer_policy": "research_observation_only",
       "claim_boundary": "Prashna/Tajika/Gulika/Saham/Sphuta public source hunt only; candidates do not upgrade numeric oracle claims."
+    },
+    {
+      "packet_id": "shadbala_dig_source_of_truth_audit_2026_07_22",
+      "path": "references/oracle/shadbala_dig_source_of_truth_audit_2026_07_22.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Two externally captured cases compare three Dig Bala models; the current error ranking is diagnostic only and does not select an absolute formula truth."
+    },
+    {
+      "packet_id": "kp_exact_cusp_public_worked_example_hunt_v2_2026_07_22",
+      "path": "references/oracle/kp_exact_cusp_public_worked_example_hunt_v2_2026_07_22.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "blocked",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "KP exact cusp remains blocked as an external oracle; runtime/API candidates can support observation sync only."
+    },
+    {
+      "packet_id": "muhurta_full_scoring_closure_queue_v2_2026_07_22",
+      "path": "references/oracle/muhurta_full_scoring_closure_queue_v2_2026_07_22.json",
+      "domain": "muhurta_full_system",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Muhurta factors can be shown as observations and avoidance windows; full scoring verdict remains blocked."
+    },
+    {
+      "packet_id": "prashna_tajika_saham_gulika_sphuta_numeric_packet_queue_v2_2026_07_22",
+      "path": "references/oracle/prashna_tajika_saham_gulika_sphuta_numeric_packet_queue_v2_2026_07_22.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Prashna/Tajika/Saham/Gulika/Sphuta numeric packet queue only; no domain is upgraded to numeric oracle ready."
+    },
+    {
+      "packet_id": "timing_rectification_holdout_freeze_contract_2026_07_22",
+      "path": "references/oracle/timing_rectification_holdout_freeze_contract_2026_07_22.json",
+      "domain": "timing_holdout_rectification",
+      "claim_status": "blocked",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Exact day/month timing and birth-time truth upgrades are blocked until independent human labels are frozen before blind ranking."
+    },
+    {
+      "packet_id": "shadbala_component_arbitration_queue_v2_2026_07_22",
+      "path": "references/oracle/shadbala_component_arbitration_queue_v2_2026_07_22.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Component-level queue only: Naisargika is same-unit closed; Dig/Drik/Kala/Sthana/Chesta remain arbitration items and do not upgrade absolute Shadbala truth."
+    },
+    {
+      "packet_id": "raman_shadbala_raw_replay_and_input_drift_2026_07_22",
+      "path": "references/oracle/raman_shadbala_raw_replay_and_input_drift_2026_07_22.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "blocked",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Raman Shadbala sample is not promoted: declared raw artifact is absent and fresh PyJHora replay proves input-contract drift."
+    },
+    {
+      "packet_id": "timing_rectification_public_holdout_candidate_queue_2026_07_22",
+      "path": "references/oracle/timing_rectification_public_holdout_candidate_queue_2026_07_22.json",
+      "domain": "timing_holdout_rectification",
+      "claim_status": "blocked_until_human_labels",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Positive public event candidates are queued, but no independent negative labels are frozen; timing and birth-time truth upgrades remain blocked."
+    },
+    {
+      "packet_id": "ul_a7_a10_kp_cusp_three_engine_parity_gap_2026_07_22",
+      "path": "references/oracle/ul_a7_a10_kp_cusp_three_engine_parity_gap_2026_07_22.json",
+      "domain": "rectification_external_parity",
+      "claim_status": "blocked",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "UL/A7/A10/KP cusp same-input external three-engine parity is not closed; local runtime may be used only as candidate signal."
+    },
+    {
+      "packet_id": "ul_a7_a10_kp_cusp_same_input_parity_probe_2026_07_22",
+      "path": "references/oracle/ul_a7_a10_kp_cusp_same_input_parity_probe_2026_07_22.json",
+      "domain": "rectification_external_parity",
+      "claim_status": "blocked",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Same-input local probe exists for UL/A7/A10/KP cusp, but external PyJHora/jyotishganit/VedicAstro parity is not closed."
     }
   ]
 }

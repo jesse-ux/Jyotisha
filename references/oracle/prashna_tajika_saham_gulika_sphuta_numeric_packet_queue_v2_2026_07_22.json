@@ -1,0 +1,47 @@
+{
+  "scope": "prashna_tajika_saham_gulika_sphuta_numeric_packet_queue_v2",
+  "created_at": "2026-07-22",
+  "claim_status": "open_queue",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "summary": {
+    "domains": 5,
+    "numeric_oracle_ready_count": 0,
+    "tooling_observation_count": 2,
+    "blocked_until_public_expected_values_count": 5
+  },
+  "domain_rows": [
+    {
+      "domain": "Prashna",
+      "local_status": "input_contract_ready",
+      "current_packets": ["references/oracle/prashna_input_contract_2026_07_20.json"],
+      "missing": ["public question input", "expected chart fields", "raw/hash replay"]
+    },
+    {
+      "domain": "Sphuta",
+      "local_status": "tooling_observation_only",
+      "current_packets": ["references/oracle/prashna_sphuta_oss_case_probe_2026_07_20.json"],
+      "missing": ["complete Prashna worked-example input", "transcription-reviewed expected Trisphuta/Catusphuta/Panchasphuta"]
+    },
+    {
+      "domain": "Gulika",
+      "local_status": "runtime_formula_present",
+      "current_packets": ["scripts/gulika.py"],
+      "missing": ["independent Gulika longitude worked example", "day/night convention", "same-location sunrise/sunset source"]
+    },
+    {
+      "domain": "Saham",
+      "local_status": "Tajika queue only",
+      "current_packets": ["docs/benchmark/tajika_sahams_annual_benchmark_dashboard.json"],
+      "missing": ["annual chart input", "expected Saham longitudes", "day/night convention"]
+    },
+    {
+      "domain": "Tajika/Varshaphala",
+      "local_status": "partial extraction contracts",
+      "current_packets": ["docs/benchmark/tajika_steve_jobs_1984_first_packet_operator_card.md", "docs/benchmark/tajika_einstein_1905_fill_map.md"],
+      "missing": ["clean public numeric source", "expected annual fields", "copyright-safe raw/hash packet"]
+    }
+  ],
+  "source_policy": "Public pages, Internet Archive metadata and OSS probes may be indexed; long copyrighted tables are not copied. Numeric packets require field-level expected values, settings and replay hash.",
+  "boundary": "No Prashna/Tajika/Saham/Gulika/Sphuta domain is upgraded to numeric oracle ready in this packet."
+}

@@ -1,0 +1,263 @@
+{
+  "scope": "shadbala_dig_source_of_truth_audit",
+  "schema_version": 1,
+  "candidate_models": [
+    "current_linear_house_model",
+    "house_midpoint_angular_model",
+    "bhava_madhya_angular_model"
+  ],
+  "inputs": {
+    "oracle_file": "references/oracle/dasha_shadbala_oracle_cases.json",
+    "oracle_file_sha256": "9ccf7697727cac73ca34e3b1057ea927d354cb6009fcb6d82f1f1ab3697ed4a4",
+    "external_case_count": 2,
+    "external_case_sources": [
+      {
+        "case_id": "template_steve_jobs_dasha_lahiri",
+        "source_artifact": "references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
+        "source_artifact_sha256": "65f652ac47d4a81ab43568bde8c5d7b9fac09d45f399564500c5af1a12db96c3"
+      },
+      {
+        "case_id": "template_extreme_latitude_kp",
+        "source_artifact": "references/oracle/artifacts/pyjhora_extreme_latitude_kp_shadbala_stdout_20260627.txt",
+        "source_artifact_sha256": "28fc0a1e3aeee3e4a3c1f305038682ce782cacdb0416900184d9c43aeae9a68c"
+      }
+    ]
+  },
+  "summary": {
+    "case_count": 2,
+    "row_count": 14,
+    "best_model_by_avg_abs_diff": "bhava_madhya_angular_model",
+    "avg_abs_diff_by_model": {
+      "current_linear_house_model": 0.3355,
+      "house_midpoint_angular_model": 0.3323,
+      "bhava_madhya_angular_model": 0.3033
+    }
+  },
+  "rows": [
+    {
+      "case_id": "template_steve_jobs_dasha_lahiri",
+      "planet": "Jupiter",
+      "external_dig_rupa": 1.3433,
+      "house": 11,
+      "planet_lon": 87.2772,
+      "asc_lon": 149.0606,
+      "current_linear_house_model": 0.6667,
+      "house_midpoint_angular_model": 0.5734,
+      "bhava_madhya_angular_model": 0.6568,
+      "abs_diffs": {
+        "current_linear_house_model": 0.6766,
+        "house_midpoint_angular_model": 0.7699,
+        "bhava_madhya_angular_model": 0.6865
+      }
+    },
+    {
+      "case_id": "template_steve_jobs_dasha_lahiri",
+      "planet": "Mars",
+      "external_dig_rupa": 1.2902,
+      "house": 9,
+      "planet_lon": 5.8598,
+      "asc_lon": 149.0606,
+      "current_linear_house_model": 0.8333,
+      "house_midpoint_angular_model": 0.6211,
+      "bhava_madhya_angular_model": 0.7044,
+      "abs_diffs": {
+        "current_linear_house_model": 0.4569,
+        "house_midpoint_angular_model": 0.6691,
+        "bhava_madhya_angular_model": 0.5858
+      }
+    },
+    {
+      "case_id": "template_steve_jobs_dasha_lahiri",
+      "planet": "Mercury",
+      "external_dig_rupa": 0.2107,
+      "house": 6,
+      "planet_lon": 291.1311,
+      "asc_lon": 149.0606,
+      "current_linear_house_model": 0.1667,
+      "house_midpoint_angular_model": 0.2941,
+      "bhava_madhya_angular_model": 0.2107,
+      "abs_diffs": {
+        "current_linear_house_model": 0.044,
+        "house_midpoint_angular_model": 0.0834,
+        "bhava_madhya_angular_model": 0.0
+      }
+    },
+    {
+      "case_id": "template_steve_jobs_dasha_lahiri",
+      "planet": "Moon",
+      "external_dig_rupa": 1.5913,
+      "house": 8,
+      "planet_lon": 344.5165,
+      "asc_lon": 149.0606,
+      "current_linear_house_model": 0.3333,
+      "house_midpoint_angular_model": 0.4975,
+      "bhava_madhya_angular_model": 0.4141,
+      "abs_diffs": {
+        "current_linear_house_model": 1.258,
+        "house_midpoint_angular_model": 1.0938,
+        "bhava_madhya_angular_model": 1.1772
+      }
+    },
+    {
+      "case_id": "template_steve_jobs_dasha_lahiri",
+      "planet": "Saturn",
+      "external_dig_rupa": 0.327,
+      "house": 3,
+      "planet_lon": 207.932,
+      "asc_lon": 149.0606,
+      "current_linear_house_model": 0.3333,
+      "house_midpoint_angular_model": 0.2437,
+      "bhava_madhya_angular_model": 0.3271,
+      "abs_diffs": {
+        "current_linear_house_model": 0.0063,
+        "house_midpoint_angular_model": 0.0833,
+        "bhava_madhya_angular_model": 0.0001
+      }
+    },
+    {
+      "case_id": "template_steve_jobs_dasha_lahiri",
+      "planet": "Sun",
+      "external_dig_rupa": 0.4135,
+      "house": 7,
+      "planet_lon": 312.5175,
+      "asc_lon": 149.0606,
+      "current_linear_house_model": 0.5,
+      "house_midpoint_angular_model": 0.3248,
+      "bhava_madhya_angular_model": 0.4081,
+      "abs_diffs": {
+        "current_linear_house_model": 0.0865,
+        "house_midpoint_angular_model": 0.0887,
+        "bhava_madhya_angular_model": 0.0054
+      }
+    },
+    {
+      "case_id": "template_steve_jobs_dasha_lahiri",
+      "planet": "Venus",
+      "external_dig_rupa": 1.1658,
+      "house": 5,
+      "planet_lon": 267.9412,
+      "asc_lon": 149.0606,
+      "current_linear_house_model": 0.8333,
+      "house_midpoint_angular_model": 0.9229,
+      "bhava_madhya_angular_model": 0.8396,
+      "abs_diffs": {
+        "current_linear_house_model": 0.3325,
+        "house_midpoint_angular_model": 0.2429,
+        "bhava_madhya_angular_model": 0.3262
+      }
+    },
+    {
+      "case_id": "template_extreme_latitude_kp",
+      "planet": "Jupiter",
+      "external_dig_rupa": 0.631,
+      "house": 4,
+      "planet_lon": 34.2332,
+      "asc_lon": 327.826,
+      "current_linear_house_model": 0.5,
+      "house_midpoint_angular_model": 0.7144,
+      "bhava_madhya_angular_model": 0.6311,
+      "abs_diffs": {
+        "current_linear_house_model": 0.131,
+        "house_midpoint_angular_model": 0.0834,
+        "bhava_madhya_angular_model": 0.0001
+      }
+    },
+    {
+      "case_id": "template_extreme_latitude_kp",
+      "planet": "Mars",
+      "external_dig_rupa": 0.0193,
+      "house": 5,
+      "planet_lon": 69.2064,
+      "asc_lon": 327.826,
+      "current_linear_house_model": 0.1667,
+      "house_midpoint_angular_model": 0.0201,
+      "bhava_madhya_angular_model": 0.0632,
+      "abs_diffs": {
+        "current_linear_house_model": 0.1474,
+        "house_midpoint_angular_model": 0.0008,
+        "bhava_madhya_angular_model": 0.0439
+      }
+    },
+    {
+      "case_id": "template_extreme_latitude_kp",
+      "planet": "Mercury",
+      "external_dig_rupa": 0.3437,
+      "house": 5,
+      "planet_lon": 85.9761,
+      "asc_lon": 327.826,
+      "current_linear_house_model": 0.3333,
+      "house_midpoint_angular_model": 0.4269,
+      "bhava_madhya_angular_model": 0.3436,
+      "abs_diffs": {
+        "current_linear_house_model": 0.0104,
+        "house_midpoint_angular_model": 0.0832,
+        "bhava_madhya_angular_model": 0.0001
+      }
+    },
+    {
+      "case_id": "template_extreme_latitude_kp",
+      "planet": "Moon",
+      "external_dig_rupa": 0.245,
+      "house": 12,
+      "planet_lon": 289.8315,
+      "asc_lon": 327.826,
+      "current_linear_house_model": 0.3333,
+      "house_midpoint_angular_model": 0.2056,
+      "bhava_madhya_angular_model": 0.2889,
+      "abs_diffs": {
+        "current_linear_house_model": 0.0883,
+        "house_midpoint_angular_model": 0.0394,
+        "bhava_madhya_angular_model": 0.0439
+      }
+    },
+    {
+      "case_id": "template_extreme_latitude_kp",
+      "planet": "Saturn",
+      "external_dig_rupa": 1.6447,
+      "house": 4,
+      "planet_lon": 31.7687,
+      "asc_lon": 327.826,
+      "current_linear_house_model": 0.5,
+      "house_midpoint_angular_model": 0.2719,
+      "bhava_madhya_angular_model": 0.3552,
+      "abs_diffs": {
+        "current_linear_house_model": 1.1447,
+        "house_midpoint_angular_model": 1.3728,
+        "bhava_madhya_angular_model": 1.2895
+      }
+    },
+    {
+      "case_id": "template_extreme_latitude_kp",
+      "planet": "Sun",
+      "external_dig_rupa": 0.0022,
+      "house": 5,
+      "planet_lon": 66.1221,
+      "asc_lon": 327.826,
+      "current_linear_house_model": 0.1667,
+      "house_midpoint_angular_model": 0.0372,
+      "bhava_madhya_angular_model": 0.0461,
+      "abs_diffs": {
+        "current_linear_house_model": 0.1645,
+        "house_midpoint_angular_model": 0.035,
+        "bhava_madhya_angular_model": 0.0439
+      }
+    },
+    {
+      "case_id": "template_extreme_latitude_kp",
+      "planet": "Venus",
+      "external_dig_rupa": 0.9833,
+      "house": 5,
+      "planet_lon": 68.7289,
+      "asc_lon": 327.826,
+      "current_linear_house_model": 0.8333,
+      "house_midpoint_angular_model": 0.9772,
+      "bhava_madhya_angular_model": 0.9394,
+      "abs_diffs": {
+        "current_linear_house_model": 0.15,
+        "house_midpoint_angular_model": 0.0061,
+        "bhava_madhya_angular_model": 0.0439
+      }
+    }
+  ],
+  "boundary": "This audit compares three local Dig Bala candidate models against external oracle rows. It is diagnostic only and does not modify production scoring."
+}

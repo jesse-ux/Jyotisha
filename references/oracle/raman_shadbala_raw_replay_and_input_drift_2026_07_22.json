@@ -1,0 +1,731 @@
+{
+  "boundary": "Raman Shadbala sample is not promoted: the declared raw artifact is absent and fresh black-box replay does not exactly match the pending target values under the declared coordinates. Handan-like coordinates are closer, proving an input-contract drift that needs human/source review.",
+  "chesta_variant_observation": {
+    "boundary": "PyJHora exposes at least two Chesta paths; this replay records behavior but does not choose a formula truth.",
+    "legacy_api_status": "error",
+    "new_api_present": true
+  },
+  "claim_status": "blocked",
+  "comparisons": [
+    {
+      "case_label": "declared_packet_coordinates",
+      "pending_diff": {
+        "diffs": [
+          {
+            "abs_diff": 0.75,
+            "component": "sthana",
+            "observed": 1.689,
+            "pending_expected": 2.439,
+            "planet": "Sun"
+          },
+          {
+            "abs_diff": 1.6388,
+            "component": "dig",
+            "observed": 0.333,
+            "pending_expected": 1.9718,
+            "planet": "Sun"
+          },
+          {
+            "abs_diff": 0.2525,
+            "component": "kala",
+            "observed": 1.2862,
+            "pending_expected": 1.0337,
+            "planet": "Sun"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "chesta",
+            "observed": 0.0,
+            "pending_expected": 0.0,
+            "planet": "Sun"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "naisargika",
+            "observed": 1.0,
+            "pending_expected": 1.0,
+            "planet": "Sun"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "drik",
+            "observed": -0.0113,
+            "pending_expected": -0.0113,
+            "planet": "Sun"
+          },
+          {
+            "abs_diff": 2.1364,
+            "component": "total_rupa",
+            "observed": 4.2968,
+            "pending_expected": 6.4332,
+            "planet": "Sun"
+          },
+          {
+            "abs_diff": 0.75,
+            "component": "sthana",
+            "observed": 2.3945,
+            "pending_expected": 3.1445,
+            "planet": "Moon"
+          },
+          {
+            "abs_diff": 1.8751,
+            "component": "dig",
+            "observed": 0.2522,
+            "pending_expected": 2.1273,
+            "planet": "Moon"
+          },
+          {
+            "abs_diff": 2.5158,
+            "component": "kala",
+            "observed": 3.563,
+            "pending_expected": 1.0472,
+            "planet": "Moon"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "chesta",
+            "observed": 0.0,
+            "pending_expected": 0.0,
+            "planet": "Moon"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "naisargika",
+            "observed": 0.8572,
+            "pending_expected": 0.8572,
+            "planet": "Moon"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "drik",
+            "observed": -0.361,
+            "pending_expected": -0.361,
+            "planet": "Moon"
+          },
+          {
+            "abs_diff": 0.1094,
+            "component": "total_rupa",
+            "observed": 6.7058,
+            "pending_expected": 6.8152,
+            "planet": "Moon"
+          },
+          {
+            "abs_diff": 0.25,
+            "component": "sthana",
+            "observed": 2.9763,
+            "pending_expected": 2.7263,
+            "planet": "Mars"
+          },
+          {
+            "abs_diff": 1.4364,
+            "component": "dig",
+            "observed": 0.3108,
+            "pending_expected": 1.7472,
+            "planet": "Mars"
+          },
+          {
+            "abs_diff": 0.2852,
+            "component": "kala",
+            "observed": 0.675,
+            "pending_expected": 0.3898,
+            "planet": "Mars"
+          },
+          {
+            "abs_diff": 0.0105,
+            "component": "chesta",
+            "observed": 0.7487,
+            "pending_expected": 0.7592,
+            "planet": "Mars"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "naisargika",
+            "observed": 0.2857,
+            "pending_expected": 0.2857,
+            "planet": "Mars"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "drik",
+            "observed": 0.1142,
+            "pending_expected": 0.1142,
+            "planet": "Mars"
+          },
+          {
+            "abs_diff": 0.9117,
+            "component": "total_rupa",
+            "observed": 5.1107,
+            "pending_expected": 6.0224,
+            "planet": "Mars"
+          },
+          {
+            "abs_diff": 0.75,
+            "component": "sthana",
+            "observed": 2.4245,
+            "pending_expected": 3.1745,
+            "planet": "Mercury"
+          },
+          {
+            "abs_diff": 1.8946,
+            "component": "dig",
+            "observed": 0.2742,
+            "pending_expected": 2.1688,
+            "planet": "Mercury"
+          },
+          {
+            "abs_diff": 1.7158,
+            "component": "kala",
+            "observed": 2.1688,
+            "pending_expected": 0.453,
+            "planet": "Mercury"
+          },
+          {
+            "abs_diff": 0.0132,
+            "component": "chesta",
+            "observed": 0.1285,
+            "pending_expected": 0.1417,
+            "planet": "Mercury"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "naisargika",
+            "observed": 0.4285,
+            "pending_expected": 0.4285,
+            "planet": "Mercury"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "drik",
+            "observed": -0.0113,
+            "pending_expected": -0.0113,
+            "planet": "Mercury"
+          },
+          {
+            "abs_diff": 0.942,
+            "component": "total_rupa",
+            "observed": 5.4132,
+            "pending_expected": 6.3552,
+            "planet": "Mercury"
+          },
+          {
+            "abs_diff": 0.25,
+            "component": "sthana",
+            "observed": 3.5732,
+            "pending_expected": 3.3232,
+            "planet": "Jupiter"
+          },
+          {
+            "abs_diff": 2.9272,
+            "component": "dig",
+            "observed": 0.8743,
+            "pending_expected": 3.8015,
+            "planet": "Jupiter"
+          },
+          {
+            "abs_diff": 3.9765,
+            "component": "kala",
+            "observed": 4.1237,
+            "pending_expected": 0.1472,
+            "planet": "Jupiter"
+          },
+          {
+            "abs_diff": 0.0033,
+            "component": "chesta",
+            "observed": 0.6975,
+            "pending_expected": 0.6942,
+            "planet": "Jupiter"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "naisargika",
+            "observed": 0.5715,
+            "pending_expected": 0.5715,
+            "planet": "Jupiter"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "drik",
+            "observed": 0.0903,
+            "pending_expected": 0.0903,
+            "planet": "Jupiter"
+          },
+          {
+            "abs_diff": 1.3026,
+            "component": "total_rupa",
+            "observed": 9.9305,
+            "pending_expected": 8.6279,
+            "planet": "Jupiter"
+          },
+          {
+            "abs_diff": 0.5,
+            "component": "sthana",
+            "observed": 3.2498,
+            "pending_expected": 2.7498,
+            "planet": "Venus"
+          },
+          {
+            "abs_diff": 0.739,
+            "component": "dig",
+            "observed": 1.5092,
+            "pending_expected": 2.2482,
+            "planet": "Venus"
+          },
+          {
+            "abs_diff": 2.3527,
+            "component": "kala",
+            "observed": 2.5625,
+            "pending_expected": 0.2098,
+            "planet": "Venus"
+          },
+          {
+            "abs_diff": 0.004,
+            "component": "chesta",
+            "observed": 0.3622,
+            "pending_expected": 0.3582,
+            "planet": "Venus"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "naisargika",
+            "observed": 0.7143,
+            "pending_expected": 0.7143,
+            "planet": "Venus"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "drik",
+            "observed": 0.0598,
+            "pending_expected": 0.0598,
+            "planet": "Venus"
+          },
+          {
+            "abs_diff": 2.1177,
+            "component": "total_rupa",
+            "observed": 8.4578,
+            "pending_expected": 6.3401,
+            "planet": "Venus"
+          },
+          {
+            "abs_diff": 0.75,
+            "component": "sthana",
+            "observed": 2.9992,
+            "pending_expected": 3.7492,
+            "planet": "Saturn"
+          },
+          {
+            "abs_diff": 1.1388,
+            "component": "dig",
+            "observed": 0.219,
+            "pending_expected": 1.3578,
+            "planet": "Saturn"
+          },
+          {
+            "abs_diff": 0.0103,
+            "component": "kala",
+            "observed": 1.0435,
+            "pending_expected": 1.0538,
+            "planet": "Saturn"
+          },
+          {
+            "abs_diff": 0.0035,
+            "component": "chesta",
+            "observed": 0.6103,
+            "pending_expected": 0.6068,
+            "planet": "Saturn"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "naisargika",
+            "observed": 0.1428,
+            "pending_expected": 0.1428,
+            "planet": "Saturn"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "drik",
+            "observed": 0.1852,
+            "pending_expected": 0.1852,
+            "planet": "Saturn"
+          },
+          {
+            "abs_diff": 1.8956,
+            "component": "total_rupa",
+            "observed": 5.2,
+            "pending_expected": 7.0956,
+            "planet": "Saturn"
+          }
+        ],
+        "max_abs_diff": 3.9765,
+        "row_count": 49,
+        "within_0001_count": 16
+      }
+    },
+    {
+      "case_label": "handan_candidate_coordinates",
+      "pending_diff": {
+        "diffs": [
+          {
+            "abs_diff": 0.0,
+            "component": "sthana",
+            "observed": 2.439,
+            "pending_expected": 2.439,
+            "planet": "Sun"
+          },
+          {
+            "abs_diff": 0.9396,
+            "component": "dig",
+            "observed": 1.0322,
+            "pending_expected": 1.9718,
+            "planet": "Sun"
+          },
+          {
+            "abs_diff": 0.9365,
+            "component": "kala",
+            "observed": 1.9702,
+            "pending_expected": 1.0337,
+            "planet": "Sun"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "chesta",
+            "observed": 0.0,
+            "pending_expected": 0.0,
+            "planet": "Sun"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "naisargika",
+            "observed": 1.0,
+            "pending_expected": 1.0,
+            "planet": "Sun"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "drik",
+            "observed": -0.0113,
+            "pending_expected": -0.0113,
+            "planet": "Sun"
+          },
+          {
+            "abs_diff": 0.0032,
+            "component": "total_rupa",
+            "observed": 6.43,
+            "pending_expected": 6.4332,
+            "planet": "Sun"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "sthana",
+            "observed": 3.1445,
+            "pending_expected": 3.1445,
+            "planet": "Moon"
+          },
+          {
+            "abs_diff": 1.0786,
+            "component": "dig",
+            "observed": 1.0487,
+            "pending_expected": 2.1273,
+            "planet": "Moon"
+          },
+          {
+            "abs_diff": 1.0818,
+            "component": "kala",
+            "observed": 2.129,
+            "pending_expected": 1.0472,
+            "planet": "Moon"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "chesta",
+            "observed": 0.0,
+            "pending_expected": 0.0,
+            "planet": "Moon"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "naisargika",
+            "observed": 0.8572,
+            "pending_expected": 0.8572,
+            "planet": "Moon"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "drik",
+            "observed": -0.361,
+            "pending_expected": -0.361,
+            "planet": "Moon"
+          },
+          {
+            "abs_diff": 0.0031,
+            "component": "total_rupa",
+            "observed": 6.8183,
+            "pending_expected": 6.8152,
+            "planet": "Moon"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "sthana",
+            "observed": 2.7263,
+            "pending_expected": 2.7263,
+            "planet": "Mars"
+          },
+          {
+            "abs_diff": 1.3589,
+            "component": "dig",
+            "observed": 0.3883,
+            "pending_expected": 1.7472,
+            "planet": "Mars"
+          },
+          {
+            "abs_diff": 1.359,
+            "component": "kala",
+            "observed": 1.7488,
+            "pending_expected": 0.3898,
+            "planet": "Mars"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "chesta",
+            "observed": 0.7592,
+            "pending_expected": 0.7592,
+            "planet": "Mars"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "naisargika",
+            "observed": 0.2857,
+            "pending_expected": 0.2857,
+            "planet": "Mars"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "drik",
+            "observed": 0.1142,
+            "pending_expected": 0.1142,
+            "planet": "Mars"
+          },
+          {
+            "abs_diff": 0.0001,
+            "component": "total_rupa",
+            "observed": 6.0225,
+            "pending_expected": 6.0224,
+            "planet": "Mars"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "sthana",
+            "observed": 3.1745,
+            "pending_expected": 3.1745,
+            "planet": "Mercury"
+          },
+          {
+            "abs_diff": 1.7186,
+            "component": "dig",
+            "observed": 0.4502,
+            "pending_expected": 2.1688,
+            "planet": "Mercury"
+          },
+          {
+            "abs_diff": 1.7158,
+            "component": "kala",
+            "observed": 2.1688,
+            "pending_expected": 0.453,
+            "planet": "Mercury"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "chesta",
+            "observed": 0.1417,
+            "pending_expected": 0.1417,
+            "planet": "Mercury"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "naisargika",
+            "observed": 0.4285,
+            "pending_expected": 0.4285,
+            "planet": "Mercury"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "drik",
+            "observed": -0.0113,
+            "pending_expected": -0.0113,
+            "planet": "Mercury"
+          },
+          {
+            "abs_diff": 0.0029,
+            "component": "total_rupa",
+            "observed": 6.3523,
+            "pending_expected": 6.3552,
+            "planet": "Mercury"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "sthana",
+            "observed": 3.3232,
+            "pending_expected": 3.3232,
+            "planet": "Jupiter"
+          },
+          {
+            "abs_diff": 3.6515,
+            "component": "dig",
+            "observed": 0.15,
+            "pending_expected": 3.8015,
+            "planet": "Jupiter"
+          },
+          {
+            "abs_diff": 3.6526,
+            "component": "kala",
+            "observed": 3.7998,
+            "pending_expected": 0.1472,
+            "planet": "Jupiter"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "chesta",
+            "observed": 0.6942,
+            "pending_expected": 0.6942,
+            "planet": "Jupiter"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "naisargika",
+            "observed": 0.5715,
+            "pending_expected": 0.5715,
+            "planet": "Jupiter"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "drik",
+            "observed": 0.0903,
+            "pending_expected": 0.0903,
+            "planet": "Jupiter"
+          },
+          {
+            "abs_diff": 0.0011,
+            "component": "total_rupa",
+            "observed": 8.629,
+            "pending_expected": 8.6279,
+            "planet": "Jupiter"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "sthana",
+            "observed": 2.7498,
+            "pending_expected": 2.7498,
+            "planet": "Venus"
+          },
+          {
+            "abs_diff": 2.0399,
+            "component": "dig",
+            "observed": 0.2083,
+            "pending_expected": 2.2482,
+            "planet": "Venus"
+          },
+          {
+            "abs_diff": 2.0367,
+            "component": "kala",
+            "observed": 2.2465,
+            "pending_expected": 0.2098,
+            "planet": "Venus"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "chesta",
+            "observed": 0.3582,
+            "pending_expected": 0.3582,
+            "planet": "Venus"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "naisargika",
+            "observed": 0.7143,
+            "pending_expected": 0.7143,
+            "planet": "Venus"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "drik",
+            "observed": 0.0598,
+            "pending_expected": 0.0598,
+            "planet": "Venus"
+          },
+          {
+            "abs_diff": 0.0031,
+            "component": "total_rupa",
+            "observed": 6.337,
+            "pending_expected": 6.3401,
+            "planet": "Venus"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "sthana",
+            "observed": 3.7492,
+            "pending_expected": 3.7492,
+            "planet": "Saturn"
+          },
+          {
+            "abs_diff": 0.3011,
+            "component": "dig",
+            "observed": 1.0567,
+            "pending_expected": 1.3578,
+            "planet": "Saturn"
+          },
+          {
+            "abs_diff": 0.3057,
+            "component": "kala",
+            "observed": 1.3595,
+            "pending_expected": 1.0538,
+            "planet": "Saturn"
+          },
+          {
+            "abs_diff": 0.0001,
+            "component": "chesta",
+            "observed": 0.6067,
+            "pending_expected": 0.6068,
+            "planet": "Saturn"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "naisargika",
+            "observed": 0.1428,
+            "pending_expected": 0.1428,
+            "planet": "Saturn"
+          },
+          {
+            "abs_diff": 0.0,
+            "component": "drik",
+            "observed": 0.1852,
+            "pending_expected": 0.1852,
+            "planet": "Saturn"
+          },
+          {
+            "abs_diff": 0.0044,
+            "component": "total_rupa",
+            "observed": 7.1,
+            "pending_expected": 7.0956,
+            "planet": "Saturn"
+          }
+        ],
+        "max_abs_diff": 3.6526,
+        "row_count": 49,
+        "within_0001_count": 29
+      }
+    }
+  ],
+  "created_at": "2026-07-22",
+  "pending_packet": "references/oracle/artifacts/pending_packets/external_template_synthetic_north_china_shadbala_raman_pyjhora_20260627.json",
+  "production_tuning_allowed": false,
+  "replay_artifact": "references/oracle/artifacts/pyjhora_synthetic_north_china_shadbala_raman_stdout_20260722.txt",
+  "replay_artifact_sha256": "427ad14c8fe3ab3b879822b7692f70ab3cbc26ed2e8896c8465bd138b310b24a",
+  "scope": "raman_shadbala_raw_replay_and_input_drift",
+  "summary": {
+    "best_case_label_by_max_diff": "handan_candidate_coordinates",
+    "can_promote_raman_sample": false,
+    "complete_match_count": 0,
+    "pending_declared_artifact_found": false,
+    "replay_case_count": 2
+  },
+  "truth_matrix_allowed": false
+}

@@ -1,0 +1,35 @@
+{
+  "scope": "timing_rectification_holdout_freeze_contract",
+  "created_at": "2026-07-22",
+  "claim_status": "blocked",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "summary": {
+    "minimum_public_people": 3,
+    "positive_events_per_person": 1,
+    "negative_windows_per_person": 2,
+    "frozen_label_count": 0,
+    "blind_ranking_allowed": false,
+    "day_month_claim_upgrade_allowed": false
+  },
+  "required_label_schema": {
+    "person_id": "public person slug",
+    "birth_data_source": "public source URL or packet id",
+    "event_domain": "career | relationship | health | relocation | other",
+    "positive_event": {"date_or_range": "required", "source": "required", "pre_registered": true},
+    "negative_windows": [{"start": "required", "end": "required", "reason": "no known target event in this domain"}],
+    "reviewer": "human reviewer id",
+    "freeze_hash": "sha256 of sorted labels before model run"
+  },
+  "allowed_runtime_output": {
+    "verified_window": "broad window only",
+    "candidate_windows": "exploratory_unvalidated",
+    "claim_status": "exploratory_unvalidated"
+  },
+  "blocked_output": [
+    "verified exact event date",
+    "birth-time truth from candidate score",
+    "production tuning on existing observed controls"
+  ],
+  "boundary": "Timing and birth-time rectification exact day/month upgrades are blocked until independent human labels are frozen before blind ranking."
+}

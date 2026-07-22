@@ -32,63 +32,63 @@
         "shadbala_components": {
           "Jupiter": {
             "chesta": 1.2333,
-            "dig": 3.3218,
+            "dig": 1.3433,
             "drik": 0.1148,
-            "kala": 1.3433,
+            "kala": 3.3218,
             "naisargika": 0.5715,
             "sthana": 3.3633,
             "total_rupa": 9.948
           },
           "Mars": {
             "chesta": 1.643,
-            "dig": 2.1322,
+            "dig": 1.2902,
             "drik": 0.2248,
-            "kala": 1.2902,
+            "kala": 2.1322,
             "naisargika": 0.2857,
             "sthana": 3.3105,
             "total_rupa": 8.8864
           },
           "Mercury": {
             "chesta": 0.763,
-            "dig": 2.0297,
+            "dig": 0.2107,
             "drik": -0.1772,
-            "kala": 0.2107,
+            "kala": 2.0297,
             "naisargika": 0.4285,
             "sthana": 2.7993,
             "total_rupa": 6.054
           },
           "Moon": {
             "chesta": 0.0,
-            "dig": 2.493,
+            "dig": 1.5913,
             "drik": 0.3343,
-            "kala": 1.5913,
+            "kala": 2.493,
             "naisargika": 0.8572,
             "sthana": 4.1057,
             "total_rupa": 9.3815
           },
           "Saturn": {
             "chesta": 0.606,
-            "dig": 2.2795,
+            "dig": 0.327,
             "drik": 0.1582,
-            "kala": 0.327,
+            "kala": 2.2795,
             "naisargika": 0.1428,
             "sthana": 3.6435,
             "total_rupa": 7.157
           },
           "Sun": {
             "chesta": 0.0,
-            "dig": 2.3498,
+            "dig": 0.4135,
             "drik": 0.029,
-            "kala": 0.4135,
+            "kala": 2.3498,
             "naisargika": 1.0,
             "sthana": 3.6182,
             "total_rupa": 7.4105
           },
           "Venus": {
             "chesta": 0.518,
-            "dig": 1.8907,
+            "dig": 1.1658,
             "drik": -0.0458,
-            "kala": 1.1658,
+            "kala": 1.8907,
             "naisargika": 0.7143,
             "sthana": 2.5677,
             "total_rupa": 6.8107
@@ -136,63 +136,63 @@
         "shadbala_components": {
           "Jupiter": {
             "chesta": 0.1965,
-            "dig": 3.161,
+            "dig": 0.631,
             "drik": -0.1575,
-            "kala": 0.631,
+            "kala": 3.161,
             "naisargika": 0.5715,
             "sthana": 3.225,
             "total_rupa": 7.6275
           },
           "Mars": {
             "chesta": 0.0128,
-            "dig": 2.0753,
+            "dig": 0.0193,
             "drik": -0.0493,
-            "kala": 0.0193,
+            "kala": 2.0753,
             "naisargika": 0.2857,
             "sthana": 2.4897,
             "total_rupa": 4.8335
           },
           "Mercury": {
             "chesta": 0.8185,
-            "dig": 2.4763,
+            "dig": 0.3437,
             "drik": -0.0563,
-            "kala": 0.3437,
+            "kala": 2.4763,
             "naisargika": 0.4285,
             "sthana": 2.6547,
             "total_rupa": 6.6654
           },
           "Moon": {
             "chesta": 0.0,
-            "dig": 1.3733,
+            "dig": 0.245,
             "drik": -0.2927,
-            "kala": 0.245,
+            "kala": 1.3733,
             "naisargika": 0.8572,
             "sthana": 1.5518,
             "total_rupa": 3.7346
           },
           "Saturn": {
             "chesta": 0.1935,
-            "dig": 0.8512,
+            "dig": 1.6447,
             "drik": -0.1627,
-            "kala": 1.6447,
+            "kala": 0.8512,
             "naisargika": 0.1428,
             "sthana": 3.2218,
             "total_rupa": 5.8913
           },
           "Sun": {
             "chesta": 0.0,
-            "dig": 1.7548,
+            "dig": 0.0022,
             "drik": -0.0622,
-            "kala": 0.0022,
+            "kala": 1.7548,
             "naisargika": 1.0,
             "sthana": 3.1882,
             "total_rupa": 5.883
           },
           "Venus": {
             "chesta": 0.0508,
-            "dig": 4.6728,
+            "dig": 0.9833,
             "drik": -0.0513,
-            "kala": 0.9833,
+            "kala": 4.6728,
             "naisargika": 0.7143,
             "sthana": 2.1638,
             "total_rupa": 8.5337
