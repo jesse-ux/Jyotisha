@@ -1,6 +1,5 @@
 import { ChatMessageContent } from "@/components/chat-message-content";
 import type { ChatMessageView } from "@/lib/chat-message-view";
-import { consultationReportMarkdown, downloadMarkdownReport } from "@/lib/consultation-report-export";
 
 export function AgentAvatar() {
   return <span className="agent-avatar" aria-hidden="true" />;
@@ -24,7 +23,7 @@ export function ChatMessageRow({ message }: { readonly message: ChatMessageView 
           {message.role === "assistant" ? (
             message.state === "thinking"
               ? <div className="thinking"><i /><i /><i /></div>
-              : <><ChatMessageContent text={message.text} /><button className="report-download-button" type="button" onClick={() => downloadMarkdownReport("Jyotisha 咨询报告", consultationReportMarkdown({ title: "Jyotisha 咨询报告", messages: [message] }))}>下载本次报告</button></>
+              : <ChatMessageContent text={message.text} />
           ) : <p>{message.text}</p>}
         </div>
       </div>

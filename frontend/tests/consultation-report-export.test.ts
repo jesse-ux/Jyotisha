@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { consultationReportMarkdown, downloadMarkdownReport } from "../src/lib/consultation-report-export.ts";
+import { consultationReportMarkdown } from "../src/lib/consultation-report-export.ts";
 const rowSource = readFileSync(new URL("../src/components/chat-message-row.tsx", import.meta.url), "utf8");
 const globalStyles = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
 
@@ -32,9 +32,8 @@ test("exports latest consultation answer with workflow receipt and claim boundar
   assert.match(report, /未闭环内容不得包装成确定预测/);
 });
 
-test("assistant answer exposes a markdown report download button", () => {
-  assert.equal(typeof downloadMarkdownReport, "function");
-  assert.match(rowSource, /下载本次报告/);
-  assert.match(rowSource, /downloadMarkdownReport/);
-  assert.match(globalStyles, /\.report-download-button/);
+test("assistant answer does not expose internal report controls", () => {
+  assert.doesNotMatch(rowSource, /下载本次报告/);
+  assert.doesNotMatch(rowSource, /downloadMarkdownReport/);
+  assert.doesNotMatch(globalStyles, /\.report-download-button/);
 });

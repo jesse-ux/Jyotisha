@@ -96,6 +96,7 @@ function packetEngine(options: {
   readonly scanTimes?: readonly string[];
   readonly scanCalls?: Array<{ readonly birthTime: string; readonly uncertaintyMinutes: number }>;
   readonly scoreResults?: readonly CandidateResult[];
+  readonly differenceError?: Error;
 } = {}): BirthTimeJourneyEngine {
   let scoreResultIndex = 0;
   const minute = (value: string) => {
@@ -168,6 +169,7 @@ function packetEngine(options: {
     },
     async buildDifferencePacket(input) {
       options.differenceCalls?.push(input);
+      if (options.differenceError) throw options.differenceError;
       return {
         packet: {
           caseId: input.caseId,
@@ -185,6 +187,62 @@ function packetEngine(options: {
     async scoreChoices() { throw new Error("unexpected choice score"); },
   };
 }
+
+test("production first turn continues when optional candidate differences time out", async () => {
+  const built = await buildProductionConversationalRectificationPacket(
+    packetEngine({ differenceError: new DOMException("timed out", "TimeoutError") }),
+    {
+      userId,
+      caseId,
+      asOfDate: "2026-07-22",
+      declaredBirthInput: {
+        source: "hospital_record",
+        birthDate: "1990-01-01",
+        reportedTime: "05:20",
+        uncertaintyBeforeMinutes: 2,
+        uncertaintyAfterMinutes: 2,
+        birthTimeClue: null,
+        birthplace: packetBirthplace,
+      },
+      privateCandidate: null,
+      evidence: [],
+    },
+  );
+
+  assert.equal(built.packet.candidate.status, "pending_validation");
+  assert.deepEqual(built.packet.candidate.range, { startTime: "05:18", endTime: "05:22" });
+  assert.deepEqual(built.packet.candidateDifferenceRefs.filter((item) => (
+    item.startsWith("birth-time-choice-scoring")
+  )), []);
+  assert.equal(built.packet.suggestedDomains.length >= 2, true);
+});
+
+test("production first turn skips the minute-heavy candidate partition call for a full day", async () => {
+  const differenceCalls: DifferencePacketInput[] = [];
+  const built = await buildProductionConversationalRectificationPacket(
+    packetEngine({ differenceCalls }),
+    {
+      userId,
+      caseId,
+      asOfDate: "2026-07-22",
+      declaredBirthInput: {
+        source: "unknown",
+        birthDate: "1990-01-01",
+        reportedTime: null,
+        uncertaintyBeforeMinutes: null,
+        uncertaintyAfterMinutes: null,
+        birthTimeClue: null,
+        birthplace: packetBirthplace,
+      },
+      privateCandidate: null,
+      evidence: [],
+    },
+  );
+
+  assert.equal(differenceCalls.length, 0);
+  assert.deepEqual(built.packet.candidate.range, { startTime: "00:00", endTime: "23:59" });
+  assert.equal(built.packet.suggestedDomains.length >= 2, true);
+});
 
 const packetBirthplace = {
   cityCode: "TPE-CITY",

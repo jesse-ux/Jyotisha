@@ -240,13 +240,16 @@ function suggestedDomains(
       && Boolean(values[index]?.length)
       && value !== values[index]
     )).length;
-    if (adjacentChanges === 0) return [];
+    const observedRangeDifference = item.values.length > 1;
+    if (adjacentChanges === 0 && !observedRangeDifference) return [];
     return [{
       domain,
       layer: item.layer,
       adjacentChanges,
       valueCount: item.values.length,
-      reason: `${item.layer} 在相邻候选分钟中发生 ${adjacentChanges} 次实际切换，并呈现 ${item.values.join(" / ")} 差异，可用已发生的${domainLabels[domain]}事件区分。`,
+      reason: adjacentChanges > 0
+        ? `${item.layer} 在相邻候选分钟中发生 ${adjacentChanges} 次实际切换，并呈现 ${item.values.join(" / ")} 差异，可用已发生的${domainLabels[domain]}事件区分。`
+        : `${item.layer} 在候选范围内已扫描的时点呈现 ${item.values.join(" / ")} 差异，可用已发生的${domainLabels[domain]}事件继续区分；这不代表相邻分钟已经发生切换。`,
     }];
   }).sort((left, right) => right.adjacentChanges - left.adjacentChanges
     || right.valueCount - left.valueCount

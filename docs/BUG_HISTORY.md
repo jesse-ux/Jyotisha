@@ -208,11 +208,11 @@
 - 首次发现：2026-07-22
 - 最近更新：2026-07-22
 - 影响面：普通问答消息、Agent 回答顶部区域
-- 用户现象：回答正文上方显示“证据状态：not-applicable”和“证据链摘要 · not-applicable”等工程审计信息。
+- 用户现象：回答正文上方显示“证据状态：not-applicable”和“证据链摘要 · not-applicable”等工程审计信息，正文下方还显示单条回答的报告下载控件。
 - 触发条件：任意已完成的 Agent 回答，尤其是后端返回 `not-applicable` 时。
 - 根因：消息行对每条非思考态 Agent 消息无条件渲染 claim boundary 与 Technique Audit Table；未识别状态又直接回退显示原始状态值。
-- 修复：从普通聊天消息行移除内部证据徽章与审计面板；证据状态和 workflow receipt 仍随消息保存并供内部约束及报告生成使用。
-- 验证：`frontend/tests/claim-boundary-badge.test.ts`、`frontend/tests/evidence-audit-panel.test.ts` 锁定聊天消息不再挂载两个内部组件。
+- 修复：从普通聊天消息行移除内部证据徽章、审计面板和单条回答报告下载控件；证据状态和 workflow receipt 仍随消息保存并供内部约束使用。
+- 验证：`frontend/tests/claim-boundary-badge.test.ts`、`frontend/tests/evidence-audit-panel.test.ts`、`frontend/tests/consultation-report-export.test.ts` 锁定聊天消息不再挂载这些内部组件。
 - 防复发：聊天消息渲染契约禁止直接展示 `techniqueTruth` 和 `workflowReceipt`；需要运营或调试时使用独立的受控界面。
 - 相关记录：BUG-009
 - 复发自：无
@@ -281,3 +281,19 @@
 - 相关记录：BUG-009、BUG-014、ERR-045、ERR-053、ERR-086
 - 复发自：无
 - 修复版本：d7d9703
+
+## BUG-016 | 生时校正首轮被扫描稀疏度或候选分区超时打成 503
+
+- 状态：resolved
+- 首次发现：2026-07-22
+- 最近更新：2026-07-22
+- 影响面：首页“先完成生时校正”、`POST /api/birth-time-conversation` 首轮技术包
+- 用户现象：点击生时校正后仍停留在普通咨询页，并显示“生时校正暂时无法继续”；接口返回 503。
+- 触发条件：候选扫描包含真实但不连续的时点差异，或动态候选分区依赖在 45 秒内没有返回。
+- 根因：技术包只承认相邻分钟切换，错误拒绝了稀疏扫描中的真实范围差异；同时首轮把用于改善问题排序的候选分区依赖当成不可降级的硬依赖。生产版本 `b981c4e` 的日志分别记录了 `RectificationTechnicalPacketRangeError` 和 `candidate_differences TimeoutError`。
+- 修复：稀疏扫描差异改用明确的范围级文案，禁止伪称相邻分钟切换；超过六小时的宽范围首轮跳过分钟级候选分区，较窄范围在候选分区发生已知超时、取消、配置或服务故障时保留服务端扫描证据并继续收集，不再返回 503；未知编程或契约错误仍失败关闭。
+- 验证：`frontend/tests/conversational-technical-packet.test.ts`、`frontend/tests/conversational-rectification-route.test.ts`、真实 Chromium 390px 组件回归和 `npm run build` 通过；完整前端套件 844 项中 837 项通过，余下 7 项均为沙箱 Chromium / PostgreSQL 端口环境失败，针对性 Chromium 在沙箱外 8/8 通过。
+- 防复发：首轮必须区分核心扫描失败与可降级的候选排序依赖；稀疏差异文案必须显式否认相邻分钟切换；生产验收必须核对接口状态与实际进入校正会话。
+- 相关记录：BUG-004、BUG-008、ERR-091
+- 复发自：无
+- 修复版本：待提交（本地可测）

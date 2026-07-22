@@ -272,13 +272,13 @@ test("does not claim scan-wide 05:10-05:30 differences inside a 05:16-05:24 cand
     && error.reason === "insufficient_samples");
 });
 
-test("does not describe sparse in-range samples as adjacent-minute switches", () => {
+test("uses sparse in-range differences without describing them as adjacent-minute switches", () => {
   const sparseScan = {
     ...scan,
     samples: [scan.samples[1], scan.samples[2]],
   } satisfies RectificationQuestionnaire;
 
-  assert.throws(() => buildRectificationTechnicalPacket({
+  const packet = buildRectificationTechnicalPacket({
     scan: sparseScan,
     candidateDifferences,
     eventScore,
@@ -298,8 +298,13 @@ test("does not describe sparse in-range samples as adjacent-minute switches", ()
       boundaryDistanceMinutes: 4,
       futureWindows: [],
     },
-  }), (error) => error instanceof RectificationTechnicalPacketRangeError
-    && error.reason === "insufficient_domains");
+  });
+  assert.equal(packet.suggestedDomains.length, 2);
+  for (const domain of packet.suggestedDomains) {
+    assert.match(domain.reason, /已扫描的时点/);
+    assert.match(domain.reason, /不代表相邻分钟已经发生切换/);
+    assert.doesNotMatch(domain.reason, /发生 \d+ 次实际切换/);
+  }
 });
 
 test("uses typed server time links when normalized scan raw metadata omits sample times", () => {

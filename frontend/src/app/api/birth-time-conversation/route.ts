@@ -23,6 +23,7 @@ import {
 import type { RectificationNarrativeGenerator } from "../../../lib/conversational-rectification/narrative-agent.ts";
 import type { BirthTimeJourneyEngine, RectificationQuestionnaire } from "../../../lib/birth-time-journey-service.ts";
 import type { CandidateResult, LifeEvent } from "../../../lib/birth-time-evidence.ts";
+import type { CandidateDifferenceBuild } from "../../../lib/birth-time-dynamic-choice-internal.ts";
 import { conversationalRectificationCreationPolicyFromEnvironment } from "../../../lib/conversational-rectification/creation-policy.ts";
 import {
   conversationalRectificationLatencyBucket,
@@ -449,6 +450,43 @@ function layerMetadata(scan: RectificationQuestionnaire, calculationVersion: str
   };
 }
 
+function unavailableCandidateDifferences(
+  caseId: string,
+  range: { readonly startTime: string; readonly endTime: string },
+): CandidateDifferenceBuild {
+  return {
+    packet: {
+      caseId,
+      scoringVersion: "birth-time-choice-scoring-v2",
+      currentRange: range,
+      opportunities: [],
+      askedQuestionFingerprints: [],
+      candidatePartitionFingerprints: [],
+      recentRangeHistory: [],
+    },
+    candidateModel: { version: "birth-time-choice-scoring-v2" },
+    scoringPartitions: {},
+  };
+}
+
+function candidateDifferencesAreUnavailable(error: unknown): boolean {
+  return error instanceof Error && [
+    "AbortError",
+    "TimeoutError",
+    "BirthTimeJourneyEngineError",
+    "BirthTimeJourneyEngineConfigurationError",
+  ].includes(error.name);
+}
+
+function candidateDifferenceRangeIsTooWide(
+  range: { readonly startTime: string; readonly endTime: string },
+): boolean {
+  const start = minute(range.startTime);
+  let end = minute(range.endTime);
+  if (end < start) end += 1_440;
+  return end - start > 360;
+}
+
 function boundaryDistance(range: { readonly startTime: string; readonly endTime: string }, representative: string) {
   const start = minute(range.startTime);
   let end = minute(range.endTime);
@@ -529,26 +567,35 @@ export async function buildProductionConversationalRectificationPacket(
       "merge_scans",
       () => mergeQuestionnaireScans(questionnaires, range),
     );
-    const candidateDifferences = await rectificationPacketStage(
-      "candidate_differences",
-      () => engine.buildDifferencePacket({
-        caseId: input.caseId,
-        asOfDate: input.asOfDate,
-        birthDate: input.declaredBirthInput.birthDate,
-        startTime: range.startTime,
-        endTime: range.endTime,
-        lat: latitude,
-        lon: longitude,
-        tz: place.timezoneOffset,
-        evidence: [],
-        events,
-        dismissedOpportunityIds: [],
-        questionFingerprints: [],
-        partitionFingerprints: [],
-        recentRanges: [],
-        candidateModel: null,
-      }),
-    );
+    let candidateDifferences = unavailableCandidateDifferences(input.caseId, range);
+    if (!candidateDifferenceRangeIsTooWide(range)) {
+      try {
+        candidateDifferences = await rectificationPacketStage(
+          "candidate_differences",
+          () => engine.buildDifferencePacket({
+          caseId: input.caseId,
+          asOfDate: input.asOfDate,
+          birthDate: input.declaredBirthInput.birthDate,
+          startTime: range.startTime,
+          endTime: range.endTime,
+          lat: latitude,
+          lon: longitude,
+          tz: place.timezoneOffset,
+          evidence: [],
+          events,
+          dismissedOpportunityIds: [],
+          questionFingerprints: [],
+          partitionFingerprints: [],
+          recentRanges: [],
+          candidateModel: null,
+          }),
+        );
+      } catch (error) {
+        if (!candidateDifferencesAreUnavailable(error)) throw error;
+        // Candidate partitions improve question ranking, but evidence collection can still
+        // proceed from the server scan. Do not turn an optional slow dependency into a 503.
+      }
+    }
     const version = calculationVersion
       ? `${candidateDifferences.packet.scoringVersion}+${calculationVersion}`
       : candidateDifferences.packet.scoringVersion;
