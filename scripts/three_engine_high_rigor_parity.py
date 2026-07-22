@@ -14,9 +14,10 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from benchmarks.jyotish.scripts.run_pyjhora_compare import build_pyjhora_sample
-from benchmarks.jyotish.scripts.run_skill_baseline import run_sample
-from scripts.three_engine_parity_runner import _capture_jyotishganit_raw
+from benchmarks.jyotish.scripts.run_pyjhora_compare import build_pyjhora_sample  # noqa: E402
+from benchmarks.jyotish.scripts.run_skill_baseline import run_sample  # noqa: E402
+from scripts.rectification_input_contract import semantic_evidence_hash  # noqa: E402
+from scripts.three_engine_parity_runner import _capture_jyotishganit_raw  # noqa: E402
 
 ORACLE = ROOT / "references" / "oracle"
 ARTIFACTS = ORACLE / "artifacts"
@@ -146,9 +147,9 @@ def build() -> dict[str, Any]:
     manifest = {
         "case_id": "steve_jobs_public_1955_lahiri", "birth_data_policy": "public_case_only", "blocked_reason": "none",
         "engines": {
-            "VedAstro": {"status": "official_verified", "official_raw_response_path": "artifacts/" + ved_path.name, "artifact_hash": _sha(ved_path), "settings": ved["settings"]},
-            "PyJHora_JHora": {"status": "imported", "raw_output_path": "artifacts/" + py_path.name, "artifact_hash": _sha(py_path), "settings": pyjhora["settings"]},
-            "jyotishganit": {"status": "imported", "raw_output_path": "artifacts/" + jy_path.name, "artifact_hash": _sha(jy_path), "settings": {"ayanamsa": jyotish["ayanamsa"]}},
+            "VedAstro": {"status": "official_verified", "official_raw_response_path": "artifacts/" + ved_path.name, "artifact_hash": _sha(ved_path), "semantic_hash": semantic_evidence_hash(ved), "settings": ved["settings"]},
+            "PyJHora_JHora": {"status": "imported", "raw_output_path": "artifacts/" + py_path.name, "artifact_hash": _sha(py_path), "semantic_hash": semantic_evidence_hash(pyjhora), "settings": pyjhora["settings"]},
+            "jyotishganit": {"status": "imported", "raw_output_path": "artifacts/" + jy_path.name, "artifact_hash": _sha(jy_path), "semantic_hash": semantic_evidence_hash(jyotish), "settings": {"ayanamsa": jyotish["ayanamsa"]}},
         },
         "comparison_rows": rows,
         "method_arbitration": {

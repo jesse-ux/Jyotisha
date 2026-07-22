@@ -1,3 +1,4 @@
+import hashlib
 import json
 from copy import deepcopy
 from pathlib import Path
@@ -47,6 +48,52 @@ def test_v3_validator_requires_content_source_audit_before_freeze(tmp_path: Path
 
     assert "source_content_audit_not_passed_before_freeze" in report["manifest_errors"]
     assert report["status"] == "blocked_awaiting_public_aa_cases"
+
+
+def _add_v4_review_safeguards(manifest: dict) -> None:
+    manifest["schema_version"] = "minute-rectification-holdout-v4"
+    manifest["source_audit_status"] = "passed_before_freeze"
+    manifest["minimum_gate"]["day_precision_events_per_case"] = 3
+    for case in manifest["cases"]:
+        case["adjudicator"] = "independent-reviewer"
+        case["independent_human_reviewed"] = True
+        case["frozen_before_scoring"] = True
+        case["false_minute_commitments"] = [
+            {
+                "offset_minutes": offset,
+                "commitment_hash": hashlib.sha256(
+                    f"{case['case_id']}:{offset}:sealed".encode()
+                ).hexdigest(),
+            }
+            for offset in case["false_minute_offsets"]
+        ]
+
+
+def test_v4_validator_accepts_reviewed_cases_with_committed_false_minutes(tmp_path: Path) -> None:
+    manifest = deepcopy(_manifest())
+    _add_v4_review_safeguards(manifest)
+    path = tmp_path / "v4.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    report = validate(path)
+
+    assert report["manifest_errors"] == []
+    assert report["invalid_case_details"] == []
+
+
+def test_v4_validator_rejects_unreviewed_or_uncommitted_cases(tmp_path: Path) -> None:
+    manifest = deepcopy(_manifest())
+    _add_v4_review_safeguards(manifest)
+    case = manifest["cases"][0]
+    case["independent_human_reviewed"] = False
+    case["false_minute_commitments"].pop()
+    path = tmp_path / "invalid-v4.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    errors = validate(path)["invalid_case_details"][0]["errors"]
+
+    assert "independent_review_not_attested" in errors
+    assert "false_minute_commitments_do_not_match_offsets" in errors
 
 
 def test_validator_rejects_tuning_case_and_non_independent_event_source(tmp_path: Path) -> None:

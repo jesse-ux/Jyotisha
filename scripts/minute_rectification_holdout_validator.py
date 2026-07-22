@@ -13,6 +13,7 @@ DEFAULT_MANIFEST = ROOT / "references" / "real_case_calibration" / "minute_recti
 SUPPORTED_SCHEMA_VERSIONS = {
     "minute-rectification-holdout-v2",
     "minute-rectification-holdout-v3",
+    "minute-rectification-holdout-v4",
 }
 ALLOWED_DOMAINS = {
     "education", "relocation", "relationship", "career", "finance", "health_pressure",
@@ -142,6 +143,71 @@ def _case_errors(case: Any, gate: dict[str, Any]) -> list[str]:
     return errors
 
 
+def _review_safeguard_errors(case: Any, gate: dict[str, Any]) -> list[str]:
+    """Validate safeguards required for newly admitted v4 holdout cases."""
+    if not isinstance(case, dict):
+        return ["case_must_be_object"]
+    errors: list[str] = []
+    if not isinstance(case.get("adjudicator"), str) or not case.get("adjudicator", "").strip():
+        errors.append("missing_independent_adjudicator")
+    if case.get("independent_human_reviewed") is not True:
+        errors.append("independent_review_not_attested")
+    if case.get("frozen_before_scoring") is not True:
+        errors.append("case_not_frozen_before_scoring")
+
+    events = case.get("events") if isinstance(case.get("events"), list) else []
+    day_precision_count = sum(
+        isinstance(event, dict)
+        and event.get("precision") == "day"
+        and _parse_event_date(event.get("date"), event.get("precision")) is not None
+        for event in events
+    )
+    if day_precision_count < int(gate.get("day_precision_events_per_case", 3)):
+        errors.append("insufficient_day_precision_events")
+
+    offsets = case.get("false_minute_offsets") if isinstance(case.get("false_minute_offsets"), list) else []
+    commitments = (
+        case.get("false_minute_commitments")
+        if isinstance(case.get("false_minute_commitments"), list)
+        else []
+    )
+    committed_offsets: list[int] = []
+    hashes: list[str] = []
+    for item in commitments:
+        if not isinstance(item, dict):
+            errors.append("invalid_false_minute_commitment")
+            continue
+        offset = item.get("offset_minutes")
+        commitment_hash = item.get("commitment_hash")
+        if not isinstance(offset, int) or offset == 0:
+            errors.append("invalid_false_minute_commitment_offset")
+        else:
+            committed_offsets.append(offset)
+        if (
+            not isinstance(commitment_hash, str)
+            or len(commitment_hash) != 64
+            or any(character not in "0123456789abcdef" for character in commitment_hash.lower())
+        ):
+            errors.append("invalid_false_minute_commitment_hash")
+        else:
+            hashes.append(commitment_hash.lower())
+        if any(key in item for key in ("candidate_minute", "published_minute", "birth_time")):
+            errors.append("false_minute_commitment_leaks_time")
+    if sorted(committed_offsets) != sorted(offsets):
+        errors.append("false_minute_commitments_do_not_match_offsets")
+    if len(hashes) != len(set(hashes)):
+        errors.append("duplicate_false_minute_commitment_hash")
+    return errors
+
+
+def case_errors(case: Any, gate: dict[str, Any], *, require_review_safeguards: bool = False) -> list[str]:
+    """Public case-level validator shared by frozen manifests and intake tooling."""
+    errors = _case_errors(case, gate)
+    if require_review_safeguards:
+        errors.extend(_review_safeguard_errors(case, gate))
+    return sorted(set(errors))
+
+
 def validate(manifest_path: Path = DEFAULT_MANIFEST) -> dict[str, Any]:
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     gate = manifest.get("minimum_gate") if isinstance(manifest.get("minimum_gate"), dict) else {}
@@ -154,7 +220,10 @@ def validate(manifest_path: Path = DEFAULT_MANIFEST) -> dict[str, Any]:
     if manifest.get("frozen_before_replay") is not True:
         manifest_errors.append("benchmark_not_frozen_before_replay")
     if (
-        manifest.get("schema_version") == "minute-rectification-holdout-v3"
+        manifest.get("schema_version") in {
+            "minute-rectification-holdout-v3",
+            "minute-rectification-holdout-v4",
+        }
         and manifest.get("source_audit_status") != "passed_before_freeze"
     ):
         manifest_errors.append("source_content_audit_not_passed_before_freeze")
@@ -165,8 +234,9 @@ def validate(manifest_path: Path = DEFAULT_MANIFEST) -> dict[str, Any]:
     seen_ids: set[str] = set()
     invalid_details: list[dict[str, Any]] = []
     valid_cases = 0
+    require_review_safeguards = manifest.get("schema_version") == "minute-rectification-holdout-v4"
     for case in cases:
-        errors = _case_errors(case, gate)
+        errors = case_errors(case, gate, require_review_safeguards=require_review_safeguards)
         case_id = case.get("case_id") if isinstance(case, dict) else "non_object_case"
         if isinstance(case_id, str) and case_id in seen_ids:
             errors.append("duplicate_case_id")

@@ -1,15 +1,26 @@
 """Build a privacy-safe, request-level three-engine rectification parity packet."""
 from __future__ import annotations
 
-import hashlib
 import importlib
-import json
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from domain_calculation_service import compute_chart
+
+try:
+    from scripts.rectification_input_contract import (
+        candidate_input_fingerprint,
+        canonical_birth_input,
+        stability_probe_contract,
+    )
+except ModuleNotFoundError:  # pragma: no cover - direct script execution
+    from rectification_input_contract import (
+        candidate_input_fingerprint,
+        canonical_birth_input,
+        stability_probe_contract,
+    )
 
 ROOT = Path(__file__).resolve().parents[1]
 JYOTISHGANIT_ROOT = ROOT / "references" / "open_source_sources" / "jyotishganit"
@@ -19,29 +30,12 @@ SIGNS = ("Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpi
 
 def canonical_case_input(case: dict[str, Any]) -> dict[str, Any]:
     """Normalize only calculation-bearing fields before hashing or engine dispatch."""
-    required = ("year", "month", "day", "hour", "minute", "lat", "lon", "tz")
-    missing = [key for key in required if key not in case]
-    if missing:
-        raise ValueError("case is missing required birth fields")
-    return {
-        "year": int(case["year"]),
-        "month": int(case["month"]),
-        "day": int(case["day"]),
-        "hour": int(case["hour"]),
-        "minute": int(case["minute"]),
-        "second": int(case.get("second", 0)),
-        "lat": float(case["lat"]),
-        "lon": float(case["lon"]),
-        "tz": float(case["tz"]),
-        "ayanamsa": str(case.get("ayanamsa", "lahiri")).strip().lower(),
-        "node_mode": str(case.get("node_mode", case.get("nodeMode", "mean"))).strip().lower(),
-    }
+    return canonical_birth_input(case)
 
 
 def case_hash(case: dict[str, Any]) -> str:
     """Stable identity for evidence correlation; never exposes birth data."""
-    payload = json.dumps(canonical_case_input(case), sort_keys=True, ensure_ascii=True, separators=(",", ":"))
-    return hashlib.sha256(payload.encode()).hexdigest()
+    return candidate_input_fingerprint(case)
 
 
 def _local_d1(case: dict[str, Any]) -> dict[str, str]:
@@ -140,6 +134,8 @@ def build_packet(
     return {
         "scope": "request_level_three_engine_d1_parity",
         "case_hash": case_hash(case),
+        "input_contract_hash": candidate_input_fingerprint(case),
+        "stability_contract": stability_probe_contract(case),
         "engine_status": engine_status,
         "match_count": sum(row["status"] == "match" for row in rows),
         "mismatch_count": sum(row["status"] == "mismatch" for row in rows),

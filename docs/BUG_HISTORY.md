@@ -217,3 +217,19 @@
 - 相关记录：BUG-009
 - 复发自：无
 - 修复版本：待提交（本地可测）
+
+## BUG-012 | 分钟校正 safeguards PR 与主线证据契约分叉
+
+- 状态：resolved
+- 首次发现：2026-07-22
+- 最近更新：2026-07-22
+- 影响面：分钟候选输入身份、公共 holdout 校验、三引擎证据包、PR quality gate
+- 用户现象：PR 与 `main` 在五个文件发生冲突，聚焦测试通过但完整 quick quality gate 在 API 安全测试收集阶段失败。
+- 触发条件：基于旧基线开发 v1 holdout safeguards，同时主线独立升级到 v2/v3 证据契约并移除旧 API store 导入。
+- 根因：PR 复用了旧 holdout 字段和 `true node` 默认，未执行与 CI 相同的 quick quality gate；主线已经采用 `mean node` 和更严格的 sealed holdout schema。
+- 修复：以主线为准新增兼容的输入指纹、邻近分钟探针和语义哈希；新增 v4 独立审核、日级事件、假分钟承诺门禁及非生产 intake；不恢复旧自动评估循环。
+- 验证：分钟校正聚焦回归、脚本直接执行检查、Ruff、Python compilation 和 quick quality gate。
+- 防复发：新 safeguards 必须以当前 schema 向前升级；候选身份必须继承产品计算默认；PR 验收必须包含 workflow 实际执行的 quick quality gate。
+- 相关记录：BUG-009、ERR-045、ERR-053、ERR-086
+- 复发自：无
+- 修复版本：待提交（本地可测）

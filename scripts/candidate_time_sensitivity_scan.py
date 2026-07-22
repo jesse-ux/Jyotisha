@@ -11,6 +11,14 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+try:
+    from scripts.rectification_input_contract import (
+        candidate_input_fingerprint,
+        stability_probe_contract,
+    )
+except ModuleNotFoundError:  # pragma: no cover - direct script execution
+    from rectification_input_contract import candidate_input_fingerprint, stability_probe_contract
+
 
 ROOT = Path(__file__).resolve().parents[1]
 ENGINE = ROOT / "scripts" / "jyotish_engine.py"
@@ -60,6 +68,7 @@ def scan_candidate_times(payload: dict[str, Any], *, uncertainty_minutes: int = 
         rows.append({
             "time": moment.strftime("%Y-%m-%d %H:%M"),
             "offset_minutes": offset,
+            "input_fingerprint": candidate_input_fingerprint(point),
             "d1_ascendant": asc.get("sign"),
             "d1_degree_in_sign": asc.get("degree_in_sign"),
             "divisional_ascendants": divisional,
@@ -68,14 +77,22 @@ def scan_candidate_times(payload: dict[str, Any], *, uncertainty_minutes: int = 
     unavailable_vargas = [varga.upper() for varga in _VARGAS if all(row["divisional_ascendants"][varga.upper()] is None for row in rows)]
     supported_vargas = [varga.lower() for varga in _VARGAS if varga.upper() not in unavailable_vargas]
     modal = Counter(signatures).most_common(1)[0][0]
-    for row, signature in zip(rows, signatures):
-        row["sensitivity_count"] = sum(left != right for left, right in zip(signature, modal))
+    for row, signature in zip(rows, signatures, strict=True):
+        row["sensitivity_count"] = sum(
+            left != right for left, right in zip(signature, modal, strict=True)
+        )
         row["sensitive_layers"] = [
-            name for name, current, typical in zip(("D1", "D4", "D9", "D10", "D24", "D30"), signature, modal)
+            name
+            for name, current, typical in zip(
+                ("D1", "D4", "D9", "D10", "D24", "D30"),
+                signature,
+                modal,
+                strict=True,
+            )
             if current != typical
         ]
     transitions = []
-    for previous, current in zip(rows, rows[1:]):
+    for previous, current in zip(rows, rows[1:], strict=False):
         changed = [name for name in ("d1_ascendant", "divisional_ascendants") if previous[name] != current[name]]
         if changed:
             transitions.append({"between": [previous["time"], current["time"]], "changed": changed})
@@ -88,6 +105,17 @@ def scan_candidate_times(payload: dict[str, Any], *, uncertainty_minutes: int = 
         "uncertainty_minutes": uncertainty_minutes,
         "step_minutes": step_minutes,
         "rows": rows,
+        "input_contract": {
+            "version": "rectification-input-v1",
+            "center_input_fingerprint": candidate_input_fingerprint(payload),
+            "settings": {
+                "ayanamsa": str(payload.get("ayanamsa") or "lahiri").strip().lower(),
+                "node_mode": str(
+                    payload.get("node_mode", payload.get("nodeMode", "mean"))
+                ).strip().lower(),
+            },
+        },
+        "stability_contract": stability_probe_contract(payload),
         "transitions": transitions,
         "supported_vargas": [varga.upper() for varga in supported_vargas],
         "unavailable_vargas": unavailable_vargas,

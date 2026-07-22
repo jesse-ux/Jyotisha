@@ -1,0 +1,16 @@
+{
+  "schema_version": "minute-rectification-holdout-v4-intake",
+  "status": "collecting_independently_reviewed_cases",
+  "minimum_gate": {
+    "public_aa_cases": 20,
+    "events_per_case": 3,
+    "domains_per_case": 2,
+    "independent_event_sources_per_case": 2,
+    "negative_minutes_per_case": 4,
+    "day_precision_events_per_case": 3
+  },
+  "cases": [],
+  "production_tuning_allowed": false,
+  "verified_minute_claim_allowed": false,
+  "boundary": "This intake queue is not a frozen holdout. Promotion requires a new version, a passed source audit and a scoring identity frozen before blind replay."
+}
