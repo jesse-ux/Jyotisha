@@ -727,8 +727,9 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
     );
     await cdp.evaluate("globalThis.__rectificationHarness.setTurn('activeA1')");
     await waitFor(
-      () => cdp?.evaluate<boolean>("document.body.textContent.includes('当前判断')") ?? Promise.resolve(false),
-      "async initial turn",
+      () => cdp?.evaluate<boolean>(`document.querySelector('.conversational-candidate time')?.textContent === '05:18'
+        && document.body.textContent.includes('已记录：2021-07')`) ?? Promise.resolve(false),
+      "streamlined async initial turn",
     );
 
     const layout = await cdp.evaluate<{

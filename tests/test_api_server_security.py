@@ -1607,7 +1607,7 @@ def test_capability_audit_scans_registry_and_local_sources() -> None:
         'ashtakavarga_sodhita',
         'bhava_bala',
         'career_engine',
-            'deep_varga_avastha',
+        'deep_varga_avastha',
         'divisional_yoga',
         'kakshya',
         'kp_system',

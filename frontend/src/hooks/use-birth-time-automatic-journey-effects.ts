@@ -16,6 +16,7 @@ import {
 } from "@/lib/birth-time-guided-effect-coordinator";
 import type { StableActionIdentityRegistry } from "@/lib/birth-time-guided-effect-coordinator";
 import { runBirthTimeScoringPoll, scoringPollDelay } from "@/lib/birth-time-guided-polling";
+import { birthTimeUserError } from "@/lib/birth-time-user-error";
 
 type AutomaticEffectsInput = {
   readonly journey: JourneyClientResponse | null;
@@ -82,7 +83,7 @@ export function useBirthTimeAutomaticJourneyEffects(input: AutomaticEffectsInput
       if (publishCurrentJourney({ expected, current: latest.current, next, publish: onJourney })) latest.current = next;
     }).catch((caught: unknown) => {
       if (latest.current?.caseId === expected.caseId && latest.current.turnVersion === expected.turnVersion) {
-        setError(caught instanceof Error ? caught.message : "暂时无法生成下一题，请重试。");
+        setError(birthTimeUserError(caught));
       }
     });
   }, [actionRegistry, generationIdentity, generationRequests, generationRun, latest, onJourney, preview, setError]);
@@ -114,7 +115,7 @@ export function useBirthTimeAutomaticJourneyEffects(input: AutomaticEffectsInput
         latest.current = result.turn;
         if (result.kind === "exhausted") setError("评分仍在进行。你可以稍后继续，或重新检查状态。");
       }).catch((caught: unknown) => {
-        if (!controller.signal.aborted) setError(caught instanceof Error ? caught.message : "暂时无法读取评分进度，请稍后重试。");
+        if (!controller.signal.aborted) setError(birthTimeUserError(caught));
       });
     });
     return () => { cancelStart(); controller.abort(); };
