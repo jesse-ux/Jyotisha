@@ -297,3 +297,19 @@
 - 相关记录：BUG-004、BUG-008、ERR-091
 - 复发自：无
 - 修复版本：待提交（本地可测）
+
+## BUG-017 | 候选范围终态继续原问题必定返回 409
+
+- 状态：resolved
+- 首次发现：2026-07-22
+- 最近更新：2026-07-22
+- 影响面：生时校正范围终态、`POST /api/consult`、durable 原问题交接
+- 用户现象：生时校正安全结束并保存候选范围后，点击“继续原问题”仍提示原问题状态变化，接口返回 409。
+- 触发条件：分钟确认发布门禁未通过，校正以 `candidate.status=pending_validation` 完成；页面按未确认分钟选择 `unverified_birth_time` 并携带 durable handoff。
+- 根因：页面正确区分确认分钟与保存范围，但咨询接口把所有 handoff 硬限制为 `verified_chart`；范围终态因此在计费和模型调用前被拒绝。
+- 修复：handoff 允许 `verified_chart` 与 `unverified_birth_time` 两种星盘模式，继续拒绝 `general_no_birth_time`、旧校正入口和不一致 request ID；分钟确认门禁保持不变。
+- 验证：生产合成账号复现 `409 mode_changed`；`frontend/tests/consultation-birth-time-mode.test.ts` 锁定范围终态模式与一般咨询隔离；发布后需复跑 durable claim、正常咨询和聊天删除 smoke。
+- 防复发：范围终态和精确确认必须分别覆盖 continuation 模式；不得把“拥有 handoff”错误等同于“已经确认出生分钟”。
+- 相关记录：BUG-008、BUG-009、BUG-016、ERR-085、ERR-091
+- 复发自：无
+- 修复版本：待提交（生产 smoke 待当前精确 SHA 发布后补齐）
