@@ -1,0 +1,149 @@
+{
+  "scope": "muhurta_observation_factor_packet",
+  "created_at": "2026-07-22",
+  "claim_status": "observation_only",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "probe_command": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 scripts/muhurta_factor_probe.py --date 2026-07-19 --birth-moon-nakshatra-index 4 --birth-moon-sign-index 1",
+  "raw_sha256": "f884d3b18a15ba901c8e2a12c18b615b00ceff0beb7d1c497e172c799cb4cb63",
+  "canonical_request": {
+    "date": "2026-07-19",
+    "birth_moon_nakshatra_index": 4,
+    "birth_moon_sign_index": 1
+  },
+  "factor_status": {
+    "tarabala": "computed_rule_probe",
+    "chandrabala": "computed_rule_probe",
+    "rahu_kalam": "present",
+    "abhijit_muhurta": "present"
+  },
+  "observed_factor_keys": [
+    "tarabala",
+    "chandrabala",
+    "rahu_kalam",
+    "abhijit_muhurta"
+  ],
+  "candidate_window_policy": {
+    "blockers": [],
+    "claim_status": "exploratory_muhurta_candidate",
+    "confidence_cap": "low",
+    "label": "abhijit_reference_window",
+    "signals": [
+      "Tarabala",
+      "Chandrabala",
+      "Abhijit"
+    ]
+  },
+  "full_scoring_status": "blocked_until_oracle",
+  "verified_muhurta_verdict": false,
+  "raw_observation": {
+    "boundary": "Muhurta factors are observations only；未通过完整 worked examples 与负样本验证，不能作为确定择日承诺。",
+    "candidate_windows": [
+      {
+        "blockers": [],
+        "claim_status": "exploratory_muhurta_candidate",
+        "confidence_cap": "low",
+        "label": "abhijit_reference_window",
+        "signals": [
+          "Tarabala",
+          "Chandrabala",
+          "Abhijit"
+        ]
+      }
+    ],
+    "claim_status": "exploratory_muhurta_candidate",
+    "created_at": "2026-07-19",
+    "date": "2026-07-19",
+    "ephemeris_source": "swisseph",
+    "factors": {
+      "abhijit_muhurta": {
+        "description": "Abhijit Muhurta 是一天中最吉祥的时段（正午前后各24分钟）",
+        "duration_minutes": 48,
+        "rule": "日升到日落共15个 muhurta，第8个（中间）即 Abhijit",
+        "warning": "周三（Wednesday/Budha Vara）不宜使用 Abhijit"
+      },
+      "chandrabala": {
+        "favorable": true,
+        "relative_house": 5,
+        "status": "computed_rule_probe"
+      },
+      "panchanga": {
+        "auspicious_count": 2,
+        "hora": {
+          "hora_from_sunrise": 6.0,
+          "hora_lord": "Mars",
+          "hora_num": 7,
+          "quality": "asubha"
+        },
+        "karana": {
+          "is_vishti": false,
+          "karana": "Taitila",
+          "karana_num": 11,
+          "quality": "subha"
+        },
+        "nakshatra": {
+          "moon_lon": 159.62,
+          "nakshatra": "Uttara Phalguni",
+          "nakshatra_idx": 11,
+          "pada": 4,
+          "quality": "subha",
+          "type": "sthira"
+        },
+        "overall_quality": "凶（Asubha）",
+        "overall_score": 0.42,
+        "rahu_kala": {
+          "duration_minutes": 90.0,
+          "end": "18:00",
+          "guidance": "Avoid important beginnings and commitments.",
+          "label": "Rahu Kala",
+          "segment": 8,
+          "start": "16:30"
+        },
+        "tithi": {
+          "full_name": "Shukla Shashthi",
+          "moon_sun_diff": 67.0,
+          "name": "Shashthi",
+          "paksha": "Shukla",
+          "quality": "mixed",
+          "tithi_in_paksha": 6,
+          "tithi_num": 6
+        },
+        "total_elements": 6,
+        "vara": {
+          "quality": "asubha",
+          "vara": "Sunday",
+          "vara_lord": "Sun",
+          "weekday_idx": 0
+        },
+        "warnings": [
+          "⚠️ Parigha Yoga——不利时段"
+        ],
+        "yoga": {
+          "quality": "asubha",
+          "sun_moon_sum": 252.24,
+          "yoga": "Parigha",
+          "yoga_idx": 18
+        }
+      },
+      "rahu_kalam": {
+        "duration_minutes": 90.0,
+        "end": "18:00",
+        "guidance": "Avoid important beginnings and commitments.",
+        "label": "Rahu Kala",
+        "segment": 8,
+        "start": "16:30"
+      },
+      "tarabala": {
+        "favorable": true,
+        "status": "computed_rule_probe",
+        "tara_class": 8,
+        "tara_position": 8
+      }
+    },
+    "full_scoring_status": "blocked_until_oracle",
+    "production_tuning_allowed": false,
+    "scope": "muhurta_factor_probe",
+    "verified_muhurta_verdict": false
+  },
+  "boundary": "Tarabala/Chandrabala/Rahu Kalam/Abhijit are captured as observation factors only. No final Muhurta scoring or electional verdict is allowed until formula weights and public worked examples close."
+}

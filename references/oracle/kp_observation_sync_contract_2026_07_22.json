@@ -1,0 +1,45 @@
+{
+  "scope": "kp_observation_sync_contract",
+  "created_at": "2026-07-22",
+  "claim_status": "observation_only",
+  "runtime_status": "calculable",
+  "display_status": "displayable_with_warning",
+  "prediction_status": "not_verified_prediction",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "allowed_claim_level": "technical_observation",
+  "forbidden_claims": [
+    "verified event timing",
+    "confirmed birth-time rectification",
+    "public oracle parity",
+    "predictive certainty from KP significators"
+  ],
+  "evidence_refs": [
+    "references/oracle/kp_exact_cusp_invocation_closure_2026_07_21.json",
+    "references/oracle/kp_archive_numeric_extraction_result_2026_07_21.json",
+    "references/oracle/roxyapi_kp_surface_contract_2026_07_21.json"
+  ],
+  "display_fields": [
+    "cusp_longitude",
+    "rasi",
+    "nakshatra",
+    "nakshatra_lord",
+    "sub_lord",
+    "sub_sub_lord",
+    "raw_hash",
+    "oracle_boundary"
+  ],
+  "sync_targets": {
+    "skill": "reference_only_with_boundary",
+    "api": "observation_endpoint_allowed",
+    "ui": "capability_center_badge_only",
+    "commercial": "eligible_as_observation_contract_not_prediction"
+  },
+  "required_user_facing_boundary": "KP exact cusp/star/sub/sub-sub can be displayed as technical observation. Public worked-example oracle is still missing, so KP must not be used as verified precise event timing.",
+  "next_required_evidence": [
+    "complete public KP worked example",
+    "same-input star/sub/sub-sub expected table",
+    "field-level replay against runtime raw",
+    "claim gate test proving verified prediction remains blocked"
+  ]
+}

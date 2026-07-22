@@ -1,0 +1,40 @@
+{
+  "scope": "kp_tajika_public_oracle_source_triage_round2",
+  "created_at": "2026-07-21",
+  "claim_status": "open_queue",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "boundary": "Round2 web triage found useful KP API-surface references and a Steve Jobs Varshaphala numeric candidate, but neither is yet a clean public numeric oracle packet.",
+  "candidates": [
+    {
+      "candidate_id": "roxyapi_kp_surface_candidate",
+      "domain": "kp_exact_cusp",
+      "source_url": "https://github.com/RoxyAPI/kp-astrology-api",
+      "supporting_url": "https://roxyapi.com/docs/guides/kp",
+      "promotion_status": "api_surface_reference_only",
+      "claim_upgrade": "none",
+      "useful_evidence": "Documents a KP API shape with Placidus cusps and signLord/starLord/subLord/subSubLord fields.",
+      "missing_for_oracle": [
+        "license and reproducible local runner review",
+        "public worked example with expected values",
+        "source package/version hash",
+        "same-input field-level comparison"
+      ]
+    },
+    {
+      "candidate_id": "steve_jobs_varshaphala_yumpu_candidate",
+      "domain": "tajika_varshaphala",
+      "source_url": "https://www.yumpu.com/en/document/view/40420384/ashtakavarga-system-of-prediction-a-part-40-neelastro",
+      "promotion_status": "numeric_candidate_needs_source_review",
+      "claim_upgrade": "none",
+      "useful_evidence": "Search snippet exposes Steve Jobs Varshaphala chart rows and annual years, including numeric chart fragments.",
+      "missing_for_oracle": [
+        "full page capture with stable hash",
+        "permission/copyright review",
+        "structured extraction of the 1984/age-29 annual chart if present",
+        "metadata for ayanamsa, node mode, timezone and solar return convention",
+        "local replay field comparison"
+      ]
+    }
+  ]
+}

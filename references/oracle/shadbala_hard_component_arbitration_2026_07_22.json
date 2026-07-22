@@ -1,0 +1,48 @@
+{
+  "scope": "shadbala_hard_component_arbitration",
+  "created_at": "2026-07-22",
+  "claim_status": "partial",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "source_joined_packet": "references/oracle/shadbala_component_joined_closure_packet_2026_07_21.json",
+  "summary": {
+    "component_count": 3,
+    "absolute_truth_upgrade_count": 0,
+    "components_remaining_non_absolute": 3
+  },
+  "components": [
+    {
+      "component": "chesta",
+      "dominant_issue": "method_variant",
+      "bucket_counts": {
+        "method_variant": 6,
+        "formula_or_unit_mismatch": 1
+      },
+      "blocked_reason": "Mean-motion/Seeghrochcha/luminary policies diverge across engines and fixtures.",
+      "next_action": "Preserve method_variant; require source-cited Chesta policy before comparing absolute Virupa.",
+      "claim_upgrade": "none"
+    },
+    {
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "bucket_counts": {
+        "formula_or_unit_mismatch": 5,
+        "method_variant": 2
+      },
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "next_action": "Split Sthana into subcomponents and compare only after Moolatrikona and dignity-table variants are pinned.",
+      "claim_upgrade": "none"
+    },
+    {
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "bucket_counts": {
+        "formula_or_unit_mismatch": 7
+      },
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "next_action": "Pin birth-time/sunrise/day-night context and Kala subcomponent formula source before parity comparison.",
+      "claim_upgrade": "none"
+    }
+  ],
+  "boundary": "Hard Shadbala components remain explanatory partial. This packet prevents tuning them into a single absolute truth without source variant decisions."
+}

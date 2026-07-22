@@ -1,0 +1,122 @@
+{
+  "scope": "shadbala_component_closure_rollup",
+  "created_at": "2026-07-22",
+  "claim_status": "component_explanatory_partial",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "source_joined_packet": "references/oracle/shadbala_component_joined_closure_packet_2026_07_21.json",
+  "summary": {
+    "total_rows": 42,
+    "bucket_counts": {
+      "method_variant": 8,
+      "formula_or_unit_mismatch": 27,
+      "within_tolerance": 7
+    },
+    "component_count": 6,
+    "absolute_truth_upgrade_count": 0,
+    "display_ready_observation_components": [
+      "naisargika"
+    ]
+  },
+  "components": [
+    {
+      "component": "naisargika",
+      "row_count": 7,
+      "bucket_counts": {
+        "within_tolerance": 7
+      },
+      "closure_status": "observation_tolerance_ready",
+      "display_policy": "show_as_component_ready_observation",
+      "claim_upgrade": "none",
+      "sample_tickets": [
+        "shadbala.sun.naisargika",
+        "shadbala.moon.naisargika",
+        "shadbala.mars.naisargika"
+      ],
+      "next_action": "Freeze fixed Virupa table after a second public case repeats tolerance behavior."
+    },
+    {
+      "component": "dig",
+      "row_count": 7,
+      "bucket_counts": {
+        "formula_or_unit_mismatch": 7
+      },
+      "closure_status": "formula_or_unit_arbitration_required",
+      "display_policy": "show_as_component_partial_with_mismatch_count",
+      "claim_upgrade": "none",
+      "sample_tickets": [
+        "shadbala.sun.dig",
+        "shadbala.moon.dig",
+        "shadbala.mars.dig"
+      ],
+      "next_action": "Pin cusp/whole-house direction policy and compare against source-cited worked example."
+    },
+    {
+      "component": "drik",
+      "row_count": 7,
+      "bucket_counts": {
+        "formula_or_unit_mismatch": 7
+      },
+      "closure_status": "formula_or_unit_arbitration_required",
+      "display_policy": "show_as_component_partial_with_mismatch_count",
+      "claim_upgrade": "none",
+      "sample_tickets": [
+        "shadbala.sun.drik",
+        "shadbala.moon.drik",
+        "shadbala.mars.drik"
+      ],
+      "next_action": "Pin aspect model, orb/interpolation and benefic/malefic policy before parity claim."
+    },
+    {
+      "component": "chesta",
+      "row_count": 7,
+      "bucket_counts": {
+        "method_variant": 6,
+        "formula_or_unit_mismatch": 1
+      },
+      "closure_status": "method_variant_requires_source_choice",
+      "display_policy": "show_as_method_variant_not_error",
+      "claim_upgrade": "none",
+      "sample_tickets": [
+        "shadbala.sun.chesta",
+        "shadbala.moon.chesta",
+        "shadbala.mars.chesta"
+      ],
+      "next_action": "Preserve method_variant until mean-motion/Seeghrochcha/luminary policy is selected."
+    },
+    {
+      "component": "sthana",
+      "row_count": 7,
+      "bucket_counts": {
+        "method_variant": 2,
+        "formula_or_unit_mismatch": 5
+      },
+      "closure_status": "formula_or_unit_arbitration_required",
+      "display_policy": "show_as_component_partial_with_mismatch_count",
+      "claim_upgrade": "none",
+      "sample_tickets": [
+        "shadbala.sun.sthana",
+        "shadbala.moon.sthana",
+        "shadbala.mars.sthana"
+      ],
+      "next_action": "Split Sthana subcomponents and pin dignity/Moolatrikona/varga policies."
+    },
+    {
+      "component": "kala",
+      "row_count": 7,
+      "bucket_counts": {
+        "formula_or_unit_mismatch": 7
+      },
+      "closure_status": "formula_or_unit_arbitration_required",
+      "display_policy": "show_as_component_partial_with_mismatch_count",
+      "claim_upgrade": "none",
+      "sample_tickets": [
+        "shadbala.sun.kala",
+        "shadbala.moon.kala",
+        "shadbala.mars.kala"
+      ],
+      "next_action": "Pin sunrise/day-night/time-context subcomponent formulas and unit caps."
+    }
+  ],
+  "boundary": "Shadbala is component-level explanatory partial. Naisargika may be displayed as tolerance-ready observation; Dig/Drik/Kala/Sthana/Chesta remain source/method arbitration, not absolute Virupa parity."
+}

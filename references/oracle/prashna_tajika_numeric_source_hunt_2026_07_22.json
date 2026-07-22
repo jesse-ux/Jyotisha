@@ -1,0 +1,58 @@
+{
+  "scope": "prashna_tajika_numeric_source_hunt",
+  "created_at": "2026-07-22",
+  "claim_status": "open_queue",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "boundary": "Source hunt only. New public candidates may supply formula or partial numeric facts, but none currently closes complete input + expected values + raw/hash + replay for Prashna/Gulika/Saham/Tajika.",
+  "candidate_sources": [
+    {
+      "source_id": "prasna_marga_archive_text",
+      "url": "https://archive.org/stream/PrasnaMargaBVR/Prasna%20Marga%201_djvu.txt",
+      "domain": "Prashna/Sphuta",
+      "useful_for": "source text locator for Trisphuta/Chatusphuta/Pranasphuta formulas",
+      "upgrade_status": "formula_locator_only",
+      "missing_for_numeric_packet": ["complete worked example input", "expected local chart values", "citation-safe excerpt review"]
+    },
+    {
+      "source_id": "eastrovedica_lesson49_sphuta_definitions",
+      "url": "https://www.eastrovedica.com/html/vedic_astrologylesson49.asp",
+      "domain": "Sphuta",
+      "useful_for": "public formula definitions for Tri/Chatu/Pancha Sphuta",
+      "upgrade_status": "formula_reference_only",
+      "missing_for_numeric_packet": ["birth/question input", "expected values", "external replay"]
+    },
+    {
+      "source_id": "scribd_gulika_mandi_numeric_candidate",
+      "url": "https://www.scribd.com/document/551959941/calculation-and-interpretation-of-gulika-and-mandi",
+      "domain": "Gulika",
+      "useful_for": "snippet reports a Gulika longitude candidate for May 11 2014",
+      "upgrade_status": "numeric_candidate_needs_copyright_and_input_review",
+      "missing_for_numeric_packet": ["full location/timezone", "source permission/citation boundary", "local replay"]
+    },
+    {
+      "source_id": "astrogle_saham_formula_reference",
+      "url": "https://www.astrogle.com/astrology/important-role-of-sahams-in-varshaphala-annual-chart.html",
+      "domain": "Saham/Tajika",
+      "useful_for": "Saham formula variants including day/night Punya Saham and Vivaha Saham",
+      "upgrade_status": "formula_reference_only",
+      "missing_for_numeric_packet": ["annual chart input", "expected Saham longitude", "day/night convention replay"]
+    },
+    {
+      "source_id": "varshaphala_ms_mehta_pdf_candidate",
+      "url": "https://astrofoxx.files.wordpress.com/2018/11/jyotish_annual-horoscope_varshaphala_m-s-mehta.pdf",
+      "domain": "Tajika/Varshaphala",
+      "useful_for": "public PDF candidate for annual horoscope worked examples",
+      "upgrade_status": "candidate_needs_page_level_numeric_extraction",
+      "missing_for_numeric_packet": ["page-level worked example fields", "solar return convention", "ayanamsa/node/timezone", "raw/hash capture"]
+    }
+  ],
+  "next_action": "Promote only a source that supplies complete input and expected numeric fields. Keep Scribd/Yumpu snippets as candidates, not oracle packets.",
+  "summary": {
+    "candidate_count": 5,
+    "formula_reference_only": 2,
+    "formula_locator_only": 1,
+    "numeric_candidate_needs_review": 1,
+    "pdf_candidate_needs_extraction": 1
+  }
+}

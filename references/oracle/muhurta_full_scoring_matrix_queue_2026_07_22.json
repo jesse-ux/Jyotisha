@@ -1,0 +1,83 @@
+{
+  "scope": "muhurta_full_scoring_matrix_queue",
+  "created_at": "2026-07-22",
+  "claim_status": "open_queue",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "source_observation_packet": "references/oracle/muhurta_observation_factor_packet_2026_07_22.json",
+  "boundary": "Full Muhurta scoring queue only. Factors may be displayed as observations; no final electional verdict is allowed until formula weights and public worked examples close.",
+  "factor_rows": [
+    {
+      "factor": "Tarabala",
+      "runtime_status": "observation_available",
+      "claim": "factor_only",
+      "missing_for_scoring": ["activity-specific weight", "public worked example", "negative example"]
+    },
+    {
+      "factor": "Chandrabala",
+      "runtime_status": "observation_available",
+      "claim": "factor_only",
+      "missing_for_scoring": ["birth Moon sign contract", "activity-specific weight", "public worked example"]
+    },
+    {
+      "factor": "Rahu Kalam",
+      "runtime_status": "observation_available",
+      "claim": "avoidance_window_only",
+      "missing_for_scoring": ["location-aware sunrise/sunset replay", "activity override policy", "public worked example"]
+    },
+    {
+      "factor": "Yamaganda",
+      "runtime_status": "local_formula_available_not_packeted",
+      "claim": "avoidance_window_only",
+      "missing_for_scoring": ["observation packet capture", "location-aware sunrise/sunset replay", "public worked example"]
+    },
+    {
+      "factor": "Gulika Kalam",
+      "runtime_status": "local_formula_available_not_packeted",
+      "claim": "avoidance_window_only",
+      "missing_for_scoring": ["observation packet capture", "Gulika tradition variant", "public worked example"]
+    },
+    {
+      "factor": "Abhijit Muhurta",
+      "runtime_status": "observation_available",
+      "claim": "reference_window_only",
+      "missing_for_scoring": ["weekday exception policy", "location-aware solar noon", "public worked example"]
+    },
+    {
+      "factor": "Panchaka",
+      "runtime_status": "gap",
+      "claim": "not_computed",
+      "missing_for_scoring": ["source formula", "nakshatra/tithi mapping", "activity-specific impact", "public worked example"]
+    },
+    {
+      "factor": "Vyatipata",
+      "runtime_status": "panchanga_yoga_detectable",
+      "claim": "gate_candidate_only",
+      "missing_for_scoring": ["hard-block vs weighted penalty policy", "public worked example"]
+    },
+    {
+      "factor": "Vaidhriti",
+      "runtime_status": "panchanga_yoga_detectable",
+      "claim": "gate_candidate_only",
+      "missing_for_scoring": ["hard-block vs weighted penalty policy", "public worked example"]
+    },
+    {
+      "factor": "Sankranti",
+      "runtime_status": "gap",
+      "claim": "not_computed",
+      "missing_for_scoring": ["solar ingress calculation", "punya/avoidance window policy", "public worked example"]
+    }
+  ],
+  "display_policy": {
+    "allowed": "Show factor rows and warnings with low confidence.",
+    "forbidden": "Do not show a final Muhurta score, best date, or auspicious verdict."
+  },
+  "summary": {
+    "factor_count": 10,
+    "observation_available": 4,
+    "local_formula_available_not_packeted": 2,
+    "panchanga_yoga_detectable": 2,
+    "gap": 2,
+    "final_verdict_allowed": false
+  }
+}

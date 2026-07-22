@@ -1,0 +1,24 @@
+{
+  "scope": "kp_archive_numeric_extraction_result",
+  "created_at": "2026-07-21",
+  "claim_status": "blocked_until_oracle",
+  "source_locator": "references/oracle/kp_archive_numeric_locator_packet_2026_07_21.json",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "numeric_oracle_ready": false,
+  "extracted_partial_numeric_fact": {
+    "line_number": 2662,
+    "cusp": "11th",
+    "sign": "Sagittarius",
+    "degree_dms": "27°48'40\"",
+    "context": "Example explains why 11th house lordship is allotted to Jupiter."
+  },
+  "why_not_oracle": [
+    "no complete birth/question input tied to this figure was extracted",
+    "no full star/sub/sub-sub expected result table was extracted",
+    "line refers reader to another book for Kalamsa/Cuspal Interlinks details",
+    "single cusp degree cannot validate exact KP event timing"
+  ],
+  "next_action": "Review the referenced figure/page and related book citation manually; only promote if complete input plus star/sub/sub-sub table can be captured under citation limits.",
+  "boundary": "This closes the machine extraction pass: a partial cusp degree was found, but a complete numeric KP oracle packet was not."
+}

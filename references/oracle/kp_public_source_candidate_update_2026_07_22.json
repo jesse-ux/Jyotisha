@@ -1,0 +1,63 @@
+{
+  "scope": "kp_public_source_candidate_update",
+  "created_at": "2026-07-22",
+  "claim_status": "blocked_until_oracle",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "source_basis": [
+    {
+      "source_id": "astrosage_sign_star_sub_table",
+      "url": "https://kpastrology.astrosage.com/reference-tables/sign-star-and-sub-table",
+      "use": "reference_table_candidate",
+      "license_boundary": "public web reference only; no bulk table copy committed",
+      "missing_for_numeric_oracle": [
+        "complete worked-example birth/question input",
+        "expected exact cusp longitude",
+        "expected star/sub/sub-sub row tied to that same input"
+      ]
+    },
+    {
+      "source_id": "astrosage_fundamental_principles",
+      "url": "https://kpastrology.astrosage.com/kp-learning-home/tutorial/chapter-2-fundamental-principles",
+      "use": "formula_semantics_candidate",
+      "observed_semantics": "Sub lords follow Vimshottari sequence inside each star.",
+      "license_boundary": "semantic citation only; no table implementation copied",
+      "missing_for_numeric_oracle": [
+        "sub-sub worked example",
+        "house cusp calculation contract",
+        "same-input runtime replay"
+      ]
+    },
+    {
+      "source_id": "archive_khullar_partial_cusp",
+      "url": "https://archive.org/download/Book1969LiewellynAToZHoroscopeMakerAndDelineatorKPRedIt/Jyotish_Key%20to%20Learn_K.P.%20cuspal%20system_S.P.%20Khullar_djvu.txt",
+      "use": "partial_numeric_candidate",
+      "observed_partial_fact": {
+        "cusp": "11th",
+        "sign": "Sagittarius",
+        "degree_dms": "27°48'40\""
+      },
+      "missing_for_numeric_oracle": [
+        "full birth/question input",
+        "star/sub/sub-sub expected values",
+        "citation-safe page review",
+        "same-input local/VedicAstro replay"
+      ]
+    }
+  ],
+  "runtime_sync_policy": {
+    "kp_status": "calculable_displayable_public_oracle_blocked",
+    "allowed": [
+      "technical KP cusp/star/sub/sub-sub observation",
+      "source/reference table provenance display",
+      "candidate significator table with warning"
+    ],
+    "forbidden": [
+      "verified precise event timing",
+      "truth-matrix oracle parity",
+      "birth-time truth claim"
+    ]
+  },
+  "next_action": "Manually inspect citation-safe pages around the archive partial cusp and search for a full public worked example with exact input plus star/sub/sub-sub table.",
+  "boundary": "KP has public reference-table candidates and one partial archive cusp degree. It remains observation-only until a complete numeric worked example is captured and replayed."
+}
