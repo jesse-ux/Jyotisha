@@ -1,0 +1,39 @@
+{
+  "scope": "tajika_steve_jobs_1984_extraction_contract",
+  "created_at": "2026-07-21",
+  "claim_status": "blocked_until_oracle",
+  "source_template": "references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "boundary": "Steve Jobs 1984 Tajika/Varshaphala remains a blank template. No annual-chart oracle or interpretation upgrade is allowed until a citable external numeric source fills the required fields.",
+  "required_metadata_fields": [
+    "tool_name",
+    "tool_version_or_url",
+    "capture_date",
+    "source_artifact",
+    "ayanamsa",
+    "node_mode",
+    "timezone",
+    "annual_system",
+    "target_year"
+  ],
+  "required_numeric_fields": [
+    "solar_return_datetime",
+    "varsha_lagna_deg",
+    "muntha_sign",
+    "year_lord",
+    "mudda_dasha_first_lord",
+    "sahams.punya_saham",
+    "sahams.rajya_saham",
+    "sahams.vivah_saham",
+    "tajika_yogas"
+  ],
+  "candidate_sources": [
+    {
+      "source_id": "varshaphala_public_pdf_candidate",
+      "source_url": "https://vedicastrologervaibhavvyas.com/DownloadsofVA/4.%20my%20article%20on%20varshaphala.pdf",
+      "use": "method/example candidate only",
+      "blocked_reason": "not Steve Jobs 1984 and not yet extracted into structured numeric fields"
+    }
+  ]
+}

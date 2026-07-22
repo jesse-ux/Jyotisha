@@ -1,0 +1,60 @@
+{
+  "scope": "technique_invocation_matrix_current",
+  "created_at": "2026-07-21",
+  "claim_status": "partial",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "boundary": "Current invocation matrix only. A technique can be present in code or UI while still blocked at oracle/claim level.",
+  "rows": [
+    {
+      "technique": "Shadbala",
+      "code": "yes",
+      "skill": "yes_high_rigor_required",
+      "api": "yes",
+      "ui": "yes_research_panel",
+      "claim_gate": "component_partial_only",
+      "oracle_status": "component_explanatory_partial",
+      "evidence": "references/oracle/shadbala_component_joined_closure_packet_2026_07_21.json"
+    },
+    {
+      "technique": "KP exact cusp",
+      "code": "probe_available",
+      "skill": "reference_only",
+      "api": "observation_endpoint_allowed",
+      "ui": "capability_center_badge_only",
+      "claim_gate": "observation_only",
+      "oracle_status": "calculable_displayable_public_oracle_blocked",
+      "evidence": "references/oracle/kp_observation_sync_contract_2026_07_22.json"
+    },
+    {
+      "technique": "Tajika/Varshaphala",
+      "code": "partial",
+      "skill": "partial",
+      "api": "partial",
+      "ui": "limited",
+      "claim_gate": "blocked_until_oracle",
+      "oracle_status": "steve_jobs_1984_numeric_source_missing",
+      "evidence": "references/oracle/tajika_steve_jobs_1984_extraction_contract_2026_07_21.json"
+    },
+    {
+      "technique": "Birth-time rectification",
+      "code": "yes",
+      "skill": "yes_candidate_only",
+      "api": "yes",
+      "ui": "yes_guided_journey",
+      "claim_gate": "candidate_not_birth_time_truth",
+      "oracle_status": "needs_human_labeled_holdout",
+      "evidence": "references/oracle/kp_tajika_public_oracle_source_candidates_2026_07_21.json"
+    },
+    {
+      "technique": "Day/month timing",
+      "code": "partial",
+      "skill": "yes_with_boundary",
+      "api": "candidate_windows_only",
+      "ui": "candidate_windows_only",
+      "claim_gate": "exploratory_candidate_only",
+      "oracle_status": "blocked_until_human_labels",
+      "evidence": "references/real_case_calibration/day_level_holdout_v3_human_annotation_packet_2026_07_19.json"
+    }
+  ]
+}

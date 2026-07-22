@@ -1,0 +1,59 @@
+{
+  "scope": "roxyapi_kp_surface_contract",
+  "created_at": "2026-07-21",
+  "claim_status": "reference_only",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "source": {
+    "repo_url": "https://github.com/RoxyAPI/kp-astrology-api",
+    "docs_url": "https://roxyapi.com/docs/guides/kp",
+    "license_claim_in_repo_readme": "MIT license; commercial use stated in README",
+    "source_review_status": "reference_only_until_dependency_and_terms_review"
+  },
+  "api_surface": {
+    "endpoint": "POST /vedic-astrology/kp/chart",
+    "request_fields": [
+      "date",
+      "time",
+      "latitude",
+      "longitude",
+      "timezone",
+      "ayanamsa",
+      "nodeType"
+    ],
+    "cusp_fields": [
+      "house",
+      "longitude",
+      "sign",
+      "signLord",
+      "nakshatra",
+      "starLord",
+      "subLord",
+      "subSubLord",
+      "kpNumber"
+    ],
+    "related_outputs": [
+      "planets[].subLord",
+      "planets[].subSubLord",
+      "significators.houseWise",
+      "significators.planetWise"
+    ]
+  },
+  "local_relation": {
+    "local_observation_packet": "references/oracle/kp_exact_cusp_invocation_closure_2026_07_21.json",
+    "compatible_fields": [
+      "cusp longitude",
+      "star/nakshatra lord",
+      "sub lord",
+      "sub-sub lord"
+    ]
+  },
+  "oracle_status": "blocked_missing_same_input_numeric_replay",
+  "missing_for_oracle": [
+    "pinned package/source commit and license terms review",
+    "same-input raw output with hash",
+    "public worked example expected values",
+    "field-level comparison against local/VedicAstro KP raw"
+  ],
+  "boundary": "RoxyAPI is useful as a KP surface/reference candidate. It does not close exact KP cusp oracle parity until a same-input numeric replay and public worked example are captured."
+}

@@ -1,0 +1,33 @@
+{
+  "scope": "tajika_yumpu_source_review_gate",
+  "created_at": "2026-07-21",
+  "claim_status": "blocked_until_oracle",
+  "candidate_id": "steve_jobs_varshaphala_yumpu_candidate",
+  "source_url": "https://www.yumpu.com/en/document/view/40420384/ashtakavarga-system-of-prediction-a-part-40-neelastro",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "copyright_boundary": "no_bulk_text_or_table_extraction",
+  "finding": "Search results suggest this candidate may contain Steve Jobs Varshaphala numerical material, but the source is a document-hosting page. It is not yet a safe, citable, structured oracle packet.",
+  "allowed_next_actions": [
+    "record bibliographic/source metadata",
+    "capture only minimal fair-use snippets needed to identify whether 1984/age-29 numeric fields exist",
+    "prefer finding the original author/source or a permissive copy",
+    "manually enter numeric fields only after source/copyright review",
+    "hash the final approved capture artifact"
+  ],
+  "forbidden_actions": [
+    "bulk copy full tables or full document text",
+    "treat search snippets as numeric oracle evidence",
+    "use candidate values in truth matrix before local replay",
+    "commercialize extracted content without source review"
+  ],
+  "required_before_oracle": [
+    "approved source capture hash",
+    "target year 1984 or explicit age/year mapping",
+    "solar return convention",
+    "varsha lagna degree",
+    "Muntha/year lord/Mudda Dasha values",
+    "Saham and Tajika yoga values",
+    "field-level local replay comparison"
+  ]
+}

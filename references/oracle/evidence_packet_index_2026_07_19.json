@@ -5,7 +5,7 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 128,
+    "packet_count": 142,
     "blocked_or_partial_count": 52,
     "human_review_required_count": 3
   },
@@ -1033,6 +1033,198 @@
       "claim_status": "open_queue",
       "consumer_policy": "research_observation_only",
       "claim_boundary": "Records public KP and Tajika/Varshaphala candidate sources found during WorkBuddy closure; none is a complete numeric oracle yet."
+    },
+    {
+      "packet_id": "kp_exact_cusp_invocation_closure_2026_07_21",
+      "path": "references/oracle/kp_exact_cusp_invocation_closure_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Closes exact KP cusp/star/sub/sub-sub runtime invocation using VedicAstro raw; public numeric worked-example oracle remains blocked."
+    },
+    {
+      "packet_id": "tajika_steve_jobs_1984_extraction_contract_2026_07_21",
+      "path": "references/oracle/tajika_steve_jobs_1984_extraction_contract_2026_07_21.json",
+      "domain": "tajika_oracle",
+      "claim_status": "blocked_until_oracle",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Keeps Steve Jobs 1984 Tajika/Varshaphala template blocked until citable external numeric fields are captured and replayed."
+    },
+    {
+      "packet_id": "kp_tajika_public_oracle_source_triage_round2_2026_07_21",
+      "path": "references/oracle/kp_tajika_public_oracle_source_triage_round2_2026_07_21.json",
+      "domain": "worked_example_collection",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Round2 web triage adds KP API-surface and Steve Jobs Varshaphala numeric candidates; both remain non-oracle until source/hash/extraction/replay close."
+    },
+    {
+      "packet_id": "roxyapi_kp_surface_contract_2026_07_21",
+      "path": "references/oracle/roxyapi_kp_surface_contract_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "reference_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Pins RoxyAPI KP endpoint/field surface as reference-only; same-input numeric replay and public worked example remain required before oracle use."
+    },
+    {
+      "packet_id": "tajika_yumpu_source_review_gate_2026_07_21",
+      "path": "references/oracle/tajika_yumpu_source_review_gate_2026_07_21.json",
+      "domain": "tajika_oracle",
+      "claim_status": "blocked_until_oracle",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Keeps Yumpu Steve Jobs Varshaphala candidate blocked until copyright/source review, structured capture, hash, and local replay are complete."
+    },
+    {
+      "packet_id": "kp_archive_worked_example_candidate_2026_07_21",
+      "path": "references/oracle/kp_archive_worked_example_candidate_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Internet Archive KP cuspal-system text is a worked-example candidate, but remains blocked until structured numeric extraction, copyright/source review, and replay."
+    },
+    {
+      "packet_id": "kp_archive_numeric_locator_packet_2026_07_21",
+      "path": "references/oracle/kp_archive_numeric_locator_packet_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Hash-stable KP archive locator with candidate numeric line numbers; still requires permitted extraction and replay before oracle use."
+    },
+    {
+      "packet_id": "tajika_yumpu_access_locator_2026_07_21",
+      "path": "references/oracle/tajika_yumpu_access_locator_2026_07_21.json",
+      "domain": "tajika_oracle",
+      "claim_status": "blocked_until_oracle",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Yumpu source is reachable and mentions Steve Jobs, but no authorized numeric Tajika/Varshaphala extraction or replay has occurred."
+    },
+    {
+      "packet_id": "shadbala_component_joined_closure_packet_2026_07_21",
+      "path": "references/oracle/shadbala_component_joined_closure_packet_2026_07_21.json",
+      "domain": "shadbala_oracle",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Joins parsed PyJHora WorkBuddy 42 component rows to same-unit Shadbala closure queue; explanatory partial only, no absolute truth upgrade."
+    },
+    {
+      "packet_id": "kp_archive_numeric_extraction_result_2026_07_21",
+      "path": "references/oracle/kp_archive_numeric_extraction_result_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "blocked_until_oracle",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Machine extraction found one partial 11th cusp degree from KP archive text but no complete input/star-sub-sub table; oracle remains blocked."
+    },
+    {
+      "packet_id": "technique_invocation_matrix_current_2026_07_21",
+      "path": "references/oracle/technique_invocation_matrix_current_2026_07_21.json",
+      "domain": "technique_invocation",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Tracks current code/skill/API/UI/gate/oracle status for Shadbala, KP, Tajika, rectification and timing; no truth upgrade."
+    },
+    {
+      "packet_id": "shadbala_priority_component_arbitration_2026_07_22",
+      "path": "references/oracle/shadbala_priority_component_arbitration_2026_07_22.json",
+      "domain": "shadbala_oracle",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Prioritizes Naisargika/Dig/Drik Shadbala component arbitration; explanatory partial only, no absolute formula truth selected."
+    },
+    {
+      "packet_id": "shadbala_hard_component_arbitration_2026_07_22",
+      "path": "references/oracle/shadbala_hard_component_arbitration_2026_07_22.json",
+      "domain": "shadbala_oracle",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies Chesta/Sthana/Kala as hard Shadbala components with method/formula blockers; no absolute truth upgrade."
+    },
+    {
+      "packet_id": "kp_observation_sync_contract_2026_07_22",
+      "path": "references/oracle/kp_observation_sync_contract_2026_07_22.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "KP is calculable/displayable as technical observation only; public numeric oracle and verified prediction remain blocked."
+    },
+    {
+      "packet_id": "research_web_skill_invocation_gap_matrix_2026_07_22",
+      "path": "references/oracle/research_web_skill_invocation_gap_matrix_2026_07_22.json",
+      "domain": "research_web_skill_sync",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_planning_only",
+      "claim_boundary": "Tracks code/skill/API/UI/oracle/commercial sync gaps; does not upgrade any technique to truth-ready."
+    },
+    {
+      "packet_id": "shadbala_component_closure_rollup_2026_07_22",
+      "path": "references/oracle/shadbala_component_closure_rollup_2026_07_22.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "42 same-unit component rows are summarized for display; only Naisargika is tolerance-ready observation, no absolute Virupa truth upgrade."
+    },
+    {
+      "packet_id": "kp_public_source_candidate_update_2026_07_22",
+      "path": "references/oracle/kp_public_source_candidate_update_2026_07_22.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "blocked_until_oracle",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "KP public reference-table candidates and one partial archive cusp fact are recorded; exact cusp/star-sub-sub oracle remains blocked."
+    },
+    {
+      "packet_id": "muhurta_observation_factor_packet_2026_07_22",
+      "path": "references/oracle/muhurta_observation_factor_packet_2026_07_22.json",
+      "domain": "muhurta_factor_scoring",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Tarabala/Chandrabala/Rahu Kalam/Abhijit are captured as observation factors only; no final Muhurta verdict."
+    },
+    {
+      "packet_id": "horary_annual_sensitive_points_numeric_packet_queue_2026_07_22",
+      "path": "references/oracle/horary_annual_sensitive_points_numeric_packet_queue_2026_07_22.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Prashna/Tajika/Saham/Gulika/Sphuta numeric packet queue; candidates do not upgrade claims until complete input/raw/hash/replay close."
+    },
+    {
+      "packet_id": "workbuddy_round5_transfer_status_2026_07_22",
+      "path": "references/oracle/workbuddy_round5_transfer_status_2026_07_22.json",
+      "domain": "fragment_governance",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_governance_only",
+      "claim_boundary": "Accounts for 20 WorkBuddy round4 candidates: transferred/reference-only/forbidden; does not claim whole-machine exhaustiveness or truth upgrade."
+    },
+    {
+      "packet_id": "shadbala_formula_arbitration_queue_v2_2026_07_22",
+      "path": "references/oracle/shadbala_formula_arbitration_queue_v2_2026_07_22.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Dig/Drik/Kala/Sthana/Chesta formula policies are queued for arbitration; no absolute Virupa truth upgrade."
+    },
+    {
+      "packet_id": "muhurta_full_scoring_matrix_queue_2026_07_22",
+      "path": "references/oracle/muhurta_full_scoring_matrix_queue_2026_07_22.json",
+      "domain": "muhurta_factor_scoring",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Muhurta full scoring factors are queued; factor observations allowed, final electional verdict forbidden until oracle closure."
+    },
+    {
+      "packet_id": "kp_exact_cusp_public_worked_example_hunt_2026_07_22",
+      "path": "references/oracle/kp_exact_cusp_public_worked_example_hunt_2026_07_22.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "blocked_until_oracle",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "KP exact cusp public worked-example hunt found only candidate/reference sources; required exact cusp/star/sub/sub-sub oracle remains missing."
+    },
+    {
+      "packet_id": "prashna_tajika_numeric_source_hunt_2026_07_22",
+      "path": "references/oracle/prashna_tajika_numeric_source_hunt_2026_07_22.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Prashna/Tajika/Gulika/Saham/Sphuta public source hunt only; candidates do not upgrade numeric oracle claims."
     }
   ]
 }

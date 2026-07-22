@@ -1,0 +1,54 @@
+{
+  "scope": "kp_exact_cusp_public_worked_example_hunt",
+  "created_at": "2026-07-22",
+  "claim_status": "blocked_until_oracle",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "search_status": "no_complete_public_numeric_worked_example_found",
+  "boundary": "This search found KP reference tables and partial example fragments, but no public worked example with complete input plus exact cusp longitude plus star/sub/sub-sub expected table.",
+  "required_fields": [
+    "birth_or_question_input",
+    "place",
+    "timezone",
+    "ayanamsa",
+    "house_system",
+    "exact_cusp_longitude",
+    "star_lord",
+    "sub_lord",
+    "sub_sub_lord"
+  ],
+  "sources_reviewed": [
+    {
+      "source_id": "astrosage_fundamental_principles",
+      "url": "https://kpastrology.astrosage.com/kp-learning-home/tutorial/chapter-2-fundamental-principles",
+      "useful_for": "cusp and sub-lord semantics",
+      "missing": ["complete worked example", "exact cusp star/sub/sub-sub expected row"]
+    },
+    {
+      "source_id": "astrosage_sign_star_sub_table",
+      "url": "https://kpastrology.astrosage.com/reference-tables/sign-star-and-sub-table",
+      "useful_for": "reference table candidate",
+      "missing": ["same-input cusp calculation", "birth/question input"]
+    },
+    {
+      "source_id": "aryanastrology_sub_lord_table",
+      "url": "https://aryanastrologyresearchcentre.com/2021/08/kp-astrology-sub-lord-table/",
+      "useful_for": "sub-lord calculation method candidate",
+      "missing": ["house cusp worked example", "sub-sub lord expected table"]
+    },
+    {
+      "source_id": "indiadivine_horary_cuspal_sublord_fragment",
+      "url": "https://www.indiadivine.org/content/topic/1467658-horary-cuspal-sublord-in-the-sub-of-retrograde-planet/",
+      "useful_for": "partial Horary input fragment",
+      "missing": ["exact cusp longitude", "star/sub/sub-sub expected table", "replayable source table"]
+    },
+    {
+      "source_id": "kpastrology_basics",
+      "url": "https://www.kpastrology.com/kpbasics.htm",
+      "useful_for": "cusp/star/sub concept explanation",
+      "missing": ["numeric worked example"]
+    }
+  ],
+  "next_action": "Continue manual/archive search for a citation-safe page or public PDF containing all required fields. Until then KP remains calculable/displayable as observation-only.",
+  "runtime_sync_policy": "observation_only_not_verified_prediction"
+}

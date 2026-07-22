@@ -1,0 +1,66 @@
+{
+  "boundary": "Naisargika/Dig/Drik are prioritized for Shadbala closure. This packet explains current partial status; it does not select an absolute formula truth.",
+  "claim_status": "partial",
+  "components": [
+    {
+      "bucket_counts": {
+        "within_tolerance": 7
+      },
+      "claim_upgrade": "none",
+      "closure_status": "observation_tolerance_ready",
+      "component": "naisargika",
+      "formula_summary": "Natural strength assigned by fixed planetary order/brightness tradition.",
+      "known_variants": [
+        "fixed table rounding",
+        "planet inclusion set"
+      ],
+      "next_action": "Add second public case, then freeze fixed Virupa table/tolerance.",
+      "source_formula": "shadbala_naisargika_bala",
+      "unit_contract": "Fixed Virupa table for seven visible planets; table source must be named."
+    },
+    {
+      "bucket_counts": {
+        "formula_or_unit_mismatch": 7
+      },
+      "claim_upgrade": "none",
+      "closure_status": "formula_source_arbitration_required",
+      "component": "dig",
+      "formula_summary": "Directional strength by angular distance from planet-specific strongest direction/house.",
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "next_action": "Pin house/cusp vs whole-house angular-distance policy and rerun component comparison.",
+      "source_formula": "shadbala_dig_bala",
+      "unit_contract": "Virupa component; cap/floor and interpolation must be explicit."
+    },
+    {
+      "bucket_counts": {
+        "formula_or_unit_mismatch": 7
+      },
+      "claim_upgrade": "none",
+      "closure_status": "formula_source_arbitration_required",
+      "component": "drik",
+      "formula_summary": "Aspectual strength from benefic/malefic aspects on planet; depends on aspect model, orb/interpolation and natural/functional treatment policy.",
+      "known_variants": [
+        "graha drishti model",
+        "orb/interpolation",
+        "benefic/malefic classification"
+      ],
+      "next_action": "Pin graha-drishti/aspect-strength model, positive/negative scale and benefic/malefic policy.",
+      "source_formula": "shadbala_drik_bala",
+      "unit_contract": "Virupa component; positive/negative sign and aspect-strength scale must be explicit."
+    }
+  ],
+  "created_at": "2026-07-22",
+  "production_tuning_allowed": false,
+  "scope": "shadbala_priority_component_arbitration",
+  "source_joined_packet": "references/oracle/shadbala_component_joined_closure_packet_2026_07_21.json",
+  "summary": {
+    "absolute_truth_upgrade_count": 0,
+    "component_count": 3,
+    "formula_source_arbitration_required_count": 2,
+    "observation_tolerance_ready_count": 1
+  },
+  "truth_matrix_allowed": false
+}

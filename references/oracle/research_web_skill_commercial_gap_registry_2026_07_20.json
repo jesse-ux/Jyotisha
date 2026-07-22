@@ -63,6 +63,16 @@
       ]
     }
   },
+  "completed_milestones": [
+    {
+      "track": "kp_precision_timing_observation_sync",
+      "completed_at": "2026-07-22",
+      "contract": "references/oracle/kp_observation_sync_contract_2026_07_22.json",
+      "matrix": "references/oracle/technique_invocation_matrix_current_2026_07_21.json",
+      "status": "calculable_displayable_public_oracle_blocked",
+      "sync_boundary": "KP exact cusp/star/sub/sub-sub may be exposed as technical observation only. It must not be advertised as verified event timing or birth-time truth."
+    }
+  ],
   "delivery_queue": [
     {
       "track": "worked_examples_to_numeric_packets",

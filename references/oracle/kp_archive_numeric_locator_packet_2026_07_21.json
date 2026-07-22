@@ -1,0 +1,41 @@
+{
+  "scope": "kp_archive_numeric_locator_packet",
+  "created_at": "2026-07-21",
+  "claim_status": "open_queue",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "source_url": "https://archive.org/download/Book1969LiewellynAToZHoroscopeMakerAndDelineatorKPRedIt/Jyotish_Key%20to%20Learn_K.P.%20cuspal%20system_S.P.%20Khullar_djvu.txt",
+  "source_sha256": "3c5c714f3f15af4784c8b647268b8349e1a11bf045481abbd56d263432dd2a9a",
+  "source_length_bytes": 387799,
+  "locator_status": "candidate_lines_found_not_oracle",
+  "candidate_numeric_line_count": 41,
+  "term_hits": {
+    "example": 62,
+    "cuspal": 224,
+    "longitude": 5,
+    "significator": 53,
+    "horary": 3,
+    "dasa": 263
+  },
+  "candidate_line_numbers_sample": [
+    2662,
+    6465,
+    6577,
+    6586,
+    6588,
+    6737,
+    10746,
+    12922,
+    19845,
+    20692
+  ],
+  "copyright_boundary": "locator_only_no_bulk_text_extraction",
+  "missing_for_oracle": [
+    "manual review of candidate lines/pages",
+    "minimal permitted excerpt/citation policy",
+    "exact birth/question data for any selected worked example",
+    "structured cusp longitude and star/sub/sub-sub expected values",
+    "same-input local or VedicAstro replay"
+  ],
+  "boundary": "This packet upgrades KP archive discovery from vague candidate to hash-stable locator. It still does not provide a numeric oracle row."
+}

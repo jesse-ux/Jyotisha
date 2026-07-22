@@ -1,0 +1,24 @@
+{
+  "scope": "tajika_yumpu_access_locator",
+  "created_at": "2026-07-21",
+  "claim_status": "blocked_until_oracle",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "source_url": "https://www.yumpu.com/en/document/view/40420384/ashtakavarga-system-of-prediction-a-part-40-neelastro",
+  "http_status": 200,
+  "html_probe": {
+    "bytes_read": 120000,
+    "steve_jobs_string_found": true,
+    "varshaphala_string_found": false
+  },
+  "numeric_extraction_status": "not_performed",
+  "copyright_boundary": "access_locator_only_no_bulk_capture",
+  "missing_for_oracle": [
+    "authorized/full source capture",
+    "confirmation that 1984 Varshaphala values are present",
+    "structured numeric field extraction",
+    "source hash for approved capture",
+    "local replay comparison"
+  ],
+  "boundary": "Yumpu is reachable and contains a Steve Jobs string in the first 120KB HTML probe, but no numeric Tajika/Varshaphala oracle extraction was performed."
+}

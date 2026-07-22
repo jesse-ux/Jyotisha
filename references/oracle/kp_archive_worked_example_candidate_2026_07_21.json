@@ -1,0 +1,26 @@
+{
+  "scope": "kp_archive_worked_example_candidate",
+  "created_at": "2026-07-21",
+  "claim_status": "open_queue",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "source_url": "https://archive.org/stream/Book1969LiewellynAToZHoroscopeMakerAndDelineatorKPRedIt/Jyotish_Key%20to%20Learn_K.P.%20cuspal%20system_S.P.%20Khullar_djvu.txt",
+  "candidate_strength": "worked_example_text_candidate",
+  "observed_public_snippet_topics": [
+    "Sub-Sub lord",
+    "cusp significator example",
+    "dasa lord example",
+    "house/cusp signification"
+  ],
+  "oracle_status": "blocked_pending_structured_numeric_extraction",
+  "copyright_boundary": "public_access_not_permission_to_bulk_copy",
+  "missing_for_oracle": [
+    "book/source bibliographic review",
+    "specific page/section locator",
+    "minimal fair-use excerpt policy",
+    "exact cusp longitude table if present",
+    "star/sub/sub-sub result table extraction",
+    "same-input local or VedicAstro replay"
+  ],
+  "boundary": "This is the strongest KP worked-example text candidate found in this pass, but it is not yet a numeric oracle packet."
+}

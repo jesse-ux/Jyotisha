@@ -1,0 +1,100 @@
+{
+  "scope": "research_web_skill_invocation_gap_matrix",
+  "created_at": "2026-07-22",
+  "claim_status": "open_queue",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "boundary": "This matrix tracks whether a Jyotish technique is actually callable by code, skill, API, and research web UI. It is not a truth upgrade matrix.",
+  "rows": [
+    {
+      "technique": "Shadbala",
+      "code": "yes",
+      "skill": "yes_high_rigor_required",
+      "api": "yes",
+      "ui": "research_panel_partial",
+      "oracle": "component_explanatory_partial",
+      "next_action": "Expose same-unit component closure status in web Technique Audit instead of a single optimistic Shadbala label.",
+      "commercial_sync": "sync_partial_with_component_boundary"
+    },
+    {
+      "technique": "KP exact cusp / star-sub-sub",
+      "code": "probe_available",
+      "skill": "reference_only_with_boundary",
+      "api": "observation_endpoint_allowed",
+      "ui": "capability_center_badge_only",
+      "oracle": "public_numeric_oracle_blocked",
+      "next_action": "Display KP as technical observation only; continue archive numeric line extraction for public worked examples.",
+      "commercial_sync": "sync_observation_contract_only"
+    },
+    {
+      "technique": "Muhurta / Panchanga factors",
+      "code": "factor_probe_partial",
+      "skill": "partial",
+      "api": "partial",
+      "ui": "not_full_scoring",
+      "oracle": "factor_observation_only",
+      "next_action": "Add Tarabala, Chandrabala, Rahu Kalam, Abhijit factor display without final择日 verdict.",
+      "commercial_sync": "sync_observation_only_after_factor_contract"
+    },
+    {
+      "technique": "Prashna / Saham / Gulika / Sphuta",
+      "code": "partial_probe_available",
+      "skill": "blocked_or_observation",
+      "api": "partial",
+      "ui": "not_clear",
+      "oracle": "worked_example_numeric_packet_needed",
+      "next_action": "Convert public worked examples into numeric packets before any claim upgrade.",
+      "commercial_sync": "do_not_sync_as_prediction"
+    },
+    {
+      "technique": "Tajika / Varshaphala",
+      "code": "partial",
+      "skill": "partial",
+      "api": "partial",
+      "ui": "limited",
+      "oracle": "numeric_source_missing",
+      "next_action": "Continue source hunt for clean Steve Jobs 1984 or other public annual chart numeric packet.",
+      "commercial_sync": "hold_until_clean_oracle_or_reference_only"
+    },
+    {
+      "technique": "Birth-time rectification",
+      "code": "yes_candidate_engine",
+      "skill": "yes_candidate_only",
+      "api": "yes_candidate_only",
+      "ui": "guided_journey_needs_maturity",
+      "oracle": "needs_human_labeled_holdout",
+      "next_action": "Improve journey resume/mobile/error handling while keeping claim candidate-only.",
+      "commercial_sync": "sync_journey_contract_not_birth_time_truth"
+    },
+    {
+      "technique": "Day/month timing",
+      "code": "candidate_ranker",
+      "skill": "candidate_only",
+      "api": "candidate_windows_only",
+      "ui": "candidate_windows_only",
+      "oracle": "blocked_until_independent_labels",
+      "next_action": "Collect frozen positive/negative labels and run blind ranking; no tuning on existing controls.",
+      "commercial_sync": "sync_boundary_contract_only"
+    },
+    {
+      "technique": "D1-D60 varga mapping",
+      "code": "generic_engine_with_special_case_gaps",
+      "skill": "registry_available",
+      "api": "partial",
+      "ui": "not_full_matrix",
+      "oracle": "external_packet_gaps",
+      "next_action": "Promote only mapped divisions with source/formula/oracle status visible.",
+      "commercial_sync": "sync_mapped_divisions_only"
+    },
+    {
+      "technique": "Compatibility / relationship combinations",
+      "code": "foundation_available",
+      "skill": "rule_family_registry",
+      "api": "partial",
+      "ui": "basic",
+      "oracle": "advanced_overlay_unclosed",
+      "next_action": "Connect relationship rule-family registry to UI as evidence-weighted layers.",
+      "commercial_sync": "sync_foundation_only"
+    }
+  ]
+}

@@ -34,3 +34,13 @@ def test_research_web_skill_gap_registry_orders_numeric_packets_before_ui_truth_
     assert "localStorage only" in tracks["research_web_profile_flow"]["next_delivery"]
     assert "exploratory" in tracks["research_web_rectification_journey"]["gate_for_upgrade"]
     assert "skill_truth_overlay" in tracks["skill_to_web_sync"]["next_delivery"]
+
+
+def test_research_web_skill_gap_registry_records_kp_observation_sync_boundary():
+    data = json.loads(REGISTRY.read_text(encoding="utf-8"))
+    milestones = {row["track"]: row for row in data["completed_milestones"]}
+    kp = milestones["kp_precision_timing_observation_sync"]
+    assert kp["contract"] == "references/oracle/kp_observation_sync_contract_2026_07_22.json"
+    assert kp["status"] == "calculable_displayable_public_oracle_blocked"
+    assert "technical observation only" in kp["sync_boundary"]
+    assert "verified event timing" in kp["sync_boundary"]

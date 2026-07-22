@@ -1,0 +1,86 @@
+{
+  "scope": "horary_annual_sensitive_points_numeric_packet_queue",
+  "created_at": "2026-07-22",
+  "claim_status": "open_queue",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "boundary": "Prashna/Tajika/Saham/Gulika/Sphuta numeric packet queue only. Existing numeric candidates do not upgrade interpretation or prediction claims until complete input, settings, raw/hash and legal replay close.",
+  "rows": [
+    {
+      "technique": "Prashna input contract",
+      "local_code": "available",
+      "numeric_candidate_status": "input_contract_ready_numeric_oracle_needed",
+      "source_packet": "references/oracle/prashna_input_contract_2026_07_20.json",
+      "missing_for_oracle": [
+        "same-input public worked example",
+        "external replay",
+        "claim-gate upgrade review"
+      ],
+      "claim_boundary": "question time/place/timezone/ayanamsa/node-mode can be captured, but judgment remains observation/blocked until numeric examples close."
+    },
+    {
+      "technique": "Sphuta / Trisphuta / Chatusphuta / Panchasphuta",
+      "local_code": "probe_available",
+      "numeric_candidate_status": "partial_numeric_candidate_present_not_oracle",
+      "source_packet": "references/oracle/prashna_numeric_oracle_packet_queue_2026_07_20.json",
+      "numeric_fields_present": [
+        "sun",
+        "moon",
+        "rahu",
+        "lagna",
+        "gulika",
+        "trisphuta",
+        "chatusphuta",
+        "panchasphuta"
+      ],
+      "missing_for_oracle": [
+        "complete Prashna input",
+        "ayanamsa",
+        "node mode",
+        "timezone",
+        "raw capture hash",
+        "local and external replay"
+      ],
+      "claim_boundary": "Numeric-looking Sphuta values are candidate evidence only."
+    },
+    {
+      "technique": "Gulika",
+      "local_code": "available",
+      "numeric_candidate_status": "candidate_inside_sphuta_packet",
+      "source_packet": "references/oracle/prashna_numeric_oracle_packet_queue_2026_07_20.json",
+      "missing_for_oracle": [
+        "standalone Gulika worked example",
+        "sunrise/sunset and day/night convention",
+        "same-input replay comparison"
+      ],
+      "claim_boundary": "Gulika can be calculated locally but remains observation-only without standalone oracle closure."
+    },
+    {
+      "technique": "Saham",
+      "local_code": "available",
+      "numeric_candidate_status": "worked_example_needed",
+      "source_packet": "scripts/saham_daynight.py",
+      "missing_for_oracle": [
+        "public Saham formula variant",
+        "annual/prashna input",
+        "expected numeric values",
+        "day/night convention"
+      ],
+      "claim_boundary": "Saham remains local calculation/reference-only until citable numeric packet closes."
+    },
+    {
+      "technique": "Tajika / Varshaphala",
+      "local_code": "partial",
+      "numeric_candidate_status": "source_hunt_blocked",
+      "source_packet": "references/oracle/tajika_steve_jobs_1984_extraction_contract_2026_07_21.json",
+      "missing_for_oracle": [
+        "clean public Steve Jobs 1984 annual chart numeric source",
+        "solar return convention",
+        "ayanamsa/node mode/timezone",
+        "local replay comparison",
+        "copyright-safe provenance"
+      ],
+      "claim_boundary": "Tajika/Varshaphala annual interpretation remains blocked/partial; do not promote from Yumpu snippets."
+    }
+  ]
+}

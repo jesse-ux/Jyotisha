@@ -1,0 +1,123 @@
+{
+  "scope": "shadbala_formula_arbitration_queue_v2",
+  "created_at": "2026-07-22",
+  "claim_status": "partial",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "source_rollup": "references/oracle/shadbala_component_closure_rollup_2026_07_22.json",
+  "boundary": "Formula arbitration queue only. These policy choices make component differences explainable; they do not make Shadbala absolute Virupa parity truth-ready.",
+  "components": [
+    {
+      "component": "dig",
+      "current_bucket": "formula_or_unit_mismatch",
+      "research_policy_to_test": "house_cusp_angular_distance",
+      "alternative_variants": [
+        "whole_house_angular_distance",
+        "equal_house_midpoint",
+        "engine_specific_cusp_model"
+      ],
+      "unit_contract": "Virupa, capped/floored after angular interpolation; house/cusp basis must be explicit.",
+      "why_this_policy": "Dig Bala is a directional/angular strength; using cuspal geometry is the most testable policy against exact external worked examples.",
+      "next_evidence": [
+        "source-cited formula paragraph",
+        "same-input cusp longitudes",
+        "per-planet angular distance table",
+        "local vs PyJHora/Xalen/jyotishganit rerun"
+      ],
+      "claim_upgrade": "none"
+    },
+    {
+      "component": "drik",
+      "current_bucket": "formula_or_unit_mismatch",
+      "research_policy_to_test": "classical_graha_drishti_with_signed_benefic_malefic_sum",
+      "alternative_variants": [
+        "orb_weighted_aspect_strength",
+        "full_parashara_special_aspects_only",
+        "natural_benefic_malefic_only",
+        "functional_benefic_malefic_overlay"
+      ],
+      "unit_contract": "Signed Virupa contribution; positive/negative scale and aspect-strength interpolation must be named.",
+      "why_this_policy": "Drik Bala mismatches are dominated by aspect model and benefic/malefic sign convention rather than raw longitude availability.",
+      "next_evidence": [
+        "aspect matrix with source weights",
+        "natural vs functional benefic/malefic toggle",
+        "signed Virupa subtotal per aspect",
+        "same-input external worked example"
+      ],
+      "claim_upgrade": "none"
+    },
+    {
+      "component": "kala",
+      "current_bucket": "formula_or_unit_mismatch",
+      "research_policy_to_test": "split_kala_subcomponents_before_total_comparison",
+      "subcomponents_required": [
+        "nathonatha",
+        "paksha",
+        "tribhaga",
+        "abda",
+        "masa",
+        "vara",
+        "hora",
+        "ayana",
+        "yuddha"
+      ],
+      "unit_contract": "Each subcomponent must declare Virupa cap/floor and birth-time/sunrise/day-night context.",
+      "why_this_policy": "Kala total parity is not meaningful until time-context subcomponents are visible.",
+      "next_evidence": [
+        "local sunrise/sunset context",
+        "birth local time and day/night status",
+        "subcomponent formula source",
+        "component subtotal replay"
+      ],
+      "claim_upgrade": "none"
+    },
+    {
+      "component": "sthana",
+      "current_bucket": "mixed_method_and_formula",
+      "research_policy_to_test": "split_sthana_subcomponents_before_variant_selection",
+      "subcomponents_required": [
+        "uccha",
+        "saptavargaja",
+        "ojayugma",
+        "kendradi",
+        "drekkana",
+        "moolatrikona_or_dignity_variant"
+      ],
+      "unit_contract": "Subcomponent Virupa rows must be compared before a total Sthana decision.",
+      "why_this_policy": "Sthana mismatches mix moolatrikona intervals, dignity tables, and varga strength inclusion.",
+      "next_evidence": [
+        "dignity table provenance",
+        "moolatrikona degree interval policy",
+        "varga inclusion list",
+        "subcomponent subtotal replay"
+      ],
+      "claim_upgrade": "none"
+    },
+    {
+      "component": "chesta",
+      "current_bucket": "method_variant",
+      "research_policy_to_test": "explicit_mean_motion_seeghrochcha_variant_selection",
+      "alternative_variants": [
+        "mean_motion_based",
+        "seeghrochcha_based",
+        "retrogression_speed_based",
+        "luminary_zero_or_special_policy"
+      ],
+      "unit_contract": "Virupa method variant must be named before comparing absolute values.",
+      "why_this_policy": "Chesta is primarily a method-variant problem; forcing one absolute truth would hide legitimate tradition/engine divergence.",
+      "next_evidence": [
+        "source-cited Chesta formula",
+        "planet speed/retrogression raw",
+        "luminary treatment policy",
+        "same-input replay after variant selection"
+      ],
+      "claim_upgrade": "none"
+    }
+  ],
+  "summary": {
+    "component_count": 5,
+    "formula_or_unit_tracks": 4,
+    "method_variant_tracks": 1,
+    "absolute_truth_upgrade_count": 0
+  }
+}

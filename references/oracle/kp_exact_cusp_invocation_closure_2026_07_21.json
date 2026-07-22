@@ -1,0 +1,72 @@
+{
+  "scope": "kp_exact_cusp_invocation_closure",
+  "created_at": "2026-07-21",
+  "claim_status": "observation_only",
+  "source_raw": "references/oracle/vedicastro_kp_house_cusp_raw_2026_07_21.json",
+  "runtime_invocation_status": "exact_cusp_star_sub_sub_raw_available",
+  "public_numeric_oracle_status": "blocked_missing_public_worked_example",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "boundary": "This closes the runtime invocation gap for exact KP house cusp/star/sub/sub-sub raw. It does not close public numeric worked-example oracle parity and cannot be used as verified event timing truth.",
+  "raw_hash": "2e7a6b17eb2965a60846f625f6bd8bc03555216d6225983647bcbfa23d0e345b",
+  "request_contract": {
+    "ayanamsa": "Krishnamurti",
+    "house_system": "Placidus",
+    "timezone": "America/Los_Angeles",
+    "birth_case": "Steve Jobs public case",
+    "privacy": "public_person_case_only"
+  },
+  "schema_fields": [
+    "Object",
+    "HouseNr",
+    "Rasi",
+    "LonDecDeg",
+    "SignLonDMS",
+    "SignLonDecDeg",
+    "DegSize",
+    "Nakshatra",
+    "RasiLord",
+    "NakshatraLord",
+    "SubLord",
+    "SubSubLord"
+  ],
+  "summary": {
+    "house_count": 12,
+    "required_fields": [
+      "HouseNr",
+      "LonDecDeg",
+      "NakshatraLord",
+      "SubLord",
+      "SubSubLord"
+    ]
+  },
+  "sample_cusps": [
+    {
+      "HouseNr": 1,
+      "LonDecDeg": 149.434,
+      "NakshatraLord": "Sun",
+      "SubLord": "Rahu",
+      "SubSubLord": "Rahu"
+    },
+    {
+      "HouseNr": 2,
+      "LonDecDeg": 175.493,
+      "NakshatraLord": "Mars",
+      "SubLord": "Rahu",
+      "SubSubLord": "Venus"
+    },
+    {
+      "HouseNr": 3,
+      "LonDecDeg": 205.634,
+      "NakshatraLord": "Jupiter",
+      "SubLord": "Mercury",
+      "SubSubLord": "Saturn"
+    }
+  ],
+  "next_required_evidence": [
+    "public KP worked example with exact cusp longitude",
+    "published star/sub/sub-sub table result",
+    "same ayanamsa and Placidus/KP house settings",
+    "field-level comparison against this raw packet"
+  ]
+}
