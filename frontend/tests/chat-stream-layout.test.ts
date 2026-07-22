@@ -65,7 +65,7 @@ test("keeps the suggestion row height stable while an answer streams", () => {
 });
 
 test("docks the composer inside the chat panel instead of floating over content", () => {
-  assert.match(pageSource, /<div className="composer-wrap">/);
+  assert.match(pageSource, /<div className=\{`composer-wrap \$\{starterHomeVisible \? "composer-wrap-starter" : ""\}`\}>/);
   assert.match(globalStyles, /\.chat-panel[^}]*grid-template-rows:\s*68px minmax\(0,\s*1fr\) auto/);
   assert.match(globalStyles, /\.conversation[^}]*padding-bottom:\s*var\(--composer-reserve\)/);
   assert.match(globalStyles, /\.composer-wrap[^}]*position:\s*sticky/);

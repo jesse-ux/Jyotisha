@@ -36,8 +36,9 @@ test("completed account initialization switches directly to the home cards", () 
 
 test("default starter questions are guided Jyotish topics with evidence and claim boundaries", () => {
   assert.match(pageSource, /defaultGuidedJyotishTopics/);
-  assert.match(pageSource, /theme\.evidencePreview\.join/);
-  assert.match(pageSource, /theme\.claimBoundary/);
+  assert.match(pageSource, /starterSuggestions\.map/);
+  assert.match(pageSource, /themes\.find\(\(candidate\) => candidate\.id === item\.theme\)/);
+  assert.match(pageSource, /chooseSuggestedQuestion\(item\.text, item\.theme\)/);
   assert.match(guidedTopicsSource, /strictWorkflowRoute/);
   assert.match(guidedTopicsSource, /evidencePreview/);
   assert.match(guidedTopicsSource, /confidenceCap/);
@@ -73,13 +74,15 @@ test("keeps session history clickable while another session is answering", () =>
   assert.doesNotMatch(appSidebarSource, /pendingSession|isLoading|cancellationPending|requestPending/);
 });
 
-test("uses the compact model popup width", () => {
+test("sizes the model popup to its content with responsive bounds", () => {
   // Given: the model selector popup styles.
   const popupStyles = sourceBetween(globalStyles, ".model-selector-popup {", "}\n.model-selector-popup[data-starting-style]");
 
   // When: its responsive width is inspected.
-  // Then: the desktop cap is half of the former 360px width.
-  assert.match(popupStyles, /width:\s*min\(180px,/);
+  // Then: short labels stay compact while long content remains viewport-safe.
+  assert.match(popupStyles, /width:\s*max-content/);
+  assert.match(popupStyles, /min-width:\s*180px/);
+  assert.match(popupStyles, /max-width:\s*min\(420px,/);
 });
 
 test("centers the credit value with its icon", () => {

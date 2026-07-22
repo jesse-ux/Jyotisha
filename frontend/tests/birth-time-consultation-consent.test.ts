@@ -239,7 +239,7 @@ test("homepage and profile result copy use the source-aware consultation options
   const intake = readFileSync(new URL("../src/components/birth-time-intake.tsx", import.meta.url), "utf8");
 
   assert.match(page, /birthTimeConsultationOptionsCopy\(profileDraft\)/);
-  assert.match(page, /birthTimeConsultationOptionsCopy\(profile\)/);
+  assert.doesNotMatch(page, /birthTimeConsultationOptionsCopy\(profile\)/);
   assert.match(intake, /birthTimeConsultationOptionsCopy\(value\)/);
 });
 

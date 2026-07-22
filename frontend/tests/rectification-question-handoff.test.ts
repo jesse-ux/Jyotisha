@@ -70,7 +70,7 @@ function controllerFor(turn: ConversationalRectificationTurn): ConversationalRec
   };
 }
 
-test("confirmed surface requires an explicit click before continuing the original question", () => {
+test("confirmed surface requires an explicit click before returning to the original question", () => {
   let continuationCalls = 0;
   const markup = renderToStaticMarkup(React.createElement(
     ConversationalRectificationSurface,
@@ -80,8 +80,8 @@ test("confirmed surface requires an explicit click before continuing the origina
     },
   ));
 
-  assert.match(markup, /原问题：未来半年是否适合换工作？/);
-  assert.match(markup, />使用新确认时间继续回答原问题</);
+  assert.doesNotMatch(markup, /原问题：未来半年是否适合换工作？/);
+  assert.match(markup, />返回原问题</);
   assert.equal(continuationCalls, 0);
 });
 
@@ -95,7 +95,7 @@ test("continuation action is visibly locked while ordinary consultation is pendi
     },
   ));
 
-  assert.match(markup, /<button[^>]+disabled=""[^>]*>正在继续回答原问题…<\/button>/);
+  assert.match(markup, /<button[^>]+disabled=""[^>]*>正在继续回答…<\/button>/);
 });
 
 test("choosing rectify-first captures the visible question and passes it only to v3 start", async () => {

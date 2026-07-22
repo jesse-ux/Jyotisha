@@ -150,7 +150,7 @@ test("terminal CJK copy stays intact while homepage candidates remain unconfirme
   const pageSource = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 
   assert.match(candidateResultSource, /候选范围已保留，但当前证据不足以将具体分钟写入当前排盘时间。补充经历后可重新评估。/);
-  assert.match(pageSource, /未确认；\$\{birthTimeConsultationOptionsCopy\(profile\)\}/);
+  assert.match(pageSource, /`出生资料已保存。\$\{birthTimeConsultationOptionsCopy\(profileDraft\)\}`/);
   assert.match(pageSource, /<ConversationalBirthTimeRectification/);
   assert.doesNotMatch(pageSource, /当前使用候选时间排盘/);
 });
