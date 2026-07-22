@@ -126,3 +126,16 @@ test("homepage sends explicit modes and never routes an unverified minute throug
   assert.match(route, /旧版生时校正入口已停用/);
   assert.ok(route.indexOf("旧版生时校正入口已停用") < route.indexOf("reserveConsultationModel(", route.indexOf("chatRequestSchema.safeParse")));
 });
+
+test("range-terminal rectification handoff accepts unverified chart mode without weakening general-mode isolation", () => {
+  const route = readFileSync(new URL("../src/app/api/consult/route.ts", import.meta.url), "utf8");
+  const handoffGuard = route.slice(
+    route.indexOf("if (handoff)"),
+    route.indexOf("try {", route.indexOf("if (handoff)")),
+  );
+
+  assert.match(handoffGuard, /\["verified_chart", "unverified_birth_time"\]\.includes\(parsed\.data\.consultationMode\)/);
+  assert.doesNotMatch(handoffGuard, /consultationMode !== "verified_chart"/);
+  assert.doesNotMatch(handoffGuard, /general_no_birth_time/);
+  assert.match(handoffGuard, /requestId !== handoff\.requestId/);
+});

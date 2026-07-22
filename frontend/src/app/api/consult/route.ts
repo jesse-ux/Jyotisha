@@ -200,7 +200,7 @@ export async function POST(request: Request) {
   }
 
   if (handoff) {
-    if (parsed.data.consultationMode !== "verified_chart"
+    if (!["verified_chart", "unverified_birth_time"].includes(parsed.data.consultationMode)
       || parsed.data.entrypoint !== undefined
       || requestId !== handoff.requestId) {
       return NextResponse.json(
