@@ -122,6 +122,7 @@ const evidenceDomainSchema = z.enum([
   "career",
   "education",
   "finance",
+  "health_pressure",
   "relocation",
   "relationship",
   "family",

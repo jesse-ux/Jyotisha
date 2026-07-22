@@ -1,0 +1,93 @@
+{
+  "schema_version": "conversational-minute-rectification-development-v1",
+  "benchmark_id": "conversational_rectification_development_v1",
+  "source_manifest": "references/real_case_calibration/minute_rectification_development_v1.json",
+  "partition": "tuning_and_diagnostics",
+  "excluded_from_holdout": true,
+  "allowed_for_tuning": true,
+  "as_of_date": "2026-07-22",
+  "cases": [
+    {
+      "case_id": "steve_jobs_1955_development",
+      "disclosure_order": [
+        {
+          "event_id": "jobs_apple_founding_1976",
+          "user_utterance": "1976年4月1日我创业成立了公司。",
+          "expected_extraction": {"date_value": "1976-04-01", "date_precision": "day", "domain": "career", "scoreable": true},
+          "expected_route_scoreable": true
+        },
+        {
+          "event_id": "jobs_marriage_1991",
+          "user_utterance": "1991年3月18日我结婚了。",
+          "expected_extraction": {"date_value": "1991-03-18", "date_precision": "day", "domain": "relationship", "scoreable": true},
+          "expected_route_scoreable": true
+        },
+        {
+          "event_id": "jobs_cancer_diagnosis_2003",
+          "user_utterance": "2003年我确诊了胰腺神经内分泌肿瘤。",
+          "expected_extraction": {"date_value": "2003", "date_precision": "year", "domain": "health_pressure", "scoreable": true},
+          "expected_route_scoreable": true
+        },
+        {
+          "event_id": "jobs_resigned_apple_ceo_2011",
+          "user_utterance": "2011年8月24日我辞去公司CEO职务。",
+          "expected_extraction": {"date_value": "2011-08-24", "date_precision": "day", "domain": "career", "scoreable": true},
+          "expected_route_scoreable": true
+        }
+      ]
+    },
+    {
+      "case_id": "albert_einstein_1879_development",
+      "disclosure_order": [
+        {
+          "event_id": "einstein_marriage_1903",
+          "user_utterance": "1903年我结婚了。",
+          "expected_extraction": {"date_value": "1903", "date_precision": "year", "domain": "relationship", "scoreable": true},
+          "expected_route_scoreable": true
+        },
+        {
+          "event_id": "einstein_nobel_award_1922",
+          "user_utterance": "1922年我的工作成就获得了诺贝尔物理学奖。",
+          "expected_extraction": {"date_value": "1922", "date_precision": "year", "domain": "career", "scoreable": true},
+          "expected_route_scoreable": true
+        },
+        {
+          "event_id": "einstein_left_germany_1933",
+          "user_utterance": "1933年我移居国外。",
+          "expected_extraction": {"date_value": "1933", "date_precision": "year", "domain": "relocation", "scoreable": true},
+          "expected_route_scoreable": true
+        }
+      ]
+    },
+    {
+      "case_id": "marie_curie_1867_development",
+      "disclosure_order": [
+        {
+          "event_id": "curie_moved_to_paris_1891",
+          "user_utterance": "1891年我移居巴黎继续学业。",
+          "expected_extraction": {"date_value": "1891", "date_precision": "year", "domain": "education", "scoreable": true},
+          "expected_route_scoreable": true
+        },
+        {
+          "event_id": "curie_marriage_1895",
+          "user_utterance": "1895年7月26日我结婚了。",
+          "expected_extraction": {"date_value": "1895-07-26", "date_precision": "day", "domain": "relationship", "scoreable": true},
+          "expected_route_scoreable": true
+        },
+        {
+          "event_id": "curie_nobel_physics_1903",
+          "user_utterance": "1903年我的工作成果获得了诺贝尔物理学奖。",
+          "expected_extraction": {"date_value": "1903", "date_precision": "year", "domain": "career", "scoreable": true},
+          "expected_route_scoreable": true
+        },
+        {
+          "event_id": "curie_widowed_1906",
+          "user_utterance": "1906年4月19日我的丈夫因交通事故去世。",
+          "expected_extraction": {"date_value": "1906-04-19", "date_precision": "day", "domain": "health_pressure", "scoreable": true},
+          "expected_route_scoreable": true
+        }
+      ]
+    }
+  ],
+  "boundary": "Visible public entry smoke fixtures. TypeScript tests assert extractor behavior and Python uses fixture labels to simulate route filtering; the fixed cases now cover pre-1900 dates and health-pressure routing, but this is not end-to-end transport and cannot evaluate Skill-level convergence or open the release gate."
+}

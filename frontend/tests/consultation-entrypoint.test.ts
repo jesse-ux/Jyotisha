@@ -100,22 +100,24 @@ test("homepage birth-time card starts the first rectification turn without a sec
   assert.match(handler, /sendConversationalRectificationCommand\(\{[\s\S]*?type:\s*"start"/);
 });
 
-test("homepage birth-time card waits for the first turn before opening its dedicated session", () => {
+test("homepage birth-time card opens its dedicated session before the first turn resolves", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   const start = source.indexOf("async function openBirthTimeRectification");
   const end = source.indexOf("function handleConversationalRectificationTurn", start);
   const handler = source.slice(start, end);
   const create = handler.indexOf('createSession(modelCatalog.defaultModelId, "birth_time_rectification")');
-  const request = handler.indexOf("sendConversationalRectificationCommand");
-  const reveal = handler.indexOf("setActiveSessionId(boundSession.id)");
+  const firstAwait = handler.indexOf("await ");
+  const reveal = handler.indexOf("setActiveSessionId(rectificationSession.id)");
 
   assert.ok(create >= 0);
-  assert.ok(request > create);
-  assert.ok(reveal > request);
-  assert.doesNotMatch(handler.slice(0, request), /setActiveSessionId\(/);
-  assert.doesNotMatch(handler.slice(0, request), /setSessions\(/);
+  assert.ok(firstAwait > create);
+  assert.ok(reveal > create && reveal < firstAwait);
+  assert.ok(handler.indexOf("setSessions((current) => [") < firstAwait);
+  assert.match(handler, /rectificationOpenInFlight\.current/);
+  assert.match(handler, /rectificationOpenInFlight\.current = true;[\s\S]*?finally \{[\s\S]*?rectificationOpenInFlight\.current = false;/);
   assert.match(handler, /setRectificationReturnSessionId\(sourceSession\.id\)/);
-  assert.match(handler, /setRectificationInitialTurn\(turn\);[\s\S]*?setActiveSessionId\(boundSession\.id\)/);
+  assert.match(source, /const rectificationSurfaceOpen = activeRectificationSession\s*&& activeSession\.id === rectificationSessionId/);
+  assert.match(source, /rectificationSurfaceOpen && \(!visibleRectificationTurn && rectificationError \? \([\s\S]*?<ConversationalBirthTimeRectification[\s\S]*?initialTurn=\{visibleRectificationTurn\}/);
 });
 
 test("rectification cards render only inside the active rectification session", () => {

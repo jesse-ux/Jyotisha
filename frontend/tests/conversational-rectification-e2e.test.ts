@@ -143,15 +143,11 @@ function narrativeGenerator() {
       };
       const packet = request.packet;
       const final = request.phase === "final";
+      const nextDomain = packet.suggestedDomains[0]?.domain ?? "career";
       return { text: JSON.stringify({
         narrative: [
-          `${packet.candidate.representativeTime} 是待验证候选，范围为 ${packet.candidate.rangeStart} 至 ${packet.candidate.rangeEnd}。`,
-          "D1 的 Cancer 在范围内保持稳定。",
-          "D9 的 Aries / Leo 存在分钟敏感差异，搬迁事件可以区分 D9。",
-          "D10 的 Taurus / Libra 存在分钟敏感差异，事业事件可以区分 D10。",
-          "D24 的 Gemini / Virgo 存在分钟敏感差异，学业事件可以区分 D24。",
-          final ? "现有已发生事件支持进入候选确认。" : "请写一件已经发生的真实事件，注明哪一年、哪一月以及发生了什么。",
-          packet.useBoundary,
+          `当前仍在核对 ${packet.candidate.rangeStart}–${packet.candidate.rangeEnd} 的候选范围，不能视为已经确认的出生分钟。`,
+          final ? "现有已发生事件支持进入候选确认。" : "先说一件已经发生的重要经历好吗？请注明哪一年、哪一月以及发生了什么。",
         ].join(""),
         candidateStatus: packet.candidate.status,
         representativeTime: packet.candidate.representativeTime,
@@ -163,7 +159,7 @@ function narrativeGenerator() {
         referenceIds: [],
         domainReasons: packet.suggestedDomains.map((item) => ({ ...item })),
         evidenceRequest: final ? null : {
-          domains: packet.suggestedDomains.map((item) => item.domain),
+          domains: [nextDomain],
           datePrecision: "month_preferred",
           prompt: "请提供已经发生的真实事件，并写明哪一年、哪一月以及发生了什么。",
         },
@@ -472,12 +468,11 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
   let turn = await post(handler, { type: "start", actionId: caseId, pendingConsultationQuestion: originalQuestion });
   assert.equal(turn.pendingConsultationQuestion, originalQuestion);
   assert.equal(turn.status, "active");
-  assert.match(turn.narrative, /05:30.*待验证候选/);
-  assert.match(turn.narrative, /D1.*稳定/);
-  assert.match(turn.narrative, /D9.*敏感差异/);
-  assert.match(turn.narrative, /D10.*敏感差异/);
+  assert.match(turn.narrative, /05:00–06:00.*不能/);
+  assert.doesNotMatch(turn.narrative, /\bD\d+\b/);
+  assert.equal((turn.narrative.match(/[？?]/g) ?? []).length, 1);
   assert.match(turn.narrative, /哪一年、哪一月/);
-  assert.deepEqual(turn.evidenceRequest?.domains, ["career", "education", "relocation"]);
+  assert.deepEqual(turn.evidenceRequest?.domains, ["career"]);
   assert.equal(turn.evidenceRequest?.freeTextAllowed, true);
   assert.equal(JSON.stringify(turn).includes("candidateWeights"), false);
   assert.equal(JSON.stringify(turn).includes("private-synthetic-partition"), false);

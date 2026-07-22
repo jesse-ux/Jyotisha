@@ -60,10 +60,8 @@ function richOutput(): RectificationNarrativeModelOutput {
   const packet = syntheticTechnicalPacket();
   return {
     narrative: [
-      "05:20 是 05:16–05:24 范围内的待验证候选，不是已经确认的出生分钟。",
-      "D1 上升在范围内保持 Cancer，属于稳定层【consult-d1-ascendant】；D9 与 D10 分别出现 Leo/Virgo、Libra/Scorpio 的分钟敏感变化。",
-      "因此关系事件可区分 D9，事业事件可区分 D10。请提供已经发生的真实事件，尽量写明哪一年、哪一月以及发生了什么。",
-      "未来窗口只能作为背景，不能计入既成事件评分。",
+      "当前仍在核对 05:16–05:24 的候选范围，还不能把其中某一分钟当作确定出生时间。",
+      "先说一件已经发生的重要关系经历好吗？尽量写明哪一年、哪一月以及发生了什么。",
     ].join("\n"),
     candidateStatus: "pending_validation",
     representativeTime: "05:20",
@@ -78,7 +76,7 @@ function richOutput(): RectificationNarrativeModelOutput {
       { domain: "career", layer: "D10", reason: packet.suggestedDomains[1]?.reason ?? "" },
     ],
     evidenceRequest: {
-      domains: ["relationship", "career"],
+      domains: ["relationship"],
       datePrecision: "month_preferred",
       prompt: "请提供已经发生的真实关系或事业事件，并尽量说明哪一年、哪一月以及发生了什么。",
     },
@@ -114,10 +112,9 @@ test("validates a rich first-turn narrative against the technical packet", async
   assert.equal(result.allowEvidenceScoringAdvance, true);
   assert.equal(validationReceiptSchema.safeParse(result.validationReceipt).success, true);
   assert.equal(result.output.candidateStatus, "pending_validation");
-  assert.match(result.narrative, /待验证候选/);
-  assert.match(result.narrative, /D1/);
-  assert.match(result.narrative, /D9[\s\S]*D10/);
-  assert.match(result.narrative, /关系[\s\S]*D9[\s\S]*事业[\s\S]*D10/);
+  assert.match(result.narrative, /05:16–05:24[\s\S]*不能/);
+  assert.doesNotMatch(result.narrative, /\bD\d+\b/);
+  assert.equal((result.narrative.match(/[？?]/g) ?? []).length, 1);
   assert.match(result.narrative, /已经发生[\s\S]*哪一年[\s\S]*哪一月/);
   assert.doesNotMatch(result.narrative, /^哪一个时间段[\s\S]*\d{4}[–—-]\d{4}/);
 });
@@ -138,24 +135,18 @@ test("rejects invented representative times, layers, and references", () => {
   assert.ok(result.issues.some((issue) => issue.includes("invented-reference")));
 });
 
-test("rejects a first turn that names layer tokens without their stable and sensitive values", () => {
+test("accepts a concise first turn without exposing technical layer values", () => {
   const packet = syntheticTechnicalPacket();
   const invalid = {
     ...richOutput(),
-    narrative: [
-      "05:20 是 05:16–05:24 范围内的待验证候选，不能视为已经确认的出生分钟。",
-      "D1 是稳定层，D9 和 D10 是分钟敏感层。",
-      "关系事件可区分 D9，事业事件可区分 D10。请提供已经发生的真实事件，写明哪一年、哪一月。",
-    ].join("\n"),
+    narrative: "当前仍在核对 05:16–05:24 的候选范围，不能视为已经确认的出生分钟。先说一件过去的重要关系经历好吗？请写明哪一年、哪一月。",
   } satisfies RectificationNarrativeModelOutput;
   const result = validateNarrativeAgainstPacket(invalid, packet, "first");
 
-  assert.equal(result.valid, false);
-  assert.ok(result.issues.some((issue) => issue.includes("stable evidence semantics")));
-  assert.ok(result.issues.some((issue) => issue.includes("sensitive evidence semantics")));
+  assert.deepEqual(result, { valid: true, issues: [] });
 });
 
-test("rejects duplicated generic domain reasons that omit a packet discrimination pair", () => {
+test("rejects duplicated generic domain reasons that are not packet-grounded", () => {
   const packet = syntheticTechnicalPacket();
   const relationshipReason = richOutput().domainReasons[0];
   assert.ok(relationshipReason);
@@ -169,7 +160,7 @@ test("rejects duplicated generic domain reasons that omit a packet discriminatio
   const result = validateNarrativeAgainstPacket(invalid, packet, "first");
 
   assert.equal(result.valid, false);
-  assert.ok(result.issues.some((issue) => issue.includes("packet discrimination pairs")));
+  assert.ok(result.issues.some((issue) => issue.includes("packet discrimination explanation")));
 });
 
 test("rejects a generic broad-year choice questionnaire and uses a safe scoring-compatible fallback", async () => {
@@ -320,7 +311,7 @@ test("retries expression exactly once with the same grounded packet", async () =
   assert.equal(prompts.some((prompt) => prompt.includes("private-partition")), false);
 });
 
-test("uses a deterministic rich Chinese fallback after the second mismatch without blocking scoring", async () => {
+test("uses a deterministic one-question conversational fallback after the second mismatch", async () => {
   const packet = syntheticTechnicalPacket();
   const invalid = { ...richOutput(), sensitiveLayers: ["D60"] };
   const first = await generateRectificationNarrative({
@@ -338,11 +329,11 @@ test("uses a deterministic rich Chinese fallback after the second mismatch witho
   assert.equal(first.fallbackUsed, true);
   assert.equal(first.allowEvidenceScoringAdvance, true);
   assert.equal(first.narrative, second.narrative);
-  assert.match(first.narrative, /05:20[\s\S]*待验证/);
-  assert.match(first.narrative, /D1[\s\S]*稳定/);
-  assert.match(first.narrative, /D9[\s\S]*D10[\s\S]*敏感/);
+  assert.match(first.narrative, /05:16–05:24[\s\S]*不能/);
+  assert.doesNotMatch(first.narrative, /\bD\d+\b/);
   assert.match(first.narrative, /已经发生[\s\S]*年[\s\S]*月/);
-  assert.match(first.narrative, /未来[\s\S]*不能[\s\S]*评分/);
+  assert.equal((first.narrative.match(/[？?]/g) ?? []).length, 1);
+  assert.deepEqual(first.output.evidenceRequest?.domains, ["relationship"]);
 });
 
 test("bounds fallback validation issues for the durable receipt", async () => {

@@ -9,6 +9,7 @@ const evidenceDomainSchema = z.enum([
   "career",
   "education",
   "finance",
+  "health_pressure",
   "relocation",
   "relationship",
   "family",
@@ -74,7 +75,7 @@ const technicalReceiptSchema = boundedJson(z.object({
 }).strict(), 8_192);
 
 const evidenceRequestSchema = boundedJson(z.object({
-  domains: z.array(evidenceDomainSchema).min(2).max(4),
+  domains: z.array(evidenceDomainSchema).min(1).max(4),
   datePrecision: z.enum(["month_preferred", "year_accepted"]),
   freeTextAllowed: z.literal(true),
 }).strict(), 2_048);

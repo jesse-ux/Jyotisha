@@ -836,6 +836,7 @@ export default function Home() {
     createDurableRectificationQuestionHandoffClient(),
   );
   const resumeRectificationSession = useRef<(session: ChatSession) => void>(() => undefined);
+  const rectificationOpenInFlight = useRef(false);
   const rectificationContinuationInFlight = useRef(false);
   const uiPreview = useRef(false);
   const uiPreviewMode = useRef<string | null>(null);
@@ -853,7 +854,8 @@ export default function Home() {
   const visibleRectificationTurn = activeSession?.id === rectificationSessionId
     ? rectificationInitialTurn
     : null;
-  const rectificationSurfaceOpen = activeRectificationSession && visibleRectificationTurn !== null;
+  const rectificationSurfaceOpen = activeRectificationSession
+    && activeSession.id === rectificationSessionId;
   const visibleSessions = sessions
     .filter((session) => showArchivedSessions ? archivedSessionIds.includes(session.id) : !archivedSessionIds.includes(session.id))
     .sort((left, right) => Number(pinnedSessionIds.includes(right.id)) - Number(pinnedSessionIds.includes(left.id)));
@@ -1759,7 +1761,7 @@ export default function Home() {
     event.preventDefault();
     if (!selectedBirthPlace(profileDraft) || !account || profileSaving) return;
     setProfileSaving(true);
-    setBirthTimeAssessmentPhase("saving_profile");
+    setBirthTimeAssessmentPhase("entering_home");
     setAccountError("");
     try {
       await persistProfile(profileDraft);
@@ -1906,7 +1908,8 @@ export default function Home() {
     pendingConsultationQuestion: string | null = null,
     sourceSessionOverride: ChatSession | null = null,
   ) {
-    if (!account || !modelCatalog || creatingSession || rectificationLoading || rectificationMutationPending
+    if (!account || !modelCatalog || creatingSession || rectificationLoading || rectificationOpenInFlight.current
+      || rectificationMutationPending
       || rectificationContinuationInFlight.current) return;
     const sourceSession = sourceSessionOverride ?? activeSession;
     if (!sourceSession) return;
@@ -1936,6 +1939,7 @@ export default function Home() {
         ? null
         : rectificationQuestionHandoff.current.peek()?.question)
       ?? null;
+    rectificationOpenInFlight.current = true;
     setDraft("");
     setDraftTheme(null);
     setDraftEntrypoint(null);
@@ -1943,6 +1947,18 @@ export default function Home() {
     setRectificationInitialTurn(null);
     setRectificationError("");
     setRectificationLoading(true);
+    if (!reusingRectificationSession) {
+      setSessions((current) => [
+        rectificationSession,
+        ...current.filter((session) => session.id !== rectificationSession.id),
+      ]);
+    }
+    if (sourceSession.id !== rectificationSession.id) {
+      setRectificationReturnSessionId(sourceSession.id);
+    }
+    setRectificationSessionId(rectificationSession.id);
+    activeSessionIdRef.current = rectificationSession.id;
+    setActiveSessionId(rectificationSession.id);
     try {
       let turn: ConversationalRectificationTurn;
       if (action !== "resume" || !account.rectificationCase) {
@@ -2008,12 +2024,6 @@ export default function Home() {
       }
       setRectificationInitialTurn(turn);
       synchronizeRectificationQuestion(turn, sourceSession);
-      if (sourceSession.id !== boundSession.id) {
-        setRectificationReturnSessionId(sourceSession.id);
-      }
-      setRectificationSessionId(boundSession.id);
-      activeSessionIdRef.current = boundSession.id;
-      setActiveSessionId(boundSession.id);
       setComposerNotice(sessionSyncFailed ? "校正已经开始，但会话关联暂时未同步到云端。" : "");
     } catch (caught) {
       const message = caught instanceof Error
@@ -2021,7 +2031,14 @@ export default function Home() {
         : "生时校正暂时无法继续，请稍后重试。";
       setRectificationError(message);
       setComposerNotice(message);
+      if (!reusingRectificationSession) {
+        setSessions((current) => current.filter((session) => session.id !== rectificationSession.id));
+        setRectificationSessionId(null);
+        activeSessionIdRef.current = sourceSession.id;
+        setActiveSessionId(sourceSession.id);
+      }
     } finally {
+      rectificationOpenInFlight.current = false;
       setRectificationLoading(false);
     }
   }
@@ -2874,7 +2891,7 @@ export default function Home() {
           </button>
           </header>
 
-        <div className={`conversation ${activeSession?.messages.length ? "" : "is-empty"}`}>
+        <div className={`conversation ${activeSession?.messages.length ? "" : "is-empty"} ${rectificationSurfaceOpen ? "is-rectification" : ""}`}>
           {!rectificationSurfaceOpen && (!activeSession?.messages.length ? (
             <div className="welcome">
               {!profileComplete ? (
@@ -3049,18 +3066,23 @@ export default function Home() {
               <div ref={conversationEnd} />
             </div>
           ))}
-          {rectificationSurfaceOpen && visibleRectificationTurn && (
-            <section className="rectification-session-surface" aria-label="生时校正">
-              <ConversationalBirthTimeRectification
-                initialTurn={visibleRectificationTurn}
-                pendingConsultationQuestion={rectificationPendingQuestion}
-                continuationPending={rectificationContinuationPending}
-                onPendingChange={setRectificationMutationPending}
-                onTurn={handleConversationalRectificationTurn}
-                onContinueOriginalQuestion={(question) => void continueRectificationOriginalQuestion(question)}
-              />
-            </section>
-          )}
+          {rectificationSurfaceOpen && (!visibleRectificationTurn && rectificationError ? (
+            <div className="conversational-rectification-start-error" role="alert">
+              <p>{rectificationError}</p>
+              <button type="button" disabled={rectificationLoading} onClick={() => void openBirthTimeRectification(null, activeSession ?? null)}>
+                {rectificationLoading ? "正在重试…" : "重新建立校正记录"}
+              </button>
+            </div>
+          ) : (
+            <ConversationalBirthTimeRectification
+              initialTurn={visibleRectificationTurn}
+              pendingConsultationQuestion={rectificationPendingQuestion}
+              continuationPending={rectificationContinuationPending}
+              onPendingChange={setRectificationMutationPending}
+              onTurn={handleConversationalRectificationTurn}
+              onContinueOriginalQuestion={(question) => void continueRectificationOriginalQuestion(question)}
+            />
+          ))}
         </div>
 
         {!rectificationSurfaceOpen && <div className={`composer-wrap ${starterHomeVisible ? "composer-wrap-starter" : ""}`}>

@@ -72,6 +72,42 @@ test("never invents a missing month or day", () => {
   assert.equal(evidence?.eventSummary, "毕业");
 });
 
+test("accepts nineteenth-century Chinese and ISO dates as scoreable historical evidence", () => {
+  const [education] = extractLifeEventEvidence({
+    rawText: "1891年11月进入巴黎大学学习",
+    sourceTurnId,
+    asOfDate: "2026-07-20",
+  });
+  const [relationship] = extractLifeEventEvidence({
+    rawText: "1895-07-26结婚",
+    sourceTurnId,
+    asOfDate: "2026-07-20",
+  });
+
+  assert.deepEqual(
+    [education?.dateValue, education?.domain, education?.scoreable],
+    ["1891-11", "education", true],
+  );
+  assert.deepEqual(
+    [relationship?.dateValue, relationship?.domain, relationship?.scoreable],
+    ["1895-07-26", "relationship", true],
+  );
+});
+
+for (const rawText of [
+  "2003年确诊癌症并接受手术",
+  "2006年丈夫因交通事故去世",
+]) {
+  test(`classifies dated health, accident, and bereavement evidence for D30 scoring: ${rawText}`, () => {
+    const evidence = extractLifeEventEvidence({ rawText, sourceTurnId, asOfDate: "2026-07-20" });
+
+    assert.ok(evidence.length > 0);
+    assert.ok(evidence.every((item) => item.domain === "health_pressure"));
+    assert.ok(evidence.every((item) => item.scoreable));
+    assert.ok(evidence.every((item) => lifeEventEvidenceSchema.safeParse(item).success));
+  });
+}
+
 test("classifies dated income and asset changes as finance evidence", () => {
   const [evidence] = extractLifeEventEvidence({
     rawText: "2022年8月收入大幅增加并开始投资",

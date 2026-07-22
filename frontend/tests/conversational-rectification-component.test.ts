@@ -85,28 +85,21 @@ function controller(overrides: Partial<ConversationalRectificationController> = 
   };
 }
 
-test("rich narrative precedes 2–4 domain choices while free text remains available", () => {
+test("rectification is a language-first exchange with one free-text answer path", () => {
   const markup = renderToStaticMarkup(React.createElement(
     ConversationalRectificationSurface,
     { controller: controller() },
   ));
 
-  assert.match(markup, /<h2>当前判断<\/h2>/);
-  assert.match(markup, /<strong>05:18<\/strong>/);
-  assert.ok(markup.indexOf("候选时间") < markup.indexOf("当前判断"));
-  assert.ok(markup.indexOf("当前判断") < markup.indexOf('data-evidence-domain="relationship"'));
-  assert.equal((markup.match(/data-evidence-domain=/g) ?? []).length, 3);
-  assert.match(markup, /aria-label="重要关系，下一步建议"/);
-  assert.match(markup, /aria-label="事业与身份，已提供，可继续补充"/);
-  assert.ok(
-    markup.indexOf('data-evidence-domain="relationship"')
-      < markup.indexOf('data-evidence-domain="career"'),
-  );
+  assert.match(markup, /已记录：2021 年 7 月 · 开始第一份长期工作/);
+  assert.match(markup, /目前已经形成一个待确认候选/);
+  assert.ok(markup.indexOf("待确认候选") < markup.indexOf("当前候选 05:18"));
+  assert.doesNotMatch(markup, /D9 与 D10|当前判断/);
   assert.match(markup, /<textarea[^>]+id="conversational-rectification-answer"/);
-  assert.match(markup, /aria-label="经历发生年份"/);
-  assert.match(markup, /aria-label="经历发生月份"/);
-  assert.match(markup, /<option value=""[^>]*>不确定<\/option>/);
-  assert.match(markup, /Ctrl\/⌘ \+ Enter/);
+  assert.match(markup, /像聊天一样回答即可/);
+  assert.match(markup, /2018 年 6 月去了上海工作/);
+  assert.equal((markup.match(/<textarea/g) ?? []).length, 1);
+  assert.doesNotMatch(markup, /data-evidence-domain=|<select|<fieldset/);
   assert.doesNotMatch(markup, /2006[^<]*2011|BirthTimeChoiceQuestion|birth-time-choice-question/);
 });
 
@@ -125,7 +118,7 @@ test("a resumed legacy turn replaces repeated technical prose with actionable gu
 
   assert.match(markup, /已记录：2021 年 7 月 · 开始第一份长期工作/);
   assert.match(markup, /范围暂未变化不代表提交失败/);
-  assert.match(markup, /下一步：请优先补充一件重要关系或搬迁与居住地领域/);
+  assert.match(markup, /接下来请说一件重要关系或搬迁与居住地方面已经发生的事/);
   assert.doesNotMatch(markup, /D1 保持稳定/);
 });
 
@@ -162,12 +155,13 @@ test("evidence is correctable, secondary controls stay hidden, and confirmation 
   assert.match(markup, /更正这条经历：开始第一份长期工作/);
   assert.doesNotMatch(markup, /本轮分析|等待经历验证/);
   assert.doesNotMatch(markup, /本轮技术回执|rectification-technical-v1|consult-d9/);
-  assert.match(markup, /待确认 · 未验证/);
-  assert.match(markup, /确认将 05:18 设为当前排盘时间/);
+  assert.match(markup, /当前候选 05:18/);
+  assert.match(markup, /待确认，尚未验证/);
+  assert.match(markup, /确认采用 05:18（尚未验证）/);
+  assert.match(markup, /aria-label="确认将 05:18 设为当前排盘时间；当前分钟尚未验证"/);
   assert.match(markup, /已记录 1 条经历/);
-  assert.match(markup, /至少需要 3 条/);
-  assert.match(markup, /下一步优先补充/);
-  assert.match(markup, /不会自动采用/);
+  assert.match(markup, /候选只用于继续验证/);
+  assert.match(markup, /这一步不会自动采用候选/);
   assert.doesNotMatch(markup, /暂停，稍后继续|继续校正|放弃本次校正/);
 });
 
@@ -196,9 +190,8 @@ test("correction mode identifies its durable target, can be cancelled, and marks
 
   assert.match(markup, /正在更正/);
   assert.match(markup, /开始第一份长期工作/);
-  assert.match(markup, /一次只更正一条事件/);
   assert.match(markup, /取消更正/);
-  assert.match(markup, /已修订/);
+  assert.match(markup, /（已修订）/);
 });
 
 test("pending markup and responsive CSS expose accessibility contracts", () => {
@@ -223,28 +216,33 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
     new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url),
     "utf8",
   );
+  const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 
   assert.match(markup, /aria-busy="true"/);
-  assert.match(markup, /aria-label="正在核对经历"/);
+  assert.match(markup, /Jyotisha 正在核对经历/);
   assert.match(markup, /正在核对这段经历/);
-  assert.match(markup, /app-loading-orbit/);
+  assert.match(markup, /Jyotisha 正在分析/);
   assert.match(markup, /<textarea[^>]+disabled=""[^>]*>保留中的文字<\/textarea>/);
   assert.match(markup, /aria-label="生时校正对话"/);
   assert.match(markup, /role="alert"|aria-live="polite"/);
-  assert.match(css, /\.conversational-rectification[\s\S]*min-width:\s*0/);
-  assert.match(css, /\.conversational-rectification[^}]*overflow-wrap:\s*anywhere/);
-  assert.match(css, /\.conversational-rectification button[^}]*min-height:\s*44px/);
-  assert.match(css, /\.conversational-rectification[^}]*:focus-visible/);
-  assert.match(css, /:where\(button, textarea\):focus-visible/);
-  assert.match(css, /\.conversational-answer-pending[\s\S]*grid-template-columns:\s*40px minmax\(0, 1fr\)/);
-  assert.match(css, /\.conversational-domain-picker button\[aria-pressed="true"\]/);
+  assert.match(css, /\.conversation\.is-rectification[^}]*padding-bottom:\s*0/);
+  assert.match(css, /\.rectification-chat[^}]*height:\s*100%[^}]*display:\s*flex/);
+  assert.match(css, /\.rectification-message-list[^}]*flex:\s*1[^}]*overflow-y:\s*auto/);
+  assert.match(css, /\.rectification-message-details button[^}]*min-height:\s*44px/);
+  assert.match(css, /\.composer:focus-within[^}]*border-color:/);
+  assert.match(css, /\.composer textarea[^}]*border:\s*0/);
+  assert.match(css, /\.rectification-composer-wrap[^}]*position:\s*static/);
+  assert.match(page, /rectificationSurfaceOpen \? "is-rectification"/);
+  assert.doesNotMatch(css, /\.conversational-domain-picker|\.conversational-event-date/);
   assert.doesNotMatch(css, /button\[aria-label\$="下一步建议"\]/);
   assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
-  assert.match(css, /@media\s*\(max-width:\s*430px\)[\s\S]*\.conversational-rectification/);
+  assert.match(css, /@media\s*\(max-width:\s*430px\)[\s\S]*\.rectification-message-details/);
   assert.doesNotMatch(component, /确认放弃且不应用候选|本轮技术回执/);
+  assert.match(component, /controller\.answer\(undefined, controller\.draft\.trim\(\)\)/);
+  assert.match(component, /event\.key === "Enter" && !event\.shiftKey/);
   assert.match(component, /onPendingChange/);
   assert.match(component, /onPendingChange:\s*props\.onPendingChange/);
-  assert.match(component, /&& onContinueOriginalQuestion &&/);
+  assert.match(component, /onContinueOriginalQuestion\?\./);
 });
 
 type CdpResponse = Readonly<{
@@ -727,7 +725,7 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
     );
     await cdp.evaluate("globalThis.__rectificationHarness.setTurn('activeA1')");
     await waitFor(
-      () => cdp?.evaluate<boolean>(`document.querySelector('.conversational-candidate time')?.textContent === '05:18'
+      () => cdp?.evaluate<boolean>(`document.body.textContent.includes('当前候选 05:18')
         && document.body.textContent.includes('已记录：2021-07')`) ?? Promise.resolve(false),
       "streamlined async initial turn",
     );
@@ -737,25 +735,28 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
       scrollWidth: number;
       surfaceWidth: number;
       shortestButton: number;
-      dateFieldsShareRow: boolean;
+      selectCount: number;
+      domainChoiceCount: number;
     }>(`(() => {
-      const buttons = [...document.querySelectorAll('.conversational-rectification button')];
-      const year = document.querySelector('[aria-label="经历发生年份"]').getBoundingClientRect();
-      const month = document.querySelector('[aria-label="经历发生月份"]').getBoundingClientRect();
+      const buttons = [...document.querySelectorAll('.rectification-chat button')]
+        .filter((button) => button.getBoundingClientRect().height > 0);
       return {
         viewport: document.documentElement.clientWidth,
         scrollWidth: document.documentElement.scrollWidth,
-        surfaceWidth: document.querySelector('.conversational-rectification').getBoundingClientRect().width,
+        surfaceWidth: document.querySelector('.rectification-chat').getBoundingClientRect().width,
         shortestButton: Math.min(...buttons.map((button) => button.getBoundingClientRect().height)),
-        dateFieldsShareRow: Math.abs(year.top - month.top) < 2,
+        selectCount: document.querySelectorAll('.rectification-chat select').length,
+        domainChoiceCount: document.querySelectorAll('[data-evidence-domain]').length,
       };
     })()`);
     assert.equal(layout.viewport, 390);
     assert.ok(layout.scrollWidth <= 390, `page overflowed: ${layout.scrollWidth}px`);
     assert.ok(layout.surfaceWidth <= 366, `surface overflowed padded viewport: ${layout.surfaceWidth}px`);
     assert.ok(layout.shortestButton >= 44, `shortest button was ${layout.shortestButton}px`);
-    assert.equal(layout.dateFieldsShareRow, true, "year and month should stay on one row at 390px");
+    assert.equal(layout.selectCount, 0, "language-first flow should not render date selects");
+    assert.equal(layout.domainChoiceCount, 0, "language-first flow should not render domain buttons");
 
+    await cdp.evaluate("document.querySelector('.rectification-message-details').open = true");
     await cdp.evaluate("document.querySelector('[aria-label^=\"更正这条经历\"]').click()");
     await waitFor(
       () => cdp?.evaluate<boolean>(`(() => {
@@ -772,17 +773,12 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
       "correction cancellation",
     );
 
-    await cdp.evaluate("document.querySelector('[data-evidence-domain=career]').click()");
-    await waitFor(
-      () => cdp?.evaluate<boolean>("document.activeElement?.id === 'conversational-rectification-answer'") ?? Promise.resolve(false),
-      "domain-to-composer focus",
-    );
-
     await cdp.evaluate("globalThis.__rectificationHarness.setTurn('activeA3')");
     await waitFor(
       () => cdp?.evaluate<boolean>(`(() => {
         const text = document.body.textContent;
-        return text.includes('候选时间')
+        return text.includes('当前候选')
+          && !text.includes('候选时间')
           && !text.includes('本轮技术回执')
           && !text.includes('暂停，稍后继续')
           && !text.includes('放弃本次校正')

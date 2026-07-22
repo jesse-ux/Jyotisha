@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   buildProductionConversationalRectificationPacket,
@@ -19,6 +20,15 @@ const userId = "00000000-0000-4000-8000-000000000711";
 const actionId = "00000000-0000-4000-8000-000000000712";
 const caseId = "00000000-0000-4000-8000-000000000713";
 const requestId = "00000000-0000-4000-8000-000000000714";
+
+test("production narrator loads the Jyotish Skill without overriding packet truth", () => {
+  const source = readFileSync(new URL("../src/app/api/birth-time-conversation/route.ts", import.meta.url), "utf8");
+
+  assert.match(source, /skills:\s*\[jyotishSkillPath\]/);
+  assert.match(source, /Use the Jyotish Skill only to choose a natural, one-question-at-a-time evidence strategy and wording/);
+  assert.match(source, /supplied packet facts as the exclusive source/);
+  assert.match(source, /Never invent, recalculate, or confirm candidate data/);
+});
 
 const turn = {
   caseId,
@@ -139,7 +149,7 @@ function packetEngine(options: {
     },
     async score() { throw new Error("unexpected questionnaire score"); },
     async scoreEvents(input) {
-      assert.ok(input.events.length >= 3 && input.events.length <= 6);
+      assert.ok(input.events.length >= 3 && input.events.length <= 8);
       for (const event of input.events) {
         const birthBoundary = event.precision === "year"
           ? input.birthDate.slice(0, 4)
@@ -889,11 +899,11 @@ test("production rescans the declared range after correction while ordinary evid
   assert.equal(ordinary.packet.sensitivityScope.sampleTimes.includes("04:50"), false);
 });
 
-test("production packet deterministically sends only the latest six supported events", async () => {
+test("production packet sends health evidence and uses the shared eight-event convergence limit", async () => {
   const scoreCalls: LifeEvent[][] = [];
   const differenceCalls: DifferencePacketInput[] = [];
   const engine = packetEngine({ scoreCalls, differenceCalls });
-  const domains = ["education", "relocation", "career", "relationship"] as const;
+  const domains = ["education", "relocation", "career", "relationship", "health_pressure"] as const;
   const evidence = Array.from({ length: 8 }, (_, index) =>
     syntheticEvidence(index + 1, domains[index % domains.length] ?? "career"));
 
@@ -917,12 +927,13 @@ test("production packet deterministically sends only the latest six supported ev
   assert.equal(scoreCalls.length, 1);
   assert.deepEqual(
     scoreCalls[0]?.map((event) => event.id),
-    evidence.slice(-6).map((item) => item.id),
+    evidence.map((item) => item.id),
   );
   assert.deepEqual(
     differenceCalls.at(-1)?.events.map((event) => event.id),
-    evidence.slice(-6).map((item) => item.id),
+    evidence.map((item) => item.id),
   );
+  assert.ok(scoreCalls[0]?.some((event) => event.domain === "health_pressure"));
 });
 
 test("persistable future background evidence never reaches the production scorer", async () => {

@@ -1,0 +1,906 @@
+{
+  "benchmark_id": "conversational_rectification_development_v1",
+  "boundary": "This is a structured-event smoke replay. TypeScript tests separately assert the fixture's current extractor behavior; the Python filter is not an end-to-end product transport. Cases below five scoreable events cannot evaluate Skill-level convergence.",
+  "cases": [
+    {
+      "case_id": "steve_jobs_1955_development",
+      "final_oracle_structured": {
+        "deterministic_tiebreak_error": 8,
+        "deterministic_tiebreak_time": "19:23",
+        "leave_one_event_out_passed": false,
+        "minute_error": null,
+        "neighbor_stability_passed": false,
+        "offline_truth_qualified_success": false,
+        "predicted_time": null,
+        "result_reasons": [
+          "unique_minute_not_found",
+          "neighbor_stability_not_passed",
+          "leave_one_event_out_not_passed",
+          "top_candidate_feature_not_unique",
+          "fact_ranker_v4_holdout_not_ready"
+        ],
+        "runtime_confirmation_candidate": false,
+        "scored_event_count": 4,
+        "top_score_class_size": 4,
+        "true_rank": 12,
+        "truth_in_top_score_tie": false,
+        "winning_segment": {
+          "end_time": "19:23",
+          "representative_time": "19:21",
+          "start_time": "19:20",
+          "width_minutes": 4
+        }
+      },
+      "final_simulated_current_transport_filter": {
+        "deterministic_tiebreak_error": 8,
+        "deterministic_tiebreak_time": "19:23",
+        "leave_one_event_out_passed": false,
+        "minute_error": null,
+        "neighbor_stability_passed": false,
+        "offline_truth_qualified_success": false,
+        "predicted_time": null,
+        "result_reasons": [
+          "unique_minute_not_found",
+          "neighbor_stability_not_passed",
+          "leave_one_event_out_not_passed",
+          "top_candidate_feature_not_unique",
+          "fact_ranker_v4_holdout_not_ready"
+        ],
+        "runtime_confirmation_candidate": false,
+        "scored_event_count": 4,
+        "top_score_class_size": 4,
+        "true_rank": 12,
+        "truth_in_top_score_tie": false,
+        "winning_segment": {
+          "end_time": "19:23",
+          "representative_time": "19:21",
+          "start_time": "19:20",
+          "width_minutes": 4
+        }
+      },
+      "published_time": "19:15",
+      "turns": [
+        {
+          "event_id": "jobs_apple_founding_1976",
+          "oracle_structured": {
+            "deterministic_tiebreak_error": 8,
+            "deterministic_tiebreak_time": "19:23",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "insufficient_domains",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 1,
+            "top_score_class_size": 4,
+            "true_rank": 5,
+            "truth_in_top_score_tie": false,
+            "winning_segment": {
+              "end_time": "19:23",
+              "representative_time": "19:21",
+              "start_time": "19:20",
+              "width_minutes": 4
+            }
+          },
+          "route_scoreable": true,
+          "simulated_current_transport_filter": {
+            "deterministic_tiebreak_error": 8,
+            "deterministic_tiebreak_time": "19:23",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "insufficient_domains",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 1,
+            "top_score_class_size": 4,
+            "true_rank": 5,
+            "truth_in_top_score_tie": false,
+            "winning_segment": {
+              "end_time": "19:23",
+              "representative_time": "19:21",
+              "start_time": "19:20",
+              "width_minutes": 4
+            }
+          },
+          "turn": 1,
+          "user_utterance": "1976年4月1日我创业成立了公司。"
+        },
+        {
+          "event_id": "jobs_marriage_1991",
+          "oracle_structured": {
+            "deterministic_tiebreak_error": 1,
+            "deterministic_tiebreak_time": "19:16",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "insufficient_domains",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 2,
+            "top_score_class_size": 15,
+            "true_rank": 1,
+            "truth_in_top_score_tie": true,
+            "winning_segment": {
+              "end_time": "19:19",
+              "representative_time": "19:12",
+              "start_time": "19:05",
+              "width_minutes": 15
+            }
+          },
+          "route_scoreable": true,
+          "simulated_current_transport_filter": {
+            "deterministic_tiebreak_error": 1,
+            "deterministic_tiebreak_time": "19:16",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "insufficient_domains",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 2,
+            "top_score_class_size": 15,
+            "true_rank": 1,
+            "truth_in_top_score_tie": true,
+            "winning_segment": {
+              "end_time": "19:19",
+              "representative_time": "19:12",
+              "start_time": "19:05",
+              "width_minutes": 15
+            }
+          },
+          "turn": 2,
+          "user_utterance": "1991年3月18日我结婚了。"
+        },
+        {
+          "event_id": "jobs_cancer_diagnosis_2003",
+          "oracle_structured": {
+            "deterministic_tiebreak_error": 10,
+            "deterministic_tiebreak_time": "19:05",
+            "leave_one_event_out_passed": false,
+            "minute_error": 10,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": "19:05",
+            "result_reasons": [
+              "insufficient_events",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 3,
+            "top_score_class_size": 1,
+            "true_rank": 10,
+            "truth_in_top_score_tie": false,
+            "winning_segment": {
+              "end_time": "19:05",
+              "representative_time": "19:05",
+              "start_time": "19:05",
+              "width_minutes": 1
+            }
+          },
+          "route_scoreable": true,
+          "simulated_current_transport_filter": {
+            "deterministic_tiebreak_error": 10,
+            "deterministic_tiebreak_time": "19:05",
+            "leave_one_event_out_passed": false,
+            "minute_error": 10,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": "19:05",
+            "result_reasons": [
+              "insufficient_events",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 3,
+            "top_score_class_size": 1,
+            "true_rank": 10,
+            "truth_in_top_score_tie": false,
+            "winning_segment": {
+              "end_time": "19:05",
+              "representative_time": "19:05",
+              "start_time": "19:05",
+              "width_minutes": 1
+            }
+          },
+          "turn": 3,
+          "user_utterance": "2003年我确诊了胰腺神经内分泌肿瘤。"
+        },
+        {
+          "event_id": "jobs_resigned_apple_ceo_2011",
+          "oracle_structured": {
+            "deterministic_tiebreak_error": 8,
+            "deterministic_tiebreak_time": "19:23",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 4,
+            "top_score_class_size": 4,
+            "true_rank": 12,
+            "truth_in_top_score_tie": false,
+            "winning_segment": {
+              "end_time": "19:23",
+              "representative_time": "19:21",
+              "start_time": "19:20",
+              "width_minutes": 4
+            }
+          },
+          "route_scoreable": true,
+          "simulated_current_transport_filter": {
+            "deterministic_tiebreak_error": 8,
+            "deterministic_tiebreak_time": "19:23",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 4,
+            "top_score_class_size": 4,
+            "true_rank": 12,
+            "truth_in_top_score_tie": false,
+            "winning_segment": {
+              "end_time": "19:23",
+              "representative_time": "19:21",
+              "start_time": "19:20",
+              "width_minutes": 4
+            }
+          },
+          "turn": 4,
+          "user_utterance": "2011年8月24日我辞去公司CEO职务。"
+        }
+      ]
+    },
+    {
+      "case_id": "albert_einstein_1879_development",
+      "final_oracle_structured": {
+        "deterministic_tiebreak_error": 9,
+        "deterministic_tiebreak_time": "11:39",
+        "leave_one_event_out_passed": false,
+        "minute_error": null,
+        "neighbor_stability_passed": false,
+        "offline_truth_qualified_success": false,
+        "predicted_time": null,
+        "result_reasons": [
+          "unique_minute_not_found",
+          "insufficient_events",
+          "neighbor_stability_not_passed",
+          "leave_one_event_out_not_passed",
+          "top_candidate_feature_not_unique",
+          "fact_ranker_v4_holdout_not_ready"
+        ],
+        "runtime_confirmation_candidate": false,
+        "scored_event_count": 3,
+        "top_score_class_size": 2,
+        "true_rank": 3,
+        "truth_in_top_score_tie": false,
+        "winning_segment": {
+          "end_time": "11:40",
+          "representative_time": "11:39",
+          "start_time": "11:39",
+          "width_minutes": 2
+        }
+      },
+      "final_simulated_current_transport_filter": {
+        "deterministic_tiebreak_error": 9,
+        "deterministic_tiebreak_time": "11:39",
+        "leave_one_event_out_passed": false,
+        "minute_error": null,
+        "neighbor_stability_passed": false,
+        "offline_truth_qualified_success": false,
+        "predicted_time": null,
+        "result_reasons": [
+          "unique_minute_not_found",
+          "insufficient_events",
+          "neighbor_stability_not_passed",
+          "leave_one_event_out_not_passed",
+          "top_candidate_feature_not_unique",
+          "fact_ranker_v4_holdout_not_ready"
+        ],
+        "runtime_confirmation_candidate": false,
+        "scored_event_count": 3,
+        "top_score_class_size": 2,
+        "true_rank": 3,
+        "truth_in_top_score_tie": false,
+        "winning_segment": {
+          "end_time": "11:40",
+          "representative_time": "11:39",
+          "start_time": "11:39",
+          "width_minutes": 2
+        }
+      },
+      "published_time": "11:30",
+      "turns": [
+        {
+          "event_id": "einstein_marriage_1903",
+          "oracle_structured": {
+            "deterministic_tiebreak_error": 8,
+            "deterministic_tiebreak_time": "11:38",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "insufficient_domains",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 1,
+            "top_score_class_size": 5,
+            "true_rank": 6,
+            "truth_in_top_score_tie": false,
+            "winning_segment": {
+              "end_time": "11:40",
+              "representative_time": "11:38",
+              "start_time": "11:36",
+              "width_minutes": 5
+            }
+          },
+          "route_scoreable": true,
+          "simulated_current_transport_filter": {
+            "deterministic_tiebreak_error": 8,
+            "deterministic_tiebreak_time": "11:38",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "insufficient_domains",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 1,
+            "top_score_class_size": 5,
+            "true_rank": 6,
+            "truth_in_top_score_tie": false,
+            "winning_segment": {
+              "end_time": "11:40",
+              "representative_time": "11:38",
+              "start_time": "11:36",
+              "width_minutes": 5
+            }
+          },
+          "turn": 1,
+          "user_utterance": "1903年我结婚了。"
+        },
+        {
+          "event_id": "einstein_nobel_award_1922",
+          "oracle_structured": {
+            "deterministic_tiebreak_error": 10,
+            "deterministic_tiebreak_time": "11:40",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "insufficient_domains",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 2,
+            "top_score_class_size": 2,
+            "true_rank": 6,
+            "truth_in_top_score_tie": false,
+            "winning_segment": {
+              "end_time": "11:40",
+              "representative_time": "11:39",
+              "start_time": "11:39",
+              "width_minutes": 2
+            }
+          },
+          "route_scoreable": true,
+          "simulated_current_transport_filter": {
+            "deterministic_tiebreak_error": 10,
+            "deterministic_tiebreak_time": "11:40",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "insufficient_domains",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 2,
+            "top_score_class_size": 2,
+            "true_rank": 6,
+            "truth_in_top_score_tie": false,
+            "winning_segment": {
+              "end_time": "11:40",
+              "representative_time": "11:39",
+              "start_time": "11:39",
+              "width_minutes": 2
+            }
+          },
+          "turn": 2,
+          "user_utterance": "1922年我的工作成就获得了诺贝尔物理学奖。"
+        },
+        {
+          "event_id": "einstein_left_germany_1933",
+          "oracle_structured": {
+            "deterministic_tiebreak_error": 9,
+            "deterministic_tiebreak_time": "11:39",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 3,
+            "top_score_class_size": 2,
+            "true_rank": 3,
+            "truth_in_top_score_tie": false,
+            "winning_segment": {
+              "end_time": "11:40",
+              "representative_time": "11:39",
+              "start_time": "11:39",
+              "width_minutes": 2
+            }
+          },
+          "route_scoreable": true,
+          "simulated_current_transport_filter": {
+            "deterministic_tiebreak_error": 9,
+            "deterministic_tiebreak_time": "11:39",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 3,
+            "top_score_class_size": 2,
+            "true_rank": 3,
+            "truth_in_top_score_tie": false,
+            "winning_segment": {
+              "end_time": "11:40",
+              "representative_time": "11:39",
+              "start_time": "11:39",
+              "width_minutes": 2
+            }
+          },
+          "turn": 3,
+          "user_utterance": "1933年我移居国外。"
+        }
+      ]
+    },
+    {
+      "case_id": "marie_curie_1867_development",
+      "final_oracle_structured": {
+        "deterministic_tiebreak_error": 4,
+        "deterministic_tiebreak_time": "12:04",
+        "leave_one_event_out_passed": false,
+        "minute_error": null,
+        "neighbor_stability_passed": false,
+        "offline_truth_qualified_success": false,
+        "predicted_time": null,
+        "result_reasons": [
+          "unique_minute_not_found",
+          "neighbor_stability_not_passed",
+          "leave_one_event_out_not_passed",
+          "top_candidate_feature_not_unique",
+          "fact_ranker_v4_holdout_not_ready"
+        ],
+        "runtime_confirmation_candidate": false,
+        "scored_event_count": 4,
+        "top_score_class_size": 2,
+        "true_rank": 3,
+        "truth_in_top_score_tie": false,
+        "winning_segment": {
+          "end_time": "12:05",
+          "representative_time": "12:04",
+          "start_time": "12:04",
+          "width_minutes": 2
+        }
+      },
+      "final_simulated_current_transport_filter": {
+        "deterministic_tiebreak_error": 4,
+        "deterministic_tiebreak_time": "12:04",
+        "leave_one_event_out_passed": false,
+        "minute_error": null,
+        "neighbor_stability_passed": false,
+        "offline_truth_qualified_success": false,
+        "predicted_time": null,
+        "result_reasons": [
+          "unique_minute_not_found",
+          "neighbor_stability_not_passed",
+          "leave_one_event_out_not_passed",
+          "top_candidate_feature_not_unique",
+          "fact_ranker_v4_holdout_not_ready"
+        ],
+        "runtime_confirmation_candidate": false,
+        "scored_event_count": 4,
+        "top_score_class_size": 2,
+        "true_rank": 3,
+        "truth_in_top_score_tie": false,
+        "winning_segment": {
+          "end_time": "12:05",
+          "representative_time": "12:04",
+          "start_time": "12:04",
+          "width_minutes": 2
+        }
+      },
+      "published_time": "12:00",
+      "turns": [
+        {
+          "event_id": "curie_moved_to_paris_1891",
+          "oracle_structured": {
+            "deterministic_tiebreak_error": 9,
+            "deterministic_tiebreak_time": "12:09",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "insufficient_domains",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 1,
+            "top_score_class_size": 21,
+            "true_rank": 1,
+            "truth_in_top_score_tie": true,
+            "winning_segment": {
+              "end_time": "12:10",
+              "representative_time": "12:00",
+              "start_time": "11:50",
+              "width_minutes": 21
+            }
+          },
+          "route_scoreable": true,
+          "simulated_current_transport_filter": {
+            "deterministic_tiebreak_error": 9,
+            "deterministic_tiebreak_time": "12:09",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "insufficient_domains",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 1,
+            "top_score_class_size": 21,
+            "true_rank": 1,
+            "truth_in_top_score_tie": true,
+            "winning_segment": {
+              "end_time": "12:10",
+              "representative_time": "12:00",
+              "start_time": "11:50",
+              "width_minutes": 21
+            }
+          },
+          "turn": 1,
+          "user_utterance": "1891年我移居巴黎继续学业。"
+        },
+        {
+          "event_id": "curie_marriage_1895",
+          "oracle_structured": {
+            "deterministic_tiebreak_error": 5,
+            "deterministic_tiebreak_time": "11:55",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "insufficient_domains",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 2,
+            "top_score_class_size": 21,
+            "true_rank": 1,
+            "truth_in_top_score_tie": true,
+            "winning_segment": {
+              "end_time": "12:10",
+              "representative_time": "12:00",
+              "start_time": "11:50",
+              "width_minutes": 21
+            }
+          },
+          "route_scoreable": true,
+          "simulated_current_transport_filter": {
+            "deterministic_tiebreak_error": 5,
+            "deterministic_tiebreak_time": "11:55",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "insufficient_domains",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 2,
+            "top_score_class_size": 21,
+            "true_rank": 1,
+            "truth_in_top_score_tie": true,
+            "winning_segment": {
+              "end_time": "12:10",
+              "representative_time": "12:00",
+              "start_time": "11:50",
+              "width_minutes": 21
+            }
+          },
+          "turn": 2,
+          "user_utterance": "1895年7月26日我结婚了。"
+        },
+        {
+          "event_id": "curie_nobel_physics_1903",
+          "oracle_structured": {
+            "deterministic_tiebreak_error": 3,
+            "deterministic_tiebreak_time": "11:57",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 3,
+            "top_score_class_size": 16,
+            "true_rank": 1,
+            "truth_in_top_score_tie": true,
+            "winning_segment": {
+              "end_time": "12:05",
+              "representative_time": "11:57",
+              "start_time": "11:50",
+              "width_minutes": 16
+            }
+          },
+          "route_scoreable": true,
+          "simulated_current_transport_filter": {
+            "deterministic_tiebreak_error": 3,
+            "deterministic_tiebreak_time": "11:57",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "insufficient_events",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 3,
+            "top_score_class_size": 16,
+            "true_rank": 1,
+            "truth_in_top_score_tie": true,
+            "winning_segment": {
+              "end_time": "12:05",
+              "representative_time": "11:57",
+              "start_time": "11:50",
+              "width_minutes": 16
+            }
+          },
+          "turn": 3,
+          "user_utterance": "1903年我的工作成果获得了诺贝尔物理学奖。"
+        },
+        {
+          "event_id": "curie_widowed_1906",
+          "oracle_structured": {
+            "deterministic_tiebreak_error": 4,
+            "deterministic_tiebreak_time": "12:04",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 4,
+            "top_score_class_size": 2,
+            "true_rank": 3,
+            "truth_in_top_score_tie": false,
+            "winning_segment": {
+              "end_time": "12:05",
+              "representative_time": "12:04",
+              "start_time": "12:04",
+              "width_minutes": 2
+            }
+          },
+          "route_scoreable": true,
+          "simulated_current_transport_filter": {
+            "deterministic_tiebreak_error": 4,
+            "deterministic_tiebreak_time": "12:04",
+            "leave_one_event_out_passed": false,
+            "minute_error": null,
+            "neighbor_stability_passed": false,
+            "offline_truth_qualified_success": false,
+            "predicted_time": null,
+            "result_reasons": [
+              "unique_minute_not_found",
+              "neighbor_stability_not_passed",
+              "leave_one_event_out_not_passed",
+              "top_candidate_feature_not_unique",
+              "fact_ranker_v4_holdout_not_ready"
+            ],
+            "runtime_confirmation_candidate": false,
+            "scored_event_count": 4,
+            "top_score_class_size": 2,
+            "true_rank": 3,
+            "truth_in_top_score_tie": false,
+            "winning_segment": {
+              "end_time": "12:05",
+              "representative_time": "12:04",
+              "start_time": "12:04",
+              "width_minutes": 2
+            }
+          },
+          "turn": 4,
+          "user_utterance": "1906年4月19日我的丈夫因交通事故去世。"
+        }
+      ]
+    }
+  ],
+  "excluded_from_holdout": true,
+  "may_open_release_gate": false,
+  "scope": "conversational_minute_rectification_entry_smoke_replay",
+  "status": "diagnostics_available",
+  "summary": {
+    "oracle_structured": {
+      "case_count": 3,
+      "cases_reaching_five_scoreable_events": 0,
+      "deterministic_tiebreak_mean_absolute_error": 7.0,
+      "leave_one_event_out_pass_count": 0,
+      "mean_winning_segment_width_minutes": 2.6667,
+      "neighbor_stability_pass_count": 0,
+      "offline_truth_qualified_success_count": 0,
+      "runtime_confirmation_candidate_count": 0,
+      "truth_in_top_score_tie_rate": 0.0,
+      "truth_rank_le_3_rate": 0.6667,
+      "unique_minute_count": 0
+    },
+    "simulated_current_transport_filter": {
+      "case_count": 3,
+      "cases_reaching_five_scoreable_events": 0,
+      "deterministic_tiebreak_mean_absolute_error": 7.0,
+      "leave_one_event_out_pass_count": 0,
+      "mean_winning_segment_width_minutes": 2.6667,
+      "neighbor_stability_pass_count": 0,
+      "offline_truth_qualified_success_count": 0,
+      "runtime_confirmation_candidate_count": 0,
+      "truth_in_top_score_tie_rate": 0.0,
+      "truth_rank_le_3_rate": 0.6667,
+      "unique_minute_count": 0
+    }
+  }
+}

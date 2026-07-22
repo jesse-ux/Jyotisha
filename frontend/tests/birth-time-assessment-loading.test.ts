@@ -18,4 +18,7 @@ test("onboarding keeps the current card visible while birth-time assessment is p
   assert.match(source, /className="birth-time-assessment-overlay"/);
   assert.match(source, /aria-busy=\{birthTimeAssessmentPhase !== null\}/);
   assert.match(source, /previewMode === "birth-time-assessment-loading"/);
+  assert.match(source, /saveOnboardingBirth[\s\S]*?setBirthTimeAssessmentPhase\("saving_profile"\)/);
+  assert.match(source, /saveOnboardingPlace[\s\S]*?setBirthTimeAssessmentPhase\("entering_home"\)/);
+  assert.match(source, /entering_home:[\s\S]*?title: "正在进入首页"[\s\S]*?detail: "出生资料已保存，正在为你准备首页。"/);
 });
