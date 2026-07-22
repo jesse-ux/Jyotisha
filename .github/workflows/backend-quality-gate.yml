@@ -74,9 +74,6 @@ jobs:
           path: artifacts/quick-quality-gate.log
 
       - name: Validate frontend and database contracts
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder
         run: |
           npm test --prefix frontend
           npm run lint --prefix frontend
@@ -92,24 +89,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Validate staging web build variables
-        env:
-          STAGING_SUPABASE_URL: ${{ vars.STAGING_SUPABASE_URL }}
-          STAGING_SUPABASE_ANON_KEY: ${{ vars.STAGING_SUPABASE_ANON_KEY }}
-        run: |
-          test -n "$STAGING_SUPABASE_URL" || {
-            echo "STAGING_SUPABASE_URL is required" >&2
-            exit 1
-          }
-          test -n "$STAGING_SUPABASE_ANON_KEY" || {
-            echo "STAGING_SUPABASE_ANON_KEY is required" >&2
-            exit 1
-          }
-          if [[ ! "$STAGING_SUPABASE_URL" =~ ^https://[a-z0-9][a-z0-9-]*\.supabase\.co/?$ ]]; then
-            echo "STAGING_SUPABASE_URL must be an HTTPS Supabase project URL" >&2
-            exit 1
-          fi
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -135,9 +114,6 @@ jobs:
           file: deploy/railway-web.Dockerfile
           push: true
           tags: ghcr.io/jesse-ux/jyotisha-web:${{ github.sha }}
-          build-args: |
-            NEXT_PUBLIC_SUPABASE_URL=${{ vars.STAGING_SUPABASE_URL }}
-            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.STAGING_SUPABASE_ANON_KEY }}
 
       - name: Record immutable staging image manifest
         env:

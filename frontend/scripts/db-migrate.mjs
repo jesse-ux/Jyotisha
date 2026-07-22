@@ -9,34 +9,56 @@ const migrationFilenamePattern = /^\d{14}_[a-z0-9_]+\.sql$/;
 
 class SafeMigrationError extends Error {}
 
-async function loadMigrationFiles(migrationsDirectory) {
-  let entries;
-  try {
-    entries = await readdir(migrationsDirectory, { withFileTypes: true });
-  } catch {
-    throw new SafeMigrationError("unable to read migrations directory");
+async function loadMigrationFiles(migrationsDirectories) {
+  const directories = Array.isArray(migrationsDirectories)
+    ? migrationsDirectories
+    : [migrationsDirectories];
+  const entriesByDirectory = [];
+  for (const migrationsDirectory of directories) {
+    try {
+      entriesByDirectory.push({
+        migrationsDirectory,
+        entries: await readdir(migrationsDirectory, { withFileTypes: true }),
+      });
+    } catch {
+      throw new SafeMigrationError("unable to read migrations directory");
+    }
   }
 
-  const malformedSqlEntry = entries.find(
-    (entry) =>
-      entry.isFile() &&
-      entry.name.endsWith(".sql") &&
-      !migrationFilenamePattern.test(entry.name),
-  );
+  const malformedSqlEntry = entriesByDirectory
+    .flatMap(({ entries }) => entries)
+    .find(
+      (entry) =>
+        entry.isFile() &&
+        entry.name.endsWith(".sql") &&
+        !migrationFilenamePattern.test(entry.name),
+    );
   if (malformedSqlEntry) {
     throw new SafeMigrationError(
       `invalid migration filename: ${malformedSqlEntry.name}`,
     );
   }
 
+  const migrationEntries = entriesByDirectory.flatMap(
+    ({ migrationsDirectory, entries }) =>
+      entries
+        .filter(
+          (entry) => entry.isFile() && migrationFilenamePattern.test(entry.name),
+        )
+        .map((entry) => ({ migrationsDirectory, filename: entry.name })),
+  );
+  const duplicate = migrationEntries.find(
+    (entry, index) =>
+      migrationEntries.findIndex((candidate) => candidate.filename === entry.filename) !== index,
+  );
+  if (duplicate) {
+    throw new SafeMigrationError(`duplicate migration filename: ${duplicate.filename}`);
+  }
+
   return Promise.all(
-    entries
-      .filter(
-        (entry) => entry.isFile() && migrationFilenamePattern.test(entry.name),
-      )
-      .map((entry) => entry.name)
-      .sort()
-      .map(async (filename) => {
+    migrationEntries
+      .sort((left, right) => left.filename.localeCompare(right.filename))
+      .map(async ({ migrationsDirectory, filename }) => {
         const bytes = await readFile(resolve(migrationsDirectory, filename));
         return {
           filename,
@@ -76,10 +98,11 @@ function assertLedgerFilesPresent(ledger, files) {
 export async function runMigrations({
   connectionString,
   migrationsDirectory,
+  migrationsDirectories,
   logger = console,
   check = false,
 }) {
-  const files = await loadMigrationFiles(migrationsDirectory);
+  const files = await loadMigrationFiles(migrationsDirectories ?? migrationsDirectory);
   const client = new Client({ connectionString });
   let locked = false;
 
@@ -193,11 +216,21 @@ if (invokedPath === import.meta.url) {
     dirname(fileURLToPath(import.meta.url)),
     "../db/migrations",
   );
+  const supabaseCompatibilityDirectory = resolve(
+    dirname(fileURLToPath(import.meta.url)),
+    "../supabase/migrations",
+  );
   try {
     const status = await runMigrations({
       connectionString: requireSchemaDatabaseUrl(process.env),
-      migrationsDirectory:
-        process.env.MIGRATIONS_DIRECTORY?.trim() || defaultDirectory,
+      ...(process.env.MIGRATIONS_DIRECTORY?.trim()
+        ? { migrationsDirectory: process.env.MIGRATIONS_DIRECTORY.trim() }
+        : {
+            migrationsDirectories: [
+              defaultDirectory,
+              supabaseCompatibilityDirectory,
+            ],
+          }),
       check: process.argv.slice(2).includes("--check"),
     });
     process.exitCode = status;

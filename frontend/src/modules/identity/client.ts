@@ -19,11 +19,13 @@ export interface SelfHostedOtpClient {
       otp: string;
     }): Promise<OtpClientResult>;
   };
+  signOut?(): Promise<OtpClientResult>;
 }
 
 export interface SelfHostedOtpActions {
   send(email: string): Promise<void>;
   verify(email: string, otp: string): Promise<void>;
+  signOut(): Promise<void>;
 }
 
 export function createSelfHostedOtpActions(
@@ -47,6 +49,11 @@ export function createSelfHostedOtpActions(
       if (result.error) {
         throw new Error("验证码错误或已过期，请重新获取");
       }
+    },
+    async signOut() {
+      if (!client.signOut) throw new Error("退出失败，请稍后再试");
+      const result = await client.signOut();
+      if (result.error) throw new Error("退出失败，请稍后再试");
     },
   };
 }

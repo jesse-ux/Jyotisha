@@ -48,6 +48,17 @@ SELECT format(
 ) WHERE NOT EXISTS (
   SELECT 1 FROM pg_roles WHERE rolname = 'admin_runtime'
 ) \gexec
+
+SELECT 'CREATE ROLE anon NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT'
+WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') \gexec
+SELECT 'CREATE ROLE authenticated NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT'
+WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') \gexec
+SELECT 'CREATE ROLE service_role NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT BYPASSRLS'
+WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') \gexec
+ALTER ROLE service_role BYPASSRLS;
+
+GRANT authenticated TO app_runtime;
+GRANT service_role TO admin_runtime;
 SELECT format(
   'CREATE ROLE migration_runner WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT PASSWORD %L',
   :'migration_runner_password'

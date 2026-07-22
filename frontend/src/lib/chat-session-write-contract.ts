@@ -27,6 +27,10 @@ export const chatSessionCreateSchema = chatSessionWriteSchema.extend({
   id: z.string().uuid(),
 }).strict();
 
+export const chatSessionModelPatchSchema = z.object({
+  model_id: z.string().trim().min(1).max(64),
+}).strict();
+
 export type ChatSessionWrite = Readonly<{
   title: string;
   theme: "career" | "marriage" | "wealth" | "timing" | "general";
