@@ -53,6 +53,7 @@ services:
     restart: unless-stopped
     environment:
       SITE_ADDRESS: ${SITE_ADDRESS:-https://jyotisha.chat}
+      ADMIN_SITE_ADDRESS: ${ADMIN_SITE_ADDRESS:-https://admin.staging.jyotisha.chat}
     ports:
       - "80:80"
       - "443:443"

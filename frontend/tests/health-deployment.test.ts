@@ -104,6 +104,10 @@ test("server compose accepts staging paths while preserving production defaults"
     compose,
     /SITE_ADDRESS: \$\{SITE_ADDRESS:-https:\/\/jyotisha\.chat\}/,
   );
+  assert.match(
+    compose,
+    /ADMIN_SITE_ADDRESS: \$\{ADMIN_SITE_ADDRESS:-https:\/\/admin\.staging\.jyotisha\.chat\}/,
+  );
 });
 
 test("server compose defaults to local images without removing either build", () => {
@@ -152,14 +156,20 @@ test("server compose defaults to local images without removing either build", ()
   }
 });
 
-test("staging Caddy configuration serves only the configured staging address", () => {
+test("staging Caddy isolates the public and identity-only admin hosts", () => {
   const caddy = readFileSync(
     new URL("../../deploy/Caddyfile.staging", import.meta.url),
     "utf8",
   );
 
   assert.match(caddy, /\{\$SITE_ADDRESS:https:\/\/staging\.jyotisha\.chat\}/);
+  assert.match(
+    caddy,
+    /\{\$ADMIN_SITE_ADDRESS:https:\/\/admin\.staging\.jyotisha\.chat\}/,
+  );
   assert.match(caddy, /reverse_proxy web:3000/);
+  assert.match(caddy, /@identity path \/login \/api\/auth\/\*/);
+  assert.match(caddy, /respond "Not found" 404/);
   assert.doesNotMatch(caddy, /www\.jyotisha\.chat/);
 });
 
@@ -223,6 +233,16 @@ test("staging env validator rejects selector drift, duplicates, and unsafe permi
     "APP_ENV_FILE=../.env.staging",
     "CADDYFILE_PATH=./Caddyfile.staging",
     "SITE_ADDRESS=https://staging.jyotisha.chat",
+    "ADMIN_SITE_ADDRESS=https://admin.staging.jyotisha.chat",
+    "AUTH_PROVIDER=supabase",
+    "SELF_HOSTED_IDENTITY_ENABLED=true",
+    "AUTH_USER_ORIGIN=https://staging.jyotisha.chat",
+    "AUTH_ADMIN_ORIGIN=https://admin.staging.jyotisha.chat",
+    "IDENTITY_DATABASE_URL=postgresql://identity_runtime:identity-runtime-test-password@postgres:5432/jyotisha",
+    "BETTER_AUTH_USER_SECRET=user-secret-that-is-at-least-32-bytes-long",
+    "BETTER_AUTH_ADMIN_SECRET=admin-secret-that-is-at-least-32-bytes-long",
+    "RESEND_API_KEY=re_test_key_that_must_not_be_printed",
+    "RESEND_FROM_EMAIL=Jyotisha Staging <login@staging.jyotisha.chat>",
   ];
   const run = () =>
     spawnSync("bash", [validator, envFile], { encoding: "utf8" });
@@ -301,6 +321,26 @@ test("staging env validator rejects selector drift, duplicates, and unsafe permi
 
     writeEnv([...validSelectors, "SITE_ADDRESS"]);
     assert.notEqual(run().status, 0);
+
+    writeEnv(
+      validSelectors.map((line) =>
+        line.startsWith("AUTH_PROVIDER=")
+          ? "AUTH_PROVIDER=self-hosted"
+          : line,
+      ),
+    );
+    assert.notEqual(run().status, 0);
+
+    writeEnv([
+      ...validSelectors,
+      "BETTER_AUTH_USER_SECRET=duplicate-secret-that-must-not-be-printed",
+    ]);
+    const duplicateSecret = run();
+    assert.notEqual(duplicateSecret.status, 0);
+    assert.doesNotMatch(
+      `${duplicateSecret.stdout}${duplicateSecret.stderr}`,
+      /duplicate-secret-that-must-not-be-printed|re_test_key_that_must_not_be_printed/,
+    );
 
     writeEnv(validSelectors, 0o644);
     assert.notEqual(run().status, 0);

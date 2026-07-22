@@ -217,3 +217,51 @@
 - 相关记录：BUG-009
 - 复发自：无
 - 修复版本：待提交（本地可测）
+
+## BUG-012 | 自动生时流程重构后再次直出实现层错误
+
+- 状态：resolved
+- 首次发现：2026-07-22
+- 最近更新：2026-07-22
+- 影响面：生时校正自动出题与评分轮询、`use-birth-time-automatic-journey-effects`
+- 用户现象：自动流程失败时可能再次显示底层异常原文，而不是稳定、可操作的中文提示。
+- 触发条件：自动出题或评分轮询 Promise 进入异常分支。
+- 根因：出生时间流程重构保留了 automatic effect 中直接读取 `caught.message` 的旧分支；原回归测试后来只检查 guided hook，因此没有锁定 automatic hook 的两个入口。
+- 修复：automatic effect 的出题与轮询异常统一经过 `birthTimeUserError`；回归测试同时检查 guided 与 automatic 两个 hook，并禁止两种直接展示 `caught.message` 的写法。
+- 验证：`frontend/tests/birth-time-user-errors.test.ts`。
+- 防复发：错误归一化测试按入口文件验证安全不变量，不再依赖单文件精确调用次数。
+- 相关记录：BUG-003
+- 复发自：BUG-003
+- 修复版本：待提交（PR #25）
+
+## BUG-013 | 精简生时校正文案后真实 Chromium 测试等待已删除标题
+
+- 状态：resolved
+- 首次发现：2026-07-22
+- 最近更新：2026-07-22
+- 影响面：`frontend/tests/conversational-rectification-component.test.ts`、前端完整质量门禁
+- 用户现象：页面已经正确渲染候选时间、经历和输入控件，但测试持续等待并最终报 `Timed out waiting for async initial turn`。
+- 触发条件：运行真实 Chromium 390px 组件回归测试，并把 active turn 注入精简后的生时校正界面。
+- 根因：产品把重复的“当前判断”叙事改成“已记录”行动文案后，浏览器测试仍以旧标题作为异步渲染完成信号。
+- 修复：测试改为等待候选代表时间与已记录经历两个稳定结构信号，不再绑定可变标题文案。
+- 验证：`frontend/tests/conversational-rectification-component.test.ts`。
+- 防复发：真实浏览器等待条件优先绑定语义结构和状态数据，不用已批准可调整的展示标题充当加载边界。
+- 相关记录：BUG-004
+- 复发自：无
+- 修复版本：待提交（PR #25）
+
+## BUG-014 | 能力审计新增案例验证主题后质量门禁仍断言旧主题集合
+
+- 状态：resolved
+- 首次发现：2026-07-22
+- 最近更新：2026-07-22
+- 影响面：`tests/test_api_server_security.py`、Python quick quality gate
+- 用户现象：能力审计正确返回 `Case Validation` 并将案例验证评为可产品化，但质量门禁仍按旧主题集合和 `thin` 等级失败。
+- 触发条件：运行能力审计测试，且应用可见主题已包含案例验证入口。
+- 根因：案例验证能力进入 `_app_visible_topics` 后，对应主题集合和 UX 等级断言都没有同步更新。
+- 修复：把 `Case Validation` 纳入预期可见主题，并把 `case_validator` 从 `thin` 队列移入 `excellent` 断言，保持测试与同一审计规则一致。
+- 验证：`tests/test_api_server_security.py::test_capability_audit_scans_registry_and_local_sources`；Python quick quality gate。
+- 防复发：扩展应用可见主题时必须同时更新能力审计契约测试；精确集合断言继续用于发现意外增删。
+- 相关记录：无
+- 复发自：无
+- 修复版本：待提交（PR #25）

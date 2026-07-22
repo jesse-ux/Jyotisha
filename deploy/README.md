@@ -167,7 +167,10 @@ The staging env file must include these non-secret selectors so Compose cannot f
 APP_ENV_FILE=../.env.staging
 CADDYFILE_PATH=./Caddyfile.staging
 SITE_ADDRESS=https://staging.jyotisha.chat
+ADMIN_SITE_ADDRESS=https://admin.staging.jyotisha.chat
 ```
+
+The self-hosted identity milestone runs in coexistence mode: keep `AUTH_PROVIDER=supabase` and set `SELF_HOSTED_IDENTITY_ENABLED=true`. Add the server-only identity database, separate user/admin Better Auth secrets, origins, and staging-only Resend settings listed in `deploy/.env.staging.identity.example`. The public login remains on Supabase while the admin host and identity API are exercised. Do not set `AUTH_PROVIDER=self-hosted` until the Supabase-backed business modules have migrated. See `docs/operations/self-hosted-identity.md` for validation, import, smoke, and rollback commands.
 
 After source sync and before `up`, the workflow validates `.env.staging` mode/selectors, explicitly pins the three staging selectors against ambient shell overrides, and runs `docker compose --env-file .env.staging -f deploy/docker-compose.server.yml config --quiet`. For later manual inspections, run the same checks only after the tracked deployment files exist on the server. Do not use a manual gate run from `main` as the first publishing path: publishing requires a successful push to `staging`, while manual `Deploy staging` requires a successful gate run for the exact SHA.
 

@@ -2,3 +2,13 @@
     encode zstd gzip
     reverse_proxy web:3000
 }
+
+{$ADMIN_SITE_ADDRESS:https://admin.staging.jyotisha.chat} {
+    encode zstd gzip
+
+    @identity path /login /api/auth/* /_next/* /jyotish-logo.png /favicon.ico
+    handle @identity {
+        reverse_proxy web:3000
+    }
+    respond "Not found" 404
+}
