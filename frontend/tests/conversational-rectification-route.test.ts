@@ -228,9 +228,6 @@ test("production first turn skips the minute-heavy candidate partition call for 
       declaredBirthInput: {
         source: "unknown",
         birthDate: "1990-01-01",
-        reportedTime: null,
-        uncertaintyBeforeMinutes: null,
-        uncertaintyAfterMinutes: null,
         birthTimeClue: null,
         birthplace: packetBirthplace,
       },
