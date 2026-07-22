@@ -125,7 +125,19 @@ Deployment safety rules:
 3. 不得在未查看当前 `git status --short --branch` 时覆盖或重置本地变更。
 4. 新发现的重复错误、阻塞、碎片目录、远端验证失败，必须追加到错误台账或当轮 sweep 文档。
 
-## 6. Bug History Workflow Hard Constraint
+## 6. Git Branch Delivery Hard Constraint
+
+当用户要求 push，且开发发生在非 `main` 分支时，默认交付目标是远端
+`main` 已包含本次变更，而不是仅把功能分支推到远端：
+
+1. 先 fetch 并同步最新 `origin/main`，不得基于过期的 `main` 合并。
+2. 在保护本地未提交修改的前提下，将功能分支合并到最新 `main`。
+3. 完成与风险相称的测试并确认合并结果后，push `main`。
+4. 除非用户明确要求只推功能分支，否则不得把“功能分支已 push”当作最终交付，也不得要求用户再去 GitHub 手动寻找分支或创建 PR。
+5. 推送后必须核对远端 SHA，并验证 `origin/main` 已包含目标提交。
+6. 工作树有无关脏文件时，使用独立 worktree 完成 `main` 合并；不得 stash、reset、覆盖或顺带提交用户修改。
+
+## 7. Bug History Workflow Hard Constraint
 
 任何包含“Bug、报错、失败、异常、回归、无法保存、无法删除、状态码错误、线上故障”等现象的任务，开始诊断前必须完整读取并搜索：
 
