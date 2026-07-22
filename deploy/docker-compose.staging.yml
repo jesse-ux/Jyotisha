@@ -1,0 +1,8 @@
+services:
+  web:
+    networks:
+      - default
+      - app
+
+networks:
+  app:

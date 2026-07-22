@@ -120,6 +120,7 @@ bash deploy/validate-staging-database-env.sh .env.staging.database
 compose=(
   docker compose -p jyotisha-staging --env-file .env.staging
   -f deploy/docker-compose.server.yml -f deploy/docker-compose.postgres.yml
+  -f deploy/docker-compose.staging.yml
 )
 export APP_ENV_FILE='../.env.staging'
 export DATABASE_ENV_FILE='../.env.staging.database'
@@ -196,7 +197,10 @@ if (!login?.ok) process.exit(1);
 const adminLogin = await fetch(`${process.env.STAGING_ADMIN_URL}/login`);
 if (!adminLogin.ok) process.exit(1);
 const adminRoot = await fetch(process.env.STAGING_ADMIN_URL, { redirect: "manual" });
-if (adminRoot.status !== 404) process.exit(1);
+if (
+  adminRoot.status !== 302 ||
+  adminRoot.headers.get("location") !== "/admin/codes"
+) process.exit(1);
 const adminSession = await fetch(`${process.env.STAGING_ADMIN_URL}/api/auth/get-session`);
 if (!adminSession.ok) process.exit(1);
 const account = await fetch(`${process.env.STAGING_URL}/api/account`);
