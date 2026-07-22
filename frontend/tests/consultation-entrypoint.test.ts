@@ -245,3 +245,21 @@ test("homepage entrypoints use two whole-card native actions", () => {
   assert.equal(wholeCardActions.length, 2);
   assert.doesNotMatch(source, /className="daily-starlanguage-heading">[\s\S]{0,180}<button/);
 });
+
+test("starter homepage stays editorial and hides technical chart parameters", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const styles = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
+  const start = source.indexOf('<div className="starter-list starter-workbench"');
+  const end = source.indexOf("{onboardingError &&", start);
+  const starterHomepage = source.slice(start, end);
+
+  assert.ok(start >= 0 && end > start);
+  assert.match(starterHomepage, /className="starter-hero"/);
+  assert.match(starterHomepage, /className="starter-theme-accordion"/);
+  assert.match(starterHomepage, /starterSuggestions\.map/);
+  assert.doesNotMatch(starterHomepage, /evidencePreview|birthTimeDisplay|Vimshottari|D1|D9/);
+  assert.match(source, /const starterSuggestions = themes\.map/);
+  assert.match(source, /composer-wrap-starter/);
+  assert.match(styles, /\/\* Starter workbench \*\/[\s\S]*?\.starter-list \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);/);
+  assert.match(styles, /\.starter-hero,[\s\S]*?\.product-entrypoints,[\s\S]*?\.starter-themes \{[\s\S]*?width: 100%;/);
+});

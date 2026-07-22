@@ -3,6 +3,8 @@
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ArrowUp, ArrowUpRight, Sparkles, Square, X } from "lucide-react";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -71,7 +73,6 @@ import { consultationReportMarkdown } from "@/lib/consultation-report-export";
 import {
   OnboardingAuthenticationError,
   type OnboardingContent,
-  createOnboardingFallbackGreeting,
   createStartGreeting,
   isCurrentOnboardingRequest,
   onboardingProfileFingerprint,
@@ -89,6 +90,8 @@ import {
   type PublicLanguageModelCatalog,
 } from "@/lib/public-models";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
+
+gsap.registerPlugin(useGSAP);
 
 const BirthTimeRectification = dynamic(
   () => import("@/components/birth-time-rectification").then((module) => module.BirthTimeRectification),
@@ -234,6 +237,12 @@ const dailyStarlanguageCards: DailyStarlanguageCard[] = [
   { trend: "执行力比灵感更重要。小步完成会比大计划更有力量。", action: "先完成一个可交付版本，再考虑优化。", caution: "别让完美感拖慢开始。" },
   { trend: "适合观察资源流向：时间、注意力、金钱都算。", action: "检查一个正在消耗你的习惯，并给它设上限。", caution: "不要为了短期安心做长期成本高的选择。" },
 ];
+
+function greetingForHour(hour: number): string {
+  if (hour < 11) return "早上好";
+  if (hour < 18) return "下午好";
+  return "晚上好";
+}
 
 const emptyProfile: Profile = {
   name: "",
@@ -806,6 +815,7 @@ export default function Home() {
   const closeButton = useRef<HTMLButtonElement>(null);
   const redeemInput = useRef<HTMLInputElement>(null);
   const composerInput = useRef<HTMLTextAreaElement>(null);
+  const starterWorkbench = useRef<HTMLDivElement>(null);
   const pendingConsultation = useRef<PendingConsultation | null>(null);
   const cancellationRequests = useRef(new Map<string, Promise<void>>());
   const cancellationFeedbackRequest = useRef<string | null>(null);
@@ -974,7 +984,6 @@ export default function Home() {
   }, [accountId, profile]);
 
   const profileComplete = isProfileComplete(profile);
-  const birthTimeDisplay = birthTimeDisplayState(profile);
   const dailyStarlanguage = dailyStarlanguageCard ?? (profileComplete ? buildDailyStarlanguageCard(profile) : null);
   const onboardingPending = profileComplete && !onboarding && !onboardingError;
   const currentOnboardingMessage = onboardingJustCompleted
@@ -989,6 +998,14 @@ export default function Home() {
   const shouldStreamOnboarding = !profileComplete;
   const presetMessageFinished = !shouldStreamOnboarding || presetMessageLength >= currentOnboardingMessage.length;
   const onboardingCardReady = presetMessageFinished || birthTimeAssessmentPhase !== null;
+  const starterSuggestions = themes.map((theme) => onboarding?.suggestions.find((item) => item.theme === theme.id)
+    ?? { theme: theme.id, text: theme.prompt });
+  const starterHomeVisible = profileComplete
+    && presetMessageFinished
+    && !onboardingPending
+    && !rectificationSurfaceOpen
+    && !activeSession?.messages.length;
+  const daypartGreeting = greetingForHour(new Date().getHours());
 
   useEffect(() => {
     const controller = new AbortController();
@@ -2684,6 +2701,39 @@ export default function Home() {
     continueRectificationQuestion.current(question);
   }, [rectificationInitialTurn, rectificationLoading, rectificationMutationPending]);
 
+  useGSAP(() => {
+    if (!starterHomeVisible || !starterWorkbench.current) return;
+    const motion = gsap.matchMedia();
+    motion.add("(prefers-reduced-motion: no-preference)", () => {
+      const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
+      timeline
+        .from(".starter-hero-copy > *", {
+          autoAlpha: 0,
+          duration: 0.62,
+          stagger: 0.07,
+          y: 18,
+        })
+        .from(".starter-celestial-visual", {
+          autoAlpha: 0,
+          duration: 0.76,
+          scale: 0.94,
+        }, 0.08)
+        .from(".product-entrypoint-card", {
+          autoAlpha: 0,
+          duration: 0.54,
+          stagger: 0.08,
+          y: 20,
+        }, 0.2)
+        .from(".starter-theme-card", {
+          autoAlpha: 0,
+          duration: 0.46,
+          stagger: 0.055,
+          y: 14,
+        }, 0.34);
+    });
+    return () => motion.revert();
+  }, { dependencies: [activeSession?.id, starterHomeVisible], scope: starterWorkbench });
+
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!profileComplete) {
@@ -2839,12 +2889,7 @@ export default function Home() {
                   {profileComplete && onboardingJustCompleted && selectedBirthPlace(profileDraft) && <OnboardingChatMessage role="user" text={selectedBirthPlace(profileDraft)?.label ?? ""} />}
                   {profileComplete && onboardingJustCompleted && <OnboardingChatMessage role="assistant" text={currentOnboardingMessage} streaming length={presetMessageLength} />}
                 </>
-              ) : (
-                <OnboardingChatMessage role="assistant" text={onboarding?.greeting
-                  || (onboardingPending
-                    ? `${profile.name.trim()}，稍等一下，我正在准备几个适合开始的问题。`
-                    : createOnboardingFallbackGreeting(profile.name))} />
-              )}
+              ) : null}
 
               {!profileComplete && onboardingStep === "birth" && onboardingCardReady && (
                 <div className="onboarding-card-reveal">
@@ -2903,9 +2948,24 @@ export default function Home() {
               {profileComplete && presetMessageFinished && !rectificationSurfaceOpen && (onboardingPending ? (
                 <div className="starter-loading" role="status">正在准备三个入门问题…</div>
               ) : (
-                <div className="starter-list" aria-label="Jyotisha 推荐的初始问题">
-                  <div className="product-entrypoints" aria-label="常用占星入口">
-                    <article className="daily-starlanguage-card product-entrypoint-card" aria-label="今日星语">
+                <div className="starter-list starter-workbench" ref={starterWorkbench} aria-label="Jyotisha 推荐的初始问题">
+                  <section className="starter-hero" aria-labelledby="starter-heading">
+                    <div className="starter-hero-copy">
+                      <p className="starter-greeting">{daypartGreeting}，{profile.name.trim()}。</p>
+                      <h1 id="starter-heading">今天想先理清什么？</h1>
+                      <p className="starter-hero-note">从此刻最在意的事开始，我会结合你的星盘证据，帮你把问题拆得更清楚。</p>
+                    </div>
+                    <div className="starter-celestial-visual" aria-hidden="true">
+                      <span className="starter-orbit starter-orbit-outer" />
+                      <span className="starter-orbit starter-orbit-inner" />
+                      <span className="starter-orbit-dot starter-orbit-dot-primary" />
+                      <span className="starter-orbit-dot starter-orbit-dot-secondary" />
+                      <span className="starter-celestial-mark" />
+                    </div>
+                  </section>
+
+                  <section className="product-entrypoints" aria-label="常用占星入口">
+                    <article className="daily-starlanguage-card product-entrypoint-card" aria-labelledby="daily-starlanguage-title">
                       <button
                         className="product-entrypoint-hitarea"
                         type="button"
@@ -2913,20 +2973,17 @@ export default function Home() {
                         disabled={productEntrypointsDisabled}
                         onClick={draftDailyStarlanguageQuestion}
                       />
-                      <div className="daily-starlanguage-heading">
-                        <span>今日星语</span>
+                      <div className="product-entrypoint-copy">
+                        <span className="product-entrypoint-kicker">每日观察</span>
+                        <h2 id="daily-starlanguage-title">今日星语</h2>
+                        <p>{dailyStarlanguage?.trend}</p>
                       </div>
-                      <dl>
-                        <div><dt>今日趋势</dt><dd>{dailyStarlanguage?.trend}</dd></div>
-                        <div><dt>行动建议</dt><dd>{dailyStarlanguage?.action}</dd></div>
-                        <div><dt>今日提醒</dt><dd>{dailyStarlanguage?.caution}</dd></div>
-                      </dl>
                       <div className="product-entrypoint-footer">
-                        <small>探索性日提示，不是确定预测。</small>
+                        <small>{dailyStarlanguage?.action}</small>
                         <span className="product-entrypoint-action" aria-hidden="true">深入看今日 <ArrowUpRight className="starter-arrow" /></span>
                       </div>
                     </article>
-                    <article className="birth-rectification-card product-entrypoint-card" aria-label="生时校正">
+                    <article className="birth-rectification-card product-entrypoint-card" aria-labelledby="birth-rectification-title">
                       <button
                         className="product-entrypoint-hitarea"
                         type="button"
@@ -2934,44 +2991,50 @@ export default function Home() {
                         disabled={productEntrypointsDisabled || rectificationLoading || rectificationMutationPending}
                         onClick={() => void openBirthTimeRectification()}
                       />
-                      <div className="daily-starlanguage-heading">
-                        <span>生时校正</span>
+                      <div className="product-entrypoint-copy">
+                        <span className="product-entrypoint-kicker">出生资料</span>
+                        <h2 id="birth-rectification-title">生时校正</h2>
+                        <p>{rectificationCardAction === "resume"
+                          ? "你有一段未完成的校正记录，可以从上次的位置继续。"
+                          : "不确定准确出生时间时，可通过已经发生的人生事件逐步缩小范围。"}</p>
                       </div>
-                      <dl>
-                        {birthTimeDisplay ? (
-                          <>
-                            <div><dt>{birthTimeDisplay.kind === "candidate" ? "待验证候选时间" : "当前排盘时间"}</dt><dd>{birthTimeDisplay.activeTime}</dd></div>
-                            <div><dt>结果状态</dt><dd>{birthTimeDisplay.kind === "candidate" ? `未确认；${birthTimeConsultationOptionsCopy(profile)}` : "已确认"}</dd></div>
-                            <div><dt>原始填报</dt><dd>{birthTimeDisplay.reportedLabel}</dd></div>
-                          </>
-                        ) : (
-                          <>
-                            <div><dt>填报资料</dt><dd>{formatBirthMoment(profile)}</dd></div>
-                            <div><dt>案例状态</dt><dd>{rectificationCardAction === "resume" ? "已有进度，可继续" : "尚未建立进行中的校正案例"}</dd></div>
-                            <div><dt>校正方式</dt><dd>星盘差异解释 + 已发生事件验证</dd></div>
-                          </>
-                        )}
-                      </dl>
                       <div className="product-entrypoint-footer">
                         <small>{rectificationCardAction === "resume"
-                          ? account.rectificationCase?.preservesActiveTime
-                            ? "新校正进行中；旧确认时间继续有效，继续同一案例不重复收费。"
-                            : "继续同一案例不重复收费。"
-                          : `固定费用 ${account.rectificationPriceCredits} 点；首轮有效分析生成后收取。`}</small>
+                          ? "继续同一案例，不重复收费。"
+                          : `固定费用 ${account.rectificationPriceCredits} 点；首轮有效分析后收取。`}</small>
                         <span className="product-entrypoint-action" aria-hidden="true">{rectificationCardLabel} <ArrowUpRight className="starter-arrow" /></span>
                       </div>
                     </article>
-                  </div>
-                  {(onboarding?.suggestions ?? themes.map((item) => ({ theme: item.id, text: item.prompt }))).map((item) => {
-                    const theme = themes.find((candidate) => candidate.id === item.theme);
-                    return (
-                      <button key={`${item.theme}-${item.text}`} type="button" disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog} onClick={() => chooseSuggestedQuestion(item.text, item.theme)}>
-                        <span className="starter-content"><b>{theme?.label || "开始"}</b><span>{item.text}</span>{theme && <small>{theme.evidencePreview.join(" / ")} · {theme.claimBoundary}</small>}</span>
-                        <ArrowUpRight className="starter-arrow" aria-hidden="true" />
-                      </button>
-                    );
-                  })}
-                  {onboardingError && <p className="starter-note">Agent 的个性化入门问题暂时不可用，已显示安全的默认问题。</p>}
+                  </section>
+
+                  <section className="starter-themes" aria-labelledby="starter-themes-heading">
+                    <div className="starter-section-heading">
+                      <h2 id="starter-themes-heading">或者，从一个主题开始</h2>
+                      <p>选择最接近你当下的问题。</p>
+                    </div>
+                    <div className="starter-theme-accordion">
+                      {starterSuggestions.map((item) => {
+                        const theme = themes.find((candidate) => candidate.id === item.theme);
+                        return (
+                          <button
+                            className="starter-theme-card"
+                            key={`${item.theme}-${item.text}`}
+                            type="button"
+                            aria-label={`${theme?.label || "开始"}：${item.text}`}
+                            disabled={!hydrated || Boolean(pendingSessionId) || cancellationPending || !account || !modelCatalog}
+                            onClick={() => chooseSuggestedQuestion(item.text, item.theme)}
+                          >
+                            <span className="starter-content">
+                              <b>{theme?.label || "开始"}</b>
+                              <span>{item.text}</span>
+                            </span>
+                            <ArrowUpRight className="starter-arrow" aria-hidden="true" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                  {onboardingError && <p className="starter-note">个性化问题暂时不可用，已显示安全的默认问题。</p>}
                 </div>
               ))}
               <div ref={conversationEnd} />
@@ -3000,7 +3063,7 @@ export default function Home() {
           )}
         </div>
 
-        {!rectificationSurfaceOpen && <div className="composer-wrap">
+        {!rectificationSurfaceOpen && <div className={`composer-wrap ${starterHomeVisible ? "composer-wrap-starter" : ""}`}>
           {activeSuggestions.length > 0 && (
             <div className="composer-suggestions" aria-label="推荐继续提问">
               {activeSuggestions.map((question) => (
