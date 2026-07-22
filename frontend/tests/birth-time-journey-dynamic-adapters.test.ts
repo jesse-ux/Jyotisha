@@ -194,3 +194,22 @@ test("dynamic scores map independent engine values into guarded candidates", () 
   assert.deepEqual(parsed.candidate.evidence, []);
   assert.equal(parsed.candidate.algorithmVersion, "birth-time-choice-scoring-v2");
 });
+
+test("dynamic score adapters keep minute confirmation closed before holdout release", () => {
+  const parsed = parseDynamicChoiceScoring({
+    ...apiScore,
+    confidence: "high",
+    can_apply: true,
+    event_count: 4,
+    domain_count: 3,
+    effective_answer_count: 4,
+    dimension_count: 3,
+    top_score: 20,
+    second_score: 10,
+    margin_percent: 50,
+  });
+
+  assert.equal(parsed.candidate.confidence, "high");
+  assert.equal(parsed.candidate.canApply, false);
+  assert.ok(parsed.candidate.reasons.includes("minute_holdout_not_ready"));
+});

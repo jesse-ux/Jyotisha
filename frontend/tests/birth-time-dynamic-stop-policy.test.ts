@@ -95,6 +95,16 @@ test("forced terminal reasons win over a high-confidence score", () => {
   }), "user_finished");
 });
 
+test("a release-blocked high score does not stop as confirmable", () => {
+  const decision = decisionFor({
+    result: { ...lowCandidate, confidence: "high", canApply: false, winningSegment: {
+      startTime: "09:00", endTime: "09:00", representativeTime: "09:00", widthMinutes: 1,
+    }, eventCount: 4, domainCount: 3, marginPercent: 20 },
+  });
+
+  assert.deepEqual(decision, { kind: "continue", plateauCount: 0 });
+});
+
 test("a two point margin change resets the plateau", () => {
   const decision = decisionFor({
     result: { ...mediumCandidate, marginPercent: 17 },

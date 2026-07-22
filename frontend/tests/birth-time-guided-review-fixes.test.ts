@@ -66,6 +66,11 @@ test("dynamic medium terminal preserves its candidate range without direct adopt
   });
 });
 
+test("candidate completion hook cannot invoke the legacy endpoint for dynamic turns", () => {
+  const hookSource = readFileSync(new URL("../src/hooks/use-birth-time-guided-journey.ts", import.meta.url), "utf8");
+  assert.doesNotMatch(hookSource, /completeBirthTimeCandidate|completeCandidate/);
+});
+
 test("request identity cache and scheduled polling deduplicate Strict Mode starts", async () => {
   const cache = createIdentityRequestCache<number>();
   let loads = 0;
@@ -140,12 +145,14 @@ test("unconfirmed terminal candidates preserve the range without offering direct
   assert.match(legacyRectificationSource, /error && !showsCandidate/);
 });
 
-test("terminal and entrypoint CJK phrases stay intact at narrow widths", () => {
+test("terminal CJK copy stays intact while homepage candidates remain unconfirmed in v3", () => {
   const candidateResultSource = readFileSync(new URL("../src/components/birth-time-candidate-result.tsx", import.meta.url), "utf8");
   const pageSource = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 
   assert.match(candidateResultSource, /候选范围已保留，但当前证据不足以将具体分钟写入当前排盘时间。补充经历后可重新评估。/);
-  assert.match(pageSource, /当前使用候选时间排盘；<span className="phrase-nowrap">原始填报范围<\/span>仍保留。/);
+  assert.match(pageSource, /未确认；\$\{birthTimeConsultationOptionsCopy\(profile\)\}/);
+  assert.match(pageSource, /<ConversationalBirthTimeRectification/);
+  assert.doesNotMatch(pageSource, /当前使用候选时间排盘/);
 });
 
 test("completed rectification transcript does not repeat the birth place turn", () => {

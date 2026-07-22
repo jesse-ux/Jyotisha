@@ -13,7 +13,9 @@ INDEX = ROOT / "references/oracle/evidence_packet_index_2026_07_19.json"
 def test_jyotishganit_shadbala_surface_artifact_has_six_strengths():
     data = json.loads((ROOT / "references/oracle/jyotishganit_shadbala_surface_probe_steve_jobs_2026_07_19.json").read_text(encoding="utf-8"))
     assert data["scope"] == "jyotishganit_shadbala_surface_probe"
-    assert data["claim_status"] == "observation_only"
+    assert data["claim_status"] == "invalidated_input_mismatch"
+    assert data["status"] == "invalidated"
+    assert data["production_tuning_allowed"] is False
     assert data["raw_hash"]
     sun = data["raw"]["shadbala"]["Sun"]
     for key in ["Sthanabala", "Digbala", "Kaalabala", "Cheshtabala", "Naisargikabala", "Drikbala", "Shadbala"]:

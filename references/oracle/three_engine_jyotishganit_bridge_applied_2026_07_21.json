@@ -1,0 +1,190 @@
+{
+  "scope": "three_engine_jyotishganit_bridge_applied",
+  "created_at": "2026-07-21",
+  "claim_status": "observation_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_bridge": "references/oracle/jyotishganit_three_engine_closure_bridge_2026_07_21.json",
+  "source_queue": "references/oracle/three_engine_mismatch_closure_queue_2026_07_19.json",
+  "source_selected_hash": "4709b8ade84efdea4d0a67c15f3e32cea516a5aa2e8abe3885578feda20cb3f4",
+  "summary": {
+    "existing_ticket_rows": 18,
+    "no_existing_ticket_rows": 1,
+    "truth_upgrades": 0
+  },
+  "rows": [
+    {
+      "source_field": "D2",
+      "field": "Sun.sign",
+      "existing_ticket_id": "TEMCQ-001",
+      "existing_ticket_section": "D2",
+      "owner_track": "endpoint_contract",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "D2",
+      "field": "Moon.sign",
+      "existing_ticket_id": "TEMCQ-002",
+      "existing_ticket_section": "D2",
+      "owner_track": "endpoint_contract",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "D2",
+      "field": "Mars.sign",
+      "existing_ticket_id": "TEMCQ-003",
+      "existing_ticket_section": "D2",
+      "owner_track": "endpoint_contract",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "D2",
+      "field": "Mercury.sign",
+      "existing_ticket_id": "TEMCQ-004",
+      "existing_ticket_section": "D2",
+      "owner_track": "endpoint_contract",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "D2",
+      "field": "Jupiter.sign",
+      "existing_ticket_id": "TEMCQ-005",
+      "existing_ticket_section": "D2",
+      "owner_track": "endpoint_contract",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "D2",
+      "field": "Venus.sign",
+      "existing_ticket_id": "TEMCQ-006",
+      "existing_ticket_section": "D2",
+      "owner_track": "endpoint_contract",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "D2",
+      "field": "Saturn.sign",
+      "existing_ticket_id": "TEMCQ-007",
+      "existing_ticket_section": "D2",
+      "owner_track": "endpoint_contract",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "D4",
+      "field": "Moon.sign",
+      "existing_ticket_id": "TEMCQ-008",
+      "existing_ticket_section": "D4",
+      "owner_track": "endpoint_contract",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "D9",
+      "field": "Moon.sign",
+      "existing_ticket_id": "TEMCQ-009",
+      "existing_ticket_section": "D9",
+      "owner_track": "endpoint_contract",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "D10",
+      "field": "Moon.sign",
+      "existing_ticket_id": "TEMCQ-010",
+      "existing_ticket_section": "D10",
+      "owner_track": "endpoint_contract",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "BAV",
+      "field": "Sun",
+      "existing_ticket_id": "TEMCQ-011",
+      "existing_ticket_section": "ashtakavarga_bav",
+      "owner_track": "worked_example",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "BAV",
+      "field": "Moon",
+      "existing_ticket_id": "TEMCQ-012",
+      "existing_ticket_section": "ashtakavarga_bav",
+      "owner_track": "worked_example",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "BAV",
+      "field": "Mars",
+      "existing_ticket_id": "TEMCQ-013",
+      "existing_ticket_section": "ashtakavarga_bav",
+      "owner_track": "worked_example",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "BAV",
+      "field": "Mercury",
+      "existing_ticket_id": "TEMCQ-014",
+      "existing_ticket_section": "ashtakavarga_bav",
+      "owner_track": "worked_example",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "BAV",
+      "field": "Jupiter",
+      "existing_ticket_id": "TEMCQ-015",
+      "existing_ticket_section": "ashtakavarga_bav",
+      "owner_track": "worked_example",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "BAV",
+      "field": "Venus",
+      "existing_ticket_id": "TEMCQ-016",
+      "existing_ticket_section": "ashtakavarga_bav",
+      "owner_track": "worked_example",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "BAV",
+      "field": "Saturn",
+      "existing_ticket_id": "TEMCQ-017",
+      "existing_ticket_section": "ashtakavarga_bav",
+      "owner_track": "worked_example",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "SAV",
+      "field": "12_sign_scores",
+      "existing_ticket_id": "TEMCQ-018",
+      "existing_ticket_section": "ashtakavarga_sav",
+      "owner_track": "worked_example",
+      "closure_status": "ready_for_field_comparison",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    },
+    {
+      "source_field": "Panchanga",
+      "field": "Panchanga",
+      "existing_ticket_id": null,
+      "existing_ticket_section": null,
+      "owner_track": "new_ticket_required",
+      "closure_status": "no_existing_ticket_create_next",
+      "claim_boundary": "field_comparison_only_no_formula_truth"
+    }
+  ],
+  "boundary": "applied_bridge_only_no_truth_upgrade",
+  "human_report": "docs/research/three_engine_jyotishganit_bridge_applied_2026_07_21.md"
+}

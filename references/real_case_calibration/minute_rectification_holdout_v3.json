@@ -1,0 +1,358 @@
+{
+  "schema_version": "minute-rectification-holdout-v3",
+  "benchmark_id": "minute_rectification_fact_ranker_v4_holdout_v3",
+  "description": "Sealed public Rodden-AA minute holdout for the event-specific fact ranker v4.",
+  "truth_hidden_from_ranker": true,
+  "frozen_before_replay": true,
+  "source_audit_status": "invalidated_after_replay",
+  "source_audit_issues": [
+    {
+      "event_id": "robbins_marriage_1968",
+      "issue": "The cited public biography gives 1967-03-10, not 1968."
+    },
+    {
+      "event_id": "takamoto_joined_disney_1947",
+      "issue": "Multiple public biographies give 1945, not 1947."
+    }
+  ],
+  "minimum_gate": {
+    "public_aa_cases": 20,
+    "events_per_case": 3,
+    "domains_per_case": 2,
+    "independent_event_sources_per_case": 2,
+    "negative_minutes_per_case": 4
+  },
+  "release_metrics": {
+    "top_1_rate_minimum": 0.6,
+    "top_3_rate_minimum": 0.85,
+    "mean_absolute_minute_error_maximum": 2.0,
+    "false_confirmation_rate_maximum": 0.05,
+    "correct_insufficient_evidence_rejection_rate_minimum": 0.9
+  },
+  "frozen_scoring": {
+    "algorithm_version": "birth-time-event-fact-ranker-v4-shadow",
+    "implementation_sha256": "f41c298dd6cdcebe7a93e632f7191954be7987f6012ca2a34cecb6e447fbf196",
+    "files": [
+      "scripts/active_rectification_event_engine.py",
+      "scripts/active_rectification_events.py",
+      "scripts/ashtakavarga.py",
+      "scripts/dasha_analyzer.py",
+      "scripts/divisional_charts_extended.py",
+      "scripts/domain_calculation_service.py",
+      "scripts/jaimini.py",
+      "scripts/minute_rectification_fact_ranker_v4.py",
+      "scripts/minute_rectification_feature_facts_v4.py",
+      "scripts/narayana_dasha.py",
+      "scripts/shadbala.py",
+      "scripts/varga.py"
+    ],
+    "tie_breaker": "sha256(benchmark_id:case_id:candidate_time); published minute is never passed to the ranker"
+  },
+  "cases": [
+    {
+      "case_id": "barack_obama_1961_aa_v4_holdout",
+      "subject_label": "Barack Obama",
+      "holdout_partition": "sealed_evaluation",
+      "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10,
+      "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1961-08-04", "time": "19:24",
+        "place": "Honolulu, Hawaii, United States",
+        "latitude": 21.3069, "longitude": -157.8583, "timezone_offset": -10.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/adbvip/adbvip_08_04.htm?lang=r&nho2=161&nhor=1", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "obama_wedding_1992_v4", "domain": "relationship", "date": "1992-10-03", "precision": "day", "description": "Married Michelle Robinson.", "source": {"publisher": "Obama Foundation", "url": "https://obama.org/about/administration/chicago-where-it-began/", "independent_of_birth_source": true}},
+        {"id": "obama_illinois_senate_1996_v4", "domain": "career", "date": "1996-11-05", "precision": "day", "description": "Elected to the Illinois State Senate.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Illinois_Senate_career_of_Barack_Obama", "independent_of_birth_source": true}},
+        {"id": "obama_presidential_election_2008_v4", "domain": "career", "date": "2008-11-04", "precision": "day", "description": "Elected President of the United States.", "source": {"publisher": "White House Archives", "url": "https://obamawhitehouse.archives.gov/1600/presidents/barackobama/", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "angelina_jolie_1975_aa_v4_holdout",
+      "subject_label": "Angelina Jolie", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1975-06-04", "time": "09:09", "place": "Los Angeles, California, United States",
+        "latitude": 34.0961, "longitude": -118.2944, "timezone_offset": -7.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Jolie%2C_Angelina", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "jolie_oscar_2000", "domain": "career", "date": "2000", "precision": "year", "description": "Won the Academy Award for supporting actress.", "source": {"publisher": "Academy of Motion Picture Arts and Sciences", "url": "https://www.oscars.org/oscars/ceremonies/2000", "independent_of_birth_source": true}},
+        {"id": "jolie_mastectomy_2013", "domain": "health_pressure", "date": "2013", "precision": "year", "description": "Underwent preventive double mastectomy treatment.", "source": {"publisher": "The New York Times", "url": "https://www.nytimes.com/2013/05/14/opinion/my-medical-choice.html", "independent_of_birth_source": true}},
+        {"id": "jolie_marriage_2014", "domain": "relationship", "date": "2014-08-23", "precision": "day", "description": "Married Brad Pitt.", "source": {"publisher": "Encyclopaedia Britannica", "url": "https://www.britannica.com/biography/Angelina-Jolie", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "tiger_woods_1975_aa_v4_holdout",
+      "subject_label": "Tiger Woods", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1975-12-30", "time": "22:50", "place": "Long Beach, California, United States",
+        "latitude": 33.7667, "longitude": -118.1833, "timezone_offset": -8.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Woods%2C_Tiger", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "woods_turned_professional_1996", "domain": "career", "date": "1996", "precision": "year", "description": "Turned professional as a golfer.", "source": {"publisher": "PGA Tour", "url": "https://www.pgatour.com/player/08793/tiger-woods/bio", "independent_of_birth_source": true}},
+        {"id": "woods_marriage_2004", "domain": "relationship", "date": "2004-10-05", "precision": "day", "description": "Married Elin Nordegren.", "source": {"publisher": "Encyclopaedia Britannica", "url": "https://www.britannica.com/biography/Tiger-Woods", "independent_of_birth_source": true}},
+        {"id": "woods_car_crash_2021", "domain": "health_pressure", "date": "2021-02-23", "precision": "day", "description": "Sustained serious injuries in a motor-vehicle crash.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Tiger_Woods", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "elizabeth_taylor_1932_aa_v4_holdout",
+      "subject_label": "Elizabeth Taylor", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1932-02-27", "time": "02:30", "place": "London, England",
+        "latitude": 51.5, "longitude": -0.1667, "timezone_offset": 0.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Taylor%2C_Elizabeth", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "taylor_first_marriage_1950", "domain": "relationship", "date": "1950-05-06", "precision": "day", "description": "Married Conrad Hilton Jr.", "source": {"publisher": "Encyclopaedia Britannica", "url": "https://www.britannica.com/biography/Elizabeth-Taylor-American-actress", "independent_of_birth_source": true}},
+        {"id": "taylor_oscar_1961", "domain": "career", "date": "1961", "precision": "year", "description": "Won the Academy Award for Butterfield 8.", "source": {"publisher": "Academy of Motion Picture Arts and Sciences", "url": "https://www.oscars.org/oscars/ceremonies/1961", "independent_of_birth_source": true}},
+        {"id": "taylor_brain_surgery_1997", "domain": "health_pressure", "date": "1997", "precision": "year", "description": "Underwent surgery for a benign brain tumor.", "source": {"publisher": "Encyclopaedia Britannica", "url": "https://www.britannica.com/biography/Elizabeth-Taylor-American-actress/Final-films-and-HIV-AIDS-activism", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "elizabeth_montgomery_1933_aa_v4_holdout",
+      "subject_label": "Elizabeth Montgomery", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1933-04-15", "time": "16:38", "place": "Los Angeles, California, United States",
+        "latitude": 34.05, "longitude": -118.25, "timezone_offset": -8.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Montgomery%2C_Elizabeth", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "montgomery_marriage_asher_1963", "domain": "relationship", "date": "1963", "precision": "year", "description": "Married producer William Asher.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Elizabeth_Montgomery", "independent_of_birth_source": true}},
+        {"id": "montgomery_bewitched_1964", "domain": "career", "date": "1964-09-17", "precision": "day", "description": "Bewitched premiered on television.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Bewitched", "independent_of_birth_source": true}},
+        {"id": "montgomery_cancer_1995", "domain": "health_pressure", "date": "1995", "precision": "year", "description": "Was diagnosed with colorectal cancer and died later that year.", "source": {"publisher": "The New York Times", "url": "https://www.nytimes.com/1995/05/19/obituaries/elizabeth-montgomery-62-star-of-the-tv-comedy-bewitched.html", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "pablo_picasso_1881_aa_v4_holdout",
+      "subject_label": "Pablo Picasso", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1881-10-25", "time": "23:15", "place": "Malaga, Spain",
+        "latitude": 36.7167, "longitude": -4.4167, "timezone_offset": -0.29444,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Picasso%2C_Pablo", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "picasso_moved_paris_1904", "domain": "relocation", "date": "1904", "precision": "year", "description": "Settled permanently in Paris.", "source": {"publisher": "Encyclopaedia Britannica", "url": "https://www.britannica.com/biography/Pablo-Picasso/Blue-Period", "independent_of_birth_source": true}},
+        {"id": "picasso_marriage_1918", "domain": "relationship", "date": "1918-07-12", "precision": "day", "description": "Married Olga Khokhlova.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Pablo_Picasso", "independent_of_birth_source": true}},
+        {"id": "picasso_guernica_1937", "domain": "career", "date": "1937", "precision": "year", "description": "Created and exhibited Guernica.", "source": {"publisher": "Museum of Modern Art", "url": "https://www.moma.org/collection/works/79018", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "sigmund_freud_1856_aa_v4_holdout",
+      "subject_label": "Sigmund Freud", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1856-05-06", "time": "18:30", "place": "Freiberg in Mahren, Austrian Empire",
+        "latitude": 49.65, "longitude": 18.1667, "timezone_offset": 0.96222,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Freud%2C_Sigmund", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "freud_marriage_1886", "domain": "relationship", "date": "1886-09-14", "precision": "day", "description": "Married Martha Bernays.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Sigmund_Freud", "independent_of_birth_source": true}},
+        {"id": "freud_dreams_publication_1899", "domain": "career", "date": "1899", "precision": "year", "description": "Published The Interpretation of Dreams.", "source": {"publisher": "Encyclopaedia Britannica", "url": "https://www.britannica.com/biography/Sigmund-Freud/Psychoanalytic-theory", "independent_of_birth_source": true}},
+        {"id": "freud_moved_london_1938", "domain": "relocation", "date": "1938", "precision": "year", "description": "Fled Nazi-occupied Vienna and settled in London.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Freud_Museum", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "salma_hayek_1966_aa_v4_holdout",
+      "subject_label": "Salma Hayek", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1966-09-02", "time": "06:40", "place": "Coatzacoalcos, Mexico",
+        "latitude": 18.15, "longitude": -94.4167, "timezone_offset": -6.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Hayek%2C_Salma", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "hayek_moved_los_angeles_1991", "domain": "relocation", "date": "1991", "precision": "year", "description": "Moved to Los Angeles to pursue acting in Hollywood.", "source": {"publisher": "Encyclopaedia Britannica", "url": "https://www.britannica.com/biography/Salma-Hayek", "independent_of_birth_source": true}},
+        {"id": "hayek_frida_2002", "domain": "career", "date": "2002", "precision": "year", "description": "Produced and starred in Frida.", "source": {"publisher": "Academy of Motion Picture Arts and Sciences", "url": "https://www.oscars.org/oscars/ceremonies/2003", "independent_of_birth_source": true}},
+        {"id": "hayek_marriage_2009", "domain": "relationship", "date": "2009-02-14", "precision": "day", "description": "Married Francois-Henri Pinault.", "source": {"publisher": "Encyclopaedia Britannica", "url": "https://www.britannica.com/biography/Salma-Hayek/Personal-life", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "steve_reich_1936_aa_v4_holdout",
+      "subject_label": "Steve Reich", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1936-10-03", "time": "18:21", "place": "Manhattan, New York, United States",
+        "latitude": 40.7667, "longitude": -73.9833, "timezone_offset": -5.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Reich%2C_Steve", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "reich_cornell_degree_1957", "domain": "education", "date": "1957", "precision": "year", "description": "Graduated from Cornell University.", "source": {"publisher": "Encyclopaedia Britannica", "url": "https://www.britannica.com/biography/Steve-Reich", "independent_of_birth_source": true}},
+        {"id": "reich_moved_california_1963", "domain": "relocation", "date": "1963", "precision": "year", "description": "Moved to the San Francisco Bay Area.", "source": {"publisher": "Boosey and Hawkes", "url": "https://www.boosey.com/composer/Steve+Reich", "independent_of_birth_source": true}},
+        {"id": "reich_music_18_premiere_1976", "domain": "career", "date": "1976-04-24", "precision": "day", "description": "Music for 18 Musicians received its world premiere.", "source": {"publisher": "Pulitzer Prizes", "url": "https://www.pulitzer.org/winners/steve-reich", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "albert_brooks_1947_aa_v4_holdout",
+      "subject_label": "Albert Brooks", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1947-07-22", "time": "03:00", "place": "Los Angeles, California, United States",
+        "latitude": 34.05, "longitude": -118.25, "timezone_offset": -8.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Brooks%2C_Albert", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "brooks_real_life_1979", "domain": "career", "date": "1979", "precision": "year", "description": "Made his feature directing debut with Real Life.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Albert_Brooks", "independent_of_birth_source": true}},
+        {"id": "brooks_oscar_nomination_1988", "domain": "career", "date": "1988", "precision": "year", "description": "Received an Academy Award nomination for Broadcast News.", "source": {"publisher": "Academy of Motion Picture Arts and Sciences", "url": "https://www.oscars.org/oscars/ceremonies/1988", "independent_of_birth_source": true}},
+        {"id": "brooks_marriage_1997", "domain": "relationship", "date": "1997", "precision": "year", "description": "Married Kimberly Shlain.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Kimberly_Brooks_(artist)", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "paul_ryan_1970_aa_v4_holdout",
+      "subject_label": "Paul Ryan", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1970-01-29", "time": "02:37", "place": "Janesville, Wisconsin, United States",
+        "latitude": 42.6833, "longitude": -89.0167, "timezone_offset": -6.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Ryan%2C_Paul", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "ryan_elected_house_1998", "domain": "career", "date": "1998-11-03", "precision": "day", "description": "Was elected to the United States House of Representatives.", "source": {"publisher": "United States House of Representatives", "url": "https://history.house.gov/People/Detail/20147", "independent_of_birth_source": true}},
+        {"id": "ryan_marriage_2000", "domain": "relationship", "date": "2000-12-02", "precision": "day", "description": "Married Janna Little.", "source": {"publisher": "Encyclopaedia Britannica", "url": "https://www.britannica.com/biography/Paul-Ryan", "independent_of_birth_source": true}},
+        {"id": "ryan_speaker_2015", "domain": "career", "date": "2015-10-29", "precision": "day", "description": "Was elected Speaker of the House.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/October_2015_Speaker_of_the_United_States_House_of_Representatives_election", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "tom_kennedy_1927_aa_v4_holdout",
+      "subject_label": "Tom Kennedy", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1927-02-26", "time": "17:25", "place": "Louisville, Kentucky, United States",
+        "latitude": 38.25, "longitude": -85.7667, "timezone_offset": -6.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Kennedy%2C_Tom", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "kennedy_marriage_1952", "domain": "relationship", "date": "1952", "precision": "year", "description": "Married Betty Gevedon.", "source": {"publisher": "The Hollywood Reporter", "url": "https://www.hollywoodreporter.com/tv/tv-news/tom-kennedy-dead-game-show-host-name-that-tune-was-93-4074025/", "independent_of_birth_source": true}},
+        {"id": "kennedy_big_game_1958", "domain": "career", "date": "1958", "precision": "year", "description": "Began hosting his first national game show, The Big Game.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Tom_Kennedy_(television_host)", "independent_of_birth_source": true}},
+        {"id": "kennedy_name_that_tune_1974", "domain": "career", "date": "1974", "precision": "year", "description": "Began hosting the syndicated Name That Tune.", "source": {"publisher": "The Hollywood Reporter", "url": "https://www.hollywoodreporter.com/tv/tv-news/tom-kennedy-dead-game-show-host-name-that-tune-was-93-4074025/", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "andrew_windsor_1960_aa_v4_holdout",
+      "subject_label": "Andrew Mountbatten-Windsor", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1960-02-19", "time": "15:30", "place": "London, England",
+        "latitude": 51.5, "longitude": -0.1667, "timezone_offset": 0.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Andrew%2C_Prince", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "andrew_royal_navy_1979", "domain": "career", "date": "1979", "precision": "year", "description": "Entered the Royal Navy as an officer trainee.", "source": {"publisher": "The Royal Family", "url": "https://www.royal.uk/the-duke-of-york", "independent_of_birth_source": true}},
+        {"id": "andrew_marriage_1986", "domain": "relationship", "date": "1986-07-23", "precision": "day", "description": "Married Sarah Ferguson.", "source": {"publisher": "Encyclopaedia Britannica", "url": "https://www.britannica.com/biography/Prince-Andrew-duke-of-York", "independent_of_birth_source": true}},
+        {"id": "andrew_divorce_1996", "domain": "relationship", "date": "1996-05-30", "precision": "day", "description": "Divorce from Sarah Ferguson became final.", "source": {"publisher": "The Royal Family", "url": "https://www.royal.uk/duke-york", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "sean_lennon_1975_aa_v4_holdout",
+      "subject_label": "Sean Lennon", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1975-10-09", "time": "02:00", "place": "Manhattan, New York, United States",
+        "latitude": 40.7667, "longitude": -73.9833, "timezone_offset": -4.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Lennon%2C_Sean", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "lennon_father_death_1980", "domain": "health_pressure", "date": "1980-12-08", "precision": "day", "description": "His father John Lennon was murdered.", "source": {"publisher": "Encyclopaedia Britannica", "url": "https://www.britannica.com/biography/John-Lennon", "independent_of_birth_source": true}},
+        {"id": "lennon_into_sun_1998", "domain": "career", "date": "1998-05-19", "precision": "day", "description": "Released his debut album Into the Sun.", "source": {"publisher": "AllMusic", "url": "https://www.allmusic.com/album/into-the-sun-mw0000036772", "independent_of_birth_source": true}},
+        {"id": "lennon_friendly_fire_2006", "domain": "career", "date": "2006-09-26", "precision": "day", "description": "Released the album Friendly Fire.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Friendly_Fire_(Sean_Lennon_album)", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "joseph_kennedy_iii_1980_aa_v4_holdout",
+      "subject_label": "Joseph Kennedy III", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1980-10-04", "time": "21:42", "place": "Boston, Massachusetts, United States",
+        "latitude": 42.3667, "longitude": -71.0667, "timezone_offset": -4.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Kennedy%2C_Joseph_Patrick_III", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "kennedy_stanford_2003", "domain": "education", "date": "2003", "precision": "year", "description": "Graduated from Stanford University.", "source": {"publisher": "United States Congress", "url": "https://bioguide.congress.gov/search/bio/K000379", "independent_of_birth_source": true}},
+        {"id": "kennedy_elected_house_2012", "domain": "career", "date": "2012-11-06", "precision": "day", "description": "Was elected to the United States House of Representatives.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/2012_United_States_House_of_Representatives_elections_in_Massachusetts", "independent_of_birth_source": true}},
+        {"id": "kennedy_marriage_2012", "domain": "relationship", "date": "2012-12-01", "precision": "day", "description": "Married Lauren Birchfield.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Joe_Kennedy_III", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "kurt_cobain_1967_aa_v4_holdout",
+      "subject_label": "Kurt Cobain", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1967-02-20", "time": "19:38", "place": "Aberdeen, Washington, United States",
+        "latitude": 46.9833, "longitude": -123.8167, "timezone_offset": -8.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Cobain%2C_Kurt", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "cobain_nevermind_1991", "domain": "career", "date": "1991-09-24", "precision": "day", "description": "Nirvana released Nevermind.", "source": {"publisher": "Rock and Roll Hall of Fame", "url": "https://www.rockhall.com/inductees/nirvana", "independent_of_birth_source": true}},
+        {"id": "cobain_marriage_1992", "domain": "relationship", "date": "1992-02-24", "precision": "day", "description": "Married Courtney Love.", "source": {"publisher": "Encyclopaedia Britannica", "url": "https://www.britannica.com/biography/Kurt-Cobain", "independent_of_birth_source": true}},
+        {"id": "cobain_overdose_1994", "domain": "health_pressure", "date": "1994-03-04", "precision": "day", "description": "Was hospitalized after an overdose in Rome.", "source": {"publisher": "The Seattle Times", "url": "https://www.seattletimes.com/entertainment/music/kurt-cobain-a-timeline-of-his-life/", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "john_robbins_1947_aa_v4_holdout",
+      "subject_label": "John Robbins", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1947-10-26", "time": "02:56", "place": "Glendale, California, United States",
+        "latitude": 34.15, "longitude": -118.25, "timezone_offset": -8.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Robbins%2C_John", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "robbins_marriage_1968", "domain": "relationship", "date": "1968", "precision": "year", "description": "Married Deo Robbins.", "source": {"publisher": "John Robbins", "url": "https://www.johnrobbins.info/about/", "independent_of_birth_source": true}},
+        {"id": "robbins_diet_book_1987", "domain": "career", "date": "1987", "precision": "year", "description": "Published Diet for a New America.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/John_Robbins_(author)", "independent_of_birth_source": true}},
+        {"id": "robbins_health_book_1996", "domain": "career", "date": "1996", "precision": "year", "description": "Published Reclaiming Our Health.", "source": {"publisher": "John Robbins", "url": "https://www.johnrobbins.info/books/", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "chad_everett_1937_aa_v4_holdout",
+      "subject_label": "Chad Everett", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1937-06-11", "time": "22:20", "place": "South Bend, Indiana, United States",
+        "latitude": 41.6833, "longitude": -86.25, "timezone_offset": -5.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Everett%2C_Chad", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "everett_marriage_1966", "domain": "relationship", "date": "1966-05-22", "precision": "day", "description": "Married actress Shelby Grant.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Chad_Everett", "independent_of_birth_source": true}},
+        {"id": "everett_medical_center_1969", "domain": "career", "date": "1969", "precision": "year", "description": "Began starring in Medical Center.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Medical_Center_(TV_series)", "independent_of_birth_source": true}},
+        {"id": "everett_lung_cancer_2012", "domain": "health_pressure", "date": "2012", "precision": "year", "description": "Died after a battle with lung cancer.", "source": {"publisher": "The New York Times", "url": "https://www.nytimes.com/2012/07/26/arts/television/chad-everett-medical-center-star-dies-at-75.html", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "bernd_eichinger_1949_aa_v4_holdout",
+      "subject_label": "Bernd Eichinger", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1949-04-11", "time": "13:15", "place": "Neuburg an der Donau, Germany",
+        "latitude": 48.7333, "longitude": 11.1833, "timezone_offset": 2.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Eichinger%2C_Bernd", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "eichinger_constantin_1979", "domain": "career", "date": "1979", "precision": "year", "description": "Bought a stake in Neue Constantin Film and became executive director.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Constantin_Film", "independent_of_birth_source": true}},
+        {"id": "eichinger_summit_1991", "domain": "career", "date": "1991", "precision": "year", "description": "Co-founded Summit Entertainment.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Summit_Entertainment", "independent_of_birth_source": true}},
+        {"id": "eichinger_marriage_2006", "domain": "relationship", "date": "2006", "precision": "year", "description": "Married Katja Hofmann.", "source": {"publisher": "Reuters", "url": "https://www.reuters.com/article/us-berndeichinger/film-producer-bernd-eichinger-dies-at-61-idUSTRE70O6BJ20110125", "independent_of_birth_source": true}}
+      ]
+    },
+    {
+      "case_id": "iwao_takamoto_1925_aa_v4_holdout",
+      "subject_label": "Iwao Takamoto", "holdout_partition": "sealed_evaluation", "excluded_from_tuning": true,
+      "candidate_radius_minutes": 10, "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1925-04-29", "time": "20:00", "place": "Los Angeles, California, United States",
+        "latitude": 34.05, "longitude": -118.25, "timezone_offset": -8.0,
+        "source": {"publisher": "Astro-Databank", "url": "https://www.astro.com/astro-databank/Takamoto%2C_Iwao", "rodden_rating": "AA", "record_type": "birth_record"}
+      },
+      "events": [
+        {"id": "takamoto_joined_disney_1947", "domain": "career", "date": "1947", "precision": "year", "description": "Joined Walt Disney Animation Studios.", "source": {"publisher": "Wikipedia", "url": "https://en.wikipedia.org/wiki/Iwao_Takamoto", "independent_of_birth_source": true}},
+        {"id": "takamoto_hanna_barbera_1961", "domain": "career", "date": "1961", "precision": "year", "description": "Moved to Hanna-Barbera and began designing its characters.", "source": {"publisher": "Animation Magazine", "url": "https://www.animationmagazine.net/2007/01/animation-legend-iwao-takamoto-dies/", "independent_of_birth_source": true}},
+        {"id": "takamoto_heart_attack_2007", "domain": "health_pressure", "date": "2007-01-08", "precision": "day", "description": "Died following a heart attack.", "source": {"publisher": "The New York Times", "url": "https://www.nytimes.com/2007/01/10/arts/10takamoto.html", "independent_of_birth_source": true}}
+      ]
+    }
+  ],
+  "boundary": "This sealed set was invalidated by post-replay source-content audit and may only be used as development evidence. A future release replay requires a new scorer version and a fresh source-audited sealed evaluation set."
+}

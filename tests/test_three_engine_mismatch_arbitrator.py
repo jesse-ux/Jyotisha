@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from scripts.three_engine_mismatch_arbitrator import arbitrate_manifest
+from scripts.three_engine_mismatch_arbitrator import arbitrate_manifest, render_markdown_report
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,13 +35,16 @@ def test_vedastro_only_d2_difference_is_endpoint_semantics(tmp_path: Path) -> No
     assert row["differing_engines"] == ["VedAstro"]
 
 
-def test_commercial_receives_mismatch_status_not_raw_truth_upgrade() -> None:
-    report = json.loads((ROOT / "references/oracle/three_engine_mismatch_arbitration_2026_07_19.json").read_text(encoding="utf-8"))
-    markdown = (ROOT / "docs/research/three_engine_mismatch_arbitration_2026_07_19.md").read_text(encoding="utf-8")
+def test_markdown_report_summarizes_policy_and_category_counts() -> None:
+    report = arbitrate_manifest(ROOT / "references" / "oracle" / "three_engine_parity_replay_manifest.json")
+    markdown = render_markdown_report(report)
 
-    assert report["mismatch_count"] == 60
-    assert report["classified_count"] == 60
-    assert report["unclassified_count"] == 0
-    assert report["truth_policy"] == "no_majority_vote"
+    assert "Three-engine mismatch arbitration" in markdown
+    assert "mismatch_count: `60`" in markdown
+    assert "truth_policy: `no_majority_vote`" in markdown
     assert "commercial_sync: `status_and_claim_boundary_only`" in markdown
+    assert "endpoint_or_varga_semantics" in markdown
+    assert "shadbala_formula_variant" in markdown
+    assert "ashtakavarga_table_or_contributor_variant" in markdown
+    assert "derived_total_from_component_variants" in markdown
     assert "Do not copy raw research debt into commercial runtime" in markdown

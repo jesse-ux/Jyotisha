@@ -41,7 +41,7 @@ const onboardingResponseSchema = z.object({
 });
 
 const defaultPolicy = {
-  requestTimeoutMs: 12_000,
+  requestTimeoutMs: 25_000,
   retryDelayMs: 4_000,
   maxAttempts: 3,
 } as const;
@@ -77,7 +77,7 @@ type OnboardingProfileFingerprintInput = {
 };
 
 export type OnboardingSuggestion = {
-  readonly theme: "career" | "marriage" | "timing";
+  readonly theme: ConsultationTheme;
   readonly text: string;
 };
 
@@ -268,3 +268,4 @@ export async function requestOnboardingWithRecovery(
 
   throw lastError ?? new OnboardingRequestError("pending");
 }
+import type { ConsultationTheme } from "./consultation-workflow-request";

@@ -45,6 +45,12 @@ def test_sync_policy_encodes_research_first_commercial_mature_rule() -> None:
         "service_role_runtime",
     }
     assert "references/cross_project_contract/fixture_manifest.v1.json" in policy["shared_files"]
+    assert {
+        "scripts/active_rectification_event_engine.py",
+        "scripts/active_rectification_events.py",
+        "scripts/rectification_technique_contract.py",
+        "scripts/rectification_three_engine_packet.py",
+    } <= set(policy["shared_files"])
 
 
 def test_sync_status_passes_when_shared_files_match(tmp_path: Path) -> None:

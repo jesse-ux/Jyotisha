@@ -10,12 +10,12 @@ def test_zero_events_are_not_a_completed_rectification() -> None:
 
 def test_contract_discloses_used_and_missing_layers() -> None:
     contract = build_rectification_technique_contract(event_count=4, domain_count=3)
-    assert {"D4", "D9", "D10", "D24", "D30"} <= set(contract["used_divisional_charts"])
+    assert {"D2", "D4", "D9", "D10", "D11", "D24", "D30"} <= set(contract["used_divisional_charts"])
     assert contract["dasha_tracks"] == ["vimshottari_md_ad_pd", "narayana_md_ad"]
     assert contract["used_arudha"] == ["A7", "UL", "A10"]
     assert contract["missing_layers"] == ["shadbala_kala_dig_chesta_total"]
-    assert "D2" in contract["partial_layers"]
-    assert "D11" in contract["partial_layers"]
+    assert "D2" not in contract["partial_layers"]
+    assert "D11" not in contract["partial_layers"]
     assert "functional_benefic_malefic" in contract["auxiliary_layers"]
     assert "controlled_transit" in contract["auxiliary_layers"]
     assert "ashtakavarga" in contract["auxiliary_layers"]
@@ -29,3 +29,36 @@ def test_high_rigor_requires_real_three_engine_evidence() -> None:
     assert contract["external_engines"]["status"] == "required_not_run"
     assert "three_engine_parity_not_passed" in contract["hard_blockers"]
     assert contract["can_narrow_to_minute"] is False
+
+
+def test_public_holdout_blocks_confirmation_even_when_other_gates_pass() -> None:
+    contract = build_rectification_technique_contract(
+        event_count=4,
+        domain_count=3,
+        required_layers_complete=True,
+        canonical_input_hash="canonical-fixture",
+        stability_diagnostics={
+            "neighbor_stability": {"all_required_passed": True},
+            "leave_one_event_out": {"status": "pass"},
+        },
+    )
+
+    assert contract["canonical_input_hash"] == "canonical-fixture"
+    assert contract["gates"]["neighbor_stability"]["status"] == "pass"
+    assert contract["gates"]["leave_one_event_out"]["status"] == "pass"
+    assert contract["gates"]["public_holdout_release"]["status"] == "blocked"
+    assert contract["confirmation_allowed"] is False
+    assert contract["decision"] == "continue_rectification"
+
+
+def test_contract_reports_the_actual_missing_dasha_layer() -> None:
+    contract = build_rectification_technique_contract(
+        event_count=3,
+        domain_count=2,
+        required_layers_complete=False,
+        missing_required_layers=["Narayana_MD_AD"],
+    )
+
+    assert "Narayana_MD_AD" in contract["missing_layers"]
+    assert contract["gates"]["required_layers"]["status"] == "fail"
+    assert "required_layers_incomplete" in contract["hard_blockers"]

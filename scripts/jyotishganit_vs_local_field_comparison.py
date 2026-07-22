@@ -16,6 +16,8 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PUBLIC_CASE_LATITUDE = 37.7749
+PUBLIC_CASE_LONGITUDE = -122.4194
 TARGETS = {
     "D2": ["D2_Hora"],
     "D4": ["D4_Chaturthamsa", "D4_Turyamsa"],
@@ -150,8 +152,8 @@ def main() -> int:
     ap.add_argument("--day", type=int, default=24)
     ap.add_argument("--hour", type=int, default=19)
     ap.add_argument("--minute", type=int, default=15)
-    ap.add_argument("--latitude", type=float, default=37.3382)
-    ap.add_argument("--longitude", type=float, default=-122.0383)
+    ap.add_argument("--latitude", type=float, default=PUBLIC_CASE_LATITUDE)
+    ap.add_argument("--longitude", type=float, default=PUBLIC_CASE_LONGITUDE)
     ap.add_argument("--timezone", type=float, default=-8.0)
     ap.add_argument("--location", default="San Francisco, CA")
     ap.add_argument("--name", default="Steve Jobs public")

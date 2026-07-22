@@ -68,15 +68,166 @@ test("browser source does not own private entrypoint prompts", () => {
   assert.doesNotMatch(source, /请基于已校验的出生资料继续/);
 });
 
-test("composer keeps the public question and clears hidden routing after edits", () => {
+test("ordinary product drafts keep the public question and clear hidden routing after edits", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 
-  assert.match(source, /chooseSuggestedQuestion\("深入看今日",\s*"timing",\s*"daily_starlanguage"\)/s);
-  assert.match(source, /birthTimeDisplay \? "再次校正" : "生时校正",\s*"timing",\s*"birth_time_rectification"/s);
-  assert.match(source, /messages:\s*\[\.\.\.preservedMessages,\s*\{ role: "user", text: question \}\]/s);
+  assert.match(source, /chooseSuggestedQuestion\("深入看今日",[\s\S]*?"timing",[\s\S]*?"daily_starlanguage"\)/);
+  assert.match(source, /messages:\s*\[\.\.\.preservedMessages,[\s\S]*?\{ role: "user", text: question \}\]/);
   assert.match(source, /body:\s*JSON\.stringify\(\{[\s\S]*?entrypoint:\s*entrypoint \?\? undefined,[\s\S]*?question,/);
-  assert.match(source, /onChange=\{\(event\) => \{\s*setDraft\(event\.target\.value\);\s*setDraftTheme\(null\);\s*setDraftEntrypoint\(null\);/s);
-  assert.match(source, /setDraft\(pending\.question\);\s*setDraftTheme\(pending\.theme\);\s*setDraftEntrypoint\(pending\.entrypoint\);/s);
+  assert.match(source, /onChange=\{\(event\) => \{[\s\S]*?setDraft\(event\.target\.value\);[\s\S]*?setDraftTheme\(null\);[\s\S]*?setDraftEntrypoint\(null\);/);
+  assert.match(source, /setDraft\(pending\.question\);[\s\S]*?setDraftTheme\(pending\.theme\);[\s\S]*?setDraftEntrypoint\(pending\.entrypoint\);/);
+});
+
+test("homepage birth-time card opens the v3 surface instead of ordinary consultation", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /function openBirthTimeRectification/);
+  assert.match(source, /<ConversationalBirthTimeRectification/);
+  assert.match(source, /sendConversationalRectificationCommand/);
+  assert.match(source, /rectificationPriceCredits/);
+  assert.doesNotMatch(source, /\/api\/birth-rectification/);
+  assert.doesNotMatch(source, /\/api\/birth-time-journey/);
+  assert.doesNotMatch(source, /chooseSuggestedQuestion\([\s\S]{0,180}"birth_time_rectification"/);
+  assert.doesNotMatch(source, /draftBirthTimeRectificationQuestion/);
+});
+
+test("homepage birth-time card starts the first rectification turn without a second confirmation card", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("async function openBirthTimeRectification");
+  const end = source.indexOf("function handleConversationalRectificationTurn", start);
+  const handler = source.slice(start, end);
+
+  assert.match(handler, /sendConversationalRectificationCommand\(\{[\s\S]*?type:\s*"start"/);
+});
+
+test("homepage birth-time card waits for the first turn before opening its dedicated session", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("async function openBirthTimeRectification");
+  const end = source.indexOf("function handleConversationalRectificationTurn", start);
+  const handler = source.slice(start, end);
+  const create = handler.indexOf('createSession(modelCatalog.defaultModelId, "birth_time_rectification")');
+  const request = handler.indexOf("sendConversationalRectificationCommand");
+  const reveal = handler.indexOf("setActiveSessionId(boundSession.id)");
+
+  assert.ok(create >= 0);
+  assert.ok(request > create);
+  assert.ok(reveal > request);
+  assert.doesNotMatch(handler.slice(0, request), /setActiveSessionId\(/);
+  assert.doesNotMatch(handler.slice(0, request), /setSessions\(/);
+  assert.match(handler, /setRectificationReturnSessionId\(sourceSession\.id\)/);
+  assert.match(handler, /setRectificationInitialTurn\(turn\);[\s\S]*?setActiveSessionId\(boundSession\.id\)/);
+});
+
+test("rectification cards render only inside the active rectification session", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /activeSession\?\.sessionType === "birth_time_rectification"/);
+  assert.match(source, /session_type:\s*session\.sessionType/);
+  assert.match(source, /rectification_case_id:\s*session\.rectificationCaseId/);
+  assert.doesNotMatch(source, /这个会话保存了生时校正入口|恢复生时校正<\/button>/);
+});
+
+test("selecting a rectification session resumes it without an intermediate confirmation", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const selectSession = source.slice(
+    source.indexOf("function selectSession("),
+    source.indexOf("async function selectSessionModel", source.indexOf("function selectSession(")),
+  );
+
+  assert.match(selectSession, /nextSession\?\.sessionType === "birth_time_rectification"/);
+  assert.match(selectSession, /resumeRectificationSession\.current\(nextSession\)/);
+  assert.match(source, /resumeRectificationSession\.current\(activeSession\)/);
+  assert.doesNotMatch(source, /RectificationLoadingState|重试恢复/);
+  assert.match(source, /setComposerNotice\(message\)/);
+});
+
+test("homepage reuses the session bound to an unfinished rectification case", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("async function openBirthTimeRectification");
+  const end = source.indexOf("function handleConversationalRectificationTurn", start);
+  const handler = source.slice(start, end);
+
+  assert.match(handler, /action === "resume" && account\.rectificationCase/);
+  assert.match(handler, /session\.rectificationCaseId === account\.rectificationCase\?\.caseId/);
+  assert.match(handler, /resumableSession \?\? createSession/);
+});
+
+test("starting again after a completed rectification creates a new dedicated session", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("async function openBirthTimeRectification");
+  const end = source.indexOf("function handleConversationalRectificationTurn", start);
+  const handler = source.slice(start, end);
+
+  assert.match(handler, /const canReuseSourceRectificationSession = action === "resume"/);
+  assert.match(handler, /sourceSession\.rectificationCaseId === account\.rectificationCase\.caseId/);
+  assert.match(handler, /const rectificationSession = canReuseSourceRectificationSession[\s\S]*?: resumableSession \?\? createSession/);
+  assert.doesNotMatch(handler, /const rectificationSession = sourceSession\.sessionType === "birth_time_rectification"/);
+});
+
+test("rectify-first suggestions hand the source question to a dedicated rectification session", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("function chooseConversationSuggestion");
+  const end = source.indexOf("function draftDailyStarlanguageQuestion", start);
+  const handler = source.slice(start, end);
+
+  assert.match(handler, /suggestion !== rectifyBeforeConsultationSuggestion/);
+  assert.match(handler, /find\(\(message\) => message\.role === "user"\)/);
+  assert.match(handler, /rectificationQuestionHandoff\.current\.capture\(\{/);
+  assert.match(handler, /sessionId: activeSession\.id/);
+  assert.match(handler, /openBirthTimeRectification\(originalQuestion, activeSession\)/);
+  assert.match(source, /onClick=\{\(\) => chooseConversationSuggestion\(question\)\}/);
+});
+
+test("completed handoffs automatically return and continue the source question", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /turn\.status !== "completed"/);
+  assert.match(source, /turn\.actions\.includes\("continue_original_question"\)/);
+  assert.match(source, /automaticRectificationContinuation\.current === continuationIdentity/);
+  assert.match(source, /continueRectificationQuestion\.current\(question\)/);
+  assert.match(source, /setActiveSessionId\(context\.sessionId\)/);
+  assert.match(source, /clearBirthTimeConsultationConsent\([\s\S]*?context\.sessionId/);
+});
+
+test("ordinary consultation uses current birth data without a rectification notice", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const sendStart = source.indexOf("async function send(");
+  const consultCall = source.indexOf('fetch("/api/consult"', sendStart);
+
+  assert.ok(sendStart >= 0);
+  assert.ok(consultCall > sendStart);
+  assert.match(source, /mode: "general_no_birth_time" as const/);
+  assert.doesNotMatch(source, /<BirthTimeSoftNotice|setBirthTimeSoftNotice/);
+  assert.doesNotMatch(source, /setPendingBirthTimeChoice|<UnverifiedBirthTimeChoice/);
+});
+
+test("rectification mutations report pending state while session-level return controls stay absent", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /onPendingChange=\{setRectificationMutationPending\}/);
+  assert.match(source, /disabled=\{productEntrypointsDisabled \|\| rectificationLoading \|\| rectificationMutationPending\}/);
+  assert.doesNotMatch(source, /重试恢复/);
+  assert.doesNotMatch(source, /返回并恢复原问题|返回首页/);
+});
+
+test("session changes contain no birth-time notice state", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const selectSession = source.slice(
+    source.indexOf("function selectSession("),
+    source.indexOf("async function selectSessionModel", source.indexOf("function selectSession(")),
+  );
+
+  assert.doesNotMatch(selectSession, /birthTimeSoftNotice|setBirthTimeSoftNotice/);
+  assert.doesNotMatch(source, /dismissBirthTimeSoftNotice/);
+});
+
+test("profile and place saves do not auto-start the retired assessment flow", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const normalSave = source.slice(source.indexOf("async function saveProfile"), source.indexOf("async function saveOnboardingName"));
+  const placeSave = source.slice(source.indexOf("async function saveOnboardingPlace"), source.indexOf("function completeGuidedBirthTime"));
+
+  assert.doesNotMatch(normalSave, /assessSavedBirthTime|requestBirthTimeAssessment/);
+  assert.doesNotMatch(placeSave, /assessSavedBirthTime|requestBirthTimeAssessment/);
 });
 
 test("consult route expands an optional entrypoint for both Agent and tool input", () => {
@@ -84,7 +235,7 @@ test("consult route expands an optional entrypoint for both Agent and tool input
 
   assert.match(source, /entrypoint:\s*consultationEntrypointSchema\.optional\(\)/);
   assert.match(source, /question:\s*resolvedQuestion\.modelQuestion/);
-  assert.match(source, /resolvedQuestion\.modelQuestion,\s*"\\n需要查询星盘时/s);
+  assert.match(source, /resolvedQuestion\.modelQuestion,[\s\S]*?"\\n需要查询星盘时/);
 });
 
 test("homepage entrypoints use two whole-card native actions", () => {

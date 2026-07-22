@@ -1,0 +1,132 @@
+{
+  "scope": "three_engine_d2_field_closure_packet",
+  "created_at": "2026-07-21",
+  "claim_status": "partial",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_arbitration": "references/oracle/three_engine_mismatch_arbitration_2026_07_19.json",
+  "source_queue": "references/oracle/three_engine_mismatch_closure_queue_2026_07_19.json",
+  "source_jyotishganit_bridge": "references/oracle/jyotishganit_three_engine_closure_bridge_2026_07_21.json",
+  "summary": {
+    "rows_total": 7,
+    "local_pyjhora_jyotishganit_agree": 7,
+    "vedastro_endpoint_semantics_blocked": 7,
+    "truth_upgrades": 0
+  },
+  "rows": [
+    {
+      "ticket_id": "TEMCQ-001",
+      "section": "D2",
+      "field": "Sun.sign",
+      "local_value": "Leo",
+      "pyjhora_jhora_value": "Leo",
+      "jyotishganit_value": "Leo",
+      "vedastro_value": "Gemini",
+      "partial_consensus_value": "Leo",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "closure_status": "partial_consensus_vedastro_endpoint_blocked",
+      "remaining_evidence_needed": "VedAstro endpoint/method contract with ayanamsa, node mode, varga and timezone semantics, plus raw replay pinned to same D2 request",
+      "claim_boundary": "three_engine_consensus_not_global_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-002",
+      "section": "D2",
+      "field": "Moon.sign",
+      "local_value": "Cancer",
+      "pyjhora_jhora_value": "Cancer",
+      "jyotishganit_value": "Cancer",
+      "vedastro_value": "Pisces",
+      "partial_consensus_value": "Cancer",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "closure_status": "partial_consensus_vedastro_endpoint_blocked",
+      "remaining_evidence_needed": "VedAstro endpoint/method contract with ayanamsa, node mode, varga and timezone semantics, plus raw replay pinned to same D2 request",
+      "claim_boundary": "three_engine_consensus_not_global_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-003",
+      "section": "D2",
+      "field": "Mars.sign",
+      "local_value": "Leo",
+      "pyjhora_jhora_value": "Leo",
+      "jyotishganit_value": "Leo",
+      "vedastro_value": "Aries",
+      "partial_consensus_value": "Leo",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "closure_status": "partial_consensus_vedastro_endpoint_blocked",
+      "remaining_evidence_needed": "VedAstro endpoint/method contract with ayanamsa, node mode, varga and timezone semantics, plus raw replay pinned to same D2 request",
+      "claim_boundary": "three_engine_consensus_not_global_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-004",
+      "section": "D2",
+      "field": "Mercury.sign",
+      "local_value": "Leo",
+      "pyjhora_jhora_value": "Leo",
+      "jyotishganit_value": "Leo",
+      "vedastro_value": "Virgo",
+      "partial_consensus_value": "Leo",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "closure_status": "partial_consensus_vedastro_endpoint_blocked",
+      "remaining_evidence_needed": "VedAstro endpoint/method contract with ayanamsa, node mode, varga and timezone semantics, plus raw replay pinned to same D2 request",
+      "claim_boundary": "three_engine_consensus_not_global_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-005",
+      "section": "D2",
+      "field": "Jupiter.sign",
+      "local_value": "Cancer",
+      "pyjhora_jhora_value": "Cancer",
+      "jyotishganit_value": "Cancer",
+      "vedastro_value": "Aquarius",
+      "partial_consensus_value": "Cancer",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "closure_status": "partial_consensus_vedastro_endpoint_blocked",
+      "remaining_evidence_needed": "VedAstro endpoint/method contract with ayanamsa, node mode, varga and timezone semantics, plus raw replay pinned to same D2 request",
+      "claim_boundary": "three_engine_consensus_not_global_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-006",
+      "section": "D2",
+      "field": "Venus.sign",
+      "local_value": "Cancer",
+      "pyjhora_jhora_value": "Cancer",
+      "jyotishganit_value": "Cancer",
+      "vedastro_value": "Leo",
+      "partial_consensus_value": "Cancer",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "closure_status": "partial_consensus_vedastro_endpoint_blocked",
+      "remaining_evidence_needed": "VedAstro endpoint/method contract with ayanamsa, node mode, varga and timezone semantics, plus raw replay pinned to same D2 request",
+      "claim_boundary": "three_engine_consensus_not_global_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-007",
+      "section": "D2",
+      "field": "Saturn.sign",
+      "local_value": "Cancer",
+      "pyjhora_jhora_value": "Cancer",
+      "jyotishganit_value": "Cancer",
+      "vedastro_value": "Gemini",
+      "partial_consensus_value": "Cancer",
+      "differing_engines": [
+        "VedAstro"
+      ],
+      "closure_status": "partial_consensus_vedastro_endpoint_blocked",
+      "remaining_evidence_needed": "VedAstro endpoint/method contract with ayanamsa, node mode, varga and timezone semantics, plus raw replay pinned to same D2 request",
+      "claim_boundary": "three_engine_consensus_not_global_truth"
+    }
+  ],
+  "boundary": "D2 partial consensus only; hosted VedAstro remains blocked, so no global truth or commercial tuning upgrade.",
+  "human_report": "docs/research/three_engine_d2_field_closure_packet_2026_07_21.md"
+}

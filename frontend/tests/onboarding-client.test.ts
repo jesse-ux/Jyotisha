@@ -16,6 +16,30 @@ const personalizedOnboarding = {
   source: "cache",
 } as const;
 
+test("default request deadline leaves enough room for server-side Agent generation", async () => {
+  const originalFetch = globalThis.fetch;
+  const originalSetTimeout = globalThis.setTimeout;
+  let observedRequestDeadline: number | null = null;
+  globalThis.fetch = () => Promise.resolve(Response.json(personalizedOnboarding));
+  globalThis.setTimeout = ((callback: TimerHandler, delay?: number, ...args: unknown[]) => {
+    observedRequestDeadline ??= Number(delay);
+    return originalSetTimeout(callback, delay, ...args);
+  }) as typeof globalThis.setTimeout;
+
+  try {
+    await requestOnboardingWithRecovery(
+      new AbortController().signal,
+      () => undefined,
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+    globalThis.setTimeout = originalSetTimeout;
+  }
+
+  assert.ok(observedRequestDeadline !== null);
+  assert.ok(observedRequestDeadline >= 25_000, `request deadline was only ${observedRequestDeadline}ms`);
+});
+
 test("returns personalized cache content after a timeout and pending response", async () => {
   // Given: the first request times out, the second is provisional, and the third is terminal.
   const originalFetch = globalThis.fetch;

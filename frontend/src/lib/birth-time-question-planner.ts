@@ -11,8 +11,12 @@ export type CandidateVargaSample = {
   readonly d4Sign: string | null;
   readonly d9Sign: string | null;
   readonly d10Sign: string | null;
+  readonly d11Sign?: string | null;
   readonly d24Sign: string | null;
   readonly d30Sign: string | null;
+  readonly a7Sign?: string | null;
+  readonly ulSign?: string | null;
+  readonly a10Sign?: string | null;
 };
 
 export type QuestionPlannerInput = {

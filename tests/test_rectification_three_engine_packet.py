@@ -15,6 +15,18 @@ def test_packet_is_private_and_never_confirms(monkeypatch) -> None:
     assert packet["vedastro"]["status"] == "requires_gateway_raw_archive"
 
 
+def test_case_hash_uses_only_normalized_calculation_input() -> None:
+    equivalent = {
+        **CASE,
+        "second": 0.0,
+        "ayanamsa": " LAHIRI ",
+        "nodeMode": "MEAN",
+        "display_name": "must not affect calculation identity",
+    }
+
+    assert case_hash(equivalent) == case_hash({**CASE, "ayanamsa": "lahiri", "node_mode": "mean"})
+
+
 def test_high_rigor_packet_queues_safe_vedastro_receipt_without_raw(monkeypatch) -> None:
     monkeypatch.setattr("scripts.rectification_three_engine_packet._local_d1", lambda _: {"Sun": "Aries"})
     monkeypatch.setattr("scripts.rectification_three_engine_packet._pyjhora_d1", lambda _: {"Sun": "Aries"})

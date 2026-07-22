@@ -64,6 +64,70 @@ function createPost(
   });
 }
 
+test("slow Agent generation is aborted and a terminal fallback is cached before the client deadline", async () => {
+  const repository = new StatefulOnboardingProfileRepository(completeProfileRow());
+  let generationAborted = false;
+  const dependencies = {
+    openSession: async () => ({
+      userId: repository.snapshot().id,
+      authError: false,
+      repository,
+    }),
+    generateText: (_name: string, signal?: AbortSignal) => new Promise<string | null>((_resolve, reject) => {
+      signal?.addEventListener("abort", () => {
+        generationAborted = true;
+        reject(signal.reason);
+      }, { once: true });
+    }),
+    generationTimeoutMs: 5,
+    now: () => new Date("2026-07-19T10:00:00.000Z"),
+    warn: () => undefined,
+  };
+  const deadline = new Promise<"deadline">((resolve) => {
+    setTimeout(() => resolve("deadline"), 50);
+  });
+
+  const outcome = await Promise.race([createOnboardingPost(dependencies)(), deadline]);
+
+  assert.notEqual(outcome, "deadline");
+  assert.ok(outcome instanceof Response);
+  assert.equal(generationAborted, true);
+  const body = await responseBody(outcome);
+  assert.equal(body.source, "fallback");
+  assert.deepEqual(repository.snapshot().onboarding_payload, {
+    greeting: body.greeting,
+    suggestions: body.suggestions,
+  });
+});
+
+test("period-only birth declaration can generate the home starter questions without a concrete minute", async () => {
+  const repository = new StatefulOnboardingProfileRepository({
+    ...completeProfileRow({
+      birth_time: null,
+      active_birth_time: null,
+      birth_time_status: "reported",
+    }),
+    reported_birth_time: null,
+    birth_time_source: "period_only",
+    birth_time_period: "early_morning",
+    birth_time_clue: "家人只记得凌晨或清晨",
+    uncertainty_before_minutes: null,
+    uncertainty_after_minutes: null,
+  });
+  let generationCount = 0;
+  const post = createPost(repository, async () => {
+    generationCount += 1;
+    return generatedText(payloadA);
+  });
+
+  const response = await post();
+  const body = await responseBody(response);
+
+  assert.equal(response.status, 200);
+  assert.equal(generationCount, 1);
+  assert.deepEqual(body, { ...payloadA, source: "agent" });
+});
+
 test("stale A generation returns pending after profile B replaces its claim", async () => {
   // Given: A owns a claim whose generation remains in flight.
   const repository = new StatefulOnboardingProfileRepository(completeProfileRow());

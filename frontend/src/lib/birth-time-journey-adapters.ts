@@ -51,16 +51,31 @@ const questionSchema = z.object({
 
 const signSchema = z.object({ sign: z.string().trim().min(1) }).nullable().optional();
 const sampleSchema = z.object({
+  time: z.string().trim().min(1).optional(),
   ascendant: signSchema,
   varga_lagna: z.object({
     D4: signSchema,
+    D4_Chaturthamsa: signSchema,
+    D4_Turyamsa: signSchema,
     D2: signSchema,
+    D2_Hora: signSchema,
     D9: signSchema,
+    D9_Navamsa: signSchema,
     D10: signSchema,
+    D10_Dasamsa: signSchema,
+    D11: signSchema,
+    D11_Rudramsa: signSchema,
     D24: signSchema,
+    D24_Siddhamsa: signSchema,
     D30: signSchema,
-  }).optional(),
-});
+    D30_Trimsamsa: signSchema,
+  }).passthrough().optional(),
+  arudha: z.object({
+    A7: signSchema,
+    UL: signSchema,
+    A10: signSchema,
+  }).passthrough().optional(),
+}).passthrough();
 
 const questionnaireSchema = z.object({
   questions: z.array(questionSchema),
@@ -117,6 +132,13 @@ const candidateResultApiSchema = z.object({
     missing_layers: z.array(z.string()),
     auxiliary_layers: z.array(z.string()).default([]),
     hard_blockers: z.array(z.string()),
+    canonical_input_hash: z.string().optional(),
+    confirmation_allowed: z.boolean().optional(),
+    decision: z.enum(["continue_rectification", "confirm_minute"]).optional(),
+    gates: z.record(z.string(), z.object({
+      status: z.enum(["pass", "fail", "blocked", "not_evaluated"]),
+      reason: z.string(),
+    }).strict()).optional(),
   }).optional(),
 }).passthrough();
 
@@ -172,12 +194,23 @@ export function parseRectificationQuestionnaire(value: unknown): RectificationQu
     questions: parsed.questions.map(normalizeQuestion),
     samples: parsed.candidate_scan.samples.map((sample) => ({
       ascendantSign: sample.ascendant?.sign ?? null,
-      ...(sample.varga_lagna?.D2?.sign ? { d2Sign: sample.varga_lagna.D2.sign } : {}),
-      d4Sign: sample.varga_lagna?.D4?.sign ?? null,
-      d9Sign: sample.varga_lagna?.D9?.sign ?? null,
-      d10Sign: sample.varga_lagna?.D10?.sign ?? null,
-      d24Sign: sample.varga_lagna?.D24?.sign ?? null,
-      d30Sign: sample.varga_lagna?.D30?.sign ?? null,
+      ...(sample.varga_lagna?.D2?.sign || sample.varga_lagna?.D2_Hora?.sign
+        ? { d2Sign: sample.varga_lagna.D2?.sign ?? sample.varga_lagna.D2_Hora?.sign }
+        : {}),
+      d4Sign: sample.varga_lagna?.D4?.sign
+        ?? sample.varga_lagna?.D4_Chaturthamsa?.sign
+        ?? sample.varga_lagna?.D4_Turyamsa?.sign
+        ?? null,
+      d9Sign: sample.varga_lagna?.D9?.sign ?? sample.varga_lagna?.D9_Navamsa?.sign ?? null,
+      d10Sign: sample.varga_lagna?.D10?.sign ?? sample.varga_lagna?.D10_Dasamsa?.sign ?? null,
+      ...(sample.varga_lagna?.D11?.sign || sample.varga_lagna?.D11_Rudramsa?.sign
+        ? { d11Sign: sample.varga_lagna.D11?.sign ?? sample.varga_lagna.D11_Rudramsa?.sign }
+        : {}),
+      d24Sign: sample.varga_lagna?.D24?.sign ?? sample.varga_lagna?.D24_Siddhamsa?.sign ?? null,
+      d30Sign: sample.varga_lagna?.D30?.sign ?? sample.varga_lagna?.D30_Trimsamsa?.sign ?? null,
+      a7Sign: sample.arudha?.A7?.sign ?? null,
+      ulSign: sample.arudha?.UL?.sign ?? null,
+      a10Sign: sample.arudha?.A10?.sign ?? null,
     })),
     raw: parsed,
   };
@@ -215,7 +248,7 @@ function adaptCandidateResult(parsed: z.infer<typeof candidateResultApiSchema>):
   return candidateResultSchema.parse({
     resultId: parsed.result_id,
     confidence: parsed.confidence,
-    canApply: parsed.can_apply,
+    canApply: parsed.can_apply && parsed.technique_contract?.confirmation_allowed === true,
     winningSegment: parsed.winning_segment
       ? {
           startTime: parsed.winning_segment.start_time,
@@ -246,6 +279,10 @@ function adaptCandidateResult(parsed: z.infer<typeof candidateResultApiSchema>):
       missingLayers: parsed.technique_contract.missing_layers,
       auxiliaryLayers: parsed.technique_contract.auxiliary_layers,
       hardBlockers: parsed.technique_contract.hard_blockers,
+      canonicalInputHash: parsed.technique_contract.canonical_input_hash,
+      confirmationAllowed: parsed.technique_contract.confirmation_allowed,
+      decision: parsed.technique_contract.decision,
+      gates: parsed.technique_contract.gates,
     } } : {}),
   });
 }

@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
+  applyBirthTimeDraftPatch,
   assistantIntentCopy,
   birthTimeDisplayState,
   birthTimePersistenceValues,
   describeBirthTimeDraft,
   formatBirthDate,
+  isDeclaredBirthProfileComplete,
   isBirthTimeReadyForConsultation,
   isBirthTimeDraftReady,
   parseBirthDate,
@@ -29,6 +32,8 @@ test("birth time intake requires only the fields selected by the source", () => 
     ...emptyDraft,
     birthTimeSource: "hospital_record",
     reportedTime: "08:16",
+    uncertaintyBeforeMinutes: 2,
+    uncertaintyAfterMinutes: 2,
   } satisfies BirthTimeDraft;
   const period = {
     ...emptyDraft,
@@ -58,6 +63,120 @@ test("an unconfirmed candidate working time remains in rectification onboarding"
   assert.equal(isBirthTimeReadyForConsultation({ ...candidate, time: "" }), false);
   assert.equal(isBirthTimeReadyForConsultation({ ...candidate, birthTimeStatus: "rectifying" }), false);
   assert.equal(isBirthTimeReadyForConsultation({ ...candidate, birthTimeStatus: "confirmed" }), true);
+});
+
+test("declared birth data completes onboarding without an active or confirmed minute", () => {
+  const declaredExact = {
+    ...emptyDraft,
+    reportedTime: "05:30",
+    birthTimeSource: "family_exact",
+    uncertaintyBeforeMinutes: 10,
+    uncertaintyAfterMinutes: 10,
+    birthTimeStatus: "reported",
+  } satisfies BirthTimeDraft;
+  const declaredPeriod = {
+    ...emptyDraft,
+    birthTimeSource: "period_only",
+    birthTimePeriod: "early_morning",
+    birthTimeStatus: "reported",
+  } satisfies BirthTimeDraft;
+
+  assert.equal(isDeclaredBirthProfileComplete(declaredExact), true);
+  assert.equal(isBirthTimeReadyForConsultation(declaredExact), false);
+  assert.equal(isDeclaredBirthProfileComplete(declaredPeriod), true);
+  assert.equal(isBirthTimeReadyForConsultation(declaredPeriod), false);
+});
+
+test("declared completeness validates the actual calendar date, clock, source fields, and bounds", () => {
+  const exact = {
+    ...emptyDraft,
+    birthTimeSource: "family_exact",
+    reportedTime: "05:30",
+    uncertaintyBeforeMinutes: 10,
+    uncertaintyAfterMinutes: 10,
+  } satisfies BirthTimeDraft;
+
+  assert.equal(isDeclaredBirthProfileComplete({ ...exact, date: "2000-02-29" }), true);
+  assert.equal(isDeclaredBirthProfileComplete({ ...exact, date: "2001-02-29" }), false);
+  assert.equal(isDeclaredBirthProfileComplete({ ...exact, date: "1899-12-31" }), false);
+  assert.equal(isDeclaredBirthProfileComplete({ ...exact, date: "2101-01-01" }), false);
+  assert.equal(isDeclaredBirthProfileComplete({ ...exact, reportedTime: "24:00" }), false);
+  assert.equal(isDeclaredBirthProfileComplete({ ...exact, reportedTime: "5:30" }), false);
+  assert.equal(isDeclaredBirthProfileComplete({ ...exact, uncertaintyBeforeMinutes: 7 }), false);
+  assert.equal(isDeclaredBirthProfileComplete({
+    ...emptyDraft,
+    birthTimeSource: "hospital_record",
+    reportedTime: "05:30",
+  }), false);
+  assert.equal(isDeclaredBirthProfileComplete({
+    ...emptyDraft,
+    birthTimeSource: "period_only",
+    birthTimePeriod: "",
+  }), false);
+  assert.equal(isDeclaredBirthProfileComplete({
+    ...emptyDraft,
+    birthTimeSource: "period_only",
+    birthTimePeriod: "morning",
+    uncertaintyBeforeMinutes: 30,
+  }), false);
+  assert.equal(isDeclaredBirthProfileComplete({
+    ...emptyDraft,
+    birthTimeSource: "unknown",
+    reportedTime: "05:30",
+  }), false);
+  assert.equal(isDeclaredBirthProfileComplete({
+    ...emptyDraft,
+    birthTimeSource: "unknown",
+    birthTimeClue: "x".repeat(241),
+  }), false);
+  assert.equal(isDeclaredBirthProfileComplete(exact, {
+    label: "中国 · 河北省 · 邯郸市",
+    lat: 36.62,
+    lon: 114.49,
+    tz: 8,
+  }), true);
+  assert.equal(isDeclaredBirthProfileComplete(exact, {
+    label: "越界地点",
+    lat: 91,
+    lon: 114.49,
+    tz: 8,
+  }), false);
+  assert.equal(isDeclaredBirthProfileComplete(exact, null), false);
+});
+
+test("editing an unconfirmed declaration invalidates an old candidate but preserves confirmed active time", () => {
+  const candidate = {
+    ...emptyDraft,
+    time: "05:18",
+    reportedTime: "05:30",
+    birthTimeSource: "approximate",
+    uncertaintyBeforeMinutes: 30,
+    uncertaintyAfterMinutes: 30,
+    birthTimeStatus: "candidate",
+  } satisfies BirthTimeDraft;
+
+  assert.deepEqual(applyBirthTimeDraftPatch(candidate, { reportedTime: "06:10" }), {
+    ...candidate,
+    time: "",
+    reportedTime: "06:10",
+    birthTimeStatus: "reported",
+  });
+  assert.deepEqual(applyBirthTimeDraftPatch(candidate, {
+    uncertaintyBeforeMinutes: 60,
+    uncertaintyAfterMinutes: 60,
+  }), {
+    ...candidate,
+    time: "",
+    uncertaintyBeforeMinutes: 60,
+    uncertaintyAfterMinutes: 60,
+    birthTimeStatus: "reported",
+  });
+
+  const confirmed = { ...candidate, birthTimeStatus: "confirmed" } satisfies BirthTimeDraft;
+  assert.deepEqual(applyBirthTimeDraftPatch(confirmed, { reportedTime: "06:10" }), {
+    ...confirmed,
+    reportedTime: "06:10",
+  });
 });
 
 test("a persisted candidate working time takes precedence over the reported range", () => {
@@ -132,4 +251,11 @@ test("birth date values round trip leap days and reject invalid input", () => {
   assert.equal(leapDay === undefined ? undefined : formatBirthDate(leapDay), "2000-02-29");
   assert.equal(parseBirthDate(""), undefined);
   assert.equal(parseBirthDate("2001-02-29"), undefined);
+});
+
+test("candidate copy does not claim an unconfirmed minute is automatically in use", () => {
+  const source = readFileSync(new URL("../src/components/birth-time-intake.tsx", import.meta.url), "utf8");
+
+  assert.doesNotMatch(source, /已用于当前排盘/);
+  assert.match(source, /birthTimeConsultationOptionsCopy\(value\)/);
 });

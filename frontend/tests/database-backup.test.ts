@@ -110,7 +110,10 @@ function safeDiskCommand(directory: string, usage = 10): void {
   );
 }
 
-function backupEnvironment(commandDirectory: string, extra: NodeJS.ProcessEnv = {}): NodeJS.ProcessEnv {
+function backupEnvironment(
+  commandDirectory: string,
+  extra: Partial<NodeJS.ProcessEnv> = {},
+): NodeJS.ProcessEnv {
   return {
     ...process.env,
     ...extra,

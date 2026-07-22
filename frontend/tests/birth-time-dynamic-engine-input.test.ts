@@ -9,9 +9,16 @@ import { dynamicCase } from "./birth-time-dynamic-persistence-fixture.ts";
 function matchingCandidateModel(activation = 0) {
   return {
     version: "birth-time-choice-scoring-v2",
-    opportunity_model_version: "birth-time-opportunity-model-v2",
+    opportunity_model_version: "birth-time-opportunity-model-v4",
+    historical_event_fingerprint: "fixture-event-fingerprint",
     range: { start_time: "05:02", end_time: "05:03" },
-    windows: [{ activations: { "05:02": activation, "05:03": 1 } }],
+    windows: [{
+      activations: { "05:02": activation, "05:03": 1 },
+      fact_selection_priority: 1,
+      fact_priority_version: "birth-time-question-fact-priority-v1",
+      event_fact_selection_priority: 0,
+      event_fact_priority_version: "birth-time-question-event-fact-priority-v1",
+    }],
   };
 }
 
@@ -78,6 +85,18 @@ test("matching candidate models remain reusable", () => {
   const input = dynamicDifferenceInput({ ...stored, candidateModel: matchingModel });
 
   assert.equal(input.candidateModel, matchingModel);
+});
+
+test("legacy v2 candidate models are rebuilt for fact-driven question selection", () => {
+  const stored = narrowedCase();
+  const matchingModel = {
+    ...matchingCandidateModel(),
+    opportunity_model_version: "birth-time-opportunity-model-v2",
+  };
+
+  const input = dynamicDifferenceInput({ ...stored, candidateModel: matchingModel });
+
+  assert.equal(input.candidateModel, null);
 });
 
 test("persisted candidate models with legacy negative activations are rebuilt", () => {

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { forwardRef } from "react";
 import { SidebarMenuButton } from "@/components/ui/sidebar";
+import { sessionMutationMenuVisible } from "@/lib/chat-session-persistence";
 
 export type SidebarSession = {
   readonly id: string;
@@ -100,7 +101,7 @@ export const SidebarSessionRow = forwardRef<HTMLButtonElement, SidebarSessionRow
       >
         <MoreHorizontal aria-hidden="true" />
       </button>
-      {menuOpen ? (
+      {sessionMutationMenuVisible(menuOpen, disabled) ? (
         <div className="session-actions" role="menu" aria-label={`${session.title} 操作`}>
           <button type="button" role="menuitem" onClick={() => runAction(onTogglePinned)}>
             {session.pinned ? <PinOff aria-hidden="true" /> : <Pin aria-hidden="true" />}

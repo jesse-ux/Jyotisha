@@ -1,4 +1,10 @@
 import { NextResponse } from "next/server";
+import {
+  conversationalRectificationCreationPolicyFromEnvironment,
+  conversationalRectificationDeploymentShaFromEnvironment,
+} from "../../../lib/conversational-rectification/creation-policy.ts";
+
+import { getTruthSourceRuntimeIdentity } from "@/lib/truth-source-runtime-identity";
 
 type Check = {
   status: "ok" | "degraded" | "blocked";
@@ -7,11 +13,6 @@ type Check = {
 };
 
 const jyotishApiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200";
-const gitCommit =
-  process.env.GITHUB_SHA
-  ?? process.env.VERCEL_GIT_COMMIT_SHA
-  ?? process.env.NEXT_PUBLIC_GIT_COMMIT
-  ?? "unknown";
 
 function envCheck(names: string[]): Check {
   const missing = names.filter((name) => !process.env[name]);
@@ -58,14 +59,25 @@ function aggregate(checks: Record<string, Check>) {
 }
 
 export async function GET() {
+  const gitCommit = conversationalRectificationDeploymentShaFromEnvironment();
+  const rectificationV3MigrationsReady =
+    process.env.RECTIFICATION_V3_MIGRATIONS_READY?.trim().toLowerCase() === "true";
+  const creationPolicy = conversationalRectificationCreationPolicyFromEnvironment();
+  const truthSourceIdentity = getTruthSourceRuntimeIdentity();
   const checks = {
     web: { status: "ok" } satisfies Check,
     supabasePublicConfig: envCheck(["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]),
     supabaseServiceRole: envCheck(["SUPABASE_SERVICE_ROLE_KEY"]),
     modelProvider: anyEnvCheck(["LLM_MODELS_JSON", "OPENAI_API_KEY", "LLM_API_KEY", "DEEPSEEK_API_KEY"]),
     jyotishApi: await jyotishApiCheck(),
+    researchTruthSource: {
+      status: truthSourceIdentity.status,
+      message: truthSourceIdentity.mountStatus === "mounted" ? undefined : truthSourceIdentity.mountStatus,
+    } satisfies Check,
   };
   const status = aggregate(checks);
+  const rectificationV3Ready = status === "ok"
+    && creationPolicy.audience === "public";
   return NextResponse.json(
     {
       status,
@@ -73,6 +85,17 @@ export async function GET() {
       deployment: {
         gitCommit,
       },
+      rollout: {
+        conversationalRectificationV3: {
+          protocol: "conversational-evidence-v3",
+          newCaseCreation: creationPolicy.audience === "paused" ? "paused" : "enabled",
+          creationAudience: creationPolicy.audience,
+          migrations: rectificationV3MigrationsReady ? "ready" : "unverified",
+          syntheticSmoke: creationPolicy.smokeMatchesDeployment ? "matched" : "pending",
+          readyForNewCases: rectificationV3Ready,
+        },
+      },
+      truthSource: truthSourceIdentity,
       checks,
     },
     { status: status === "ok" ? 200 : 503 },

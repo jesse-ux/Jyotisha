@@ -45,7 +45,9 @@ def _candidate_scan(
     end = center + timedelta(minutes=uncertainty_minutes)
     total_minutes = int((end - start).total_seconds() // 60)
     candidate_count = total_minutes // step_minutes + 1
-    sample_offsets = sorted({-uncertainty_minutes, 0, uncertainty_minutes})
+    # Every candidate minute is recast. Sparse start/mid/end samples cannot prove
+    # where an adjacent-minute Varga or Arudha boundary actually occurs.
+    sample_offsets = list(range(-uncertainty_minutes, uncertainty_minutes + 1, step_minutes))
     samples = []
     for offset in sample_offsets:
         candidate = center + timedelta(minutes=offset)
@@ -83,8 +85,8 @@ def _candidate_scan(
         "cluster_labels": ["early_candidate_cluster", "middle_candidate_cluster", "late_candidate_cluster"],
         "samples": samples,
         "sensitivity_summary": {
-            "method": "range_bucket_scan_v1",
-            "high_value_layers": ["D9", "D10", "D24", "D30", "D60", "UL", "A7", "A10", "KP_cusp"],
+            "method": "minute_feature_scan_v2",
+            "high_value_layers": ["D2", "D4", "D9", "D10", "D24", "D30", "D60", "UL", "A7", "A10", "KP_cusp"],
             "computed_layers": computed_layers,
             "blocked_layers": blocked_layers,
             "boundary": "Candidate Varga, Arudha and KP cusp recasts are computed from the local domain chart; external oracle parity remains a separate gate.",
@@ -134,7 +136,7 @@ def _candidate_recast(
         if name in {"Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"}
     }
     asc_lon = chart["ascendant"]["lon"]
-    vargas = varga.calc_all_vargas(planet_lons, asc_lon, divisions=[9, 10, 24, 30, 60])
+    vargas = varga.calc_all_vargas(planet_lons, asc_lon, divisions=[2, 4, 9, 10, 11, 24, 30, 60])
     arudha = jaimini.calc_arudha_padas(int(asc_lon // 30), planet_lons)
     padas = arudha.get("padas", {})
     upapada = arudha.get("upapada", {})

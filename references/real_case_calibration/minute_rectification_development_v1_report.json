@@ -1,0 +1,64 @@
+{
+  "benchmark_id": "minute_rectification_development_v1",
+  "generated_on": "2026-07-21",
+  "scope": "minute_rectification_development_diagnostics",
+  "status": "p6_fact_contract_shadow_only",
+  "case_count": 3,
+  "cases": [
+    {
+      "case_id": "steve_jobs_1955_development",
+      "published_time": "19:15",
+      "v2": {"predicted_time": "19:23", "true_rank": 12, "minute_error": 8},
+      "v3": {"predicted_time": "19:24", "true_rank": 11, "minute_error": 9},
+      "unique_feature_fingerprint_count": 9,
+      "indistinguishable_adjacent_pair_count": 12,
+      "p6_fact_unique_feature_fingerprint_count": 9,
+      "p6_fact_indistinguishable_adjacent_pair_count": 12,
+      "production_confirmation_allowed": false
+    },
+    {
+      "case_id": "albert_einstein_1879_development",
+      "published_time": "11:30",
+      "v2": {"predicted_time": "11:39", "true_rank": 5, "minute_error": 9},
+      "v3": {"predicted_time": "11:39", "true_rank": 8, "minute_error": 9},
+      "unique_feature_fingerprint_count": 6,
+      "indistinguishable_adjacent_pair_count": 15,
+      "p6_fact_unique_feature_fingerprint_count": 8,
+      "p6_fact_indistinguishable_adjacent_pair_count": 13,
+      "production_confirmation_allowed": false
+    },
+    {
+      "case_id": "marie_curie_1867_development",
+      "published_time": "12:00",
+      "v2": {"predicted_time": "12:05", "true_rank": 8, "minute_error": 5},
+      "v3": {"predicted_time": "12:05", "true_rank": 8, "minute_error": 5},
+      "unique_feature_fingerprint_count": 6,
+      "indistinguishable_adjacent_pair_count": 15,
+      "p6_fact_unique_feature_fingerprint_count": 8,
+      "p6_fact_indistinguishable_adjacent_pair_count": 13,
+      "production_confirmation_allowed": false
+    }
+  ],
+  "summary": {
+    "v2_mean_minute_error": 7.3333,
+    "v3_mean_minute_error": 7.6667,
+    "v3_improved_case_count": 0,
+    "v3_worsened_case_count": 1,
+    "v3_unchanged_case_count": 2,
+    "indistinguishable_adjacent_pair_count": 42,
+    "adjacent_pair_count": 60,
+    "indistinguishable_adjacent_pair_ratio": 0.7,
+    "p6_fact_indistinguishable_adjacent_pair_count": 38,
+    "p6_fact_indistinguishable_adjacent_pair_ratio": 0.6333,
+    "p6_fact_difference_opportunity_count": 11,
+    "p6_question_ready_opportunity_count": 9,
+    "p6_fact_atoms_may_affect_score": false,
+    "v3_shadow_only": true,
+    "v3_may_replace_production": false,
+    "decision": "reject_v3_production_promotion"
+  },
+  "finding": "Across three development-only AA cases, v3 improves no case and increases mean error from 7.3333 to 7.6667 minutes. The P6 fact contract preserves Dasha actor identity and exact D4/D9/D10 placement changes that generic rule labels discarded, reducing evidence-equivalent adjacent pairs from 42 to 38 of 60 and producing 11 fact-driven opportunities, 9 of which have 2-4 usable partitions. These facts remain shadow-only and cannot score or confirm a minute.",
+  "excluded_from_holdout": true,
+  "may_open_release_gate": false,
+  "boundary": "This development outcome may guide a future scorer version. It is permanently excluded from sealed holdout metrics."
+}

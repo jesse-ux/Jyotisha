@@ -2,6 +2,7 @@
 
 import { useId } from "react";
 import { BirthDatePicker } from "@/components/birth-date-picker";
+import { birthTimeConsultationOptionsCopy } from "@/lib/birth-time-consultation-consent";
 import {
   birthTimeDisplayState,
   birthTimePeriodOptions,
@@ -54,6 +55,9 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
   const source = value.birthTimeSource;
   const isConfirmed = value.birthTimeStatus === "confirmed";
   const displayState = birthTimeDisplayState(value);
+  const knowledgeMode = source === "period_only" || source === "unknown"
+    ? "uncertain"
+    : source ? "exact" : "";
   const usesClockTime = source === "hospital_record"
     || source === "family_exact"
     || source === "approximate"
@@ -69,7 +73,7 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
           </div>
           <dl>
             <div>
-              <dt>{displayState.kind === "candidate" ? "当前工作排盘时间" : "当前排盘时间"}</dt>
+              <dt>{displayState.kind === "candidate" ? "待验证候选时间" : "当前排盘时间"}</dt>
               <dd>{displayState.activeTime}</dd>
             </div>
             <div>
@@ -78,7 +82,7 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
             </div>
           </dl>
           {displayState.kind === "candidate" && (
-            <p>已用于当前排盘，但仍保留为候选结果，不会标记成出生记录中的确定分钟。</p>
+            <p>这仍是未确认候选，不会自动成为出生分钟；{birthTimeConsultationOptionsCopy(value)}</p>
           )}
         </section>
       )}
@@ -95,15 +99,19 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
       )}
 
       {!isConfirmed && <fieldset className="birth-time-source-fieldset">
-        <legend>你知道的出生时间属于哪一种？</legend>
+        <legend>你是否知道准确出生时间？</legend>
         <div className="birth-time-source-list">
           {birthTimeSourceOptions.map((option) => (
             <label
-              className={`birth-time-source-option ${source === option.value ? "is-selected" : ""}`}
+              className={`birth-time-source-option ${option.value === "family_exact"
+                ? knowledgeMode === "exact" ? "is-selected" : ""
+                : knowledgeMode === "uncertain" ? "is-selected" : ""}`}
               key={option.value}
             >
               <input
-                checked={source === option.value}
+                checked={option.value === "family_exact"
+                  ? knowledgeMode === "exact"
+                  : knowledgeMode === "uncertain"}
                 name={`birth-time-source-${groupId}`}
                 type="radio"
                 value={option.value}
@@ -138,7 +146,7 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
           {source === "hospital_record" && (
             <p className="birth-time-detail-note">系统会无感检查前后 2 分钟的上升与 D9 / D10 稳定性。</p>
           )}
-          {(source === "family_exact" || source === "approximate") && (
+          {source === "approximate" && (
             <label>
               <span>可能误差</span>
               <select
@@ -148,7 +156,7 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
                   onPatch({ uncertaintyBeforeMinutes: minutes, uncertaintyAfterMinutes: minutes });
                 }}
               >
-                {(source === "family_exact" ? [5, 10, 15] : [15, 30, 60]).map((minutes) => (
+                {[15, 30, 60].map((minutes) => (
                   <option key={minutes} value={minutes}>前后 {minutes} 分钟</option>
                 ))}
               </select>
@@ -158,35 +166,59 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
       )}
 
       {source === "period_only" && (
-        <label className="onboarding-card-reveal">
-          <span>大致时段</span>
-          <select
-            required
-            value={value.birthTimePeriod}
-            onChange={(event) => {
-              const period = birthTimePeriodOptions.find((option) => option.value === event.target.value);
-              if (period) onPatch({ birthTimePeriod: period.value });
-            }}
-          >
-            <option value="" disabled>请选择你知道的时段</option>
-            {birthTimePeriodOptions.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
-        </label>
+        <div className="birth-time-detail-grid onboarding-card-reveal">
+          <label>
+            <span>请选择最接近的时间范围</span>
+            <select
+              required
+              value={value.birthTimePeriod}
+              onChange={(event) => {
+                const period = birthTimePeriodOptions.find((option) => option.value === event.target.value);
+                if (period) onPatch({ birthTimePeriod: period.value });
+              }}
+            >
+              <option value="" disabled>请选择大致时段</option>
+              {birthTimePeriodOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>补充描述（可选）</span>
+            <textarea
+              maxLength={240}
+              placeholder="例如：天刚亮、午饭前后、家人记得大约 6—8 点"
+              rows={2}
+              value={value.birthTimeClue}
+              onChange={(event) => onPatch({ birthTimeClue: event.target.value })}
+            />
+          </label>
+          <button
+            className="button-secondary"
+            type="button"
+            onClick={() => onPatch({
+              birthTimeSource: "unknown",
+              reportedTime: "",
+              birthTimePeriod: "",
+              birthTimeClue: "",
+              uncertaintyBeforeMinutes: null,
+              uncertaintyAfterMinutes: null,
+              birthTimeStatus: "reported",
+              time: "",
+            })}
+          >完全不清楚，跳过出生时间</button>
+        </div>
       )}
 
       {source === "unknown" && (
-        <label className="onboarding-card-reveal">
-          <span>目前知道的线索（可选）</span>
-          <textarea
-            maxLength={240}
-            placeholder="例如：家人只记得天黑以后，或可以再询问长辈"
-            rows={3}
-            value={value.birthTimeClue}
-            onChange={(event) => onPatch({ birthTimeClue: event.target.value })}
-          />
-        </label>
+        <div className="birth-time-detail-note onboarding-card-reveal" role="status">
+          <p>已跳过具体出生时间。保存后可以直接使用首页功能，生时校正以后需要时再做。</p>
+          <button
+            className="button-secondary"
+            type="button"
+            onClick={() => onPatch({ birthTimeSource: "period_only", birthTimeStatus: "reported" })}
+          >我可以描述一个时间范围</button>
+        </div>
       )}
     </div>
   );

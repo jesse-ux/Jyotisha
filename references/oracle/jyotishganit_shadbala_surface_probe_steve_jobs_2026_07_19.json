@@ -11,8 +11,15 @@
       "Drikbala"
     ]
   },
-  "boundary": "jyotishganit exposes Shadbala via object surface, not top-level to_dict. Observation-only until component units and external worked examples are compared.",
-  "claim_status": "observation_only",
+  "boundary": "Invalidated: the artifact label says San Francisco but its coordinates do not match the canonical San Francisco public-case input. These values cannot be used for parity or tuning and must be regenerated.",
+  "claim_status": "invalidated_input_mismatch",
+  "invalidation": {
+    "reason": "location_label_coordinate_mismatch",
+    "recorded_location": "San Francisco, CA",
+    "recorded_coordinates": [37.3382, -122.0383],
+    "required_coordinates": [37.7749, -122.4194],
+    "replacement_status": "blocked_until_probe_is_rerun_with_corrected_input"
+  },
   "coverage": {
     "Jupiter": {
       "Cheshtabala": true,
@@ -367,6 +374,6 @@
   "raw_hash": "8748eb3c54481929a1d7232eb40032bd7c86e6e9e59a38193c233a35c18fb972",
   "scope": "jyotishganit_shadbala_surface_probe",
   "source_path": "references/open_source_sources/jyotishganit/jyotishganit/components/strengths.py",
-  "status": "complete",
+  "status": "invalidated",
   "truth_matrix_allowed": false
 }

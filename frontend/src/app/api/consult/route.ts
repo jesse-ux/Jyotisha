@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   consultationInputSchema,
   consultationWorkflowReceipt,
+  getGeneralJyotishAgent,
   getJyotishAgent,
   runConsultationWorkflow,
 } from "@/mastra";
@@ -19,16 +20,30 @@ import { reserveConsultationModel } from "@/lib/consultation-model-selection";
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { streamTextResponse } from "@/lib/stream-text-response";
-import { guardPreciseTimingOutput } from "@/lib/timing-output-guard";
+import {
+  applyBirthTimeModeToWorkflowContext,
+  consultationBirthTimeModeSchema,
+  createBirthTimeModeOutputGuard,
+  shouldRunBirthChartWorkflow,
+  type ConsultationBirthTimeMode,
+} from "@/lib/consultation-birth-time-mode";
+import {
+  ConsultationProfileTruthError,
+  prepareConsultationRoute,
+} from "@/lib/consultation-route-service";
+import {
+  createRectificationHandoffService,
+  type RectificationHandoffExecution,
+  type RectificationHandoffService,
+} from "@/lib/rectification-handoff-service";
 import { z } from "zod";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const chatRequestSchema = consultationInputSchema.extend({
+const chatRequestMetadataSchema = z.object({
   requestId: z.string().uuid(),
   modelId: z.string().trim().min(1).max(64),
-  entrypoint: consultationEntrypointSchema.optional(),
   name: z.string().trim().max(80).optional().default(""),
   history: z
     .array(
@@ -40,6 +55,32 @@ const chatRequestSchema = consultationInputSchema.extend({
     .max(20)
     .default([]),
 });
+
+const rectificationHandoffSchema = z.object({
+  caseId: z.string().uuid(),
+  turnVersion: z.number().int().nonnegative(),
+  claimActionId: z.string().uuid(),
+  requestId: z.string().uuid(),
+}).strict();
+
+const chartChatRequestSchema = consultationInputSchema.extend({
+  ...chatRequestMetadataSchema.shape,
+  consultationMode: consultationBirthTimeModeSchema.exclude(["general_no_birth_time"])
+    .optional()
+    .default("verified_chart"),
+  entrypoint: consultationEntrypointSchema.optional(),
+  rectificationHandoff: rectificationHandoffSchema.optional(),
+}).strict();
+
+const generalChatRequestSchema = z.object({
+  ...chatRequestMetadataSchema.shape,
+  consultationMode: z.literal("general_no_birth_time"),
+  question: z.string().trim().min(1).max(500),
+  theme: z.enum(["career", "marriage", "wealth", "timing", "general"]),
+  entrypoint: z.undefined().optional(),
+}).strict();
+
+const chatRequestSchema = z.union([generalChatRequestSchema, chartChatRequestSchema]);
 
 function currentTimeContext(now = new Date()) {
   const chinaTime = new Date(now.getTime() + 8 * 60 * 60 * 1000)
@@ -119,20 +160,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const userControlledPrompt = [
-    parsed.data.question,
-    ...parsed.data.history
-      .filter((message) => message.role === "user")
-      .map((message) => message.text),
-  ].join("\n");
-  if (blocksPromptExtraction(userControlledPrompt)) {
+  if (parsed.data.entrypoint === "birth_time_rectification") {
     return NextResponse.json(
       {
-        error: "无法处理该请求",
-        message:
-          "我不能提供系统提示词、技能原文或任何密钥。你可以继续询问占星相关问题。",
+        error: "旧版生时校正入口已停用",
+        message: "请从首页生时校正卡片开始或继续对话式校正，本次不会扣点。",
       },
-      { status: 400 },
+      { status: 409 },
     );
   }
 
@@ -145,20 +179,157 @@ export async function POST(request: Request) {
 
   const userId = user.id;
   const requestId = parsed.data.requestId;
-  let modelSelection;
-  try {
-    modelSelection = await reserveConsultationModel(
-      parsed.data.modelId,
-      resolveLanguageModel,
-      () =>
-        runCreditRpc(
-          accounting,
-          "begin_consultation_credit",
-          userId,
-          requestId,
-        ),
+  const handoff = "rectificationHandoff" in parsed.data
+    ? parsed.data.rectificationHandoff
+    : undefined;
+  let handoffService: RectificationHandoffService | null = null;
+  let handoffExecution: RectificationHandoffExecution | null = null;
+  let handoffSettlement: Promise<void> | null = null;
+
+  async function settleHandoff(emitted: boolean) {
+    if (!handoff || !handoffService || !handoffExecution
+      || handoffExecution.status !== "ready") return;
+    handoffSettlement ??= handoffService.settle({
+      userId,
+      caseId: handoff.caseId,
+      claimActionId: handoff.claimActionId,
+      requestId: handoff.requestId,
+      emitted,
+    }).then(() => undefined);
+    await handoffSettlement;
+  }
+
+  if (handoff) {
+    if (parsed.data.consultationMode !== "verified_chart"
+      || parsed.data.entrypoint !== undefined
+      || requestId !== handoff.requestId) {
+      return NextResponse.json(
+        {
+          error: "原问题交接请求不一致",
+          message: "请刷新校正结果后重新点击继续，本次不会扣点。",
+        },
+        { status: 409 },
+      );
+    }
+    try {
+      handoffService = createRectificationHandoffService(accounting);
+      handoffExecution = await handoffService.beginExecution({
+        userId,
+        caseId: handoff.caseId,
+        turnVersion: handoff.turnVersion,
+        claimActionId: handoff.claimActionId,
+        requestId: handoff.requestId,
+        question: parsed.data.question,
+      });
+    } catch {
+      return NextResponse.json(
+        {
+          error: "原问题状态已经变化",
+          message: "请刷新后查看最新状态，本次不会扣点。",
+        },
+        { status: 409 },
+      );
+    }
+    if (handoffExecution.status !== "ready") {
+      const consumed = handoffExecution.status === "consumed";
+      return NextResponse.json(
+        {
+          error: consumed ? "原问题已经继续回答" : "原问题正在另一处继续",
+          message: consumed
+            ? "刷新后即可查看最新状态，不会再次扣点。"
+            : "请等待当前回答完成后刷新，本次不会重复扣点。",
+        },
+        { status: consumed ? 410 : 409 },
+      );
+    }
+  }
+
+  const userControlledPrompt = [
+    parsed.data.question,
+    ...parsed.data.history
+      .filter((message) => message.role === "user")
+      .map((message) => message.text),
+  ].join("\n");
+  if (blocksPromptExtraction(userControlledPrompt)) {
+    if (handoffExecution?.status === "ready") {
+      try {
+        await settleHandoff(false);
+      } catch {
+        return NextResponse.json(
+          { error: "暂时无法释放原问题", message: "请稍后刷新状态。" },
+          { status: 503 },
+        );
+      }
+    }
+    return NextResponse.json(
+      {
+        error: "无法处理该请求",
+        message:
+          "我不能提供系统提示词、技能原文或任何密钥。你可以继续询问占星相关问题。",
+      },
+      { status: 400 },
     );
+  }
+  let prepared;
+  try {
+    prepared = await prepareConsultationRoute({
+      userId,
+      mode: parsed.data.consultationMode,
+      async loadProfile(profileUserId) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("name,birth_date,reported_birth_time,active_birth_time,birth_time_source,birth_time_status,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset")
+          .eq("id", profileUserId)
+          .single();
+        if (error || !data) throw new ConsultationProfileTruthError("profile_unavailable");
+        return data;
+      },
+      reserve: () => reserveConsultationModel(
+        parsed.data.modelId,
+        resolveLanguageModel,
+        () => handoffExecution?.billingReused
+          ? Promise.resolve({
+            success: true,
+            credits: handoffExecution.credits ?? null,
+            error_code: null,
+          })
+          : runCreditRpc(
+            accounting,
+            "begin_consultation_credit",
+            userId,
+            requestId,
+          ),
+      ),
+    });
   } catch (error) {
+    if (handoffExecution?.status === "ready") {
+      try {
+        await settleHandoff(false);
+      } catch {
+        return NextResponse.json(
+          {
+            error: "暂时无法释放原问题",
+            message: "请稍后刷新状态，本次不会重复扣点。",
+          },
+          { status: 503 },
+        );
+      }
+    }
+    if (error instanceof ConsultationProfileTruthError) {
+      const modeChanged = error.code === "mode_changed";
+      return NextResponse.json(
+        modeChanged
+          ? {
+            error: "出生时间状态已经变化",
+            message: "请刷新后重新选择使用填报时间、一般咨询或先完成校正，本次不会扣点。",
+          }
+          : {
+            error: "暂时无法核对完整出生资料",
+            message: "出生日期、时间来源或出生地点资料不完整或不一致，请重新保存后再试，本次不会扣点。",
+          },
+        { status: modeChanged ? 409 : 503 },
+      );
+    }
     const reason = error instanceof Error ? error.name : "UnknownError";
     console.error(
       `[billing] reservation failed request=${requestId} reason=${reason}`,
@@ -169,7 +340,19 @@ export async function POST(request: Request) {
     );
   }
 
+  const modelSelection = prepared.reservation;
+
   if (modelSelection.status === "unavailable") {
+    if (handoffExecution?.status === "ready") {
+      try {
+        await settleHandoff(false);
+      } catch {
+        return NextResponse.json(
+          { error: "暂时无法释放原问题", message: "请稍后刷新状态。" },
+          { status: 503 },
+        );
+      }
+    }
     return NextResponse.json(
       {
         error: "模型暂不可用",
@@ -183,6 +366,16 @@ export async function POST(request: Request) {
   const reserveResult = modelSelection.reservation;
 
   if (!reserveResult.success) {
+    if (handoffExecution?.status === "ready") {
+      try {
+        await settleHandoff(false);
+      } catch {
+        return NextResponse.json(
+          { error: "暂时无法释放原问题", message: "请稍后刷新状态。" },
+          { status: 503 },
+        );
+      }
+    }
     const insufficient = reserveResult.error_code === "insufficient_credits";
     return NextResponse.json(
       {
@@ -196,6 +389,17 @@ export async function POST(request: Request) {
   }
 
   async function cancel() {
+    if (handoffExecution?.status === "ready") {
+      try {
+        await settleHandoff(false);
+      } catch (error) {
+        const reason = error instanceof Error ? error.name : "UnknownError";
+        console.error(
+          `[billing] handoff release failed request=${requestId} reason=${reason}`,
+        );
+      }
+      return;
+    }
     try {
       await runCreditRpc(
         accounting,
@@ -212,6 +416,10 @@ export async function POST(request: Request) {
   }
 
   async function complete() {
+    if (handoffExecution?.status === "ready") {
+      await settleHandoff(true);
+      return;
+    }
     const result = await runCreditRpc(
       accounting,
       "complete_consultation_credit",
@@ -229,12 +437,65 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { history, name } = parsed.data;
+    const { history } = parsed.data;
+    const name = prepared.serverChart?.name ?? parsed.data.name;
+    const consultationMode: ConsultationBirthTimeMode = parsed.data.consultationMode;
+    if (!shouldRunBirthChartWorkflow(consultationMode)) {
+      const result = await getGeneralJyotishAgent(selectedModel).stream([
+        {
+          role: "user",
+          content: [
+            currentTimeContext(requestTime),
+            name ? `用户称呼：${name}` : "",
+            "当前是用户明确选择的无出生分钟一般咨询。不得计算或推断个人星盘；不得补 00:00、时段中点或任何候选分钟。",
+            resolvedQuestion.modelQuestion,
+          ].filter(Boolean).join("\n"),
+        },
+      ]);
+      const completeAndRecordUsage = async () => {
+        await complete();
+        void recordModelUsage(
+          accounting,
+          userId,
+          requestId,
+          modelSelection.usageModelId,
+          result.totalUsage,
+        );
+      };
+      const settleInterrupted = (emitted: boolean) =>
+        settle(emitted ? completeAndRecordUsage : cancel);
+      return streamTextResponse(result.textStream, {
+        transformText: createBirthTimeModeOutputGuard(consultationMode, false),
+        mode: "mastra",
+        requestId,
+        headers: {
+          "x-jyotish-workflow-route": "general-no-birth-time",
+          "x-jyotish-workflow-status": "ready",
+          "x-jyotish-technique-truth": "not-applicable",
+          "x-jyotish-precise-timing": "blocked",
+          "x-jyotish-missing-layers": "birth-minute",
+          "x-jyotish-birth-time-mode": consultationMode,
+        },
+        ...(handoff ? { onFirstOutput: () => settle(completeAndRecordUsage) } : {}),
+        onComplete: () => settle(completeAndRecordUsage),
+        onError: (_error, emitted) => settleInterrupted(emitted),
+        onCancel: settleInterrupted,
+      });
+    }
+
+    if (!prepared.serverChart) throw new Error("server_chart_truth_missing");
     const toolInput = consultationInputSchema.parse({
-      ...parsed.data,
+      ...prepared.serverChart.toolInput,
+      // Unverified use is still a normal chart calculation with a hard answer
+      // boundary. It must never reactivate the retired rectification questionnaire.
+      entryMode: "direct_chart",
       question: resolvedQuestion.modelQuestion,
+      theme: parsed.data.theme,
     });
-    const workflowContext = await runConsultationWorkflow(toolInput);
+    const workflowContext = applyBirthTimeModeToWorkflowContext(
+      await runConsultationWorkflow(toolInput),
+      consultationMode,
+    );
     const workflowReceipt = consultationWorkflowReceipt(workflowContext);
 
     const result = await getJyotishAgent(selectedModel, workflowContext).stream([
@@ -265,10 +526,10 @@ export async function POST(request: Request) {
     const settleInterrupted = (emitted: boolean) =>
       settle(emitted ? completeAndRecordUsage : cancel);
     return streamTextResponse(result.textStream, {
-      transformText:
-        workflowReceipt.preciseTiming === "blocked"
-          ? guardPreciseTimingOutput
-          : undefined,
+      transformText: createBirthTimeModeOutputGuard(
+        consultationMode,
+        workflowReceipt.preciseTiming !== "blocked",
+      ),
       mode: "mastra",
       requestId,
       headers: {
@@ -277,7 +538,9 @@ export async function POST(request: Request) {
         "x-jyotish-technique-truth": workflowReceipt.techniqueTruth,
         "x-jyotish-precise-timing": workflowReceipt.preciseTiming,
         "x-jyotish-missing-layers": workflowReceipt.missingLayers,
+        "x-jyotish-birth-time-mode": consultationMode,
       },
+      ...(handoff ? { onFirstOutput: () => settle(completeAndRecordUsage) } : {}),
       onComplete: () => settle(completeAndRecordUsage),
       onError: (_error, emitted) => settleInterrupted(emitted),
       onCancel: settleInterrupted,

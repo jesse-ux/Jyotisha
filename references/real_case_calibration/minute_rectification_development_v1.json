@@ -1,0 +1,223 @@
+{
+  "schema_version": "minute-rectification-development-v1",
+  "benchmark_id": "minute_rectification_development_v1",
+  "scope": "public_cases_for_tuning_and_diagnostics_only",
+  "minimum_case_contract": {
+    "events_per_case": 3,
+    "domains_per_case": 2,
+    "independent_event_sources_per_case": 2,
+    "negative_minutes_per_case": 4
+  },
+  "cases": [
+    {
+      "case_id": "steve_jobs_1955_development",
+      "subject_label": "Steve Jobs",
+      "development_partition": "tuning_and_diagnostics",
+      "allowed_for_tuning": true,
+      "excluded_from_holdout": true,
+      "candidate_radius_minutes": 10,
+      "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1955-02-24",
+        "time": "19:15",
+        "place": "San Francisco, California, United States",
+        "latitude": 37.7749,
+        "longitude": -122.4194,
+        "timezone_offset": -8.0,
+        "source": {
+          "publisher": "Astro-Databank",
+          "url": "https://www.astro.com/adbvip/adbvip_02_24.htm?lang=r&nho2=250&nhor=1",
+          "rodden_rating": "AA",
+          "record_type": "birth_record"
+        }
+      },
+      "events": [
+        {
+          "id": "jobs_apple_founding_1976",
+          "domain": "career",
+          "date": "1976-04-01",
+          "precision": "day",
+          "description": "Apple was founded.",
+          "source": {
+            "publisher": "Apple Newsroom",
+            "url": "https://www.apple.com/ca/newsroom/2026/03/apple-to-celebrate-50-years-of-thinking-different/",
+            "independent_of_birth_source": true
+          }
+        },
+        {
+          "id": "jobs_marriage_1991",
+          "domain": "relationship",
+          "date": "1991-03-18",
+          "precision": "day",
+          "description": "Married Laurene Powell.",
+          "source": {
+            "publisher": "Biography.com",
+            "url": "https://www.biography.com/business-leaders/steve-jobs",
+            "independent_of_birth_source": true
+          }
+        },
+        {
+          "id": "jobs_cancer_diagnosis_2003",
+          "domain": "health_pressure",
+          "date": "2003",
+          "precision": "year",
+          "description": "Diagnosed with a pancreatic neuroendocrine tumor.",
+          "source": {
+            "publisher": "Biography.com",
+            "url": "https://www.biography.com/business-leaders/steve-jobs",
+            "independent_of_birth_source": true
+          }
+        },
+        {
+          "id": "jobs_resigned_apple_ceo_2011",
+          "domain": "career",
+          "date": "2011-08-24",
+          "precision": "day",
+          "description": "Resigned as Apple CEO.",
+          "source": {
+            "publisher": "Apple Newsroom",
+            "url": "https://www.apple.com/newsroom/2011/08/24Letter-from-Steve-Jobs/",
+            "independent_of_birth_source": true
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "albert_einstein_1879_development",
+      "subject_label": "Albert Einstein",
+      "development_partition": "tuning_and_diagnostics",
+      "allowed_for_tuning": true,
+      "excluded_from_holdout": true,
+      "candidate_radius_minutes": 10,
+      "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1879-03-14",
+        "time": "11:30",
+        "place": "Ulm, Germany",
+        "latitude": 48.4011,
+        "longitude": 9.9876,
+        "timezone_offset": 0.66584,
+        "timezone_basis": "local_mean_time_from_longitude",
+        "source": {
+          "publisher": "Astro-Databank",
+          "url": "https://www.astro.com/astro-databank/Einstein%2C_Albert",
+          "rodden_rating": "AA",
+          "record_type": "birth_record"
+        }
+      },
+      "events": [
+        {
+          "id": "einstein_marriage_1903",
+          "domain": "relationship",
+          "date": "1903",
+          "precision": "year",
+          "description": "Married Mileva Maric.",
+          "source": {
+            "publisher": "Nobel Prize",
+            "url": "https://www.nobelprize.org/prizes/physics/1921/einstein/biographical/",
+            "independent_of_birth_source": true
+          }
+        },
+        {
+          "id": "einstein_nobel_award_1922",
+          "domain": "career",
+          "date": "1922",
+          "precision": "year",
+          "description": "Received the reserved 1921 Nobel Prize in Physics.",
+          "source": {
+            "publisher": "Nobel Prize",
+            "url": "https://www.nobelprize.org/prizes/physics/1921/einstein/questions-and-answers/",
+            "independent_of_birth_source": true
+          }
+        },
+        {
+          "id": "einstein_left_germany_1933",
+          "domain": "relocation",
+          "date": "1933",
+          "precision": "year",
+          "description": "Left Germany after the Nazi seizure of power.",
+          "source": {
+            "publisher": "Max Planck Society",
+            "url": "https://www.mpg.de/947161/1932-albert-einstein",
+            "independent_of_birth_source": true
+          }
+        }
+      ]
+    },
+    {
+      "case_id": "marie_curie_1867_development",
+      "subject_label": "Marie Curie",
+      "development_partition": "tuning_and_diagnostics",
+      "allowed_for_tuning": true,
+      "excluded_from_holdout": true,
+      "candidate_radius_minutes": 10,
+      "false_minute_offsets": [-10, -5, -2, -1, 1, 2, 5, 10],
+      "birth": {
+        "date": "1867-11-07",
+        "time": "12:00",
+        "place": "Warsaw, Poland",
+        "latitude": 52.2297,
+        "longitude": 21.0122,
+        "timezone_offset": 1.400813,
+        "timezone_basis": "local_mean_time_from_longitude",
+        "source": {
+          "publisher": "Astro-Databank",
+          "url": "https://www.astro.com/astro-databank/Curie%2C_Marie",
+          "rodden_rating": "AA",
+          "record_type": "birth_record"
+        }
+      },
+      "events": [
+        {
+          "id": "curie_moved_to_paris_1891",
+          "domain": "relocation",
+          "date": "1891",
+          "precision": "year",
+          "description": "Moved to Paris to continue studies at the Sorbonne.",
+          "source": {
+            "publisher": "Nobel Prize",
+            "url": "https://www.nobelprize.org/prizes/chemistry/1911/marie-curie/biographical/",
+            "independent_of_birth_source": true
+          }
+        },
+        {
+          "id": "curie_marriage_1895",
+          "domain": "relationship",
+          "date": "1895-07-26",
+          "precision": "day",
+          "description": "Married Pierre Curie.",
+          "source": {
+            "publisher": "French Ministry of Higher Education and Research",
+            "url": "https://www.enseignementsup-recherche.gouv.fr/fr/celebration-du-150e-anniversaire-de-la-naissance-de-marie-curie-49204",
+            "independent_of_birth_source": true
+          }
+        },
+        {
+          "id": "curie_nobel_physics_1903",
+          "domain": "career",
+          "date": "1903",
+          "precision": "year",
+          "description": "Received the Nobel Prize in Physics.",
+          "source": {
+            "publisher": "Nobel Prize",
+            "url": "https://www.nobelprize.org/prizes/physics/1903/marie-curie/",
+            "independent_of_birth_source": true
+          }
+        },
+        {
+          "id": "curie_widowed_1906",
+          "domain": "health_pressure",
+          "date": "1906-04-19",
+          "precision": "day",
+          "description": "Pierre Curie died in a traffic accident.",
+          "source": {
+            "publisher": "Musee Curie",
+            "url": "https://curiotheque.musee.curie.fr/s/fr/page/dans-le-temps",
+            "independent_of_birth_source": true
+          }
+        }
+      ]
+    }
+  ],
+  "boundary": "These cases are visible development material. Their outcomes may improve diagnostics, but they are permanently excluded from public holdout metrics and cannot open the minute-confirmation gate."
+}

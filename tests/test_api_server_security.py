@@ -1570,6 +1570,7 @@ def test_capability_audit_scans_registry_and_local_sources() -> None:
     assert audit['surfaces']['app_routes'] == ['admin/codes', 'home', 'login']
     assert set(audit['surfaces']['app_visible_topics']) == {
         'Birth Rectification',
+        'Case Validation',
         'Synastry 16-factor',
     }
     assert '/api/deep_varga_avastha' in audit['surfaces']['api_endpoints']
@@ -1599,13 +1600,13 @@ def test_capability_audit_scans_registry_and_local_sources() -> None:
     assert all('ux_next_action' in row for row in ux['next_queue'])
     ux_by_id = {row['id']: row for row in ux['rows']}
     assert ux_by_id['birth_time_rectifier']['ux_level'] in {'excellent', 'usable'}
+    assert ux_by_id['case_validator']['ux_level'] == 'excellent'
     assert ux_by_id['synastry_16factor']['ux_level'] == 'excellent'
     for technique_id in [
         'ashtakavarga_pav',
         'ashtakavarga_sodhita',
         'bhava_bala',
         'career_engine',
-        'case_validator',
         'deep_varga_avastha',
         'divisional_yoga',
         'kakshya',

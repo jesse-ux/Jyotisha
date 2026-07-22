@@ -1,0 +1,35 @@
+{
+  "scope": "workbuddy_round4_remaining_closure_packet",
+  "created_at": "2026-07-21",
+  "claim_status": "open_queue",
+  "source_queue": "references/oracle/workbuddy_round4_usage_closure_queue_2026_07_21.json",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "boundary": "The remaining WorkBuddy round4 candidates are explicitly classified. None is a complete oracle or runtime capability.",
+  "remaining_candidates": [
+    {
+      "candidate_id": "wb_round4_kp_practical_event_timing",
+      "source_path": "references/kp-practical-event-timing.md",
+      "classification": "privacy_scrubbed_reference_only",
+      "claim_upgrade": "none",
+      "finding": "The retained file is a privacy-scrubbed notice, not a reusable KP worked example or executable contract.",
+      "next_action": "Use public KP worked examples plus exact cusp/star/sub/sub-sub API probe; do not derive timing truth from this WorkBuddy fragment."
+    },
+    {
+      "candidate_id": "wb_round4_pyjhora_steve_jobs_shadbala_stdout",
+      "source_path": "references/oracle/artifacts/pyjhora_steve_jobs_shadbala_lahiri_stdout_20260627.txt",
+      "classification": "parsed_observation_packet_ready",
+      "claim_upgrade": "none",
+      "finding": "Parsed into 42 same-unit component rows in references/oracle/pyjhora_steve_jobs_shadbala_stdout_components_2026_07_21.json; still observation-only because formula variants and absolute parity remain unresolved.",
+      "next_action": "Join parsed rows to shadbala_component_closure_queue_v2 and compare against local/jyotishganit/Xalen/VP Jain rows by component."
+    },
+    {
+      "candidate_id": "wb_round4_tajika_steve_jobs_1984_first_packet",
+      "source_path": "references/oracle/evidence_packet_templates/tajika_steve_jobs_1984_first_packet.json",
+      "classification": "blank_template_not_oracle",
+      "claim_upgrade": "none",
+      "finding": "The packet is a blank external-capture template; required metadata and target numeric fields are empty/null.",
+      "next_action": "Fill from a citable external Varshaphala/Tajika numeric source before using as oracle evidence."
+    }
+  ]
+}

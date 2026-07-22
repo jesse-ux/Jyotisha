@@ -1,0 +1,70 @@
+{
+  "scope": "source_runtime_closure_queue",
+  "created_at": "2026-07-21",
+  "claim_status": "open_queue",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_scan": "references/oracle/whole_machine_jyotish_fragment_scan_2026_07_21.json",
+  "not_fully_closed_reference_layers": [
+    "references/open_source_sources/jyotishganit",
+    "references/open_source_sources/VedicAstro",
+    "references/open_source_sources/jaimini-tropical",
+    "references/open_source_sources/rishi-ai-mcp",
+    "references/open_source_sources/vedic-astro-skills",
+    "references/open_source_sources/dashaflow"
+  ],
+  "rows": [
+    {
+      "id": "jyotishganit_field_closure",
+      "source": "references/open_source_sources/jyotishganit",
+      "existing_probe": "scripts/jyotishganit_field_probe.py",
+      "existing_test": "tests/test_jyotishganit_and_vedicastro_probes.py",
+      "current_status": "probe_runs_observation_only",
+      "latest_observed_raw_hash": "19fa9ea862b68c4cffb6756fa6cbf0466daf47a8b008b3fe8809e9fc6a1ed30c",
+      "latest_observed_selected_hash": "4709b8ade84efdea4d0a67c15f3e32cea516a5aa2e8abe3885578feda20cb3f4",
+      "coverage": {
+        "panchanga": true,
+        "D2": true,
+        "D4": true,
+        "D9": true,
+        "D10": true,
+        "BAV_SAV": true,
+        "Shadbala": false
+      },
+      "next_closure_step": "attach field-level comparison rows to the three-engine closure queue; keep Shadbala missing as explicit gap"
+    },
+    {
+      "id": "vedicastro_kp_house_cusp_closure",
+      "source": "references/open_source_sources/VedicAstro",
+      "existing_probe": "scripts/vedicastro_kp_house_cusp_probe.py",
+      "existing_test": "tests/test_vedicastro_kp_runtime_tmp_probe.py",
+      "current_status": "raw_ready_observation_only",
+      "next_closure_step": "compare these 12 cusp star/sub/sub-sub rows against public numeric KP worked examples before any event timing use",
+      "latest_raw_packet": "references/oracle/vedicastro_kp_house_cusp_raw_2026_07_21.json",
+      "latest_env_identity": "references/oracle/vedicastro_kp_tmp_env_identity_2026_07_21.json",
+      "latest_observed_raw_hash": "2e7a6b17eb2965a60846f625f6bd8bc03555216d6225983647bcbfa23d0e345b",
+      "coverage": {
+        "house_cusps": 12,
+        "rasi": true,
+        "nakshatra": true,
+        "rasi_lord": true,
+        "nakshatra_lord": true,
+        "sub_lord": true,
+        "sub_sub_lord": true
+      }
+    },
+    {
+      "id": "rishi_ai_mcp_vedic_astro_skills_reference",
+      "source": "references/open_source_sources/rishi-ai-mcp + references/open_source_sources/vedic-astro-skills",
+      "current_status": "reference_only_prompt_or_product_flow",
+      "next_closure_step": "extract skill/process wording only after license/source review; never numeric oracle or formula truth"
+    },
+    {
+      "id": "jaimini_tropical_dashaflow_reference",
+      "source": "references/open_source_sources/jaimini-tropical + references/open_source_sources/dashaflow",
+      "current_status": "reference_only_until_contract",
+      "next_closure_step": "pin license, version, input contract, raw hash and replay tests before any adapter or truth matrix use"
+    }
+  ],
+  "boundary": "queue_only_no_adapter_or_truth_upgrade"
+}

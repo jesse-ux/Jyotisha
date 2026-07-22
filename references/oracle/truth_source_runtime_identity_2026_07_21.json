@@ -1,0 +1,54 @@
+{
+  "scope": "truth_source_runtime_identity",
+  "created_at": "2026-07-21",
+  "status": "active_contract_v1",
+  "truth_source": {
+    "path": "/Users/wuyongnaren/Documents/印度占星",
+    "role": "sole_main_research_truth_source",
+    "branch_at_capture": "main",
+    "git_commit": "737683edc976d28558d81737501943790da07b34",
+    "git_commit_semantics": "commit at packet capture time; later packet commits supersede this value through git history"
+  },
+  "skill": {
+    "path": "SKILL.md",
+    "version": "6.9.14"
+  },
+  "evidence_packets": {
+    "index_path": "references/oracle/evidence_packet_index_2026_07_19.json",
+    "packet_count": 106,
+    "blocked_or_partial_count": 51,
+    "human_review_required_count": 3
+  },
+  "oracle_summary": {
+    "production_tuning_allowed": false,
+    "truth_matrix_allowed": false,
+    "vedastro_hosted_identity": "blocked",
+    "timing_holdout": "blocked_until_independent_human_labels",
+    "sphuta_oss_probe": "tooling_observation_only",
+    "three_engine_parity": "open_queue"
+  },
+  "runtime_contract": {
+    "research_web_panel_required": true,
+    "commercial_startup_self_check_required": true,
+    "commercial_ci_golden_case_required": "pyjhora_jhora_sphuta_probe",
+    "must_not_accept_legacy_workbuddy_as_truth_source": true
+  },
+  "fragment_quarantine": {
+    "workbuddy_old_copies": {
+      "status": "quarantined",
+      "labels": [
+        "not_for_truth_source",
+        "privacy_review_required",
+        "artifact_incomplete",
+        "historical_fragment_only"
+      ],
+      "paths": [
+        "/Users/wuyongnaren/WorkBuddy/2026-07-05-19-03-49/yinduzhanxing",
+        "/Users/wuyongnaren/.workbuddy/backups/jyotish-vedic-astrology-20260711-154109",
+        "/Users/wuyongnaren/.workbuddy/backups/jyotish-vedic-astrology-retired-20260711-154109"
+      ],
+      "boundary": "May be read as fragment candidates only after ledger review; never a runtime, oracle, commercial, or truth source."
+    }
+  },
+  "claim_boundary": "identity_ready_governance_only_not_oracle_truth"
+}

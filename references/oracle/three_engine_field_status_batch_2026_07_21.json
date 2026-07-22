@@ -1,0 +1,207 @@
+{
+  "scope": "three_engine_field_status_batch",
+  "created_at": "2026-07-21",
+  "claim_status": "observation_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source_applied_bridge": "references/oracle/three_engine_jyotishganit_bridge_applied_2026_07_21.json",
+  "panchanga_ticket": {
+    "ticket_id": "TEMCQ-061",
+    "section": "panchanga",
+    "field": "schema_and_named_fields",
+    "category": "schema_or_tradition_semantics",
+    "owner_track": "new_ticket_required",
+    "priority": "P1",
+    "closure_status": "open",
+    "required_evidence": "same-case local/jyotishganit/VedAstro panchanga schema mapping with weekday/tithi/nakshatra/yoga/karana calculation contract"
+  },
+  "summary": {
+    "rows_total": 18,
+    "endpoint_semantics": 10,
+    "worked_example_required": 8,
+    "truth_upgrades": 0
+  },
+  "rows": [
+    {
+      "ticket_id": "TEMCQ-001",
+      "section": "D2",
+      "field": "Sun.sign",
+      "source_field": "D2",
+      "owner_track": "endpoint_contract",
+      "status_after_bridge": "ready_for_endpoint_semantics_check",
+      "remaining_evidence_needed": "VedAstro endpoint/method semantics and same-unit local/jyotishganit raw comparison",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-002",
+      "section": "D2",
+      "field": "Moon.sign",
+      "source_field": "D2",
+      "owner_track": "endpoint_contract",
+      "status_after_bridge": "ready_for_endpoint_semantics_check",
+      "remaining_evidence_needed": "VedAstro endpoint/method semantics and same-unit local/jyotishganit raw comparison",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-003",
+      "section": "D2",
+      "field": "Mars.sign",
+      "source_field": "D2",
+      "owner_track": "endpoint_contract",
+      "status_after_bridge": "ready_for_endpoint_semantics_check",
+      "remaining_evidence_needed": "VedAstro endpoint/method semantics and same-unit local/jyotishganit raw comparison",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-004",
+      "section": "D2",
+      "field": "Mercury.sign",
+      "source_field": "D2",
+      "owner_track": "endpoint_contract",
+      "status_after_bridge": "ready_for_endpoint_semantics_check",
+      "remaining_evidence_needed": "VedAstro endpoint/method semantics and same-unit local/jyotishganit raw comparison",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-005",
+      "section": "D2",
+      "field": "Jupiter.sign",
+      "source_field": "D2",
+      "owner_track": "endpoint_contract",
+      "status_after_bridge": "ready_for_endpoint_semantics_check",
+      "remaining_evidence_needed": "VedAstro endpoint/method semantics and same-unit local/jyotishganit raw comparison",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-006",
+      "section": "D2",
+      "field": "Venus.sign",
+      "source_field": "D2",
+      "owner_track": "endpoint_contract",
+      "status_after_bridge": "ready_for_endpoint_semantics_check",
+      "remaining_evidence_needed": "VedAstro endpoint/method semantics and same-unit local/jyotishganit raw comparison",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-007",
+      "section": "D2",
+      "field": "Saturn.sign",
+      "source_field": "D2",
+      "owner_track": "endpoint_contract",
+      "status_after_bridge": "ready_for_endpoint_semantics_check",
+      "remaining_evidence_needed": "VedAstro endpoint/method semantics and same-unit local/jyotishganit raw comparison",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-008",
+      "section": "D4",
+      "field": "Moon.sign",
+      "source_field": "D4",
+      "owner_track": "endpoint_contract",
+      "status_after_bridge": "ready_for_endpoint_semantics_check",
+      "remaining_evidence_needed": "VedAstro endpoint/method semantics and same-unit local/jyotishganit raw comparison",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-009",
+      "section": "D9",
+      "field": "Moon.sign",
+      "source_field": "D9",
+      "owner_track": "endpoint_contract",
+      "status_after_bridge": "ready_for_endpoint_semantics_check",
+      "remaining_evidence_needed": "VedAstro endpoint/method semantics and same-unit local/jyotishganit raw comparison",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-010",
+      "section": "D10",
+      "field": "Moon.sign",
+      "source_field": "D10",
+      "owner_track": "endpoint_contract",
+      "status_after_bridge": "ready_for_endpoint_semantics_check",
+      "remaining_evidence_needed": "VedAstro endpoint/method semantics and same-unit local/jyotishganit raw comparison",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-011",
+      "section": "ashtakavarga_bav",
+      "field": "Sun",
+      "source_field": "BAV",
+      "owner_track": "worked_example",
+      "status_after_bridge": "ready_for_worked_example_comparison",
+      "remaining_evidence_needed": "public worked BAV/SAV table with contributor set and shodhana policy",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-012",
+      "section": "ashtakavarga_bav",
+      "field": "Moon",
+      "source_field": "BAV",
+      "owner_track": "worked_example",
+      "status_after_bridge": "ready_for_worked_example_comparison",
+      "remaining_evidence_needed": "public worked BAV/SAV table with contributor set and shodhana policy",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-013",
+      "section": "ashtakavarga_bav",
+      "field": "Mars",
+      "source_field": "BAV",
+      "owner_track": "worked_example",
+      "status_after_bridge": "ready_for_worked_example_comparison",
+      "remaining_evidence_needed": "public worked BAV/SAV table with contributor set and shodhana policy",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-014",
+      "section": "ashtakavarga_bav",
+      "field": "Mercury",
+      "source_field": "BAV",
+      "owner_track": "worked_example",
+      "status_after_bridge": "ready_for_worked_example_comparison",
+      "remaining_evidence_needed": "public worked BAV/SAV table with contributor set and shodhana policy",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-015",
+      "section": "ashtakavarga_bav",
+      "field": "Jupiter",
+      "source_field": "BAV",
+      "owner_track": "worked_example",
+      "status_after_bridge": "ready_for_worked_example_comparison",
+      "remaining_evidence_needed": "public worked BAV/SAV table with contributor set and shodhana policy",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-016",
+      "section": "ashtakavarga_bav",
+      "field": "Venus",
+      "source_field": "BAV",
+      "owner_track": "worked_example",
+      "status_after_bridge": "ready_for_worked_example_comparison",
+      "remaining_evidence_needed": "public worked BAV/SAV table with contributor set and shodhana policy",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-017",
+      "section": "ashtakavarga_bav",
+      "field": "Saturn",
+      "source_field": "BAV",
+      "owner_track": "worked_example",
+      "status_after_bridge": "ready_for_worked_example_comparison",
+      "remaining_evidence_needed": "public worked BAV/SAV table with contributor set and shodhana policy",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    },
+    {
+      "ticket_id": "TEMCQ-018",
+      "section": "ashtakavarga_sav",
+      "field": "12_sign_scores",
+      "source_field": "SAV",
+      "owner_track": "worked_example",
+      "status_after_bridge": "ready_for_worked_example_comparison",
+      "remaining_evidence_needed": "public worked BAV/SAV table with contributor set and shodhana policy",
+      "claim_boundary": "status_classification_only_no_numeric_truth"
+    }
+  ],
+  "boundary": "status_batch_only_no_truth_upgrade"
+}

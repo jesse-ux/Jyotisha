@@ -4,7 +4,7 @@ import test from "node:test";
 
 test("upserts a missing profile when saving account details", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  assert.match(source, /fetch\("\/api\/account",\s*\{\s*method:\s*"PATCH"/s);
+  assert.match(source, /fetch\("\/api\/account",[\s\S]*?\{[\s\S]*?method:\s*"PATCH"/);
   assert.match(source, /credentials:\s*"same-origin"/);
 });
 
@@ -23,6 +23,7 @@ test("account route can fall back when coordinate columns are not deployed", () 
 test("account route persists the birth-time declaration before assessment", () => {
   // Given: the birthday step submits a reported time and its source metadata.
   const source = readFileSync(new URL("../src/app/api/account/route.ts", import.meta.url), "utf8");
+  const patchContract = readFileSync(new URL("../src/lib/account-profile-patch.ts", import.meta.url), "utf8");
   const declarationColumns = [
     "reported_birth_time",
     "birth_time_source",
@@ -35,9 +36,14 @@ test("account route persists the birth-time declaration before assessment", () =
   // When: /api/account builds the profile upsert.
   // Then: every declaration field must cross the route boundary instead of being dropped.
   for (const column of declarationColumns) {
-    assert.match(source, new RegExp(`${column}:\\s*nullable`), `${column} is not persisted`);
+    assert.match(
+      source,
+      new RegExp(`payload\\.${column}\\s*!==\\s*undefined[\\s\\S]{0,160}${column}:\\s*payload\\.${column}`),
+      `${column} is not persisted`,
+    );
   }
-  assert.match(source, /birthTimeSources\s*=\s*\[[\s\S]*"legacy_import"/);
+  assert.match(source, /accountProfilePatchSchema\.safeParse/);
+  assert.match(patchContract, /birthTimeSourceSchema\s*=\s*z\.enum\(\[[\s\S]*"legacy_import"/);
 });
 
 test("service role can insert and read birth-time declaration columns during profile upsert", () => {
@@ -70,6 +76,22 @@ test("service role can read every column used by account profile upserts", () =>
   // Then: PostgREST can read both submitted columns while resolving existing rows.
   assert.match(
     migration,
-    /grant\s+select\s*\(\s*district_code\s*,\s*updated_at\s*\)\s*on\s+table\s+public\.profiles\s+to\s+service_role/is,
+    /grant\s+select\s*\(\s*district_code\s*,\s*updated_at\s*\)\s*on\s+table\s+public\.profiles\s+to\s+service_role/i,
   );
+});
+
+test("reported birth declarations remain editable and candidate times never overwrite them", () => {
+  const migration = readFileSync(
+    new URL(
+      "../supabase/migrations/20260721140000_repair_reported_birth_time_revision.sql",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  assert.match(migration, /create or replace function public\.guard_birth_time_journey\(\)/i);
+  assert.doesNotMatch(migration, /reported_birth_time_is_immutable/i);
+  assert.doesNotMatch(migration, /new\.reported_birth_time\s*:=\s*new\.birth_time/i);
+  assert.match(migration, /update public\.profiles\s+set reported_birth_time\s*=\s*null[\s\S]*?birth_time_source\s+in\s*\(\s*'period_only'\s*,\s*'unknown'\s*\)/i);
+  assert.match(migration, /profiles_reported_birth_time_source_consistency/i);
 });

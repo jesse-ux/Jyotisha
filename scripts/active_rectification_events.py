@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Final, Literal, TypedDict, assert_never
+from typing import Any, Final, Literal, TypedDict, assert_never
 from uuid import NAMESPACE_URL, uuid5
 
 EventPrecision = Literal["year", "month", "day"]
@@ -23,7 +23,7 @@ EventDomain = Literal[
 ]
 Confidence = Literal["low", "medium", "high"]
 
-ALGORITHM_VERSION: Final = "birth-time-event-scoring-v1"
+ALGORITHM_VERSION: Final = "birth-time-event-scoring-v2"
 PRECISION_WEIGHTS: Final[dict[EventPrecision, float]] = {
     "day": 1.0,
     "month": 0.8,
@@ -83,6 +83,10 @@ class CandidateResult(TypedDict):
     reasons: list[str]
     evidence: list[CandidateEvidence]
     algorithm_version: str
+    canonical_input_hash: str
+    calculation_contract: dict[str, Any]
+    stability_diagnostics: dict[str, Any]
+    missing_layers: list[str]
 
 
 def precision_weight(precision: EventPrecision) -> float:
@@ -126,12 +130,76 @@ def _winning_segment(rows: Sequence[CandidateScoreRow]) -> WinningSegment:
     }
 
 
+def _clock_distance(left: str, right: str) -> int:
+    distance = abs(_minute_value(left) - _minute_value(right))
+    return min(distance, 24 * 60 - distance)
+
+
+def _time_at_offset(value: str, offset: int) -> str:
+    total = (_minute_value(value) + offset) % (24 * 60)
+    return f"{total // 60:02d}:{total % 60:02d}"
+
+
+def build_stability_diagnostics(
+    rows: Sequence[CandidateScoreRow],
+    *,
+    winning_segment: WinningSegment | None,
+) -> dict[str, Any]:
+    """Describe exact-minute neighbor separation without claiming calibrated accuracy."""
+    representative = winning_segment["representative_time"] if winning_segment else None
+    by_time = {row["time"]: row for row in rows}
+    representative_row = by_time.get(representative) if representative else None
+    neighborhoods: list[dict[str, Any]] = []
+    for radius in (1, 2, 5):
+        required_times = {
+            _time_at_offset(representative, -radius),
+            _time_at_offset(representative, radius),
+        } if representative else set()
+        neighbors = [
+            row for row in rows
+            if representative is not None
+            and 0 < _clock_distance(row["time"], representative) <= radius
+        ]
+        if representative_row is None or not required_times.issubset(by_time):
+            neighborhoods.append({
+                "radius_minutes": radius,
+                "status": "blocked",
+                "lead_points": None,
+                "compared_candidate_count": len(neighbors),
+                "reason": "candidate_range_does_not_cover_both_sides_of_neighborhood",
+            })
+            continue
+        best_neighbor = max(row["score"] for row in neighbors)
+        lead = round(representative_row["score"] - best_neighbor, 4)
+        neighborhoods.append({
+            "radius_minutes": radius,
+            "status": "pass" if winning_segment["width_minutes"] == 1 and lead > 0 else "fail",
+            "lead_points": lead,
+            "compared_candidate_count": len(neighbors),
+            "reason": (
+                "unique_minute_leads_neighbor_candidates"
+                if winning_segment["width_minutes"] == 1 and lead > 0
+                else "minute_not_uniquely_separated_from_neighbors"
+            ),
+        })
+    return {
+        "scope": "candidate_neighbor_stability",
+        "representative_time": representative,
+        "neighborhoods": neighborhoods,
+        "all_required_passed": all(item["status"] == "pass" for item in neighborhoods),
+        "boundary": "Neighbor separation is a diagnostic only until thresholds are frozen before public holdout replay.",
+    }
+
+
 def adjudicate_candidate_rows(
     rows: Sequence[CandidateScoreRow],
     *,
     event_count: int,
     domain_count: int,
     request_fingerprint: str,
+    canonical_input_hash: str = "",
+    calculation_contract: dict[str, Any] | None = None,
+    leave_one_event_out: dict[str, Any] | None = None,
 ) -> CandidateResult:
     """Rank precomputed candidate rows and apply conservative confidence gates."""
     if not rows:
@@ -148,6 +216,13 @@ def adjudicate_candidate_rows(
             "reasons": ["no_candidate_rows"],
             "evidence": [],
             "algorithm_version": ALGORITHM_VERSION,
+            "canonical_input_hash": canonical_input_hash,
+            "calculation_contract": calculation_contract or {},
+            "stability_diagnostics": {
+                "neighbor_stability": build_stability_diagnostics([], winning_segment=None),
+                "leave_one_event_out": leave_one_event_out or {"status": "not_evaluated", "runs": []},
+            },
+            "missing_layers": [],
         }
 
     ranked_scores = sorted({row["score"] for row in rows}, reverse=True)
@@ -189,10 +264,17 @@ def adjudicate_candidate_rows(
     top_rows = segments[0] if len(segments) == 1 else []
     representative_row = top_rows[(len(top_rows) - 1) // 2] if top_rows else None
     evidence = list(representative_row["evidence"]) if representative_row else []
+    neighbor_stability = build_stability_diagnostics(rows, winning_segment=segment)
+    if not neighbor_stability["all_required_passed"]:
+        reasons.append("neighbor_stability_not_passed")
+    if (leave_one_event_out or {}).get("status") != "pass":
+        reasons.append("leave_one_event_out_not_passed")
+    # Minute confirmation remains release-gated until the frozen public AA holdout passes.
+    reasons.append("minute_holdout_not_ready")
     return {
         "result_id": str(uuid5(NAMESPACE_URL, f"{ALGORITHM_VERSION}:{request_fingerprint}")),
         "confidence": confidence,
-        "can_apply": confidence == "high",
+        "can_apply": False,
         "winning_segment": segment,
         "event_count": event_count,
         "domain_count": domain_count,
@@ -202,6 +284,13 @@ def adjudicate_candidate_rows(
         "reasons": reasons,
         "evidence": evidence,
         "algorithm_version": ALGORITHM_VERSION,
+        "canonical_input_hash": canonical_input_hash,
+        "calculation_contract": calculation_contract or {},
+        "stability_diagnostics": {
+            "neighbor_stability": neighbor_stability,
+            "leave_one_event_out": leave_one_event_out or {"status": "not_evaluated", "runs": []},
+        },
+        "missing_layers": missing_layers,
     }
 
 

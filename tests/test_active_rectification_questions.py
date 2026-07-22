@@ -10,6 +10,8 @@ def test_active_rectification_questions_generate_choice_based_workflow() -> None
     assert report["candidate_scan"]["start"] == "1955-02-24 18:45"
     assert report["candidate_scan"]["end"] == "1955-02-24 19:45"
     assert report["candidate_scan"]["candidate_count"] == 61
+    assert len(report["candidate_scan"]["samples"]) == 61
+    assert report["candidate_scan"]["sensitivity_summary"]["method"] == "minute_feature_scan_v2"
     assert "high_information_question_generation" in report["workflow"]
     assert {"D9", "D10", "D24", "D30", "UL", "A10", "KP_cusp"} <= set(report["sensitivity_layers"])
     assert len(report["questions"]) >= 8
@@ -61,6 +63,9 @@ def test_active_rectification_recasts_candidate_vargas_when_location_is_availabl
     assert "true_varga_recast" not in summary["blocked_layers"]
     assert "true_kp_cusp_recast" not in summary["blocked_layers"]
     sample = report["candidate_scan"]["samples"][1]
+    assert sample["varga_lagna"]["D2_Hora"]["sign"]
+    assert sample["varga_lagna"]["D4_Turyamsa"]["sign"]
+    assert sample["varga_lagna"]["D11_Rudramsa"]["sign"]
     assert sample["varga_lagna"]["D9_Navamsa"]["sign"]
     assert sample["varga_lagna"]["D10_Dasamsa"]["sign"]
     assert sample["arudha"]["A7"]["sign"]

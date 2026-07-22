@@ -5,7 +5,7 @@ import re
 import unicodedata
 from pathlib import Path
 
-from scripts.dynamic_rectification_opportunities import _dimension_opportunity
+from scripts.dynamic_rectification_opportunities import _dimension_opportunity, opportunities
 
 TASK2_PACKET_FIXTURE = (
     Path(__file__).parents[1]
@@ -132,3 +132,35 @@ def test_same_month_windows_receive_distinct_day_precision_labels() -> None:
     ]
     assert len(normalized) == len(set(normalized))
     assert all(len(re.findall(r"\d+", label)) >= 4 for label in labels)
+
+
+def test_fact_priority_changes_question_order_without_changing_public_information_gain() -> None:
+    candidates = ["04:00", "04:01"]
+    windows = []
+    for dimension, priority in (("career", 0.0), ("relationship", 1.0)):
+        for index, (start, end) in enumerate((
+            ("2018-01-01", "2020-12-31"),
+            ("2021-01-01", "2023-12-31"),
+        )):
+            windows.append({
+                "window_group": "periods-2",
+                "dimension_code": dimension,
+                "window_start": start,
+                "window_end": end,
+                "activations": {
+                    "04:00": 1.0 if index == 0 else 0.0,
+                    "04:01": 0.0 if index == 0 else 1.0,
+                },
+                "missing_layers": [],
+                "fact_selection_priority": priority,
+                "fact_priority_version": "birth-time-question-fact-priority-v1",
+                "event_fact_selection_priority": 1.0 if dimension == "career" else 0.0,
+                "event_fact_priority_version": "birth-time-question-event-fact-priority-v1",
+            })
+
+    result = opportunities({"candidate_times": candidates, "windows": windows})
+
+    assert [item["dimension_code"] for item in result] == ["career", "relationship"]
+    assert [item["estimated_information_gain"] for item in result] == [1.0, 1.0]
+    assert all("_fact_selection_priority" not in item for item in result)
+    assert all("_event_fact_selection_priority" not in item for item in result)

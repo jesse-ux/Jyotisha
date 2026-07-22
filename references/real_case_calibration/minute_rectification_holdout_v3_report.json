@@ -1,0 +1,61 @@
+{
+  "scope": "minute_rectification_fact_ranker_v4_blind_holdout",
+  "benchmark_id": "minute_rectification_fact_ranker_v4_holdout_v3",
+  "evaluated_on": "2026-07-21",
+  "status": "invalidated_after_source_audit",
+  "trial_count": 20,
+  "frozen_scoring": {
+    "algorithm_version": "birth-time-event-fact-ranker-v4-shadow",
+    "implementation_hash_matches": true,
+    "implementation_sha256": "f41c298dd6cdcebe7a93e632f7191954be7987f6012ca2a34cecb6e447fbf196"
+  },
+  "validation": {
+    "status_at_replay": "ready_for_blind_replay",
+    "post_replay_status": "invalidated_after_source_audit",
+    "valid_public_aa_cases": 20,
+    "minimum_public_aa_cases": 20,
+    "manifest_errors": [],
+    "invalid_cases": []
+  },
+  "post_replay_source_audit": {
+    "passed": false,
+    "issues": [
+      {"event_id": "robbins_marriage_1968", "submitted_date": "1968", "verified_date": "1967-03-10"},
+      {"event_id": "takamoto_joined_disney_1947", "submitted_date": "1947", "verified_date": "1945"}
+    ]
+  },
+  "release_metrics": {
+    "top_1_rate": {"actual": 0.15, "minimum": 0.6, "passed": false},
+    "top_3_rate": {"actual": 0.25, "minimum": 0.85, "passed": false},
+    "mean_absolute_minute_error": {"actual": 6.95, "maximum": 2.0, "passed": false},
+    "false_confirmation_rate": {"actual": 0.0, "maximum": 0.05, "passed": true},
+    "correct_insufficient_evidence_rejection_rate": {"actual": 1.0, "minimum": 0.9, "passed": true},
+    "confirmation_coverage_rate": 0.0
+  },
+  "metric_gates_passed": false,
+  "verified_minute_claim_allowed": false,
+  "trials": [
+    {"case_id": "barack_obama_1961_aa_v4_holdout", "predicted_time": "19:32", "true_rank": 4, "minute_error": 8, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "angelina_jolie_1975_aa_v4_holdout", "predicted_time": "09:19", "true_rank": 7, "minute_error": 10, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "tiger_woods_1975_aa_v4_holdout", "predicted_time": "22:55", "true_rank": 11, "minute_error": 5, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "elizabeth_taylor_1932_aa_v4_holdout", "predicted_time": "02:39", "true_rank": 6, "minute_error": 9, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "elizabeth_montgomery_1933_aa_v4_holdout", "predicted_time": "16:35", "true_rank": 7, "minute_error": 3, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "pablo_picasso_1881_aa_v4_holdout", "predicted_time": "23:06", "true_rank": 16, "minute_error": 9, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "sigmund_freud_1856_aa_v4_holdout", "predicted_time": "18:22", "true_rank": 10, "minute_error": 8, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "salma_hayek_1966_aa_v4_holdout", "predicted_time": "06:33", "true_rank": 13, "minute_error": 7, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "steve_reich_1936_aa_v4_holdout", "predicted_time": "18:17", "true_rank": 4, "minute_error": 4, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "albert_brooks_1947_aa_v4_holdout", "predicted_time": "03:08", "true_rank": 9, "minute_error": 8, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "paul_ryan_1970_aa_v4_holdout", "predicted_time": "02:47", "true_rank": 2, "minute_error": 10, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": true},
+    {"case_id": "tom_kennedy_1927_aa_v4_holdout", "predicted_time": "17:30", "true_rank": 1, "minute_error": 5, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "andrew_windsor_1960_aa_v4_holdout", "predicted_time": "15:20", "true_rank": 4, "minute_error": 10, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "sean_lennon_1975_aa_v4_holdout", "predicted_time": "02:03", "true_rank": 1, "minute_error": 3, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "joseph_kennedy_iii_1980_aa_v4_holdout", "predicted_time": "21:43", "true_rank": 1, "minute_error": 1, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "kurt_cobain_1967_aa_v4_holdout", "predicted_time": "19:28", "true_rank": 4, "minute_error": 10, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "john_robbins_1947_aa_v4_holdout", "predicted_time": "02:59", "true_rank": 17, "minute_error": 3, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "chad_everett_1937_aa_v4_holdout", "predicted_time": "22:27", "true_rank": 11, "minute_error": 7, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "bernd_eichinger_1949_aa_v4_holdout", "predicted_time": "13:06", "true_rank": 8, "minute_error": 9, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false},
+    {"case_id": "iwao_takamoto_1925_aa_v4_holdout", "predicted_time": "19:50", "true_rank": 3, "minute_error": 10, "would_confirm": false, "neighbor_stability": false, "leave_one_event_out": false}
+  ],
+  "decision": "reject_v4_production_promotion_and_invalidate_holdout_for_release",
+  "boundary": "The failed performance remains diagnostic, but this set is not a valid release holdout after source-content audit failed. It may become development evidence only; a revised scorer requires a new version and a fresh sealed holdout."
+}

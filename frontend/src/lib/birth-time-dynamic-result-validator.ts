@@ -57,7 +57,7 @@ export function assertDynamicScoringResult(
   const expected = high ? "high" : medium ? "medium" : "low";
   if (!segmentIsCoherent(result, currentRange)
     || candidate.confidence !== expected
-    || candidate.canApply !== high
+    || candidate.canApply !== false
     || candidate.evidence.length !== 0) {
     throw new BirthTimeScoringJobError("invalid_result");
   }

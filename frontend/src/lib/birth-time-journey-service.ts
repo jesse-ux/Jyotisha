@@ -17,6 +17,7 @@ import type { TimeRange } from "./birth-time-dynamic-choice.ts";
 import type { DynamicStoredFields, LegacyStoredFields } from "./birth-time-journey-stored-protocol.ts";
 import { RectificationCaseNotFoundError, RectificationQuestionsUnavailableError } from "./birth-time-journey-errors.ts";
 import { createDynamicJourneyMethods } from "./birth-time-dynamic-service-methods.ts";
+import { createDynamicCandidateConfirmation } from "./birth-time-dynamic-candidate-confirmation.ts";
 
 export { RectificationCaseNotFoundError, RectificationQuestionsUnavailableError };
 
@@ -80,6 +81,7 @@ export type DifferencePacketInput = {
   readonly lon: number;
   readonly tz: number;
   readonly evidence: readonly ServerChoiceEvidence[];
+  readonly events: readonly LifeEvent[];
   readonly dismissedOpportunityIds: readonly string[];
   readonly questionFingerprints: readonly string[];
   readonly partitionFingerprints: readonly string[];
@@ -139,12 +141,22 @@ export type DynamicScoringJobCommand = {
 
 export type DynamicScoringJobFailureCommand = DynamicScoringJobCommand & { readonly failureCode: string };
 
+export type DynamicCandidateConfirmationCommand = {
+  readonly userId: string;
+  readonly caseId: string;
+  readonly actionId: string;
+  readonly expectedVersion: number;
+  readonly resultId: string;
+  readonly time: string;
+};
+
 export interface BirthTimeJourneyStore {
   saveAssessment(value: PersistedJourneyAssessment): Promise<string>;
   loadCase(userId: string, caseId: string): Promise<StoredRectificationCase | null>;
   saveScoring(value: LegacyStoredRectificationCase): Promise<void>;
   saveTurn(value: LegacyStoredRectificationCase, expectedVersion: number, actionId: string): Promise<StoredRectificationCase>;
   saveDynamicTurn(value: DynamicStoredRectificationCase, expectedVersion: number, actionId: string): Promise<DynamicStoredRectificationCase>;
+  confirmDynamicCandidate(value: DynamicStoredRectificationCase, command: DynamicCandidateConfirmationCommand): Promise<DynamicStoredRectificationCase>;
   completeDynamicScoringJob(value: DynamicStoredRectificationCase, command: DynamicScoringJobCommand): Promise<DynamicStoredRectificationCase>;
   failDynamicScoringJob(value: DynamicStoredRectificationCase, command: DynamicScoringJobFailureCommand): Promise<DynamicStoredRectificationCase>;
   createDynamicScoringJob?(value: DynamicStoredRectificationCase, expectedVersion: number, actionId: string, questionId: string, job: DynamicScoringJobSpec): Promise<DynamicStoredRectificationCase>;
@@ -193,6 +205,7 @@ export function createBirthTimeJourneyService(ports: BirthTimeJourneyPorts) {
   const guidedCandidates = createGuidedCandidateActions(ports);
   const draftRevisions = createGuidedDraftRevisionActions(ports, turnActions.proposeEvidenceDraft);
   const dynamicMethods = createDynamicJourneyMethods(ports);
+  const dynamicCandidates = createDynamicCandidateConfirmation(ports);
   return {
     async assess(userId: string, assessment: BirthTimeAssessment): Promise<VersionedJourneyResponse | DynamicVersionedJourneyResponse> {
       const scan = await scanAssessment(ports.engine, assessment);
@@ -276,6 +289,7 @@ export function createBirthTimeJourneyService(ports: BirthTimeJourneyPorts) {
     reviseEvidenceDraft: draftRevisions.revise,
     saveGuidedCandidate: guidedCandidates.save,
     confirmGuidedCandidate: guidedCandidates.confirm,
+    confirmDynamicCandidate: dynamicCandidates.confirm,
     pollScoringJob: scoringActions.pollScoringJob,
     ...dynamicMethods,
   };

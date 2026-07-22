@@ -39,7 +39,9 @@ export function decideDynamicStop(input: DynamicStopInput): DynamicStopDecision 
     ? materiallyChanged(input.previousResult, input.result) ? 0 : input.priorPlateauCount + 1
     : input.priorPlateauCount;
   if (input.forcedReason !== null) return { kind: "finish", reason: input.forcedReason, plateauCount };
-  if (input.result?.confidence === "high") return { kind: "finish", reason: "high_confidence", plateauCount };
+  if (input.result?.confidence === "high" && input.result.canApply) {
+    return { kind: "finish", reason: "high_confidence", plateauCount };
+  }
   if (input.effectiveAnswerCount >= 10) return { kind: "finish", reason: "safety_cap", plateauCount };
   if (plateauCount >= 2) return { kind: "finish", reason: "plateau", plateauCount };
   if (input.usefulOpportunityCount === 0) return { kind: "finish", reason: "no_information_gain", plateauCount };

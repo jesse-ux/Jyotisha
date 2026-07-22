@@ -14,12 +14,14 @@ from uuid import NAMESPACE_URL, uuid5
 
 from scripts.dynamic_rectification_opportunities import (
     ALGORITHM_VERSION,
+    OPPORTUNITY_MODEL_VERSION,
     SUPPORTED_DIMENSIONS,
     candidate_times,
     candidate_window_rows,
     canonical_hash,
     compute_candidate_model,
     experience_windows,
+    historical_event_fingerprint,
     opportunities,
     validate_candidate_model,
 )
@@ -59,6 +61,8 @@ def build_difference_packet(request: dict) -> dict:
     model = (
         _compute_candidate_model(request)
         if persisted is None
+        or persisted.get("opportunity_model_version") != OPPORTUNITY_MODEL_VERSION
+        or persisted.get("historical_event_fingerprint") != historical_event_fingerprint(request)
         else _validate_candidate_model(persisted, request)
     )
     dismissed = set(request.get("dismissed_opportunity_ids", []))

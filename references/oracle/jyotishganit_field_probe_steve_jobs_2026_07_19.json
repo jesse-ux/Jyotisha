@@ -1,6 +1,10 @@
 {
-  "boundary": "Raw/hash observation only. Missing Shadbala field or matching signs do not prove formula truth or production timing readiness.",
-  "claim_status": "observation_only",
+  "boundary": "Invalidated because the San Francisco label and stored coordinates do not describe the same canonical public-case input.",
+  "claim_status": "invalidated_input_mismatch",
+  "invalidation": {
+    "reason": "location_label_coordinate_mismatch",
+    "replacement_status": "blocked_until_probe_is_rerun_with_37.7749_-122.4194"
+  },
   "coverage": {
     "BAV_SAV": true,
     "D10": true,

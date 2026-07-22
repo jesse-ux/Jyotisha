@@ -14,18 +14,14 @@ test("birth-time errors preserve a safe server message", () => {
   assert.equal(birthTimeUserError(new Error("候选结果已变化")), "候选结果已变化");
 });
 
-test("all guided journey mutations normalize implementation errors", () => {
+test("all guided and automatic journey mutations normalize implementation errors", () => {
   const sources = [
     "../src/hooks/use-birth-time-guided-journey.ts",
     "../src/hooks/use-birth-time-automatic-journey-effects.ts",
   ].map((path) => readFileSync(new URL(path, import.meta.url), "utf8"));
-  assert.equal(
-    sources.reduce(
-      (count, source) =>
-        count +
-        (source.match(/setError\(birthTimeUserError\(caught\)\)/g) ?? []).length,
-      0,
-    ),
-    3,
-  );
+  for (const source of sources) {
+    assert.ok((source.match(/setError\(birthTimeUserError\(caught\)\)/g) ?? []).length >= 1);
+    assert.equal(source.includes("setError(caught.message"), false);
+    assert.equal(source.includes("setError(caught instanceof Error ? caught.message"), false);
+  }
 });
