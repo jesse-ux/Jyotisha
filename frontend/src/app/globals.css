@@ -164,9 +164,9 @@ button:disabled { cursor: default; opacity: .45; }
 .message-markdown p { margin: 0 0 14px; }
 .message-markdown ul, .message-markdown ol { margin: 10px 0 16px; padding-left: 24px; }
 .message-markdown li { margin: 6px 0; }
-.thinking { height: 24px; display: flex; align-items: center; gap: 5px; }
-.thinking i:nth-child(2) { animation-delay: 100ms; }
-.thinking i:nth-child(3) { animation-delay: 200ms; }
+.agent-activity-status { min-height: 24px; display: flex; align-items: center; gap: var(--space-2); color: var(--color-ink-secondary); font-size: var(--type-body-sm); line-height: 1.5; }
+.agent-activity-status canvas { flex: 0 0 auto; }
+.agent-activity-status + .message-markdown { margin-top: var(--space-2); }
 .composer-suggestions::-webkit-scrollbar { display: none; }
 .composer textarea::placeholder { color: var(--color-ink-tertiary); }
 .composer button svg { width: 19px; height: 19px; }
@@ -542,14 +542,6 @@ button:disabled { cursor: default; opacity: .45; }
 .product-entrypoint-action .starter-arrow { width: 15px; height: 15px; color: currentColor; }
 .starter-loading { color: var(--color-ink-secondary); margin-left: 0; padding: var(--space-5); border-radius: var(--radius-lg); background: var(--color-canvas-muted); font-size: 14px; }
 .starter-note { margin: 10px 0 0; color: var(--color-ink-secondary); line-height: 1.5; grid-column: 1 / -1; font-size: 13px; }
-.parameter-freeze-panel { display: grid; grid-column: 1 / -1; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-canvas); }
-.parameter-freeze-panel > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-2); color: var(--color-ink-secondary); font-size: var(--type-caption); }
-.parameter-freeze-panel b { color: var(--color-ink); font-size: var(--type-title-sm); }
-.parameter-freeze-panel dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: var(--space-2); margin: 0; }
-.parameter-freeze-panel dl > div { min-width: 0; padding: var(--space-2); border-radius: var(--radius-md); background: var(--color-canvas-soft); }
-.parameter-freeze-panel dt { color: var(--color-ink-tertiary); font-size: 11px; }
-.parameter-freeze-panel dd { overflow: hidden; margin: 2px 0 0; color: var(--color-ink); text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
-
 .message-list { margin: 0 auto; width: min(900px, 100%); padding: var(--space-8) var(--space-8) var(--space-16); }
 .message { display: flex; animation: message-enter 160ms var(--ease-out) both; padding: var(--space-2) 0; }
 .agent-avatar { width: 32px; height: 32px; display: block; flex: 0 0 32px; margin-top: var(--space-2); border-radius: 50%; background: var(--color-canvas) url("/jyotish-logo.png") center / contain no-repeat; box-shadow: 0 0 0 1px var(--color-border); }
@@ -565,7 +557,6 @@ button:disabled { cursor: default; opacity: .45; }
 .message-markdown strong { color: var(--color-ink); font-weight: 500; }
 .message-markdown a { text-underline-offset: 3px; color: var(--color-action); }
 .message-markdown code { padding: 2px 5px; font-size: .9em; border-radius: var(--radius-xs); background: var(--color-canvas-muted); font-family: var(--font-mono); }
-.thinking i { width: 5px; height: 5px; border-radius: 50%; animation: pulse 850ms ease-in-out infinite alternate; background: var(--color-action); }
 .error-message { margin: 12px 0 0; padding: 12px 14px; border-left: 3px solid var(--color-danger); background: var(--color-danger-muted); color: var(--color-danger); font-size: 13px; line-height: 1.6; border-color: var(--color-danger); border-radius: 0 var(--radius-md) var(--radius-md) 0; }
 
 .composer-wrap { position: sticky; bottom: 0; z-index: 2; min-width: 0; border-top: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent); padding: var(--space-3) var(--space-6) var(--space-4); background: var(--color-frosted); backdrop-filter: saturate(130%) blur(20px); }
