@@ -201,3 +201,16 @@ test("migration keeps claim, billing recovery, settlement and ACL inside locked 
     assert.match(sql, new RegExp(`grant execute on function public\\.${functionName}\\([\\s\\S]*?to service_role`, "i"));
   }
 });
+
+test("expired handoff leases project as pending so another device can reclaim them", () => {
+  const sql = readFileSync(new URL(
+    "../supabase/migrations/20260722120000_recover_expired_rectification_handoff.sql",
+    import.meta.url,
+  ), "utf8");
+
+  assert.match(
+    sql,
+    /h\.state in \('claimed', 'executing'\)[\s\S]*h\.lease_expires_at <= pg_catalog\.now\(\)[\s\S]*then 'pending'/i,
+  );
+  assert.match(sql, /create or replace function public\.conversational_rectification_handoff_projection/i);
+});
