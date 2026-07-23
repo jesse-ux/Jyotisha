@@ -5,8 +5,8 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 180,
-    "blocked_or_partial_count": 77,
+    "packet_count": 181,
+    "blocked_or_partial_count": 165,
     "human_review_required_count": 4
   },
   "packets": [
@@ -1449,6 +1449,14 @@
       "claim_status": "reuse_plan_only",
       "consumer_policy": "no_truth_upgrade_without_numeric_or_human_labels",
       "claim_boundary": "Open-source and local fragments can reduce implementation/replay effort, but cannot replace missing terms, expected numeric values, raw/hash capture, or independent human labels."
+    },
+    {
+      "packet_id": "pyjhora_traditional_branch_oracle_boundary_2026_07_23",
+      "path": "references/oracle/pyjhora_traditional_branch_oracle_boundary_2026_07_23.json",
+      "domain": "tajika_kp_advanced_av_boundary",
+      "claim_status": "observation_boundary_matrix",
+      "consumer_policy": "sync_matrix_only_do_not_vendor_agpl_implementation",
+      "claim_boundary": "Tajika, KP exact cusp and advanced AV fields are mapped for local calculation, PyJHora observation, jyotishganit/VedicAstro reference, public worked-example status and commercial output allowance; no PyJHora implementation is synced."
     }
   ]
 }
