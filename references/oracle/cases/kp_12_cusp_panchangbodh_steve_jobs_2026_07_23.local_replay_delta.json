@@ -1,0 +1,146 @@
+{
+  "boundary": "Local replay uses VedicAstro/Krishnamurti/Placidus with inferred San Francisco timezone and coordinates. PanchangBodh screenshots do not visibly pin timezone, ayanamsa, or node mode. This delta can support replay readiness only; it cannot promote KP cusp data to final truth or timing/outcome oracle.",
+  "claim_status": "replay_delta_observation_only",
+  "created_at": "2026-07-23",
+  "local_replay_raw": "references/oracle/cases/kp_12_cusp_panchangbodh_steve_jobs_2026_07_23.local_vedicastro_replay.json",
+  "local_replay_raw_sha256": "f5c6eeccf6d61f9dfa87ccf834459376f8b34c5c9dac835a9a50618e1aac3200",
+  "lord_mismatches": [
+    {
+      "cusp": 1,
+      "field": "sub_sub_lord",
+      "local_vedicastro": {
+        "star_lord": "Sun",
+        "sub_lord": "Mars",
+        "sub_sub_lord": "Sun"
+      },
+      "panchangbodh": {
+        "star_lord": "Sun",
+        "sub_lord": "Mars",
+        "sub_sub_lord": "Moon"
+      }
+    }
+  ],
+  "packet_id": "kp_12_cusp_panchangbodh_steve_jobs_2026_07_23",
+  "production_tuning_allowed": false,
+  "raw_hash": "2923f3b1dd6205260b146a253d05d70d26ea5a9ab9c10dd9b68e743bd31ac943",
+  "rows": [
+    {
+      "arcsec_delta_local_minus_panchangbodh": -17,
+      "cusp": 1,
+      "local_vedicastro_degree": "+29:09:09 Leo",
+      "panchangbodh_degree": "29° Leo 09' 26\"",
+      "star_lord_match": true,
+      "sub_lord_match": true,
+      "sub_sub_lord_match": false
+    },
+    {
+      "arcsec_delta_local_minus_panchangbodh": -18,
+      "cusp": 2,
+      "local_vedicastro_degree": "+25:06:14 Virgo",
+      "panchangbodh_degree": "25° Virgo 06' 32\"",
+      "star_lord_match": true,
+      "sub_lord_match": true,
+      "sub_sub_lord_match": true
+    },
+    {
+      "arcsec_delta_local_minus_panchangbodh": -17,
+      "cusp": 3,
+      "local_vedicastro_degree": "+25:12:52 Libra",
+      "panchangbodh_degree": "25° Libra 13' 09\"",
+      "star_lord_match": true,
+      "sub_lord_match": true,
+      "sub_sub_lord_match": true
+    },
+    {
+      "arcsec_delta_local_minus_panchangbodh": -17,
+      "cusp": 4,
+      "local_vedicastro_degree": "+28:10:35 Scorpio",
+      "panchangbodh_degree": "28° Scorpio 10' 52\"",
+      "star_lord_match": true,
+      "sub_lord_match": true,
+      "sub_sub_lord_match": true
+    },
+    {
+      "arcsec_delta_local_minus_panchangbodh": -18,
+      "cusp": 5,
+      "local_vedicastro_degree": "+01:20:06 Capricorn",
+      "panchangbodh_degree": "01° Capricorn 20' 24\"",
+      "star_lord_match": true,
+      "sub_lord_match": true,
+      "sub_sub_lord_match": true
+    },
+    {
+      "arcsec_delta_local_minus_panchangbodh": -17,
+      "cusp": 6,
+      "local_vedicastro_degree": "+02:04:13 Aquarius",
+      "panchangbodh_degree": "02° Aquarius 04' 30\"",
+      "star_lord_match": true,
+      "sub_lord_match": true,
+      "sub_sub_lord_match": true
+    },
+    {
+      "arcsec_delta_local_minus_panchangbodh": -17,
+      "cusp": 7,
+      "local_vedicastro_degree": "+29:09:09 Aquarius",
+      "panchangbodh_degree": "29° Aquarius 09' 26\"",
+      "star_lord_match": true,
+      "sub_lord_match": true,
+      "sub_sub_lord_match": true
+    },
+    {
+      "arcsec_delta_local_minus_panchangbodh": -18,
+      "cusp": 8,
+      "local_vedicastro_degree": "+25:06:14 Pisces",
+      "panchangbodh_degree": "25° Pisces 06' 32\"",
+      "star_lord_match": true,
+      "sub_lord_match": true,
+      "sub_sub_lord_match": true
+    },
+    {
+      "arcsec_delta_local_minus_panchangbodh": -17,
+      "cusp": 9,
+      "local_vedicastro_degree": "+25:12:52 Aries",
+      "panchangbodh_degree": "25° Aries 13' 09\"",
+      "star_lord_match": true,
+      "sub_lord_match": true,
+      "sub_sub_lord_match": true
+    },
+    {
+      "arcsec_delta_local_minus_panchangbodh": -17,
+      "cusp": 10,
+      "local_vedicastro_degree": "+28:10:35 Taurus",
+      "panchangbodh_degree": "28° Taurus 10' 52\"",
+      "star_lord_match": true,
+      "sub_lord_match": true,
+      "sub_sub_lord_match": true
+    },
+    {
+      "arcsec_delta_local_minus_panchangbodh": -18,
+      "cusp": 11,
+      "local_vedicastro_degree": "+01:20:06 Cancer",
+      "panchangbodh_degree": "01° Cancer 20' 24\"",
+      "star_lord_match": true,
+      "sub_lord_match": true,
+      "sub_sub_lord_match": true
+    },
+    {
+      "arcsec_delta_local_minus_panchangbodh": -17,
+      "cusp": 12,
+      "local_vedicastro_degree": "+02:04:13 Leo",
+      "panchangbodh_degree": "02° Leo 04' 30\"",
+      "star_lord_match": true,
+      "sub_lord_match": true,
+      "sub_sub_lord_match": true
+    }
+  ],
+  "scope": "kp_12_cusp_local_replay_delta",
+  "source_packet": "references/oracle/cases/kp_12_cusp_panchangbodh_steve_jobs_2026_07_23.json",
+  "status": "mismatch_explained",
+  "summary": {
+    "degree_tolerance_arcsec": 30,
+    "lord_mismatch_count": 1,
+    "max_abs_arcsec_delta": 18,
+    "row_count": 12
+  },
+  "truth_matrix_allowed": false
+}

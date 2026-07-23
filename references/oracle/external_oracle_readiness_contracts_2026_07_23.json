@@ -1,0 +1,127 @@
+{
+  "scope": "external_oracle_readiness_contracts",
+  "created_at": "2026-07-23",
+  "claim_status": "ready_contract",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "contracts": [
+    {
+      "contract_id": "vedastro_self_host_identity",
+      "status": "blocked_until_reproducible_identity",
+      "source_candidates": [
+        {
+          "name": "VedAstro GitHub",
+          "url": "https://github.com/VedAstro/VedAstro",
+          "use": "source_commit_and_method_inventory"
+        },
+        {
+          "name": "VedAstro.Library NuGet",
+          "url": "https://www.nuget.org/packages/VedAstro.Library",
+          "use": "package_version_and_hash"
+        },
+        {
+          "name": "VedAstro Docker discussion",
+          "url": "https://github.com/orgs/VedAstro/discussions/7",
+          "use": "self_host_docker_starting_point"
+        },
+        {
+          "name": "VedAstro API docs",
+          "url": "https://vedastro.org/API.html",
+          "use": "hosted_api_boundary_and_access_model"
+        }
+      ],
+      "required_fields": [
+        "source_commit_or_tag",
+        "nuget_or_package_sha256",
+        "dll_sha256",
+        "assembly_version",
+        "container_image_digest",
+        "public_method_inventory_sha256",
+        "canonical_case_raw_hashes"
+      ],
+      "ready_when": "All identity fields exist and same canonical cases replay without undocumented hosted drift."
+    },
+    {
+      "contract_id": "kp_12_cusp_numeric_oracle",
+      "status": "blocked_until_complete_public_numeric_table",
+      "source_candidates": [
+        {
+          "name": "AstroSage KP tutorial",
+          "url": "https://kpastrology.astrosage.com/kp-learning-home/tutorial/chapter-2-fundamental-principles",
+          "use": "worked_example_candidate"
+        },
+        {
+          "name": "OnlineJyotish KP Horoscope",
+          "url": "https://www.onlinejyotish.com/free-astrology/kp-horoscope.php",
+          "use": "candidate_12_cusp_report_source"
+        },
+        {
+          "name": "AjmerAstro KP Astrology",
+          "url": "https://www.ajmerastro.com/en/kp-astrology",
+          "use": "candidate_12_cusp_sub_sub_significator_source"
+        },
+        {
+          "name": "PanchangBodh KP calculator",
+          "url": "https://panchangbodh.com/kp-birth-chart-calculator",
+          "use": "candidate_12_cusp_star_sub_sub_source"
+        },
+        {
+          "name": "RoxyAPI KP guide",
+          "url": "https://roxyapi.com/docs/guides/kp",
+          "use": "candidate_api_raw_capture_after_terms"
+        }
+      ],
+      "required_fields": [
+        "birth_or_question_input",
+        "timezone",
+        "ayanamsa",
+        "house_system",
+        "twelve_exact_cusp_longitudes",
+        "twelve_star_lords",
+        "twelve_sub_lords",
+        "twelve_sub_sub_lords",
+        "source_url_or_page_hash",
+        "local_replay_delta"
+      ],
+      "ready_when": "All 12 cusp rows are complete; 11-row label-only packets remain diagnostic."
+    },
+    {
+      "contract_id": "prashna_saham_sphuta_numeric_packet",
+      "status": "blocked_until_complete_input_expected_numeric_replay",
+      "source_candidates": [
+        {
+          "name": "Prashna Marga local locator",
+          "url": "references/oracle/prashna_marga_excerpt_locator_2026_07_20.json",
+          "use": "formula_locator_not_numeric_oracle"
+        },
+        {
+          "name": "PyJHora black-box annual captures",
+          "url": "references/oracle/artifacts/pyjhora_*_varshaphala_*",
+          "use": "AGPL_observation_only"
+        },
+        {
+          "name": "VedAstro method catalog",
+          "url": "references/oracle/vedastro_method_catalog_keyed_2026_07_23.json",
+          "use": "negative_catalog_evidence_for_Prashna_Saham_Sphuta"
+        }
+      ],
+      "required_fields": [
+        "complete_question_or_annual_input",
+        "location_timezone",
+        "ayanamsa_node_mode",
+        "formula_variant",
+        "expected_numeric_longitude_or_chart_field",
+        "source_url_page_or_artifact_hash",
+        "local_replay_result",
+        "external_replay_result_if_available"
+      ],
+      "ready_when": "A packet has complete expected values and replay deltas; VedAstro catalog absence is recorded as not_available_in_catalog."
+    }
+  ],
+  "summary": {
+    "contract_count": 3,
+    "ready_count": 0,
+    "blocked_count": 3
+  },
+  "boundary": "Readiness contracts define acceptance fields. They are not oracle packets and do not promote any calculation or prediction claim."
+}

@@ -1,0 +1,1006 @@
+{
+  "boundary": "Agreement or disagreement between astrology engines only establishes computational reproducibility under pinned inputs. It cannot validate historical-event causality, forecasting accuracy, or a rectified birth minute.",
+  "cases": [
+    {
+      "case_id": "candidate_steve_jobs_apple_ipo_1980",
+      "comparison_rows": [
+        {
+          "field": "Sun.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Aquarius",
+            "jyotishganit": "Aquarius",
+            "native": "Aquarius"
+          }
+        },
+        {
+          "field": "Moon.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Pisces",
+            "jyotishganit": "Pisces",
+            "native": "Pisces"
+          }
+        },
+        {
+          "field": "Mars.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Aries",
+            "jyotishganit": "Aries",
+            "native": "Aries"
+          }
+        },
+        {
+          "field": "Mercury.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Capricorn",
+            "jyotishganit": "Capricorn",
+            "native": "Capricorn"
+          }
+        },
+        {
+          "field": "Jupiter.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Gemini",
+            "jyotishganit": "Gemini",
+            "native": "Gemini"
+          }
+        },
+        {
+          "field": "Venus.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Sagittarius",
+            "jyotishganit": "Sagittarius",
+            "native": "Sagittarius"
+          }
+        },
+        {
+          "field": "Saturn.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Libra",
+            "jyotishganit": "Libra",
+            "native": "Libra"
+          }
+        },
+        {
+          "field": "Sun.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Capricorn",
+            "jyotishganit": "Capricorn",
+            "native": "Capricorn"
+          }
+        },
+        {
+          "field": "Moon.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Scorpio",
+            "jyotishganit": "Scorpio",
+            "native": "Scorpio"
+          }
+        },
+        {
+          "field": "Mars.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Taurus",
+            "jyotishganit": "Taurus",
+            "native": "Taurus"
+          }
+        },
+        {
+          "field": "Mercury.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Cancer",
+            "jyotishganit": "Cancer",
+            "native": "Cancer"
+          }
+        },
+        {
+          "field": "Jupiter.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Gemini",
+            "jyotishganit": "Gemini",
+            "native": "Gemini"
+          }
+        },
+        {
+          "field": "Venus.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Sagittarius",
+            "jyotishganit": "Sagittarius",
+            "native": "Sagittarius"
+          }
+        },
+        {
+          "field": "Saturn.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Gemini",
+            "jyotishganit": "Gemini",
+            "native": "Gemini"
+          }
+        },
+        {
+          "field": "Sun.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Gemini",
+            "jyotishganit": "Gemini",
+            "native": "Gemini"
+          }
+        },
+        {
+          "field": "Moon.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Pisces",
+            "jyotishganit": "Pisces",
+            "native": "Pisces"
+          }
+        },
+        {
+          "field": "Mars.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Taurus",
+            "jyotishganit": "Taurus",
+            "native": "Taurus"
+          }
+        },
+        {
+          "field": "Mercury.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Aries",
+            "jyotishganit": "Aries",
+            "native": "Aries"
+          }
+        },
+        {
+          "field": "Jupiter.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Pisces",
+            "jyotishganit": "Pisces",
+            "native": "Pisces"
+          }
+        },
+        {
+          "field": "Venus.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Virgo",
+            "jyotishganit": "Virgo",
+            "native": "Virgo"
+          }
+        },
+        {
+          "field": "Saturn.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Cancer",
+            "jyotishganit": "Cancer",
+            "native": "Cancer"
+          }
+        },
+        {
+          "field": "Moon.nakshatra",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Uttara Bhadrapada",
+            "jyotishganit": "Uttara Bhadrapada",
+            "native": "Uttara Bhadrapada"
+          }
+        },
+        {
+          "field": "mahadasha_lord",
+          "reason": "jyotishganit surface has no matching current-dasha field; no two-engine timing equivalence claim",
+          "section": "Vimshottari",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": "Ketu",
+            "jyotishganit": null,
+            "native": "Ketu"
+          }
+        },
+        {
+          "field": "antardasha_lord",
+          "reason": "jyotishganit surface has no matching current-dasha field; no two-engine timing equivalence claim",
+          "section": "Vimshottari",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": "Saturn",
+            "jyotishganit": null,
+            "native": "Saturn"
+          }
+        },
+        {
+          "field": "mahadasha_start",
+          "reason": "jyotishganit surface has no matching current-dasha field; no two-engine timing equivalence claim",
+          "section": "Vimshottari",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": "1975-03-22",
+            "jyotishganit": null,
+            "native": "1975-03-20"
+          }
+        },
+        {
+          "field": "mahadasha_end",
+          "reason": "jyotishganit surface has no matching current-dasha field; no two-engine timing equivalence claim",
+          "section": "Vimshottari",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": "1982-03-22",
+            "jyotishganit": null,
+            "native": "1982-03-19"
+          }
+        },
+        {
+          "field": "native_surface",
+          "reason": "No aligned three-engine Narayana surface in this batch",
+          "section": "Narayana",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": null,
+            "jyotishganit": null,
+            "native": true
+          }
+        }
+      ],
+      "engines": {
+        "PyJHora_JHora": {
+          "license_boundary": "AGPL observation only",
+          "path": "references/oracle/artifacts/candidate_multi_engine_observation_2026_07_23/candidate_steve_jobs_apple_ipo_1980_pyjhora.json",
+          "sha256": "d1162fd4ffabdb468f9e85618dbf4030f8ca6789eed5e4bd862b8614448fbf93",
+          "status": "observed"
+        },
+        "VedAstro": {
+          "artifact_path": "references/oracle/artifacts/vedastro_steve_jobs_contract_probe_keyed_2026_07_23.json",
+          "boundary": "Archived official raw is a separate Jobs contract probe; it is not used to fill fields for the other two cases.",
+          "sha256": "982ee9d4f954786d99f61c9c521fdda26d823997d7b3d333768ec6894fcc635c",
+          "status": "observed"
+        },
+        "jyotishganit": {
+          "license_boundary": "MIT observation",
+          "path": "references/oracle/artifacts/candidate_multi_engine_observation_2026_07_23/candidate_steve_jobs_apple_ipo_1980_jyotishganit.json",
+          "sha256": "82d5d486a8500674bc3480ddce60d13e6121c4406856b4b3be5e3f02cc5ff744",
+          "status": "observed"
+        },
+        "native": {
+          "path": "references/oracle/artifacts/candidate_multi_engine_observation_2026_07_23/candidate_steve_jobs_apple_ipo_1980_native.json",
+          "sha256": "f8e4d6d4222ef0c964af774c3b18fdbba3ee7ff9cf9976be1c080a766e9a0c48",
+          "status": "observed"
+        }
+      },
+      "event_outcome_validation": "not_run_machine_prepared_labels_not_truth",
+      "input_manifest": {
+        "birth": {
+          "day": 24,
+          "hour": 19,
+          "lat": 37.7749,
+          "lon": -122.4194,
+          "minute": 15,
+          "month": 2,
+          "tz": -8.0,
+          "year": 1955
+        },
+        "coordinate_basis": "existing public AA benchmark fixture: San Francisco 37.7749,-122.4194,-08:00",
+        "reference_date": "1980-12-12",
+        "settings": {
+          "ayanamsa": "lahiri",
+          "node_mode": "mean",
+          "time_basis": "local_civil_birth_time_with_explicit_offset"
+        },
+        "sha256": "a11219d73a8aabea21536000de8f4c1dd2083e0b73e8cc09009ea5d035dc0c4b"
+      },
+      "summary": {
+        "match_count": 22,
+        "mismatch_count": 0,
+        "not_comparable_count": 5
+      }
+    },
+    {
+      "case_id": "candidate_barack_obama_2008_election",
+      "comparison_rows": [
+        {
+          "field": "Sun.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Cancer",
+            "jyotishganit": "Cancer",
+            "native": "Cancer"
+          }
+        },
+        {
+          "field": "Moon.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Taurus",
+            "jyotishganit": "Taurus",
+            "native": "Taurus"
+          }
+        },
+        {
+          "field": "Mars.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Leo",
+            "jyotishganit": "Leo",
+            "native": "Leo"
+          }
+        },
+        {
+          "field": "Mercury.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Cancer",
+            "jyotishganit": "Cancer",
+            "native": "Cancer"
+          }
+        },
+        {
+          "field": "Jupiter.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Capricorn",
+            "jyotishganit": "Capricorn",
+            "native": "Capricorn"
+          }
+        },
+        {
+          "field": "Venus.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Gemini",
+            "jyotishganit": "Gemini",
+            "native": "Gemini"
+          }
+        },
+        {
+          "field": "Saturn.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Capricorn",
+            "jyotishganit": "Capricorn",
+            "native": "Capricorn"
+          }
+        },
+        {
+          "field": "Sun.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Sagittarius",
+            "jyotishganit": "Sagittarius",
+            "native": "Sagittarius"
+          }
+        },
+        {
+          "field": "Moon.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Aries",
+            "jyotishganit": "Aries",
+            "native": "Aries"
+          }
+        },
+        {
+          "field": "Mars.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Sagittarius",
+            "jyotishganit": "Sagittarius",
+            "native": "Sagittarius"
+          }
+        },
+        {
+          "field": "Mercury.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Virgo",
+            "jyotishganit": "Virgo",
+            "native": "Virgo"
+          }
+        },
+        {
+          "field": "Jupiter.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Pisces",
+            "jyotishganit": "Pisces",
+            "native": "Pisces"
+          }
+        },
+        {
+          "field": "Venus.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Sagittarius",
+            "jyotishganit": "Sagittarius",
+            "native": "Sagittarius"
+          }
+        },
+        {
+          "field": "Saturn.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Capricorn",
+            "jyotishganit": "Capricorn",
+            "native": "Capricorn"
+          }
+        },
+        {
+          "field": "Sun.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Virgo",
+            "jyotishganit": "Virgo",
+            "native": "Virgo"
+          }
+        },
+        {
+          "field": "Moon.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Aries",
+            "jyotishganit": "Aries",
+            "native": "Aries"
+          }
+        },
+        {
+          "field": "Mars.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Taurus",
+            "jyotishganit": "Taurus",
+            "native": "Taurus"
+          }
+        },
+        {
+          "field": "Mercury.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Gemini",
+            "jyotishganit": "Gemini",
+            "native": "Gemini"
+          }
+        },
+        {
+          "field": "Jupiter.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Scorpio",
+            "jyotishganit": "Scorpio",
+            "native": "Scorpio"
+          }
+        },
+        {
+          "field": "Venus.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Leo",
+            "jyotishganit": "Leo",
+            "native": "Leo"
+          }
+        },
+        {
+          "field": "Saturn.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Virgo",
+            "jyotishganit": "Virgo",
+            "native": "Virgo"
+          }
+        },
+        {
+          "field": "Moon.nakshatra",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Rohini",
+            "jyotishganit": "Rohini",
+            "native": "Rohini"
+          }
+        },
+        {
+          "field": "mahadasha_lord",
+          "reason": "jyotishganit surface has no matching current-dasha field; no two-engine timing equivalence claim",
+          "section": "Vimshottari",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": "Jupiter",
+            "jyotishganit": null,
+            "native": "Jupiter"
+          }
+        },
+        {
+          "field": "antardasha_lord",
+          "reason": "jyotishganit surface has no matching current-dasha field; no two-engine timing equivalence claim",
+          "section": "Vimshottari",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": "Moon",
+            "jyotishganit": null,
+            "native": "Moon"
+          }
+        },
+        {
+          "field": "mahadasha_start",
+          "reason": "jyotishganit surface has no matching current-dasha field; no two-engine timing equivalence claim",
+          "section": "Vimshottari",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": "1996-07-24",
+            "jyotishganit": null,
+            "native": "1996-07-25"
+          }
+        },
+        {
+          "field": "mahadasha_end",
+          "reason": "jyotishganit surface has no matching current-dasha field; no two-engine timing equivalence claim",
+          "section": "Vimshottari",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": "2012-07-25",
+            "jyotishganit": null,
+            "native": "2012-07-25"
+          }
+        },
+        {
+          "field": "native_surface",
+          "reason": "No aligned three-engine Narayana surface in this batch",
+          "section": "Narayana",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": null,
+            "jyotishganit": null,
+            "native": true
+          }
+        }
+      ],
+      "engines": {
+        "PyJHora_JHora": {
+          "license_boundary": "AGPL observation only",
+          "path": "references/oracle/artifacts/candidate_multi_engine_observation_2026_07_23/candidate_barack_obama_2008_election_pyjhora.json",
+          "sha256": "28b0f9cb4f17b020fc26e744250014f818d7113dfebd58c7f0c543c5e5014370",
+          "status": "observed"
+        },
+        "VedAstro": {
+          "reason": "Official raw requests were not run for this candidate in this batch; availability is not a raw observation.",
+          "status": "not_captured_for_this_case"
+        },
+        "jyotishganit": {
+          "license_boundary": "MIT observation",
+          "path": "references/oracle/artifacts/candidate_multi_engine_observation_2026_07_23/candidate_barack_obama_2008_election_jyotishganit.json",
+          "sha256": "a97c5543eafbad8d175f29fdc26f25645f749b5d387ba6968c0fff3430404b50",
+          "status": "observed"
+        },
+        "native": {
+          "path": "references/oracle/artifacts/candidate_multi_engine_observation_2026_07_23/candidate_barack_obama_2008_election_native.json",
+          "sha256": "e91b2ba68f83496a455147833fddd7046b83d6348fbaa09b82e15a1dd15ea1a8",
+          "status": "observed"
+        }
+      },
+      "event_outcome_validation": "not_run_machine_prepared_labels_not_truth",
+      "input_manifest": {
+        "birth": {
+          "day": 4,
+          "hour": 19,
+          "lat": 21.3069,
+          "lon": -157.8583,
+          "minute": 24,
+          "month": 8,
+          "tz": -10.0,
+          "year": 1961
+        },
+        "coordinate_basis": "existing public AA benchmark fixture: Honolulu 21.3069,-157.8583,-10:00",
+        "reference_date": "2008-11-04",
+        "settings": {
+          "ayanamsa": "lahiri",
+          "node_mode": "mean",
+          "time_basis": "local_civil_birth_time_with_explicit_offset"
+        },
+        "sha256": "286f6777fad7b717c62e62bf91f79df964a2d05d53c6e6557399d2b5de80cc9f"
+      },
+      "summary": {
+        "match_count": 22,
+        "mismatch_count": 0,
+        "not_comparable_count": 5
+      }
+    },
+    {
+      "case_id": "candidate_princess_diana_wedding_1981",
+      "comparison_rows": [
+        {
+          "field": "Sun.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Gemini",
+            "jyotishganit": "Gemini",
+            "native": "Gemini"
+          }
+        },
+        {
+          "field": "Moon.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Aquarius",
+            "jyotishganit": "Aquarius",
+            "native": "Aquarius"
+          }
+        },
+        {
+          "field": "Mars.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Leo",
+            "jyotishganit": "Leo",
+            "native": "Leo"
+          }
+        },
+        {
+          "field": "Mercury.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Gemini",
+            "jyotishganit": "Gemini",
+            "native": "Gemini"
+          }
+        },
+        {
+          "field": "Jupiter.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Capricorn",
+            "jyotishganit": "Capricorn",
+            "native": "Capricorn"
+          }
+        },
+        {
+          "field": "Venus.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Taurus",
+            "jyotishganit": "Taurus",
+            "native": "Taurus"
+          }
+        },
+        {
+          "field": "Saturn.sign",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Capricorn",
+            "jyotishganit": "Capricorn",
+            "native": "Capricorn"
+          }
+        },
+        {
+          "field": "Sun.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Aquarius",
+            "jyotishganit": "Aquarius",
+            "native": "Aquarius"
+          }
+        },
+        {
+          "field": "Moon.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Libra",
+            "jyotishganit": "Libra",
+            "native": "Libra"
+          }
+        },
+        {
+          "field": "Mars.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Gemini",
+            "jyotishganit": "Gemini",
+            "native": "Gemini"
+          }
+        },
+        {
+          "field": "Mercury.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Sagittarius",
+            "jyotishganit": "Sagittarius",
+            "native": "Sagittarius"
+          }
+        },
+        {
+          "field": "Jupiter.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Aries",
+            "jyotishganit": "Aries",
+            "native": "Aries"
+          }
+        },
+        {
+          "field": "Venus.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Capricorn",
+            "jyotishganit": "Capricorn",
+            "native": "Capricorn"
+          }
+        },
+        {
+          "field": "Saturn.sign",
+          "section": "D9",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Aquarius",
+            "jyotishganit": "Aquarius",
+            "native": "Aquarius"
+          }
+        },
+        {
+          "field": "Sun.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Scorpio",
+            "jyotishganit": "Scorpio",
+            "native": "Scorpio"
+          }
+        },
+        {
+          "field": "Moon.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Aquarius",
+            "jyotishganit": "Aquarius",
+            "native": "Aquarius"
+          }
+        },
+        {
+          "field": "Mars.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Libra",
+            "jyotishganit": "Libra",
+            "native": "Libra"
+          }
+        },
+        {
+          "field": "Mercury.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Virgo",
+            "jyotishganit": "Virgo",
+            "native": "Virgo"
+          }
+        },
+        {
+          "field": "Jupiter.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Sagittarius",
+            "jyotishganit": "Sagittarius",
+            "native": "Sagittarius"
+          }
+        },
+        {
+          "field": "Venus.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Capricorn",
+            "jyotishganit": "Capricorn",
+            "native": "Capricorn"
+          }
+        },
+        {
+          "field": "Saturn.sign",
+          "section": "D10",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Libra",
+            "jyotishganit": "Libra",
+            "native": "Libra"
+          }
+        },
+        {
+          "field": "Moon.nakshatra",
+          "section": "D1",
+          "status": "match",
+          "values": {
+            "PyJHora_JHora": "Dhanishta",
+            "jyotishganit": "Dhanishta",
+            "native": "Dhanishta"
+          }
+        },
+        {
+          "field": "mahadasha_lord",
+          "reason": "jyotishganit surface has no matching current-dasha field; no two-engine timing equivalence claim",
+          "section": "Vimshottari",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": "Rahu",
+            "jyotishganit": null,
+            "native": "Rahu"
+          }
+        },
+        {
+          "field": "antardasha_lord",
+          "reason": "jyotishganit surface has no matching current-dasha field; no two-engine timing equivalence claim",
+          "section": "Vimshottari",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": "Mars",
+            "jyotishganit": null,
+            "native": "Mars"
+          }
+        },
+        {
+          "field": "mahadasha_start",
+          "reason": "jyotishganit surface has no matching current-dasha field; no two-engine timing equivalence claim",
+          "section": "Vimshottari",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": "1964-02-05",
+            "jyotishganit": null,
+            "native": "1964-02-05"
+          }
+        },
+        {
+          "field": "mahadasha_end",
+          "reason": "jyotishganit surface has no matching current-dasha field; no two-engine timing equivalence claim",
+          "section": "Vimshottari",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": "1982-02-04",
+            "jyotishganit": null,
+            "native": "1982-02-05"
+          }
+        },
+        {
+          "field": "native_surface",
+          "reason": "No aligned three-engine Narayana surface in this batch",
+          "section": "Narayana",
+          "status": "not_comparable",
+          "values": {
+            "PyJHora_JHora": null,
+            "jyotishganit": null,
+            "native": true
+          }
+        }
+      ],
+      "engines": {
+        "PyJHora_JHora": {
+          "license_boundary": "AGPL observation only",
+          "path": "references/oracle/artifacts/candidate_multi_engine_observation_2026_07_23/candidate_princess_diana_wedding_1981_pyjhora.json",
+          "sha256": "3e3b08a3c950e3db439b07a62e997be640abaca7a4867c567880f472e7737e10",
+          "status": "observed"
+        },
+        "VedAstro": {
+          "reason": "Official raw requests were not run for this candidate in this batch; availability is not a raw observation.",
+          "status": "not_captured_for_this_case"
+        },
+        "jyotishganit": {
+          "license_boundary": "MIT observation",
+          "path": "references/oracle/artifacts/candidate_multi_engine_observation_2026_07_23/candidate_princess_diana_wedding_1981_jyotishganit.json",
+          "sha256": "f78f210b55abae1db0935ded31b9b0b958e712f9beac4ba3e74c4bf5487b5856",
+          "status": "observed"
+        },
+        "native": {
+          "path": "references/oracle/artifacts/candidate_multi_engine_observation_2026_07_23/candidate_princess_diana_wedding_1981_native.json",
+          "sha256": "a33d58cab5d796b39bf9b8fdf2ad95477f7e01981bfe57814e8bbc0a02e063fa",
+          "status": "observed"
+        }
+      },
+      "event_outcome_validation": "not_run_machine_prepared_labels_not_truth",
+      "input_manifest": {
+        "birth": {
+          "day": 1,
+          "hour": 19,
+          "lat": 52.8294,
+          "lon": 0.5143,
+          "minute": 45,
+          "month": 7,
+          "tz": 1.0,
+          "year": 1961
+        },
+        "coordinate_basis": "existing public AA benchmark fixture: Sandringham 52.8294,0.5143,+01:00",
+        "reference_date": "1981-07-29",
+        "settings": {
+          "ayanamsa": "lahiri",
+          "node_mode": "mean",
+          "time_basis": "local_civil_birth_time_with_explicit_offset"
+        },
+        "sha256": "759b62b36e627290063f44b2ed2360d169a8d755dd545393ecd7e266b5ebd980"
+      },
+      "summary": {
+        "match_count": 22,
+        "mismatch_count": 0,
+        "not_comparable_count": 5
+      }
+    }
+  ],
+  "claim_status": "observation_only_not_outcome_validation",
+  "production_tuning_allowed": false,
+  "scope": "candidate_multi_engine_observation_replay",
+  "summary": {
+    "VedAstro_policy": "official raw required per case before included as same-case observation",
+    "case_count": 3,
+    "required_engines": [
+      "native",
+      "PyJHora_JHora",
+      "jyotishganit"
+    ]
+  }
+}

@@ -1,0 +1,181 @@
+{
+  "boundary": "KP 12 cusp source packet transcribed from user screenshots. It must pass intake validation and then local replay before any oracle status upgrade.",
+  "claim_status": "ready_for_replay_packet",
+  "created_at": "2026-07-23",
+  "packets": [
+    {
+      "ayanamsa": "KP implied by KP Birth Chart Calculator; exact ayanamsa setting not explicitly visible",
+      "birth_or_question_input": {
+        "date": "1955-02-24",
+        "gender": "male",
+        "latitude": "inferred_not_page_visible",
+        "longitude": "inferred_not_page_visible",
+        "name": "Steve Jobs",
+        "place": "San Francisco, United States",
+        "time": "19:15:00",
+        "time_displayed": "07:15 PM",
+        "timezone": "America/Los_Angeles / -08:00 inferred from city and public birth data",
+        "timezone_visibility": "not_explicitly_visible_on_page"
+      },
+      "claim_boundary": "Ready-for-replay packet only. PanchangBodh visibly provides KP Placidus 12 cusp degree/star/sub/sub-sub rows. Local VedicAstro replay is degree-close but has one cusp-1 sub-sub-lord mismatch; timezone, exact ayanamsa and node mode are not explicitly visible. This packet is not final truth or timing validation.",
+      "domain": "kp_12_cusp",
+      "house_system": "Placidus explicitly visible",
+      "local_replay": {
+        "delta_artifact": "references/oracle/cases/kp_12_cusp_panchangbodh_steve_jobs_2026_07_23.local_replay_delta.json",
+        "delta_summary": "Local VedicAstro replay with inferred San Francisco timezone/coordinates is within 18 arcsec for all 12 cusps; star/sub lords match; cusp 1 sub-sub lord differs (PanchangBodh Moon vs local VedicAstro Sun). Treat as boundary/method/settings delta, not final truth.",
+        "local_replay_raw": "references/oracle/vedicastro_kp_house_cusp_probe_steve_jobs_sf_runtime_2026_07_23.json",
+        "lord_mismatch_count": 1,
+        "max_abs_arcsec_delta": 18,
+        "status": "mismatch_explained"
+      },
+      "packet_id": "kp_12_cusp_panchangbodh_steve_jobs_2026_07_23",
+      "source_provenance": {
+        "page_or_artifact_hash": "sha256:1f0a91b8e30f974cd210ed71a8afb99a427c7215abaad6c2059111bca247ba18",
+        "screenshots": [
+          {
+            "path": "/var/folders/s_/jf0j1pnj28n0lqg4rsqzy4hm0000gn/T/TemporaryItems/NSIRD_screencaptureui_MiQah8/截屏2026-07-23 15.47.13.png",
+            "role": "12_cusp_table",
+            "sha256": "1f0a91b8e30f974cd210ed71a8afb99a427c7215abaad6c2059111bca247ba18"
+          },
+          {
+            "path": "/var/folders/s_/jf0j1pnj28n0lqg4rsqzy4hm0000gn/T/TemporaryItems/NSIRD_screencaptureui_k2dW6i/截屏2026-07-23 15.49.54.png",
+            "role": "input_form_and_url",
+            "sha256": "10b31e369a9a200af9c5fc0553d4b2bd04a03c4a6799b4131c0b6d6345e5bd6e"
+          },
+          {
+            "path": "/var/folders/s_/jf0j1pnj28n0lqg4rsqzy4hm0000gn/T/TemporaryItems/NSIRD_screencaptureui_8A6Xug/截屏2026-07-23 15.49.05.png",
+            "role": "source_navigation",
+            "sha256": "509f7a062c8c18b477b66ee837082bffb865421572402c0224388c65a6830933"
+          },
+          {
+            "path": "/var/folders/s_/jf0j1pnj28n0lqg4rsqzy4hm0000gn/T/TemporaryItems/NSIRD_screencaptureui_SYW6mT/截屏2026-07-23 15.52.30.png",
+            "role": "significator_method_reference",
+            "sha256": "4d997e4e8000482c8ca9a4c510ed5424526f297c8ca4b98c32676c9c05bfb2af"
+          }
+        ],
+        "source_name": "PanchangBodh KP Birth Chart Calculator — Placidus Cusps & Sub Lords",
+        "url": "https://panchangbodh.com/kp-birth-chart-calculator"
+      },
+      "timezone": "America/Los_Angeles / -08:00 inferred_not_page_visible",
+      "twelve_exact_cusp_longitudes": [
+        {
+          "cusp": 1,
+          "degree": "29° Leo 09' 26\"",
+          "nakshatra": "Uttara Phalguni",
+          "sign": "Leo"
+        },
+        {
+          "cusp": 2,
+          "degree": "25° Virgo 06' 32\"",
+          "nakshatra": "Chitra",
+          "sign": "Virgo"
+        },
+        {
+          "cusp": 3,
+          "degree": "25° Libra 13' 09\"",
+          "nakshatra": "Vishakha",
+          "sign": "Libra"
+        },
+        {
+          "cusp": 4,
+          "degree": "28° Scorpio 10' 52\"",
+          "nakshatra": "Jyeshtha",
+          "sign": "Scorpio"
+        },
+        {
+          "cusp": 5,
+          "degree": "01° Capricorn 20' 24\"",
+          "nakshatra": "Uttara Ashadha",
+          "sign": "Capricorn"
+        },
+        {
+          "cusp": 6,
+          "degree": "02° Aquarius 04' 30\"",
+          "nakshatra": "Dhanishta",
+          "sign": "Aquarius"
+        },
+        {
+          "cusp": 7,
+          "degree": "29° Aquarius 09' 26\"",
+          "nakshatra": "Purva Bhadrapada",
+          "sign": "Aquarius"
+        },
+        {
+          "cusp": 8,
+          "degree": "25° Pisces 06' 32\"",
+          "nakshatra": "Revati",
+          "sign": "Pisces"
+        },
+        {
+          "cusp": 9,
+          "degree": "25° Aries 13' 09\"",
+          "nakshatra": "Bharani",
+          "sign": "Aries"
+        },
+        {
+          "cusp": 10,
+          "degree": "28° Taurus 10' 52\"",
+          "nakshatra": "Mrigashira",
+          "sign": "Taurus"
+        },
+        {
+          "cusp": 11,
+          "degree": "01° Cancer 20' 24\"",
+          "nakshatra": "Punarvasu",
+          "sign": "Cancer"
+        },
+        {
+          "cusp": 12,
+          "degree": "02° Leo 04' 30\"",
+          "nakshatra": "Magha",
+          "sign": "Leo"
+        }
+      ],
+      "twelve_star_lords": [
+        "Sun",
+        "Mars",
+        "Jupiter",
+        "Mercury",
+        "Sun",
+        "Mars",
+        "Jupiter",
+        "Mercury",
+        "Venus",
+        "Mars",
+        "Jupiter",
+        "Ketu"
+      ],
+      "twelve_sub_lords": [
+        "Mars",
+        "Rahu",
+        "Mercury",
+        "Saturn",
+        "Jupiter",
+        "Ketu",
+        "Sun",
+        "Rahu",
+        "Mercury",
+        "Saturn",
+        "Rahu",
+        "Venus"
+      ],
+      "twelve_sub_sub_lords": [
+        "Moon",
+        "Mercury",
+        "Rahu",
+        "Saturn",
+        "Jupiter",
+        "Sun",
+        "Saturn",
+        "Mercury",
+        "Rahu",
+        "Saturn",
+        "Rahu",
+        "Jupiter"
+      ]
+    }
+  ],
+  "production_tuning_allowed": false,
+  "scope": "numeric_oracle_packet_intake",
+  "truth_matrix_allowed": false
+}

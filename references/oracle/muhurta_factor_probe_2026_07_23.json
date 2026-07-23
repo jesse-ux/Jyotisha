@@ -1,0 +1,170 @@
+{
+  "boundary": "Muhurta factors are observations only；未通过完整 worked examples 与负样本验证，不能作为确定择日承诺。",
+  "candidate_windows": [
+    {
+      "blockers": [],
+      "claim_status": "exploratory_muhurta_candidate",
+      "confidence_cap": "low",
+      "label": "abhijit_reference_window",
+      "signals": [
+        "Tarabala",
+        "Chandrabala",
+        "Abhijit"
+      ]
+    }
+  ],
+  "claim_status": "exploratory_muhurta_candidate",
+  "created_at": "2026-07-19",
+  "date": "2026-07-23",
+  "ephemeris_source": "swisseph",
+  "factor_scorecard": {
+    "boundary": "Factor scorecard is for comparison only; it is not a final electional verdict.",
+    "caution_factor_count": 2,
+    "caution_factors": [
+      "yamaganda",
+      "gulika_kalam"
+    ],
+    "claim_status": "factor_only_not_final_muhurta_verdict",
+    "favorable_factor_count": 5,
+    "favorable_factors": [
+      "tarabala",
+      "chandrabala",
+      "sankranti",
+      "vyatipata",
+      "vaidhriti"
+    ],
+    "score_cap": "low"
+  },
+  "factors": {
+    "abhijit_muhurta": {
+      "description": "Abhijit Muhurta 是一天中最吉祥的时段（正午前后各24分钟）",
+      "duration_minutes": 48,
+      "rule": "日升到日落共15个 muhurta，第8个（中间）即 Abhijit",
+      "warning": "周三（Wednesday/Budha Vara）不宜使用 Abhijit"
+    },
+    "chandrabala": {
+      "favorable": true,
+      "relative_house": 11,
+      "status": "computed_rule_probe"
+    },
+    "gulika_kalam": {
+      "quality": "avoid_or_handle_with_caution",
+      "status": "computed_rule_probe",
+      "window": {
+        "duration_minutes": 90.0,
+        "end": "10:30",
+        "segment": 3,
+        "start": "09:00"
+      }
+    },
+    "panchaka": {
+      "active": false,
+      "moon_sign_index": 6,
+      "quality": "neutral",
+      "status": "computed_rule_probe"
+    },
+    "panchanga": {
+      "auspicious_count": 4,
+      "hora": {
+        "hora_from_sunrise": 6.0,
+        "hora_lord": "Saturn",
+        "hora_num": 7,
+        "quality": "asubha"
+      },
+      "karana": {
+        "is_vishti": false,
+        "karana": "Taitila",
+        "karana_num": 18,
+        "quality": "subha"
+      },
+      "nakshatra": {
+        "moon_lon": 209.24,
+        "nakshatra": "Vishakha",
+        "nakshatra_idx": 15,
+        "pada": 3,
+        "quality": "mixed",
+        "type": "mixed"
+      },
+      "overall_quality": "吉（Subha）",
+      "overall_score": 0.75,
+      "rahu_kala": {
+        "duration_minutes": 90.0,
+        "end": "15:00",
+        "guidance": "Avoid important beginnings and commitments.",
+        "label": "Rahu Kala",
+        "segment": 6,
+        "start": "13:30"
+      },
+      "tithi": {
+        "full_name": "Shukla Dashami",
+        "moon_sun_diff": 112.8,
+        "name": "Dashami",
+        "paksha": "Shukla",
+        "quality": "subha",
+        "tithi_in_paksha": 10,
+        "tithi_num": 10
+      },
+      "total_elements": 6,
+      "vara": {
+        "quality": "subha",
+        "vara": "Thursday",
+        "vara_lord": "Jupiter",
+        "weekday_idx": 4
+      },
+      "warnings": [],
+      "yoga": {
+        "quality": "subha",
+        "sun_moon_sum": 305.68,
+        "yoga": "Shubha",
+        "yoga_idx": 22
+      }
+    },
+    "rahu_kalam": {
+      "duration_minutes": 90.0,
+      "end": "15:00",
+      "guidance": "Avoid important beginnings and commitments.",
+      "label": "Rahu Kala",
+      "segment": 6,
+      "start": "13:30"
+    },
+    "sankranti": {
+      "active_or_near": false,
+      "quality": "not_near_boundary",
+      "status": "boundary_screen_observation",
+      "sun_degree_in_sign": 6.437
+    },
+    "tarabala": {
+      "favorable": true,
+      "status": "computed_rule_probe",
+      "tara_class": 9,
+      "tara_position": 27
+    },
+    "vaidhriti": {
+      "active": false,
+      "current_yoga": "Shubha",
+      "quality": "not_active",
+      "status": "computed_rule_probe"
+    },
+    "vyatipata": {
+      "active": false,
+      "current_yoga": "Shubha",
+      "quality": "not_active",
+      "status": "computed_rule_probe"
+    },
+    "yamaganda": {
+      "quality": "avoid",
+      "status": "computed_rule_probe",
+      "window": {
+        "duration_minutes": 90.0,
+        "end": "07:30",
+        "segment": 1,
+        "start": "06:00"
+      }
+    }
+  },
+  "final_muhurta_verdict_status": "blocked_until_oracle",
+  "full_scoring_status": "factor_only_scoring_observation",
+  "production_tuning_allowed": false,
+  "scope": "muhurta_factor_probe",
+  "verified_muhurta_verdict": false
+}

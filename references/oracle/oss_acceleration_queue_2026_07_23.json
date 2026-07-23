@@ -1,0 +1,95 @@
+{
+  "scope": "oss_acceleration_queue",
+  "created_at": "2026-07-23",
+  "claim_status": "reuse_plan_only",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "rows": [
+    {
+      "source": "PyJHora",
+      "url": "https://github.com/naturalstupid/PyJHora",
+      "license_boundary": "AGPL black-box observation only; do not vendor or copy implementation.",
+      "helps": [
+        "Prashna Sphuta",
+        "Gulika/Maandi",
+        "Panchanga",
+        "Muhurta factors",
+        "Tajika/Varshaphala"
+      ],
+      "current_local_status": "already_used_for_observation",
+      "next_reuse": "Add more fixed public inputs only when source input is complete; compare raw/hash against local formulas.",
+      "truth_upgrade": "no"
+    },
+    {
+      "source": "VedAstro.Python / VedAstro hosted",
+      "url": "https://github.com/VedAstro/VedAstro.Python",
+      "license_boundary": "Hosted/API raw capture requires configured key, endpoint/version metadata, and retention permission.",
+      "helps": [
+        "method catalog",
+        "official raw capture",
+        "possible Prashna/Tajika/Gulika/Sphuta endpoint discovery"
+      ],
+      "current_local_status": "gateway_available_key_not_persisted",
+      "next_reuse": "Run method catalog and raw capture from local env only; store hashes, not secrets.",
+      "truth_upgrade": "observation_only_until_method_identity_and_numeric_expected_values"
+    },
+    {
+      "source": "RoxyAPI KP",
+      "url": "https://github.com/RoxyAPI/kp-astrology-api",
+      "license_boundary": "API/client surface candidate; key/terms/version required before raw archival.",
+      "helps": [
+        "KP 12 cusp",
+        "star/sub/sub-sub",
+        "ruling planets"
+      ],
+      "current_local_status": "capture_contract_ready_no_provider_key",
+      "next_reuse": "If provider key is supplied, capture one public fixed chart raw and schema fingerprint.",
+      "truth_upgrade": "no_prediction_without_public_expected_table_and_holdout"
+    },
+    {
+      "source": "AstrologyAPI KP house cusps",
+      "url": "https://www.astrologyapi.com/docs/api-ref/77/kp_house_cusps",
+      "license_boundary": "Hosted API candidate; terms and raw retention permission required.",
+      "helps": [
+        "KP 12 cusp exact longitude"
+      ],
+      "current_local_status": "candidate_only",
+      "next_reuse": "Use only after API credentials and endpoint version are pinned.",
+      "truth_upgrade": "no_prediction_without_holdout"
+    },
+    {
+      "source": "panchangam-js / panchanga APIs",
+      "url": "https://github.com/search?q=panchangam+rahu+kalam+gulika&type=repositories",
+      "license_boundary": "Per-repo license check required before adapter use.",
+      "helps": [
+        "Rahu Kalam",
+        "Yamaganda",
+        "Gulika Kalam",
+        "Abhijit",
+        "daily Panchanga factors"
+      ],
+      "current_local_status": "source_candidate_matrix_only",
+      "next_reuse": "Pin permissive repo, package hash, and one fixed-input raw comparison.",
+      "truth_upgrade": "factor_observation_only"
+    },
+    {
+      "source": "MayaAstroLib / jyotish-flutter-library candidates",
+      "url": "https://github.com/search?q=vedic+astrology+gulika+saham&type=repositories",
+      "license_boundary": "Unknown/mixed license until repository-level inspection.",
+      "helps": [
+        "supplemental formula references",
+        "possible Tajika/Saham or Gulika surfaces"
+      ],
+      "current_local_status": "not_integrated",
+      "next_reuse": "Inspect license and API surface before any adapter; prefer registry/test, not runtime import.",
+      "truth_upgrade": "no"
+    }
+  ],
+  "summary": {
+    "source_count": 6,
+    "already_used_count": 1,
+    "credential_or_terms_blocked_count": 2,
+    "ready_truth_upgrade_count": 0
+  },
+  "boundary": "OSS/API sources can accelerate raw capture, formula comparison, and adapter probes; they cannot replace missing expected numeric examples or independent timing labels."
+}

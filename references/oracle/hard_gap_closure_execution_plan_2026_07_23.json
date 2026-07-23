@@ -1,0 +1,118 @@
+{
+  "scope": "hard_gap_closure_execution_plan",
+  "created_at": "2026-07-23",
+  "claim_status": "reuse_plan_only",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "tracks": [
+    {
+      "track_id": "vedastro_hosted_identity",
+      "current_status": "blocked",
+      "why_unfinished": "Hosted API calls work, but the deployment identity is not reproducible.",
+      "engineering_70_percent": [
+        "archive hosted response headers and SDK/package metadata for every keyed capture",
+        "create self-host identity runner contract: source commit, NuGet/package hash, DLL hash, assembly version, image digest",
+        "compare hosted keyed raw against self-host raw with the same canonical cases"
+      ],
+      "cannot_be_faked": [
+        "hosted build/version/image digest from upstream",
+        "or a pinned self-host image digest generated from audited source"
+      ],
+      "acceptance_gate": "No truth upgrade until server_identity_contract.status is pinned_hosted or reproducible_self_hosted.",
+      "next_artifacts": [
+        "references/oracle/vedastro_self_host_identity_contract_2026_07_23.json",
+        "references/oracle/artifacts/vedastro_self_host_runner_manifest_<digest>.json"
+      ]
+    },
+    {
+      "track_id": "kp_12_cusp_numeric_oracle",
+      "current_status": "calculable_displayable_public_oracle_blocked",
+      "why_unfinished": "Runtime can display KP cusp/star/sub/sub-sub, but public complete numeric expected values are missing.",
+      "engineering_70_percent": [
+        "normalize required fields: birth/question input, ayanamsa, house system, 12 cusp exact longitude, star lord, sub lord, sub-sub lord",
+        "convert existing KP e-zine 11-row label packet into a gap-aware numeric queue row",
+        "add adapter slots for legal KP API raw capture when key/terms/version are available"
+      ],
+      "cannot_be_faked": [
+        "complete 12-cusp expected numeric table from public source or licensed API terms",
+        "real timing/outcome oracle labels"
+      ],
+      "acceptance_gate": "All 12 cusps must have exact longitude and star/sub/sub-sub expected values before numeric_oracle_partial.",
+      "next_artifacts": [
+        "references/oracle/kp_12_cusp_numeric_oracle_readiness_2026_07_23.json",
+        "references/oracle/artifacts/kp_api_raw_capture_<provider>_<case>.json"
+      ]
+    },
+    {
+      "track_id": "prashna_saham_sphuta_numeric_packets",
+      "current_status": "open_queue",
+      "why_unfinished": "VedAstro catalog has no Prashna/Saham/Sphuta method names; other oracle sources must be used.",
+      "engineering_70_percent": [
+        "mark VedAstro as not_available_in_catalog for Prashna/Saham/Sphuta",
+        "route Prashna/Sphuta through local formula + PyJHora/JHora black-box observation where license-safe",
+        "route Saham through Tajika/Varshaphala worked-example candidates with day/night convention fields"
+      ],
+      "cannot_be_faked": [
+        "complete input + expected numeric value + source page/hash",
+        "local replay delta within declared tolerance"
+      ],
+      "acceptance_gate": "Each packet needs complete_input, expected_numeric_values, source_provenance, replay_result and claim_boundary.",
+      "next_artifacts": [
+        "references/oracle/prashna_saham_sphuta_numeric_packet_readiness_2026_07_23.json",
+        "references/oracle/cases/prashna_sphuta_<case>.json",
+        "references/oracle/cases/tajika_saham_<case>.json"
+      ]
+    },
+    {
+      "track_id": "tajika_planet_runtime_error",
+      "current_status": "partial_payload_contract_resolved",
+      "why_unfinished": "GulikaLongitude and TajikaDateForYear2 work; planet Tajika methods reach upstream but return runtime errors.",
+      "engineering_70_percent": [
+        "capture request shapes and raw error hashes for every failed planet method",
+        "try controlled payload variants: PlanetName enum, plain planet string, scanYear int/string, Time with/without geolocation",
+        "compare TajikaDateForYear2 return time against local/PyJHora solar-return observation"
+      ],
+      "cannot_be_faked": [
+        "upstream method semantic clarification",
+        "or a public worked example proving expected Tajika planet longitude/constellation/zodiac"
+      ],
+      "acceptance_gate": "Do not expose Tajika planet fields beyond blocked diagnostic until one variant returns stable raw or external numeric oracle exists.",
+      "next_artifacts": [
+        "references/oracle/vedastro_tajika_runtime_error_arbitration_2026_07_23.json",
+        "references/oracle/artifacts/vedastro_tajika_payload_variant_matrix_<case>.json"
+      ]
+    },
+    {
+      "track_id": "timing_rectification_human_holdout",
+      "current_status": "blocked_until_human_labels",
+      "why_unfinished": "Code can rank candidates, but verified day/month timing requires frozen positive and negative labels.",
+      "engineering_70_percent": [
+        "provide a strict human label template",
+        "validate that each case has 1 positive event window and at least 2 explicit non-event windows",
+        "freeze labels before blind ranking and forbid tuning on existing 40 control dates"
+      ],
+      "cannot_be_faked": [
+        "independent human reviewer",
+        "explicit non-event intervals",
+        "labels frozen before scoring"
+      ],
+      "acceptance_gate": "Only valid frozen packets can move timing from exploratory_unvalidated to ready_for_blind_holdout.",
+      "next_artifacts": [
+        "references/real_case_calibration/timing_rectification_human_holdout_template_2026_07_23.json",
+        "references/real_case_calibration/timing_rectification_human_holdout_frozen_<batch>.json"
+      ]
+    }
+  ],
+  "summary": {
+    "track_count": 5,
+    "automatable_engineering_tracks": [
+      "vedastro_hosted_identity",
+      "kp_12_cusp_numeric_oracle",
+      "prashna_saham_sphuta_numeric_packets",
+      "tajika_planet_runtime_error",
+      "timing_rectification_human_holdout_template"
+    ],
+    "truth_upgrade_requires_external_or_human_inputs": true
+  },
+  "boundary": "This plan converts blockers into executable contracts and validators. It does not upgrade any hosted, numeric-oracle, Tajika, KP, Prashna, Saham, Sphuta, timing, or rectification claim."
+}

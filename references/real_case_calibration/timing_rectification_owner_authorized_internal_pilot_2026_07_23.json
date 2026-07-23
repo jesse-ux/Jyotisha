@@ -1,0 +1,11 @@
+{
+  "boundary": "Owner authorization permits an internal pilot replay over the three candidate cases, but it is not a substitute for a second independent reviewer. Results may inform engineering diagnostics only; they cannot upgrade timing, rectification, or production tuning claims.",
+  "claim_status": "owner_authorized_internal_pilot_only",
+  "created_at": "2026-07-23",
+  "owner_authorization_text": "我授权",
+  "production_tuning_allowed": false,
+  "reviewer_2_independent_human_label_status": "missing",
+  "scope": "timing_rectification_owner_authorized_internal_pilot",
+  "source_reviewer_status_packet": "references/real_case_calibration/timing_rectification_reviewer_freeze_status_2026_07_23.json",
+  "truth_matrix_allowed": false
+}

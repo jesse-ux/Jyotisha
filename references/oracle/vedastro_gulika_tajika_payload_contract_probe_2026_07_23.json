@@ -1,0 +1,136 @@
+{
+  "scope": "vedastro_gulika_tajika_payload_contract_probe",
+  "created_at": "2026-07-23",
+  "claim_status": "tooling_observation_only",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "input_contract": {
+    "case_id": "steve_jobs_public_birth_data",
+    "date": "1955-02-24",
+    "time": "19:15:00",
+    "place": "San Francisco",
+    "latitude": 37.7749,
+    "longitude": -122.4194,
+    "timezone": "-08:00",
+    "scan_year": 1984,
+    "planet": "Sun"
+  },
+  "summary": {
+    "requested_method_count": 6,
+    "ok_method_count": 2,
+    "blocked_method_count": 4,
+    "ok_methods": [
+      "GulikaLongitude",
+      "TajikaDateForYear2"
+    ],
+    "blocked_methods": [
+      "TajikaDateForYear",
+      "PlanetTajikaLongitude",
+      "PlanetTajikaConstellation",
+      "PlanetTajikaZodiacSign"
+    ]
+  },
+  "results": {
+    "GulikaLongitude": {
+      "request_shape_sha256": "4f1b8cb60b28f480eb61108a748feed5992765f6daa216adf770a696ad0de69f",
+      "status": "ok",
+      "available": true,
+      "raw_sha256": "391d99cebfa01b696331bb5cb0d5beb955ec3c29749ec199799d221846357988",
+      "response": {
+        "available": true,
+        "method": "GulikaLongitude",
+        "module_name": "vedastro",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "result": {
+          "DegreeMinuteSecond": "216° 6' 27",
+          "TotalDegrees": "216.1075"
+        },
+        "source": "vedastro_python_bridge",
+        "status": "ok"
+      }
+    },
+    "TajikaDateForYear": {
+      "request_shape_sha256": "801a5f300a346d842ab2a2708535de1dc637bc3959fc5be1e3e51f3456441a20",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "15d5b7de792afce557818c01bb44cd8ff40ceaf50be586a0d1711cefcbe6e18e",
+      "response": {
+        "available": false,
+        "method": "TajikaDateForYear",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1920, in TajikaDateForYear\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    },
+    "TajikaDateForYear2": {
+      "request_shape_sha256": "801a5f300a346d842ab2a2708535de1dc637bc3959fc5be1e3e51f3456441a20",
+      "status": "ok",
+      "available": true,
+      "raw_sha256": "27b300e6df644f8a7bb7a1be00cfc24a7bdb0705bd9a2f69882d07a3546fbeb9",
+      "response": {
+        "available": true,
+        "method": "TajikaDateForYear2",
+        "module_name": "vedastro",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "result": {
+          "Location": {
+            "Latitude": 37.7749,
+            "Longitude": -122.4194,
+            "Name": "San Francisco"
+          },
+          "StdTime": "05:42 25/02/1984 -08:00"
+        },
+        "source": "vedastro_python_bridge",
+        "status": "ok"
+      }
+    },
+    "PlanetTajikaLongitude": {
+      "request_shape_sha256": "b5b1f253859c8cdd5066ab6a855f7774a653942759fed56de030e98521fb3740",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "fb2110588baebf295bfd1b4709fb0abc6dcc995bb6ab60b6c938d53779265775",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaLongitude",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1866, in PlanetTajikaLongitude\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    },
+    "PlanetTajikaConstellation": {
+      "request_shape_sha256": "b5b1f253859c8cdd5066ab6a855f7774a653942759fed56de030e98521fb3740",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "212bff340b53712b76f04448c77153869a8b5e4fd70eb407d4964513806b53f6",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaConstellation",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1880, in PlanetTajikaConstellation\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    },
+    "PlanetTajikaZodiacSign": {
+      "request_shape_sha256": "b5b1f253859c8cdd5066ab6a855f7774a653942759fed56de030e98521fb3740",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "9ed4c68a4c6fe5f9cc129b227e9d537260662a630e6bd690617539bb3a5212a7",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaZodiacSign",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1894, in PlanetTajikaZodiacSign\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    }
+  },
+  "boundary": "This probe validates payload shape and raw bridge behavior only. Gulika success is observation-only; Tajika upstream runtime errors remain blocked until VedAstro method semantics or a public worked example contract is available."
+}

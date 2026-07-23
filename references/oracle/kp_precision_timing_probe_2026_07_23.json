@@ -1,0 +1,343 @@
+{
+  "claim_boundary": "This probe can expose KP star/sub-lord and significator fields, but cannot drive precise event timing without exact KP cusp oracle and independent negative holdout validation.",
+  "claim_status": "probe_only_not_timing_truth",
+  "created_at": "2026-07-19",
+  "external_oracle_status": "partial_sublord_csv_only",
+  "house_significators": {
+    "1": {
+      "A": [
+        "Moon",
+        "Saturn"
+      ],
+      "B": [
+        "Sun"
+      ],
+      "C": [],
+      "D": "Mars"
+    },
+    "10": {
+      "A": [
+        "Jupiter"
+      ],
+      "B": [
+        "Saturn"
+      ],
+      "C": [
+        "Jupiter"
+      ],
+      "D": "Saturn"
+    },
+    "11": {
+      "A": [],
+      "B": [
+        "Venus"
+      ],
+      "C": [
+        "Jupiter"
+      ],
+      "D": "Saturn"
+    },
+    "12": {
+      "A": [
+        "Mercury",
+        "Rahu"
+      ],
+      "B": [
+        "Mercury"
+      ],
+      "C": [
+        "Venus"
+      ],
+      "D": "Jupiter"
+    },
+    "2": {
+      "A": [
+        "Sun",
+        "Ketu"
+      ],
+      "B": [
+        "Moon",
+        "Ketu"
+      ],
+      "C": [],
+      "D": "Venus"
+    },
+    "3": {
+      "A": [],
+      "B": [
+        "Mars"
+      ],
+      "C": [
+        "Mercury",
+        "Rahu"
+      ],
+      "D": "Mercury"
+    },
+    "4": {
+      "A": [
+        "Venus"
+      ],
+      "B": [
+        "Jupiter"
+      ],
+      "C": [
+        "Ketu"
+      ],
+      "D": "Moon"
+    },
+    "5": {
+      "A": [],
+      "B": [],
+      "C": [
+        "Moon",
+        "Saturn"
+      ],
+      "D": "Sun"
+    },
+    "6": {
+      "A": [],
+      "B": [],
+      "C": [
+        "Mercury",
+        "Rahu"
+      ],
+      "D": "Mercury"
+    },
+    "7": {
+      "A": [],
+      "B": [],
+      "C": [],
+      "D": "Venus"
+    },
+    "8": {
+      "A": [
+        "Mars"
+      ],
+      "B": [
+        "Rahu"
+      ],
+      "C": [],
+      "D": "Mars"
+    },
+    "9": {
+      "A": [],
+      "B": [],
+      "C": [
+        "Venus"
+      ],
+      "D": "Jupiter"
+    }
+  },
+  "input_contract": {
+    "asc_sign": "Aries",
+    "ayanamsa": "caller_supplied_sidereal_positions",
+    "house_contract": "whole-sign house probe, not precise KP cusp oracle",
+    "planet_format": "{planet: {sign, degree_in_sign, house}}"
+  },
+  "kp_cusp_contract": {
+    "contract_path": "references/oracle/kp_cusp_precision_contract_2026_07_19.json",
+    "current_runtime_cusp_mode": "whole_sign_house_center_probe",
+    "exact_cusp_status": "blocked_missing_oracle",
+    "significator_policy": "supporting_probe_only"
+  },
+  "kp_lords_by_planet": {
+    "Jupiter": {
+      "nakshatra": "Pushya",
+      "nakshatra_lord": "Saturn",
+      "pada": 3,
+      "rasi_lord": "Moon",
+      "sign": "Cancer",
+      "sub_lord": "Moon",
+      "sub_sub_lord": "Venus"
+    },
+    "Ketu": {
+      "nakshatra": "Rohini",
+      "nakshatra_lord": "Moon",
+      "pada": 3,
+      "rasi_lord": "Venus",
+      "sign": "Taurus",
+      "sub_lord": "Saturn",
+      "sub_sub_lord": "Moon"
+    },
+    "Mars": {
+      "nakshatra": "Ardra",
+      "nakshatra_lord": "Rahu",
+      "pada": 4,
+      "rasi_lord": "Mercury",
+      "sign": "Gemini",
+      "sub_lord": "Sun",
+      "sub_sub_lord": "Venus"
+    },
+    "Mercury": {
+      "nakshatra": "Revati",
+      "nakshatra_lord": "Mercury",
+      "pada": 2,
+      "rasi_lord": "Jupiter",
+      "sign": "Pisces",
+      "sub_lord": "Sun",
+      "sub_sub_lord": "Mercury"
+    },
+    "Moon": {
+      "nakshatra": "Krittika",
+      "nakshatra_lord": "Sun",
+      "pada": 3,
+      "rasi_lord": "Venus",
+      "sign": "Taurus",
+      "sub_lord": "Saturn",
+      "sub_sub_lord": "Jupiter"
+    },
+    "Rahu": {
+      "nakshatra": "Jyeshtha",
+      "nakshatra_lord": "Mercury",
+      "pada": 1,
+      "rasi_lord": "Mars",
+      "sign": "Scorpio",
+      "sub_lord": "Mercury",
+      "sub_sub_lord": "Ketu"
+    },
+    "Saturn": {
+      "nakshatra": "Uttara Ashadha",
+      "nakshatra_lord": "Sun",
+      "pada": 2,
+      "rasi_lord": "Saturn",
+      "sign": "Capricorn",
+      "sub_lord": "Jupiter",
+      "sub_sub_lord": "Rahu"
+    },
+    "Sun": {
+      "nakshatra": "Ashwini",
+      "nakshatra_lord": "Ketu",
+      "pada": 3,
+      "rasi_lord": "Mars",
+      "sign": "Aries",
+      "sub_lord": "Saturn",
+      "sub_sub_lord": "Ketu"
+    },
+    "Venus": {
+      "nakshatra": "Purva Bhadrapada",
+      "nakshatra_lord": "Jupiter",
+      "pada": 3,
+      "rasi_lord": "Saturn",
+      "sign": "Aquarius",
+      "sub_lord": "Venus",
+      "sub_sub_lord": "Sun"
+    }
+  },
+  "local_reuse": {
+    "functions": [
+      "calc_kp_analysis",
+      "get_kp_lords",
+      "get_planet_significators",
+      "get_house_significators"
+    ],
+    "license_boundary": "Local implementation cites diliprk/VedicAstro MIT; keep source/oracle audit before commercial precise timing.",
+    "module": "scripts/kp_system.py"
+  },
+  "negative_holdout_status": "missing",
+  "planet_significators": {
+    "Jupiter": {
+      "A": 10,
+      "B": 4,
+      "C": [
+        10,
+        11
+      ],
+      "D": [
+        9,
+        12
+      ]
+    },
+    "Ketu": {
+      "A": 2,
+      "B": 2,
+      "C": [
+        4
+      ],
+      "D": []
+    },
+    "Mars": {
+      "A": 8,
+      "B": 3,
+      "C": [],
+      "D": [
+        1,
+        8
+      ]
+    },
+    "Mercury": {
+      "A": 12,
+      "B": 12,
+      "C": [
+        3,
+        6
+      ],
+      "D": [
+        3,
+        6
+      ]
+    },
+    "Moon": {
+      "A": 1,
+      "B": 2,
+      "C": [
+        5
+      ],
+      "D": [
+        4
+      ]
+    },
+    "Rahu": {
+      "A": 12,
+      "B": 8,
+      "C": [
+        3,
+        6
+      ],
+      "D": []
+    },
+    "Saturn": {
+      "A": 1,
+      "B": 10,
+      "C": [
+        5
+      ],
+      "D": [
+        10,
+        11
+      ]
+    },
+    "Sun": {
+      "A": 2,
+      "B": 1,
+      "C": [],
+      "D": [
+        5
+      ]
+    },
+    "Venus": {
+      "A": 4,
+      "B": 11,
+      "C": [
+        9,
+        12
+      ],
+      "D": [
+        2,
+        7
+      ]
+    }
+  },
+  "production_tuning_allowed": false,
+  "raw_sha256": "cf073173472856bf7e8146211a38fa8dc9d0685f6c7638fdd0f415dee7491afb",
+  "ruling_planets": {
+    "asc_sign_lord": "Mars",
+    "asc_star_lord": "Ketu",
+    "asc_sub_lord": "Saturn",
+    "moon_sign_lord": "Venus",
+    "moon_star_lord": "Sun",
+    "moon_sub_lord": "Saturn",
+    "source_boundary": "Minimal KP ruling-planet probe; exact horary/timing use requires question-time location and external worked examples.",
+    "weekday_lord": "Sun"
+  },
+  "scope": "kp_star_sub_lord_significator_probe"
+}

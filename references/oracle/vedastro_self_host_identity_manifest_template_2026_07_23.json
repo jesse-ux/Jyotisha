@@ -1,0 +1,31 @@
+{
+  "scope": "vedastro_self_host_identity_manifest_template",
+  "created_at": "2026-07-23",
+  "claim_status": "blocked_until_reproducible_identity",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "source": {
+    "repository": "https://github.com/VedAstro/VedAstro",
+    "commit": "",
+    "tag": ""
+  },
+  "package_identity": {
+    "package_name": "VedAstro.Library",
+    "package_version": "",
+    "package_sha256": "",
+    "dll_sha256": "",
+    "assembly_version": "",
+    "public_method_inventory_sha256": ""
+  },
+  "container_identity": {
+    "dockerfile_sha256": "",
+    "image_digest": "",
+    "runtime_base_image_digest": ""
+  },
+  "canonical_replay": {
+    "case_set": "steve_jobs_beijing_chennai_public_smoke",
+    "raw_hashes": [],
+    "same_input_hosted_comparison": "not_run"
+  },
+  "boundary": "Blank template only. Self-host identity is not pinned until all hash/digest/version fields and canonical replay hashes are present."
+}

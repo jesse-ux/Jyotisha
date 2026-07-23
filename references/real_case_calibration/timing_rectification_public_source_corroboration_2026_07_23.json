@@ -1,0 +1,136 @@
+{
+  "boundary": "Public-source corroboration is useful for internal pilot replay, but it is not a second independent human reviewer and cannot upgrade verified timing or birth-rectification claims.",
+  "claim_status": "public_source_corroborated_internal_pilot_only",
+  "created_at": "2026-07-23",
+  "production_tuning_allowed": false,
+  "rows": [
+    {
+      "birth_sources": [
+        {
+          "observed_fields": [
+            "1955-02-24",
+            "19:15",
+            "San Francisco, California, United States"
+          ],
+          "source": "Astro-Seek",
+          "url": "https://www.astro-seek.com/birth-chart/steve-jobs-horoscope"
+        },
+        {
+          "observed_fields": [
+            "1955-02-24",
+            "7:15 PM",
+            "San Francisco, California, United States",
+            "UTC -8:00",
+            "AA"
+          ],
+          "source": "Astro Charts",
+          "url": "https://astro-charts.com/persons/chart/steve-jobs/"
+        }
+      ],
+      "case_id": "candidate_steve_jobs_apple_ipo_1980",
+      "corroboration_status": "public_sources_corroborate_candidate_fields",
+      "event_sources": [
+        {
+          "observed_fields": [
+            "initial public offering",
+            "1980-12-12"
+          ],
+          "source": "Wikipedia Apple Inc.",
+          "url": "https://en.wikipedia.org/wiki/Apple_Inc."
+        }
+      ],
+      "negative_window_basis": "Public event chronology source has no same-class Apple IPO event in the two preselected negative windows.",
+      "public_person": "Steve Jobs",
+      "source_count": 3,
+      "source_fingerprint": "sha256:9d0c796a0145fc0b3878eda5728aee3eb30c73e1858d25ca181bd87d470c0b3d"
+    },
+    {
+      "birth_sources": [
+        {
+          "observed_fields": [
+            "1961-08-04",
+            "19:24",
+            "Honolulu, Hawaii, United States"
+          ],
+          "source": "Astro-Seek",
+          "url": "https://www.astro-seek.com/birth-chart/barack-obama-horoscope"
+        },
+        {
+          "observed_fields": [
+            "1961-08-04",
+            "7:24 PM",
+            "Honolulu, Hawaii, United States",
+            "UTC -10:00",
+            "AA"
+          ],
+          "source": "Astro Charts",
+          "url": "https://astro-charts.com/persons/chart/barack-obama/"
+        }
+      ],
+      "case_id": "candidate_barack_obama_2008_election",
+      "corroboration_status": "public_sources_corroborate_candidate_fields",
+      "event_sources": [
+        {
+          "observed_fields": [
+            "Barack Obama",
+            "2008-11-04",
+            "elected president"
+          ],
+          "source": "Wikipedia 2008 United States presidential election",
+          "url": "https://en.wikipedia.org/wiki/2008_United_States_presidential_election"
+        }
+      ],
+      "negative_window_basis": "Public election chronology source has no same-class presidential election win in the two preselected negative windows.",
+      "public_person": "Barack Obama",
+      "source_count": 3,
+      "source_fingerprint": "sha256:d720340f1b17003bfff9515db199756fc7fa39705068dd1e778a960bd23bcb22"
+    },
+    {
+      "birth_sources": [
+        {
+          "observed_fields": [
+            "1961-07-01",
+            "19:45",
+            "Sandringham, England, United Kingdom"
+          ],
+          "source": "Astro-Seek",
+          "url": "https://www.astro-seek.com/birth-chart/princess-diana-horoscope"
+        },
+        {
+          "observed_fields": [
+            "1961-07-01",
+            "19:45",
+            "Sandringham, England",
+            "BST h1e"
+          ],
+          "source": "Astrodienst VIP page",
+          "url": "https://www.astro.com/adbvip/adbvip_07_01.htm?lang=r&nho2=2&nhor=5nho2%3D2"
+        }
+      ],
+      "case_id": "candidate_princess_diana_wedding_1981",
+      "corroboration_status": "public_sources_corroborate_candidate_fields",
+      "event_sources": [
+        {
+          "observed_fields": [
+            "1981-07-29",
+            "wedding"
+          ],
+          "source": "Wikipedia wedding page",
+          "url": "https://en.wikipedia.org/wiki/Wedding_of_Prince_Charles_and_Lady_Diana_Spencer"
+        }
+      ],
+      "negative_window_basis": "Public wedding chronology source has no same marriage ceremony in the two preselected negative windows.",
+      "public_person": "Diana, Princess of Wales",
+      "source_count": 3,
+      "source_fingerprint": "sha256:ade2e8b70603bd86b78c7493bc9569f25267ab6bb8baadd154063da02dbef429"
+    }
+  ],
+  "scope": "timing_rectification_public_source_corroboration",
+  "summary": {
+    "case_count": 3,
+    "human_reviewer_2_count": 0,
+    "public_source_count": 9,
+    "ready_for_verified_claim_count": 0
+  },
+  "truth_matrix_allowed": false
+}

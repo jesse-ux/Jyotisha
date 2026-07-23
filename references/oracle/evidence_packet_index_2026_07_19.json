@@ -11,52 +11,188 @@
   },
   "packets": [
     {
-      "packet_id": "formula_source_kb",
-      "path": "references/oracle/formula_source_knowledge_base_2026_07_19.json",
-      "domain": "formula_sources",
+      "claim_boundary": "PyJHora BAV/SAV/Prastara/Sodhaya Pinda raw capture for three fixed charts. AGPL observation only; does not close Kakshya transit, sensitive timing, annual SAV scans, or commercial truth claims.",
+      "claim_status": "observation_only",
+      "consumer_policy": "agpl_observation_only_do_not_vendor",
+      "domain": "advanced_ashtakavarga_external_observation",
+      "packet_id": "pyjhora_advanced_ashtakavarga_raw_probe_2026_07_23",
+      "path": "references/oracle/pyjhora_advanced_ashtakavarga_raw_probe_2026_07_23.json"
+    },
+    {
+      "packet_id": "ashtakavarga_advanced_usage_gap_registry",
+      "path": "references/oracle/ashtakavarga_advanced_usage_gap_registry_2026_07_19.json",
+      "domain": "ashtakavarga_advanced_usage",
       "claim_status": "partial",
       "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Source/formula/unit registry exists; absolute numeric parity still requires worked examples and oracle comparison."
+      "claim_boundary": "Core BAV/SAV exists; Kakshya transit, sensitive transit signs/nakshatras and annual SAV timing remain observation-only until oracle/holdout gates close."
     },
     {
-      "packet_id": "profile_schema_contract",
-      "path": "references/oracle/profile_schema_contract_2026_07_19.json",
-      "domain": "profile_schema",
+      "packet_id": "rectification_missing_layer_integration_plan",
+      "path": "references/oracle/rectification_missing_layer_integration_plan_2026_07_19.json",
+      "domain": "birth_time_rectification",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "All planned rectification layers have partial guarded runtime surfaces; Shadbala-AV remains formula/unit partial and Gochara remains negative-holdout blocked, so outputs stay exploratory."
+    },
+    {
+      "packet_id": "rectification_technique_usage_audit",
+      "path": "references/oracle/rectification_technique_usage_audit_2026_07_19.json",
+      "domain": "birth_time_rectification",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Rectification now exposes candidate sweep, Vimshottari scoring, Varga sensitivity, Narayana/Jaimini/Vimsopaka cross gates, and Shadbala-AV/Gochara observation gates; all remain candidate-only and cannot confirm birth-time truth."
+    },
+    {
+      "packet_id": "claim_audit_runtime_gate",
+      "path": "scripts/claim_audit_runtime_gate.py",
+      "domain": "claim_governance",
       "claim_status": "ready_contract",
       "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Profile schema contract is ready; UI/API adoption must prove gender optional fields do not affect core chart math."
+      "claim_boundary": "Runtime gate can block or degrade high claims from blocked/partial/open evidence packets; production tuning remains false."
     },
     {
-      "packet_id": "gender_interpretation_contract",
-      "path": "references/oracle/gender_interpretation_contract_2026_07_19.json",
-      "domain": "relationship_interpretation",
-      "claim_status": "ready_contract",
+      "packet_id": "blocked_domain_resolution_queue_2026_07_20",
+      "path": "references/oracle/blocked_domain_resolution_queue_2026_07_20.json",
+      "domain": "closure_governance",
+      "claim_status": "open_queue",
       "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Gender affects only optional relationship/birth-context interpretation, not chart calculation."
+      "claim_boundary": "Action queue for 10 blocked production-ready domains; prioritizes next evidence but does not unblock any claim."
     },
     {
-      "packet_id": "relationship_gender_role_registry",
-      "path": "references/relationship_gender_role_technique_registry_2026_07_19.json",
-      "domain": "relationship_interpretation",
-      "claim_status": "ready_contract",
+      "packet_id": "five_track_blocked_progress_dashboard_2026_07_20",
+      "path": "references/oracle/five_track_blocked_progress_dashboard_2026_07_20.json",
+      "domain": "closure_governance",
+      "claim_status": "open_queue",
       "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Technique registry only; no predictive truth upgrade."
+      "claim_boundary": "Progress dashboard for five blocked-but-code-progressable domains; does not unblock production-ready claims."
     },
     {
-      "packet_id": "day_level_human_annotation_packet",
-      "path": "references/real_case_calibration/day_level_holdout_v3_human_annotation_packet_2026_07_19.json",
-      "domain": "timing_holdout",
+      "packet_id": "high_rigor_closure_gate",
+      "path": "scripts/high_rigor_closure_gate.py",
+      "domain": "closure_governance",
       "claim_status": "blocked",
-      "consumer_policy": "human_review_required",
-      "claim_boundary": "Final labels are blank; blind evaluation must not run until independent human review and freeze."
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Aggregates external numeric oracle, independent negative holdout, exact KP cusp and full scoring gates; blocks production tuning, verified timing and birth-time truth while any gate remains partial/blocked."
     },
     {
-      "packet_id": "prashna_tajika_oracle_packet",
-      "path": "references/oracle/prashna_tajika_saham_gulika_sphuta_oracle_packet_2026_07_19.json",
-      "domain": "horary_annual_sensitive_points",
+      "packet_id": "commercial_golden_oss_case_ci_contract_2026_07_21",
+      "path": "references/oracle/commercial_golden_oss_case_ci_contract_2026_07_21.json",
+      "domain": "commercial_sync_governance",
+      "claim_status": "ready_contract",
+      "consumer_policy": "commercial_ci_gate_contract_only",
+      "claim_boundary": "Requires commercial CI to replay the PyJHora/JHora Sphuta OSS observation and hash; observation-only, no truth upgrade."
+    },
+    {
+      "packet_id": "commercial_startup_self_check_contract_2026_07_21",
+      "path": "references/oracle/commercial_startup_self_check_contract_2026_07_21.json",
+      "domain": "commercial_sync_governance",
+      "claim_status": "ready_contract",
+      "consumer_policy": "commercial_startup_gate_contract_only",
+      "claim_boundary": "Requires commercial runtime to expose truth source identity, artifact gate and privacy status; no business runtime code imported into research."
+    },
+    {
+      "packet_id": "compatibility_full_system_gap_registry",
+      "path": "references/oracle/compatibility_full_system_gap_registry_2026_07_19.json",
+      "domain": "compatibility",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Ashtakoota core exists; extended planet/Lagna Kuta, relationship AV overlay and rule-family combinations remain partial/research-only."
+    },
+    {
+      "packet_id": "compatibility_skill_readiness_dashboard",
+      "path": "references/oracle/compatibility_skill_readiness_dashboard_2026_07_20.json",
+      "domain": "compatibility",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Basic compatibility layers are callable with boundaries; full synastry, relationship AV overlays, Planet/Lagna Kuta, and deterministic relationship timing remain blocked until oracle packets close."
+    },
+    {
+      "packet_id": "conception_chart_adhana_niseka_registry",
+      "path": "references/oracle/conception_chart_adhana_niseka_registry_2026_07_19.json",
+      "domain": "conception_chart",
       "claim_status": "blocked",
       "consumer_policy": "research_only",
-      "claim_boundary": "Registry exists; public worked examples and field-level numeric oracle comparison still missing."
+      "claim_boundary": "Research-only Adhana/Niseka registry; no medical/fertility/user-facing claim until source, worked example, privacy, and safety gates close."
+    },
+    {
+      "packet_id": "d2_public_formula_example_validation_2026_07_23",
+      "path": "references/oracle/d2_public_formula_example_validation_2026_07_23.json",
+      "domain": "d2_hora_method_variant",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Four publisher-stated arithmetic examples support the declared local Parashara D2 mapping for this limited set; they are not an external software oracle, canonical-school proof, wealth outcome, or timing validation."
+    },
+    {
+      "packet_id": "jyotishyamitra_d2_mismatch_attribution_2026_07_23",
+      "path": "references/oracle/jyotishyamitra_d2_mismatch_attribution_2026_07_23.json",
+      "domain": "d2_hora_method_variant",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "D2-only disagreement is retained as an unresolved mapping variant; it must not tune wealth interpretation or select an engine by majority vote."
+    },
+    {
+      "claim_boundary": "PyJHora Vimshottari/Ashtottari/Mudda raw capture for one fixed input. AGPL observation only; does not replace local Vimshottari + Narayana timing crosscheck, cannot be vendored into commercial runtime, and does not upgrade timing or rectification claims.",
+      "claim_status": "observation_only",
+      "consumer_policy": "agpl_observation_only_do_not_vendor",
+      "domain": "dasha_external_observation",
+      "packet_id": "pyjhora_multi_dasha_raw_probe_2026_07_23",
+      "path": "references/oracle/pyjhora_multi_dasha_raw_probe_2026_07_23.json"
+    },
+    {
+      "packet_id": "event_judgment_fragment_rule_family_registry_2026_07_21",
+      "path": "references/oracle/event_judgment_fragment_rule_family_registry_2026_07_21.json",
+      "domain": "event_judgment",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_registry_only_no_runtime_copy",
+      "claim_boundary": "Ports WorkBuddy event judgment as rule-family inventory only; no old engine code copied."
+    },
+    {
+      "claim_boundary": "VedAstro self-host identity, KP 12 cusp numeric oracle and Prashna/Saham/Sphuta numeric packets now have explicit required fields; the contracts themselves do not upgrade truth.",
+      "claim_status": "ready_contract",
+      "consumer_policy": "acceptance_contract_no_truth_upgrade",
+      "domain": "external_numeric_oracle_readiness",
+      "packet_id": "external_oracle_readiness_contracts_2026_07_23",
+      "path": "references/oracle/external_oracle_readiness_contracts_2026_07_23.json"
+    },
+    {
+      "packet_id": "external_evidence_reuse_matrix_2026_07_23",
+      "path": "references/oracle/external_evidence_reuse_matrix_2026_07_23.json",
+      "domain": "external_numeric_oracles",
+      "claim_status": "reuse_plan_only",
+      "consumer_policy": "no_truth_upgrade_without_numeric_or_human_labels",
+      "claim_boundary": "Open-source and local fragments can reduce implementation/replay effort, but cannot replace missing terms, expected numeric values, raw/hash capture, or independent human labels."
+    },
+    {
+      "packet_id": "hard_gap_source_hunt_2026_07_23",
+      "path": "references/oracle/hard_gap_source_hunt_2026_07_23.json",
+      "domain": "external_numeric_oracles",
+      "claim_status": "source_hunt_only",
+      "consumer_policy": "reference_only_until_complete_numeric_replay",
+      "claim_boundary": "KP 12 cusp, KP timing, Gulika/Sphuta, Prashna/Sphuta and Tajika/Saham sources were reviewed; no complete numeric oracle is ready."
+    },
+    {
+      "packet_id": "numeric_oracle_gap_queue_v3_2026_07_23",
+      "path": "references/oracle/numeric_oracle_gap_queue_v3_2026_07_23.json",
+      "domain": "external_numeric_oracles",
+      "claim_status": "candidate_queue",
+      "consumer_policy": "reference_only_until_complete_input_expected_values_and_replay",
+      "claim_boundary": "KP, Prashna, Tajika, Saham, Gulika and Sphuta candidates are recorded, but none is ready as a numeric oracle packet."
+    },
+    {
+      "claim_boundary": "OSS/API sources can accelerate raw capture, formula comparison and adapter probes; they do not replace expected numeric examples or independent timing labels.",
+      "claim_status": "reuse_plan_only",
+      "consumer_policy": "oss_api_reference_only_until_pinned_adapter_or_raw",
+      "domain": "external_numeric_oracles",
+      "packet_id": "oss_acceleration_queue_2026_07_23",
+      "path": "references/oracle/oss_acceleration_queue_2026_07_23.json"
+    },
+    {
+      "claim_boundary": "Five remaining hard gaps are decomposed into automatable engineering work, non-fakeable external inputs and acceptance gates; no hosted, numeric oracle, timing or rectification claim is upgraded.",
+      "claim_status": "reuse_plan_only",
+      "consumer_policy": "execution_contract_no_truth_upgrade",
+      "domain": "external_oracle_and_holdout_closure",
+      "packet_id": "hard_gap_closure_execution_plan_2026_07_23",
+      "path": "references/oracle/hard_gap_closure_execution_plan_2026_07_23.json"
     },
     {
       "packet_id": "vedastro_identity_evidence_audit",
@@ -75,436 +211,20 @@
       "claim_boundary": "Public repository HEAD is observed reproducibly, but it does not bind the hosted API deployment, endpoint semantics, or NuGet package."
     },
     {
-      "packet_id": "xalen_shadbala_av_delta_report",
-      "path": "references/oracle/xalen_shadbala_av_component_delta_report_2026_07_19.json",
-      "domain": "shadbala_ashtakavarga",
-      "claim_status": "partial",
-      "consumer_policy": "research_only",
-      "claim_boundary": "Deltas grouped by component; formulas/units/school variants remain open."
-    },
-    {
-      "packet_id": "three_engine_mismatch_closure_queue",
-      "path": "references/oracle/three_engine_mismatch_closure_queue_2026_07_19.json",
-      "domain": "three_engine_parity",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_only",
-      "claim_boundary": "60 tickets remain open; no majority-vote truth."
-    },
-    {
-      "packet_id": "technique_fragment_inventory",
-      "path": "references/oracle/technique_fragment_inventory_2026_07_19.json",
-      "domain": "technique_fragments",
-      "claim_status": "partial",
-      "consumer_policy": "research_only",
-      "claim_boundary": "Inventory prevents missed fragments; files are not capability closure by themselves."
-    },
-    {
-      "packet_id": "varga_karaka_promotion_audit",
-      "path": "references/oracle/technique_promotion_audit_varga_karaka_2026_07_19.json",
-      "domain": "varga_jaimini",
-      "claim_status": "partial",
-      "consumer_policy": "research_only",
-      "claim_boundary": "Runtime coverage exists; entry/display/source/oracle contracts remain."
-    },
-    {
-      "packet_id": "vimsopaka_avastha_promotion_audit",
-      "path": "references/oracle/technique_promotion_audit_vimsopaka_avastha_2026_07_19.json",
-      "domain": "strength_state_layers",
-      "claim_status": "partial",
-      "consumer_policy": "research_only",
-      "claim_boundary": "Runtime usage exists; formula source/oracle/display contracts remain."
-    },
-    {
-      "packet_id": "kp_gochara_muhurta_promotion_audit",
-      "path": "references/oracle/technique_promotion_audit_kp_gochara_muhurta_2026_07_19.json",
-      "domain": "kp_gochara_muhurta_panchanga",
-      "claim_status": "partial",
-      "consumer_policy": "research_only",
-      "claim_boundary": "Panchanga runtime exists; KP/Muhurta/Gochara remain reference-only or need license/source/oracle closure."
-    },
-    {
-      "packet_id": "claim_audit_runtime_gate",
-      "path": "scripts/claim_audit_runtime_gate.py",
-      "domain": "claim_governance",
+      "packet_id": "external_source_use_tier_registry_2026_07_20",
+      "path": "references/oracle/external_source_use_tier_registry_2026_07_20.json",
+      "domain": "external_source_governance",
       "claim_status": "ready_contract",
       "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Runtime gate can block or degrade high claims from blocked/partial/open evidence packets; production tuning remains false."
+      "claim_boundary": "Classifies OSS/web/real-case sources by allowed use tier; does not upgrade any source to oracle truth."
     },
     {
-      "packet_id": "screenshot_technique_gap_audit",
-      "path": "references/oracle/screenshot_technique_gap_audit_2026_07_19.json",
-      "domain": "source_ingestion",
-      "claim_status": "partial",
-      "consumer_policy": "research_only",
-      "claim_boundary": "Screenshot labels identify missing conception-chart and relationship-combination families, but unreadable images and source packets remain unresolved."
-    },
-    {
-      "packet_id": "conception_chart_adhana_niseka_registry",
-      "path": "references/oracle/conception_chart_adhana_niseka_registry_2026_07_19.json",
-      "domain": "conception_chart",
-      "claim_status": "blocked",
-      "consumer_policy": "research_only",
-      "claim_boundary": "Research-only Adhana/Niseka registry; no medical/fertility/user-facing claim until source, worked example, privacy, and safety gates close."
-    },
-    {
-      "packet_id": "relationship_combinations_rule_family_registry",
-      "path": "references/oracle/relationship_combinations_rule_family_registry_2026_07_19.json",
-      "domain": "relationship_rule_families",
-      "claim_status": "partial",
-      "consumer_policy": "research_only",
-      "claim_boundary": "Relationship/children/hostility combination families are indexed but require source packets, deduplication, tests, and claim gates before runtime use."
-    },
-    {
-      "packet_id": "skill_truth_overlay",
-      "path": "references/oracle/skill_truth_overlay_2026_07_19.json",
-      "domain": "skill_capability_truth",
+      "packet_id": "formula_source_kb",
+      "path": "references/oracle/formula_source_knowledge_base_2026_07_19.json",
+      "domain": "formula_sources",
       "claim_status": "partial",
       "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Corrects optimistic technique_registry statuses before any skill completeness claim."
-    },
-    {
-      "packet_id": "rectification_technique_usage_audit",
-      "path": "references/oracle/rectification_technique_usage_audit_2026_07_19.json",
-      "domain": "birth_time_rectification",
-      "claim_status": "partial",
-      "consumer_policy": "research_only",
-      "claim_boundary": "Rectification now exposes candidate sweep, Vimshottari scoring, Varga sensitivity, Narayana/Jaimini/Vimsopaka cross gates, and Shadbala-AV/Gochara observation gates; all remain candidate-only and cannot confirm birth-time truth."
-    },
-    {
-      "packet_id": "effective_skill_capability_view",
-      "path": "references/oracle/effective_skill_capability_view_2026_07_19.json",
-      "domain": "skill_capability_truth",
-      "claim_status": "ready_contract",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Effective skill view applies the truth overlay before capability claims; raw technique_registry status is not sufficient."
-    },
-    {
-      "packet_id": "rectification_missing_layer_integration_plan",
-      "path": "references/oracle/rectification_missing_layer_integration_plan_2026_07_19.json",
-      "domain": "birth_time_rectification",
-      "claim_status": "partial",
-      "consumer_policy": "research_only",
-      "claim_boundary": "All planned rectification layers have partial guarded runtime surfaces; Shadbala-AV remains formula/unit partial and Gochara remains negative-holdout blocked, so outputs stay exploratory."
-    },
-    {
-      "packet_id": "kp_precision_timing_gap_registry",
-      "path": "references/oracle/kp_precision_timing_gap_registry_2026_07_19.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "partial",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "KP precision timing gap registry exists; star/sub-lord, ruling planets and significator tables remain blocked until source/oracle/holdout gates close."
-    },
-    {
-      "packet_id": "muhurta_full_system_gap_registry",
-      "path": "references/oracle/muhurta_full_system_gap_registry_2026_07_19.json",
-      "domain": "muhurta",
-      "claim_status": "partial",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Panchanga base exists, but full Muhurta scoring remains blocked until Tarabala/Chandrabala/Panchaka/Rahu Kalam examples and source contracts close."
-    },
-    {
-      "packet_id": "ashtakavarga_advanced_usage_gap_registry",
-      "path": "references/oracle/ashtakavarga_advanced_usage_gap_registry_2026_07_19.json",
-      "domain": "ashtakavarga_advanced_usage",
-      "claim_status": "partial",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Core BAV/SAV exists; Kakshya transit, sensitive transit signs/nakshatras and annual SAV timing remain observation-only until oracle/holdout gates close."
-    },
-    {
-      "packet_id": "compatibility_full_system_gap_registry",
-      "path": "references/oracle/compatibility_full_system_gap_registry_2026_07_19.json",
-      "domain": "compatibility",
-      "claim_status": "partial",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Ashtakoota core exists; extended planet/Lagna Kuta, relationship AV overlay and rule-family combinations remain partial/research-only."
-    },
-    {
-      "packet_id": "kp_precision_timing_probe",
-      "path": "scripts/kp_precision_timing_probe.py",
-      "domain": "kp_precision_timing",
-      "claim_status": "partial",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "KP star/sub-lord and significator probe exposes raw fields and hash, but cannot drive precise event timing without exact KP cusp oracle and independent negative holdout validation."
-    },
-    {
-      "packet_id": "local_oss_reuse_sweep_kp_muhurta_av_compat",
-      "path": "references/oracle/local_oss_reuse_sweep_kp_muhurta_av_compat_2026_07_19.json",
-      "domain": "reuse_governance",
-      "claim_status": "partial",
-      "consumer_policy": "research_only",
-      "claim_boundary": "Records local/OSS reusable candidates for KP, Muhurta, AV and compatibility; discovery only, no runtime truth upgrade."
-    },
-    {
-      "packet_id": "kp_cusp_precision_contract",
-      "path": "references/oracle/kp_cusp_precision_contract_2026_07_19.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "blocked",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Exact KP cusp contract is defined, but numeric cusp oracle and negative timing holdout are missing; current runtime remains supporting probe only."
-    },
-    {
-      "packet_id": "high_rigor_closure_gate",
-      "path": "scripts/high_rigor_closure_gate.py",
-      "domain": "closure_governance",
-      "claim_status": "blocked",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Aggregates external numeric oracle, independent negative holdout, exact KP cusp and full scoring gates; blocks production tuning, verified timing and birth-time truth while any gate remains partial/blocked."
-    },
-    {
-      "packet_id": "kp_external_table_hash_manifest",
-      "path": "scripts/kp_external_table_hash_manifest.py",
-      "domain": "kp_precision_timing",
-      "claim_status": "partial",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "KP external sub-lord table hash runner fixes fixture hash when present and reports fixture_missing when absent; no timing truth upgrade."
-    },
-    {
-      "packet_id": "kp_cusp_worked_example_oracle_queue",
-      "path": "references/oracle/kp_cusp_worked_example_oracle_queue_2026_07_19.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "blocked",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Exact KP cusp worked-example queue defines required oracle fields; remains awaiting public numeric examples."
-    },
-    {
-      "packet_id": "muhurta_factor_probe",
-      "path": "scripts/muhurta_factor_probe.py",
-      "domain": "muhurta",
-      "claim_status": "partial",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Muhurta factor probe exposes Tarabala/Chandrabala/Rahu Kalam/Abhijit observations only; no verified Muhurta verdict."
-    },
-    {
-      "packet_id": "day_level_holdout_intake",
-      "path": "scripts/day_level_holdout_intake.py",
-      "domain": "timing_holdout",
-      "claim_status": "partial",
-      "consumer_policy": "research_only",
-      "claim_boundary": "Human annotation intake appends frozen independent labels; production tuning remains blocked until frozen gate passes."
-    },
-    {
-      "packet_id": "permissive_oss_worked_example_registry",
-      "path": "references/oracle/permissive_oss_worked_example_registry_2026_07_19.json",
-      "domain": "oss_reuse_and_worked_examples",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Permissive OSS candidates and worked-example queues are registered for probes only; no truth-matrix or production-tuning upgrade."
-    },
-    {
-      "packet_id": "local_oss_observation_inventory",
-      "path": "scripts/local_oss_observation_inventory.py",
-      "domain": "oss_reuse_and_worked_examples",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Local OSS fragments are inventoried with hash/license/API hints only; no runtime dependency or truth upgrade."
-    },
-    {
-      "packet_id": "panchanga_api_observation_manifest",
-      "path": "references/oracle/panchanga_api_observation_manifest_2026_07_19.json",
-      "domain": "muhurta_panchanga",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "panchanga_api local snapshot is docs-only; no numeric parity claim."
-    },
-    {
-      "packet_id": "jyotishganit_field_closure_queue",
-      "path": "references/oracle/jyotishganit_field_closure_queue_2026_07_19.json",
-      "domain": "three_engine_field_closure",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Field-level closure queue only; does not resolve mismatch rows."
-    },
-    {
-      "packet_id": "vedicastro_kp_surface_locator",
-      "path": "scripts/vedicastro_kp_surface_locator.py",
-      "domain": "kp_precision_timing",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Locates KP source surface and missing/candidate table paths; no cusp truth upgrade."
-    },
-    {
-      "packet_id": "product_skill_source_boundary",
-      "path": "references/oracle/product_skill_source_boundary_2026_07_19.json",
-      "domain": "skill_product_reference",
-      "claim_status": "reference_only",
-      "consumer_policy": "skill_prompt_reference_only",
-      "claim_boundary": "rishi-ai-mcp and vedic-astro-skills stay out of numeric truth layer."
-    },
-    {
-      "packet_id": "jyotishganit_field_probe",
-      "path": "references/oracle/jyotishganit_field_probe_steve_jobs_2026_07_19.json",
-      "domain": "three_engine_field_closure",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "jyotishganit D2/D4/D9/D10 Panchanga AV raw/hash attached; Shadbala missing remains partial."
-    },
-    {
-      "packet_id": "vedicastro_kp_api_probe",
-      "path": "references/oracle/vedicastro_kp_api_probe_2026_07_19.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "VedicAstro KP API/source hash captured; exact cusp truth still requires public numeric worked examples."
-    },
-    {
-      "packet_id": "public_worked_example_queue",
-      "path": "references/oracle/public_worked_example_queue_2026_07_19.json",
-      "domain": "worked_example_collection",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_queue_only",
-      "claim_boundary": "Public worked-example queue only; URLs/search terms are not oracle-ready until numeric fields and hashes are captured."
-    },
-    {
-      "packet_id": "d1_d60_varga_mapping_registry",
-      "path": "references/oracle/d1_d60_varga_mapping_registry_2026_07_19.json",
-      "domain": "varga_mapping",
-      "claim_status": "partial",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "D1-D60 rows are enumerated; generic fallback rows are not verified formal varga support."
-    },
-    {
-      "packet_id": "jyotishganit_vs_local_field_comparison",
-      "path": "references/oracle/jyotishganit_vs_local_field_comparison_steve_jobs_2026_07_19.json",
-      "domain": "three_engine_field_closure",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Local vs jyotishganit D2/D4/D9/D10 sign comparison with hash; mismatch attribution still pending."
-    },
-    {
-      "packet_id": "d1_d60_generic_gap_queue",
-      "path": "references/oracle/d1_d60_generic_gap_queue_2026_07_19.json",
-      "domain": "varga_mapping",
-      "claim_status": "partial",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "40 generic-only Dn rows require source/formula/oracle closure or remain hidden generic fallback."
-    },
-    {
-      "packet_id": "jyotishganit_mismatch_attribution_queue",
-      "path": "references/oracle/jyotishganit_mismatch_attribution_queue_2026_07_19.json",
-      "domain": "three_engine_field_closure",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "After D4 alias normalization, only D10 Rahu/Ketu mismatch remains queued as node/shadow handling."
-    },
-    {
-      "packet_id": "vedicastro_kp_api_probe_flatlib_tmp",
-      "path": "references/oracle/vedicastro_kp_api_probe_flatlib_tmp_2026_07_19.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Temporary flatlib import probe only; dependency version conflicts prevent runtime truth promotion."
-    },
-    {
-      "packet_id": "authoritative_oss_jyotish_source_intake",
-      "path": "references/oracle/authoritative_oss_jyotish_source_intake_2026_07_19.json",
-      "domain": "oss_source_reuse_governance",
-      "claim_status": "source_intake_only",
-      "consumer_policy": "pin_hash_license_gate_before_runtime_use",
-      "claim_boundary": "Open-source Jyotish projects may provide source candidates, probes, raw artifacts, and worked-example leads; they are not final truth until license, commit/hash, input contract, and field-level oracle gates close."
-    },
-    {
-      "packet_id": "d10_rahu_ketu_node_mode_attribution",
-      "path": "references/oracle/d10_rahu_ketu_node_mode_attribution_2026_07_19.json",
-      "domain": "three_engine_field_closure",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "D10 Rahu/Ketu remaining mismatch attributed to node/shadow handling pending raw node settings."
-    },
-    {
-      "packet_id": "vedicastro_kp_api_probe_flatlib_polars_tmp",
-      "path": "references/oracle/vedicastro_kp_api_probe_flatlib_polars_tmp_2026_07_19.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Temporary flatlib/polars probe reaches flatlib.const AY_* API mismatch; no runtime truth upgrade."
-    },
-    {
-      "packet_id": "public_worked_example_candidate_numeric_audit",
-      "path": "references/oracle/public_worked_example_candidate_numeric_audit_2026_07_19.json",
-      "domain": "worked_example_collection",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_queue_only",
-      "claim_boundary": "Candidate URLs audited; no numeric oracle-ready row yet."
-    },
-    {
-      "packet_id": "vedicastro_flatlib_sidereal_install_probe",
-      "path": "references/oracle/vedicastro_flatlib_sidereal_install_probe_2026_07_19.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "VedicAstro official fork diliprk/flatlib@sidereal is pinned and KP API surface is callable in isolated temp env; no truth upgrade until numeric KP worked-example replay."
-    },
-    {
-      "packet_id": "jyotishganit_node_source_attribution",
-      "path": "references/oracle/jyotishganit_node_source_attribution_2026_07_19.json",
-      "domain": "three_engine_field_closure",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Remaining D10 Rahu/Ketu mismatch attributed to node longitude source plus ayanamsa boundary crossing, not D10 formula."
-    },
-    {
-      "packet_id": "vedicastro_kp_runtime_surface_probe",
-      "path": "references/oracle/vedicastro_kp_runtime_surface_probe_2026_07_19.json",
-      "domain": "kp_precision_timing_dependency",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "VedicAstro KP lord/sub/sub-sub runtime surface is callable in isolated sidereal flatlib environment; no precision-timing truth upgrade until public numeric KP worked-example replay closes."
-    },
-    {
-      "packet_id": "vedicastro_kp_house_cusp_probe",
-      "path": "references/oracle/vedicastro_kp_house_cusp_probe_steve_jobs_2026_07_19.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "VedicAstro runtime house cusp star/sub/sub-sub raw/hash captured; public numeric KP oracle still missing."
-    },
-    {
-      "packet_id": "vedicastro_kp_house_cusp_probe_steve_jobs_2026_07_23",
-      "path": "references/oracle/vedicastro_kp_house_cusp_probe_steve_jobs_2026_07_23.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Fresh isolated runtime capture with source hash and explicit KP settings; public same-input numeric oracle and negative holdout remain required."
-    },
-    {
-      "packet_id": "kp_muhurta_shadbala_numeric_packet_queue",
-      "path": "references/oracle/kp_muhurta_shadbala_numeric_packet_queue_2026_07_19.json",
-      "domain": "worked_example_collection",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_queue_only",
-      "claim_boundary": "KP runtime raw is attached; KP/Muhurta/Shadbala rows remain blocked until public numeric fields and raw hashes are captured."
-    },
-    {
-      "packet_id": "jyotishganit_shadbala_surface_probe",
-      "path": "references/oracle/jyotishganit_shadbala_surface_probe_steve_jobs_2026_07_19.json",
-      "domain": "shadbala",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "jyotishganit Shadbala object surface raw/hash captured; component unit parity still pending."
-    },
-    {
-      "packet_id": "vedicastro_kp_cusp_batch_probe",
-      "path": "references/oracle/vedicastro_kp_cusp_batch_probe_2026_07_19.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "VedicAstro KP cusp batch raw/hash over public cases; public numeric oracle still pending."
-    },
-    {
-      "packet_id": "d1_d60_public_source_candidate_queue",
-      "path": "references/oracle/d1_d60_public_source_candidate_queue_2026_07_19.json",
-      "domain": "varga_mapping",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_queue_only",
-      "claim_boundary": "Public D1-D60 source text candidates only; not numeric oracle."
-    },
-    {
-      "packet_id": "muhurta_oss_factor_scoring_queue",
-      "path": "references/oracle/muhurta_oss_factor_scoring_queue_2026_07_19.json",
-      "domain": "muhurta",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "OSS Muhurta scoring surfaces queued; no final verdict until license/formula/examples/negative controls close."
+      "claim_boundary": "Source/formula/unit registry exists; absolute numeric parity still requires worked examples and oracle comparison."
     },
     {
       "packet_id": "four_engine_comparison_queue",
@@ -515,318 +235,6 @@
       "claim_boundary": "Four-engine queue prepared; requires shared input and unit/schema mapping; no majority-vote truth."
     },
     {
-      "packet_id": "shadbala_component_closure_matrix",
-      "path": "references/oracle/shadbala_component_closure_matrix_2026_07_19.json",
-      "domain": "shadbala",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "42 Shadbala component rows have jyotishganit raw and Xalen/VP Jain/provenance hooks; same-unit absolute parity still pending."
-    },
-    {
-      "packet_id": "shadbala_same_unit_normalizer",
-      "path": "references/oracle/shadbala_same_unit_normalizer_2026_07_19.json",
-      "domain": "shadbala_component_closure",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Normalizes local/Xalen/jyotishganit/VP Jain Shadbala rows into Virupa/Rupa where available; classifications are arbitration queues, not absolute truth."
-    },
-    {
-      "packet_id": "deep_fragment_oss_reuse_gate_round2",
-      "path": "references/oracle/deep_fragment_oss_reuse_gate_round2_2026_07_19.json",
-      "domain": "fragment_oss_reuse_governance",
-      "claim_status": "ready_contract",
-      "consumer_policy": "pre_work_required_before_sync",
-      "claim_boundary": "Current whole-machine fragment and OSS reuse guardrail is recorded; no numeric truth or production capability is upgraded by this packet."
-    },
-    {
-      "packet_id": "shadbala_component_closure_queue_v2",
-      "path": "references/oracle/shadbala_component_closure_queue_v2_2026_07_19.json",
-      "domain": "shadbala_component_closure",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "42 same-unit Shadbala rows converted into field-level closure tickets; no absolute parity or majority-vote truth."
-    },
-    {
-      "packet_id": "shadbala_component_closure_ledger",
-      "path": "references/oracle/shadbala_component_closure_ledger_2026_07_19.json",
-      "domain": "shadbala_component_closure",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Classifies all 42 same-unit Shadbala rows into closed observation, method variant, or open mismatch; does not assert absolute formula truth."
-    },
-    {
-      "packet_id": "muhurta_factor_scoring_readiness",
-      "path": "references/oracle/muhurta_factor_scoring_readiness_2026_07_19.json",
-      "domain": "muhurta_factor_scoring",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Classifies Muhurta factors as supporting-context only; no scored verdict readiness until formulas, weights, public examples, and replay hashes close."
-    },
-    {
-      "packet_id": "d1_d60_source_use_readiness",
-      "path": "references/oracle/d1_d60_source_use_readiness_2026_07_19.json",
-      "domain": "varga_mapping",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Classifies D1-D60 sources for names/use notes only; generic-only Dn remains hidden until formula/source/oracle gates close."
-    },
-    {
-      "packet_id": "day_level_holdout_readiness_ledger",
-      "path": "references/real_case_calibration/day_level_holdout_readiness_ledger_2026_07_19.json",
-      "domain": "timing_holdout",
-      "claim_status": "blocked",
-      "consumer_policy": "human_review_required",
-      "claim_boundary": "Reports frozen-label gap for day-level timing holdout; current pilot candidates are not independent labels and cannot unlock day/month claims."
-    },
-    {
-      "packet_id": "three_engine_mismatch_progress_ledger",
-      "path": "references/oracle/three_engine_mismatch_progress_ledger_2026_07_19.json",
-      "domain": "three_engine_parity",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Tracks explanation progress for mismatch rows; does not close original queue or allow majority-vote truth."
-    },
-    {
-      "packet_id": "high_rigor_closure_gate_snapshot_2026_07_20",
-      "path": "references/oracle/high_rigor_closure_gate_snapshot_2026_07_20.json",
-      "domain": "high_rigor_governance",
-      "claim_status": "blocked",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Aggregates current high-rigor gates; blocked/partial gates remain blocked until their evidence packets close."
-    },
-    {
-      "packet_id": "external_source_use_tier_registry_2026_07_20",
-      "path": "references/oracle/external_source_use_tier_registry_2026_07_20.json",
-      "domain": "external_source_governance",
-      "claim_status": "ready_contract",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Classifies OSS/web/real-case sources by allowed use tier; does not upgrade any source to oracle truth."
-    },
-    {
-      "packet_id": "blocked_domain_resolution_queue_2026_07_20",
-      "path": "references/oracle/blocked_domain_resolution_queue_2026_07_20.json",
-      "domain": "closure_governance",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Action queue for 10 blocked production-ready domains; prioritizes next evidence but does not unblock any claim."
-    },
-    {
-      "packet_id": "worked_example_numeric_packet_eligibility_2026_07_20",
-      "path": "references/oracle/worked_example_numeric_packet_eligibility_2026_07_20.json",
-      "domain": "worked_example_collection",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Classifies public worked-example candidates by numeric-packet eligibility; no row is oracle-ready."
-    },
-    {
-      "packet_id": "three_engine_owner_track_batch_plan_2026_07_20",
-      "path": "references/oracle/three_engine_owner_track_batch_plan_2026_07_20.json",
-      "domain": "three_engine_parity",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Groups remaining three-engine mismatches by owner track for closure planning; no production tuning or truth upgrade."
-    },
-    {
-      "packet_id": "five_track_blocked_progress_dashboard_2026_07_20",
-      "path": "references/oracle/five_track_blocked_progress_dashboard_2026_07_20.json",
-      "domain": "closure_governance",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Progress dashboard for five blocked-but-code-progressable domains; does not unblock production-ready claims."
-    },
-    {
-      "packet_id": "compatibility_skill_readiness_dashboard",
-      "path": "references/oracle/compatibility_skill_readiness_dashboard_2026_07_20.json",
-      "domain": "compatibility",
-      "claim_status": "partial",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Basic compatibility layers are callable with boundaries; full synastry, relationship AV overlays, Planet/Lagna Kuta, and deterministic relationship timing remain blocked until oracle packets close."
-    },
-    {
-      "packet_id": "worked_example_packet_intake_plan_2026_07_20",
-      "path": "references/oracle/worked_example_packet_intake_plan_2026_07_20.json",
-      "domain": "worked_example_collection",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Groups KP, Muhurta, and Shadbala worked-example candidates into intake queues; no candidate is upgraded until numeric expected values, raw/hash, and replay comparison are archived."
-    },
-    {
-      "packet_id": "three_engine_worked_example_bridge_2026_07_20",
-      "path": "references/oracle/three_engine_worked_example_bridge_2026_07_20.json",
-      "domain": "three_engine_parity",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Links three-engine owner tracks to worked-example intake domains; no mismatch row is closed without replay or method-variant attribution."
-    },
-    {
-      "packet_id": "public_worked_example_source_triage_2026_07_20",
-      "path": "references/oracle/public_worked_example_source_triage_2026_07_20.json",
-      "domain": "worked_example_collection",
-      "claim_status": "source_intake_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Triage of public KP, Muhurta, and Shadbala source candidates; no source is oracle-ready until raw capture, exact settings, expected values, hash, and replay comparison are archived."
-    },
-    {
-      "packet_id": "muhurta_numeric_candidate_capture_packet_2026_07_20",
-      "path": "references/oracle/muhurta_numeric_candidate_capture_packet_2026_07_20.json",
-      "domain": "muhurta_factor_scoring",
-      "claim_status": "source_intake_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Stages two Muhurta numeric candidates for raw page capture; does not calculate, replay, or validate Muhurta verdicts."
-    },
-    {
-      "packet_id": "real_case_website_e2e_eval_2026_07_20",
-      "path": "references/real_case_calibration/real_case_website_e2e_eval_2026_07_20.json",
-      "domain": "real_case_website_e2e",
-      "claim_status": "ready_contract",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "20 public real-case website E2E quality contract; product QA only, not an accuracy benchmark or independent holdout."
-    },
-    {
-      "packet_id": "prashna_input_contract_2026_07_20",
-      "path": "references/oracle/prashna_input_contract_2026_07_20.json",
-      "domain": "horary_annual_sensitive_points",
-      "claim_status": "ready_contract",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Prashna input contract only; requires explicit time/place/timezone/ayanamsa/node, not predictive truth."
-    },
-    {
-      "packet_id": "prashna_numeric_oracle_packet_queue_2026_07_20",
-      "path": "references/oracle/prashna_numeric_oracle_packet_queue_2026_07_20.json",
-      "domain": "horary_annual_sensitive_points",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_to_commercial_contract_only",
-      "claim_boundary": "Public numeric Prashna/Sphuta candidates remain open queue until complete input/settings/raw hash/replay close."
-    },
-    {
-      "packet_id": "prashna_sphuta_candidate_replay_readiness_2026_07_20",
-      "path": "references/oracle/prashna_sphuta_candidate_replay_readiness_2026_07_20.json",
-      "domain": "horary_annual_sensitive_points",
-      "claim_status": "tooling_observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Expected-value arithmetic replay shows Trisphuta agreement but Chatusphuta/Panchasphuta mismatch; complete Prashna input and legal external replay still required."
-    },
-    {
-      "packet_id": "prashna_sphuta_mismatch_arbitration_2026_07_20",
-      "path": "references/oracle/prashna_sphuta_mismatch_arbitration_2026_07_20.json",
-      "domain": "horary_annual_sensitive_points",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Queues Trisphuta/Chatusphuta/Panchasphuta mismatch causes and second public source candidate; no formula tuning or truth upgrade."
-    },
-    {
-      "packet_id": "prashna_marga_raw_capture_packet_2026_07_20",
-      "path": "references/oracle/prashna_marga_raw_capture_packet_2026_07_20.json",
-      "domain": "horary_annual_sensitive_points",
-      "claim_status": "source_intake_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Pins Internet Archive Prasna Marga metadata and file hashes for later raw excerpt capture; no book text vendored and no truth upgrade."
-    },
-    {
-      "packet_id": "prashna_marga_excerpt_locator_2026_07_20",
-      "path": "references/oracle/prashna_marga_excerpt_locator_2026_07_20.json",
-      "domain": "horary_annual_sensitive_points",
-      "claim_status": "source_intake_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Locates short Prasna Marga Sphuta/Gulika source windows with hashes; no long text vendored and no oracle truth upgrade."
-    },
-    {
-      "packet_id": "prashna_sphuta_source_comparison_matrix_2026_07_20",
-      "path": "references/oracle/prashna_sphuta_source_comparison_matrix_2026_07_20.json",
-      "domain": "horary_annual_sensitive_points",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Field-level matrix links VedAstro expected values, local formula replay and IA excerpt hashes; truth remains blocked until transcription/input/replay close."
-    },
-    {
-      "packet_id": "prashna_sphuta_line_review_queue_2026_07_20",
-      "path": "references/oracle/prashna_sphuta_line_review_queue_2026_07_20.json",
-      "domain": "horary_annual_sensitive_points",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Line-level review queue for Prasna Marga Sphuta windows; requires human/second-source transcription before formula or truth changes."
-    },
-    {
-      "packet_id": "prashna_sphuta_review_result_template_2026_07_20",
-      "path": "references/oracle/prashna_sphuta_review_result_template_2026_07_20.json",
-      "domain": "horary_annual_sensitive_points",
-      "claim_status": "blocked_until_human_labels",
-      "consumer_policy": "human_review_required",
-      "claim_boundary": "Blank result template for Sphuta line review; no classification, replay, or truth upgrade until reviewer fields are filled."
-    },
-    {
-      "packet_id": "prashna_sphuta_review_result_validation_2026_07_20",
-      "path": "references/oracle/prashna_sphuta_review_result_validation_2026_07_20.json",
-      "domain": "horary_annual_sensitive_points",
-      "claim_status": "blocked_until_human_labels",
-      "consumer_policy": "human_review_required",
-      "claim_boundary": "Validates Sphuta review templates; blank reviews remain blocked and completed reviews still require Prashna input and replay before truth upgrade."
-    },
-    {
-      "packet_id": "prashna_sphuta_closure_dashboard_2026_07_20",
-      "path": "references/oracle/prashna_sphuta_closure_dashboard_2026_07_20.json",
-      "domain": "horary_annual_sensitive_points",
-      "claim_status": "blocked_until_human_labels",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Closure dashboard for Prashna/Sphuta packet chain; human review, complete input and legal external replay remain blocked."
-    },
-    {
-      "packet_id": "prashna_sphuta_oss_case_probe_2026_07_20",
-      "path": "references/oracle/prashna_sphuta_oss_case_probe_2026_07_20.json",
-      "domain": "horary_annual_sensitive_points",
-      "claim_status": "tooling_observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Runs installed PyJHora/JHora OSS Sphuta case as isolated observation; AGPL implementation not vendored and no oracle truth upgraded."
-    },
-    {
-      "packet_id": "oss_worked_example_source_matrix_2026_07_20",
-      "path": "references/oracle/oss_worked_example_source_matrix_2026_07_20.json",
-      "domain": "worked_example_collection",
-      "claim_status": "source_intake_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Open-source/public worked-example source matrix only; no source upgrades truth until license/version/raw hash/input contract/replay comparison are archived."
-    },
-    {
-      "packet_id": "research_web_skill_commercial_gap_registry_2026_07_20",
-      "path": "references/oracle/research_web_skill_commercial_gap_registry_2026_07_20.json",
-      "domain": "research_web_skill_sync",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_only_no_commercial_runtime_import",
-      "claim_boundary": "Compares research web/skill maturity with commercial UI patterns; may guide local research UX only and does not import Supabase, credits, payments, dirty commercial code, or truth upgrades."
-    },
-    {
-      "packet_id": "kp_external_table_hash_manifest_2026_07_20",
-      "path": "references/oracle/kp_external_table_hash_manifest_2026_07_20.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "blocked",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Current repo lacks legal pinned KP_SL_Divisions.csv fixture; exact KP cusp and timing oracle remain blocked until table hash and replay evidence are archived."
-    },
-    {
-      "packet_id": "shadbala_naisargika_closure_packet_2026_07_20",
-      "path": "references/oracle/shadbala_naisargika_closure_packet_2026_07_20.json",
-      "domain": "shadbala_component_closure",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Freezes Naisargikabala same-unit within-tolerance observation across five sources for one chart; no absolute Shadbala parity or production tuning upgrade."
-    },
-    {
-      "packet_id": "shadbala_chesta_variant_packet_2026_07_20",
-      "path": "references/oracle/shadbala_chesta_variant_packet_2026_07_20.json",
-      "domain": "shadbala_component_closure",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Splits Cheshtabala into luminary policy, mean-motion/Seeghrochcha method variants, and Venus formula/unit mismatch; no absolute Shadbala parity upgrade."
-    },
-    {
-      "packet_id": "shadbala_digbala_formula_packet_2026_07_20",
-      "path": "references/oracle/shadbala_digbala_formula_packet_2026_07_20.json",
-      "domain": "shadbala_component_closure",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Classifies Digbala rows as formula/unit mismatch and routes them to angular-reference formula arbitration; no absolute parity upgrade."
-    },
-    {
       "packet_id": "fragment_second_pass_candidate_ledger_2026_07_21",
       "path": "references/oracle/fragment_second_pass_candidate_ledger_2026_07_21.json",
       "domain": "fragment_governance",
@@ -835,44 +243,20 @@
       "claim_boundary": "Second-pass ledger for five high-value fragments; each candidate is migrate-to-test/registry, reference-only, or forbidden/private/obsolete. No wholesale copy or truth upgrade."
     },
     {
-      "packet_id": "event_judgment_fragment_rule_family_registry_2026_07_21",
-      "path": "references/oracle/event_judgment_fragment_rule_family_registry_2026_07_21.json",
-      "domain": "event_judgment",
-      "claim_status": "ready_contract",
-      "consumer_policy": "research_registry_only_no_runtime_copy",
-      "claim_boundary": "Ports WorkBuddy event judgment as rule-family inventory only; no old engine code copied."
+      "packet_id": "reference_only_line_audit_v2_2026_07_23",
+      "path": "references/oracle/reference_only_line_audit_v2_2026_07_23.json",
+      "domain": "fragment_governance",
+      "claim_status": "fragment_audit_only",
+      "consumer_policy": "not_runtime_source",
+      "claim_boundary": "Three guarded-worktree reference-only files were line-audited; no runtime migration or numeric oracle is allowed."
     },
     {
-      "packet_id": "research_birth_time_journey_ui_contract_2026_07_21",
-      "path": "references/oracle/research_birth_time_journey_ui_contract_2026_07_21.json",
-      "domain": "research_web_birth_time_journey",
-      "claim_status": "ready_contract",
-      "consumer_policy": "research_local_ui_contract_only",
-      "claim_boundary": "Ports commercial birth-time journey behavior contracts only; no Supabase, credits, auth, or commercial code imported."
-    },
-    {
-      "packet_id": "truth_source_runtime_identity",
-      "path": "references/oracle/truth_source_runtime_identity_2026_07_21.json",
-      "domain": "truth_source_governance",
-      "claim_status": "ready_contract",
-      "consumer_policy": "research_to_commercial_startup_contract",
-      "claim_boundary": "Pins the main research repo as the only truth source, exposes runtime identity, and quarantines old WorkBuddy fragments; no oracle truth upgrade."
-    },
-    {
-      "packet_id": "commercial_startup_self_check_contract_2026_07_21",
-      "path": "references/oracle/commercial_startup_self_check_contract_2026_07_21.json",
-      "domain": "commercial_sync_governance",
-      "claim_status": "ready_contract",
-      "consumer_policy": "commercial_startup_gate_contract_only",
-      "claim_boundary": "Requires commercial runtime to expose truth source identity, artifact gate and privacy status; no business runtime code imported into research."
-    },
-    {
-      "packet_id": "commercial_golden_oss_case_ci_contract_2026_07_21",
-      "path": "references/oracle/commercial_golden_oss_case_ci_contract_2026_07_21.json",
-      "domain": "commercial_sync_governance",
-      "claim_status": "ready_contract",
-      "consumer_policy": "commercial_ci_gate_contract_only",
-      "claim_boundary": "Requires commercial CI to replay the PyJHora/JHora Sphuta OSS observation and hash; observation-only, no truth upgrade."
+      "packet_id": "superpowers_prashna_worktree_reuse_ledger_2026_07_23",
+      "path": "references/oracle/superpowers_prashna_worktree_reuse_ledger_2026_07_23.json",
+      "domain": "fragment_governance",
+      "claim_status": "fragment_audit_only",
+      "consumer_policy": "not_runtime_source",
+      "claim_boundary": "Old guarded Prashna/KP/Tajika/Gulika/Saham worktree was audited; current repo already contains same-name code/tests or newer tests, remaining docs are reference-only."
     },
     {
       "packet_id": "whole_machine_jyotish_fragment_scan_2026_07_21",
@@ -883,108 +267,12 @@
       "claim_boundary": "Whole-machine Jyotish signal scan classifies main, WorkBuddy, temp and user-drop candidates; reviewable fragments are not truth source until privacy/license/invocation checks close."
     },
     {
-      "packet_id": "source_runtime_closure_queue_2026_07_21",
-      "path": "references/oracle/source_runtime_closure_queue_2026_07_21.json",
-      "domain": "source_runtime_closure",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Prioritizes not-fully-invoked source assets such as jyotishganit and VedicAstro KP; queue only, no adapter or truth upgrade."
-    },
-    {
-      "packet_id": "vedicastro_kp_tmp_env_identity_2026_07_21",
-      "path": "references/oracle/vedicastro_kp_tmp_env_identity_2026_07_21.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Pins isolated /tmp VedicAstro KP dependency identity; dependency readiness only, no oracle truth."
-    },
-    {
-      "packet_id": "vedicastro_kp_house_cusp_raw_2026_07_21",
-      "path": "references/oracle/vedicastro_kp_house_cusp_raw_2026_07_21.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Archives VedicAstro KP house cusp star/sub/sub-sub raw for Steve Jobs public case; observation-only until public numeric worked-example replay."
-    },
-    {
-      "packet_id": "jyotishganit_three_engine_closure_bridge_2026_07_21",
-      "path": "references/oracle/jyotishganit_three_engine_closure_bridge_2026_07_21.json",
-      "domain": "three_engine_parity",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Routes available jyotishganit D2/D4/D9/D10, Panchanga and BAV/SAV fields to closure queues; Shadbala remains explicit gap."
-    },
-    {
-      "packet_id": "kp_public_worked_example_candidate_queue_2026_07_21",
-      "path": "references/oracle/kp_public_worked_example_candidate_queue_2026_07_21.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Public KP sources were triaged as formula/runtime candidates; none yet provide stable full numeric cusp star/sub/sub-sub rows for oracle upgrade."
-    },
-    {
-      "packet_id": "jyotishganit_field_closure_rows_2026_07_21",
-      "path": "references/oracle/jyotishganit_field_closure_rows_2026_07_21.json",
-      "domain": "three_engine_parity",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Routes jyotishganit D2/D4/D9/D10, Panchanga and BAV/SAV selected raw fields into closure rows; Shadbala remains explicit gap."
-    },
-    {
-      "packet_id": "three_engine_jyotishganit_bridge_applied_2026_07_21",
-      "path": "references/oracle/three_engine_jyotishganit_bridge_applied_2026_07_21.json",
-      "domain": "three_engine_parity",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Applies jyotishganit field bridge to existing TEMCQ D2/D4/D9/D10/BAV/SAV tickets and marks Panchanga as new-ticket-needed; no truth upgrade."
-    },
-    {
-      "packet_id": "three_engine_field_status_batch_2026_07_21",
-      "path": "references/oracle/three_engine_field_status_batch_2026_07_21.json",
-      "domain": "three_engine_parity",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Classifies 18 jyotishganit-applied TEMCQ rows and creates a Panchanga ticket placeholder; status only, no numeric truth upgrade."
-    },
-    {
-      "packet_id": "three_engine_d2_field_closure_packet_2026_07_21",
-      "path": "references/oracle/three_engine_d2_field_closure_packet_2026_07_21.json",
-      "domain": "three_engine_parity",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "D2 rows show local/PyJHora/jyotishganit agreement while VedAstro endpoint semantics remain blocked; no global truth upgrade."
-    },
-    {
-      "packet_id": "three_engine_d4_d9_d10_field_closure_packet_2026_07_21",
-      "path": "references/oracle/three_engine_d4_d9_d10_field_closure_packet_2026_07_21.json",
-      "domain": "three_engine_parity",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "D4/D9/D10 Moon.sign rows show local/PyJHora/jyotishganit agreement while VedAstro endpoint semantics remain blocked; no global truth upgrade."
-    },
-    {
-      "packet_id": "three_engine_bav_sav_field_closure_packet_2026_07_21",
-      "path": "references/oracle/three_engine_bav_sav_field_closure_packet_2026_07_21.json",
-      "domain": "three_engine_parity",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Classifies BAV/SAV rows into partial consensus or multi-engine variant; public worked table and method metadata still required."
-    },
-    {
-      "packet_id": "panchanga_temcq_061_schema_packet_2026_07_21",
-      "path": "references/oracle/panchanga_temcq_061_schema_packet_2026_07_21.json",
-      "domain": "three_engine_parity",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Creates TEMCQ-061 Panchanga schema mapping queue from jyotishganit raw; local/PyJHora/VedAstro normalized fields remain missing or unpinned."
-    },
-    {
-      "packet_id": "panchanga_local_jyotishganit_comparison_2026_07_21",
-      "path": "references/oracle/panchanga_local_jyotishganit_comparison_2026_07_21.json",
-      "domain": "three_engine_parity",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Compares local calc_panchanga against jyotishganit for five Panchanga labels; one Karana alias remains naming-only and no global truth upgrade is made."
+      "packet_id": "workbuddy_round5_transfer_status_2026_07_22",
+      "path": "references/oracle/workbuddy_round5_transfer_status_2026_07_22.json",
+      "domain": "fragment_governance",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_governance_only",
+      "claim_boundary": "Accounts for 20 WorkBuddy round4 candidates: transferred/reference-only/forbidden; does not claim whole-machine exhaustiveness or truth upgrade."
     },
     {
       "packet_id": "workbuddy_round3_candidate_ledger_2026_07_21",
@@ -1011,22 +299,6 @@
       "claim_boundary": "Maps round4 WorkBuddy candidates into formal registry/test targets for event judgment, birth-time rectification, Muhurta and Tajika/Saham; no runtime import, truth upgrade or bulk-copy permission."
     },
     {
-      "packet_id": "workbuddy_round4_usage_closure_queue_2026_07_21",
-      "path": "references/oracle/workbuddy_round4_usage_closure_queue_2026_07_21.json",
-      "domain": "fragment_migration",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Tracks all round4 migrate_to_registry/test candidates: 9 formalized, 2 pending oracle closure, 1 pending invocation audit; no truth upgrade."
-    },
-    {
-      "packet_id": "vedastro_divisional_degree_contract_probe_2026_07_21",
-      "path": "references/oracle/artifacts/vedastro_divisional_degree_contract_probe.json",
-      "domain": "vedastro_contract_probe",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Validates only VedAstro DivisionalLongitude degree transformation for a fixed scalar input; does not establish hosted chart sign, ayanamsa, node, timezone, or full D2/D4/D9/D10 parity."
-    },
-    {
       "packet_id": "workbuddy_round4_remaining_closure_packet_2026_07_21",
       "path": "references/oracle/workbuddy_round4_remaining_closure_packet_2026_07_21.json",
       "domain": "fragment_migration",
@@ -1035,164 +307,28 @@
       "claim_boundary": "Classifies the last three round4 WorkBuddy candidates as privacy-scrubbed reference, Shadbala artifact parse-needed, and blank Tajika template; no truth upgrade."
     },
     {
-      "packet_id": "pyjhora_steve_jobs_shadbala_stdout_components_2026_07_21",
-      "path": "references/oracle/pyjhora_steve_jobs_shadbala_stdout_components_2026_07_21.json",
-      "domain": "shadbala_oracle",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Parses WorkBuddy/PyJHora Steve Jobs Shadbala stdout into 42 same-unit component rows; observation only, no formula arbitration or absolute parity upgrade."
-    },
-    {
-      "packet_id": "kp_tajika_public_oracle_source_candidates_2026_07_21",
-      "path": "references/oracle/kp_tajika_public_oracle_source_candidates_2026_07_21.json",
-      "domain": "worked_example_collection",
+      "packet_id": "workbuddy_round4_usage_closure_queue_2026_07_21",
+      "path": "references/oracle/workbuddy_round4_usage_closure_queue_2026_07_21.json",
+      "domain": "fragment_migration",
       "claim_status": "open_queue",
       "consumer_policy": "research_observation_only",
-      "claim_boundary": "Records public KP and Tajika/Varshaphala candidate sources found during WorkBuddy closure; none is a complete numeric oracle yet."
+      "claim_boundary": "Tracks all round4 migrate_to_registry/test candidates: 9 formalized, 2 pending oracle closure, 1 pending invocation audit; no truth upgrade."
     },
     {
-      "packet_id": "kp_exact_cusp_invocation_closure_2026_07_21",
-      "path": "references/oracle/kp_exact_cusp_invocation_closure_2026_07_21.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Closes exact KP cusp/star/sub/sub-sub runtime invocation using VedicAstro raw; public numeric worked-example oracle remains blocked."
+      "packet_id": "deep_fragment_oss_reuse_gate_round2",
+      "path": "references/oracle/deep_fragment_oss_reuse_gate_round2_2026_07_19.json",
+      "domain": "fragment_oss_reuse_governance",
+      "claim_status": "ready_contract",
+      "consumer_policy": "pre_work_required_before_sync",
+      "claim_boundary": "Current whole-machine fragment and OSS reuse guardrail is recorded; no numeric truth or production capability is upgraded by this packet."
     },
     {
-      "packet_id": "tajika_steve_jobs_1984_extraction_contract_2026_07_21",
-      "path": "references/oracle/tajika_steve_jobs_1984_extraction_contract_2026_07_21.json",
-      "domain": "tajika_oracle",
-      "claim_status": "blocked_until_oracle",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Keeps Steve Jobs 1984 Tajika/Varshaphala template blocked until citable external numeric fields are captured and replayed."
-    },
-    {
-      "packet_id": "kp_tajika_public_oracle_source_triage_round2_2026_07_21",
-      "path": "references/oracle/kp_tajika_public_oracle_source_triage_round2_2026_07_21.json",
-      "domain": "worked_example_collection",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Round2 web triage adds KP API-surface and Steve Jobs Varshaphala numeric candidates; both remain non-oracle until source/hash/extraction/replay close."
-    },
-    {
-      "packet_id": "roxyapi_kp_surface_contract_2026_07_21",
-      "path": "references/oracle/roxyapi_kp_surface_contract_2026_07_21.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "reference_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Pins RoxyAPI KP endpoint/field surface as reference-only; same-input numeric replay and public worked example remain required before oracle use."
-    },
-    {
-      "packet_id": "tajika_yumpu_source_review_gate_2026_07_21",
-      "path": "references/oracle/tajika_yumpu_source_review_gate_2026_07_21.json",
-      "domain": "tajika_oracle",
-      "claim_status": "blocked_until_oracle",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Keeps Yumpu Steve Jobs Varshaphala candidate blocked until copyright/source review, structured capture, hash, and local replay are complete."
-    },
-    {
-      "packet_id": "kp_archive_worked_example_candidate_2026_07_21",
-      "path": "references/oracle/kp_archive_worked_example_candidate_2026_07_21.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Internet Archive KP cuspal-system text is a worked-example candidate, but remains blocked until structured numeric extraction, copyright/source review, and replay."
-    },
-    {
-      "packet_id": "kp_archive_numeric_locator_packet_2026_07_21",
-      "path": "references/oracle/kp_archive_numeric_locator_packet_2026_07_21.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Hash-stable KP archive locator with candidate numeric line numbers; still requires permitted extraction and replay before oracle use."
-    },
-    {
-      "packet_id": "tajika_yumpu_access_locator_2026_07_21",
-      "path": "references/oracle/tajika_yumpu_access_locator_2026_07_21.json",
-      "domain": "tajika_oracle",
-      "claim_status": "blocked_until_oracle",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Yumpu source is reachable and mentions Steve Jobs, but no authorized numeric Tajika/Varshaphala extraction or replay has occurred."
-    },
-    {
-      "packet_id": "shadbala_component_joined_closure_packet_2026_07_21",
-      "path": "references/oracle/shadbala_component_joined_closure_packet_2026_07_21.json",
-      "domain": "shadbala_oracle",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Joins parsed PyJHora WorkBuddy 42 component rows to same-unit Shadbala closure queue; explanatory partial only, no absolute truth upgrade."
-    },
-    {
-      "packet_id": "kp_archive_numeric_extraction_result_2026_07_21",
-      "path": "references/oracle/kp_archive_numeric_extraction_result_2026_07_21.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "blocked_until_oracle",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Machine extraction found one partial 11th cusp degree from KP archive text but no complete input/star-sub-sub table; oracle remains blocked."
-    },
-    {
-      "packet_id": "technique_invocation_matrix_current_2026_07_21",
-      "path": "references/oracle/technique_invocation_matrix_current_2026_07_21.json",
-      "domain": "technique_invocation",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Tracks current code/skill/API/UI/gate/oracle status for Shadbala, KP, Tajika, rectification and timing; no truth upgrade."
-    },
-    {
-      "packet_id": "shadbala_priority_component_arbitration_2026_07_22",
-      "path": "references/oracle/shadbala_priority_component_arbitration_2026_07_22.json",
-      "domain": "shadbala_oracle",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Prioritizes Naisargika/Dig/Drik Shadbala component arbitration; explanatory partial only, no absolute formula truth selected."
-    },
-    {
-      "packet_id": "shadbala_hard_component_arbitration_2026_07_22",
-      "path": "references/oracle/shadbala_hard_component_arbitration_2026_07_22.json",
-      "domain": "shadbala_oracle",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Classifies Chesta/Sthana/Kala as hard Shadbala components with method/formula blockers; no absolute truth upgrade."
-    },
-    {
-      "packet_id": "kp_observation_sync_contract_2026_07_22",
-      "path": "references/oracle/kp_observation_sync_contract_2026_07_22.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "KP is calculable/displayable as technical observation only; public numeric oracle and verified prediction remain blocked."
-    },
-    {
-      "packet_id": "research_web_skill_invocation_gap_matrix_2026_07_22",
-      "path": "references/oracle/research_web_skill_invocation_gap_matrix_2026_07_22.json",
-      "domain": "research_web_skill_sync",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_planning_only",
-      "claim_boundary": "Tracks code/skill/API/UI/oracle/commercial sync gaps; does not upgrade any technique to truth-ready."
-    },
-    {
-      "packet_id": "shadbala_component_closure_rollup_2026_07_22",
-      "path": "references/oracle/shadbala_component_closure_rollup_2026_07_22.json",
-      "domain": "shadbala_component_closure",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "42 same-unit component rows are summarized for display; only Naisargika is tolerance-ready observation, no absolute Virupa truth upgrade."
-    },
-    {
-      "packet_id": "kp_public_source_candidate_update_2026_07_22",
-      "path": "references/oracle/kp_public_source_candidate_update_2026_07_22.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "blocked_until_oracle",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "KP public reference-table candidates and one partial archive cusp fact are recorded; exact cusp/star-sub-sub oracle remains blocked."
-    },
-    {
-      "packet_id": "muhurta_observation_factor_packet_2026_07_22",
-      "path": "references/oracle/muhurta_observation_factor_packet_2026_07_22.json",
-      "domain": "muhurta_factor_scoring",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Tarabala/Chandrabala/Rahu Kalam/Abhijit are captured as observation factors only; no final Muhurta verdict."
+      "packet_id": "high_rigor_closure_gate_snapshot_2026_07_20",
+      "path": "references/oracle/high_rigor_closure_gate_snapshot_2026_07_20.json",
+      "domain": "high_rigor_governance",
+      "claim_status": "blocked",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Aggregates current high-rigor gates; blocked/partial gates remain blocked until their evidence packets close."
     },
     {
       "packet_id": "horary_annual_sensitive_points_numeric_packet_queue_2026_07_22",
@@ -1203,36 +339,100 @@
       "claim_boundary": "Prashna/Tajika/Saham/Gulika/Sphuta numeric packet queue; candidates do not upgrade claims until complete input/raw/hash/replay close."
     },
     {
-      "packet_id": "workbuddy_round5_transfer_status_2026_07_22",
-      "path": "references/oracle/workbuddy_round5_transfer_status_2026_07_22.json",
-      "domain": "fragment_governance",
+      "packet_id": "prashna_input_contract_2026_07_20",
+      "path": "references/oracle/prashna_input_contract_2026_07_20.json",
+      "domain": "horary_annual_sensitive_points",
       "claim_status": "ready_contract",
-      "consumer_policy": "research_governance_only",
-      "claim_boundary": "Accounts for 20 WorkBuddy round4 candidates: transferred/reference-only/forbidden; does not claim whole-machine exhaustiveness or truth upgrade."
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Prashna input contract only; requires explicit time/place/timezone/ayanamsa/node, not predictive truth."
     },
     {
-      "packet_id": "shadbala_formula_arbitration_queue_v2_2026_07_22",
-      "path": "references/oracle/shadbala_formula_arbitration_queue_v2_2026_07_22.json",
-      "domain": "shadbala_component_closure",
-      "claim_status": "partial",
+      "packet_id": "prashna_marga_excerpt_locator_2026_07_20",
+      "path": "references/oracle/prashna_marga_excerpt_locator_2026_07_20.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "source_intake_only",
       "consumer_policy": "research_observation_only",
-      "claim_boundary": "Dig/Drik/Kala/Sthana/Chesta formula policies are queued for arbitration; no absolute Virupa truth upgrade."
+      "claim_boundary": "Locates short Prasna Marga Sphuta/Gulika source windows with hashes; no long text vendored and no oracle truth upgrade."
     },
     {
-      "packet_id": "muhurta_full_scoring_matrix_queue_2026_07_22",
-      "path": "references/oracle/muhurta_full_scoring_matrix_queue_2026_07_22.json",
-      "domain": "muhurta_factor_scoring",
+      "packet_id": "prashna_marga_raw_capture_packet_2026_07_20",
+      "path": "references/oracle/prashna_marga_raw_capture_packet_2026_07_20.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "source_intake_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Pins Internet Archive Prasna Marga metadata and file hashes for later raw excerpt capture; no book text vendored and no truth upgrade."
+    },
+    {
+      "packet_id": "prashna_numeric_oracle_packet_queue_2026_07_20",
+      "path": "references/oracle/prashna_numeric_oracle_packet_queue_2026_07_20.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Public numeric Prashna/Sphuta candidates remain open queue until complete input/settings/raw hash/replay close."
+    },
+    {
+      "packet_id": "prashna_sphuta_candidate_replay_readiness_2026_07_20",
+      "path": "references/oracle/prashna_sphuta_candidate_replay_readiness_2026_07_20.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "tooling_observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Expected-value arithmetic replay shows Trisphuta agreement but Chatusphuta/Panchasphuta mismatch; complete Prashna input and legal external replay still required."
+    },
+    {
+      "packet_id": "prashna_sphuta_closure_dashboard_2026_07_20",
+      "path": "references/oracle/prashna_sphuta_closure_dashboard_2026_07_20.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "blocked_until_human_labels",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Closure dashboard for Prashna/Sphuta packet chain; human review, complete input and legal external replay remain blocked."
+    },
+    {
+      "packet_id": "prashna_sphuta_line_review_queue_2026_07_20",
+      "path": "references/oracle/prashna_sphuta_line_review_queue_2026_07_20.json",
+      "domain": "horary_annual_sensitive_points",
       "claim_status": "open_queue",
       "consumer_policy": "research_observation_only",
-      "claim_boundary": "Muhurta full scoring factors are queued; factor observations allowed, final electional verdict forbidden until oracle closure."
+      "claim_boundary": "Line-level review queue for Prasna Marga Sphuta windows; requires human/second-source transcription before formula or truth changes."
     },
     {
-      "packet_id": "kp_exact_cusp_public_worked_example_hunt_2026_07_22",
-      "path": "references/oracle/kp_exact_cusp_public_worked_example_hunt_2026_07_22.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "blocked_until_oracle",
+      "packet_id": "prashna_sphuta_mismatch_arbitration_2026_07_20",
+      "path": "references/oracle/prashna_sphuta_mismatch_arbitration_2026_07_20.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "open_queue",
       "consumer_policy": "research_observation_only",
-      "claim_boundary": "KP exact cusp public worked-example hunt found only candidate/reference sources; required exact cusp/star/sub/sub-sub oracle remains missing."
+      "claim_boundary": "Queues Trisphuta/Chatusphuta/Panchasphuta mismatch causes and second public source candidate; no formula tuning or truth upgrade."
+    },
+    {
+      "packet_id": "prashna_sphuta_oss_case_probe_2026_07_20",
+      "path": "references/oracle/prashna_sphuta_oss_case_probe_2026_07_20.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "tooling_observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Runs installed PyJHora/JHora OSS Sphuta case as isolated observation; AGPL implementation not vendored and no oracle truth upgraded."
+    },
+    {
+      "packet_id": "prashna_sphuta_review_result_template_2026_07_20",
+      "path": "references/oracle/prashna_sphuta_review_result_template_2026_07_20.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "blocked_until_human_labels",
+      "consumer_policy": "human_review_required",
+      "claim_boundary": "Blank result template for Sphuta line review; no classification, replay, or truth upgrade until reviewer fields are filled."
+    },
+    {
+      "packet_id": "prashna_sphuta_review_result_validation_2026_07_20",
+      "path": "references/oracle/prashna_sphuta_review_result_validation_2026_07_20.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "blocked_until_human_labels",
+      "consumer_policy": "human_review_required",
+      "claim_boundary": "Validates Sphuta review templates; blank reviews remain blocked and completed reviews still require Prashna input and replay before truth upgrade."
+    },
+    {
+      "packet_id": "prashna_sphuta_source_comparison_matrix_2026_07_20",
+      "path": "references/oracle/prashna_sphuta_source_comparison_matrix_2026_07_20.json",
+      "domain": "horary_annual_sensitive_points",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Field-level matrix links VedAstro expected values, local formula replay and IA excerpt hashes; truth remains blocked until transcription/input/replay close."
     },
     {
       "packet_id": "prashna_tajika_numeric_source_hunt_2026_07_22",
@@ -1243,28 +443,12 @@
       "claim_boundary": "Prashna/Tajika/Gulika/Saham/Sphuta public source hunt only; candidates do not upgrade numeric oracle claims."
     },
     {
-      "packet_id": "shadbala_dig_source_of_truth_audit_2026_07_22",
-      "path": "references/oracle/shadbala_dig_source_of_truth_audit_2026_07_22.json",
-      "domain": "shadbala_component_closure",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Two externally captured cases compare three Dig Bala models; the current error ranking is diagnostic only and does not select an absolute formula truth."
-    },
-    {
-      "packet_id": "kp_exact_cusp_public_worked_example_hunt_v2_2026_07_22",
-      "path": "references/oracle/kp_exact_cusp_public_worked_example_hunt_v2_2026_07_22.json",
-      "domain": "kp_precision_timing",
+      "packet_id": "prashna_tajika_oracle_packet",
+      "path": "references/oracle/prashna_tajika_saham_gulika_sphuta_oracle_packet_2026_07_19.json",
+      "domain": "horary_annual_sensitive_points",
       "claim_status": "blocked",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "KP exact cusp remains blocked as an external oracle; runtime/API candidates can support observation sync only."
-    },
-    {
-      "packet_id": "muhurta_full_scoring_closure_queue_v2_2026_07_22",
-      "path": "references/oracle/muhurta_full_scoring_closure_queue_v2_2026_07_22.json",
-      "domain": "muhurta_full_system",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Muhurta factors can be shown as observations and avoidance windows; full scoring verdict remains blocked."
+      "consumer_policy": "research_only",
+      "claim_boundary": "Registry exists; public worked examples and field-level numeric oracle comparison still missing."
     },
     {
       "packet_id": "prashna_tajika_saham_gulika_sphuta_numeric_packet_queue_v2_2026_07_22",
@@ -1275,62 +459,6 @@
       "claim_boundary": "Prashna/Tajika/Saham/Gulika/Sphuta numeric packet queue only; no domain is upgraded to numeric oracle ready."
     },
     {
-      "packet_id": "timing_rectification_holdout_freeze_contract_2026_07_22",
-      "path": "references/oracle/timing_rectification_holdout_freeze_contract_2026_07_22.json",
-      "domain": "timing_holdout_rectification",
-      "claim_status": "blocked",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Exact day/month timing and birth-time truth upgrades are blocked until independent human labels are frozen before blind ranking."
-    },
-    {
-      "packet_id": "shadbala_component_arbitration_queue_v2_2026_07_22",
-      "path": "references/oracle/shadbala_component_arbitration_queue_v2_2026_07_22.json",
-      "domain": "shadbala_component_closure",
-      "claim_status": "partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Component-level queue only: Naisargika is same-unit closed; Dig/Drik/Kala/Sthana/Chesta remain arbitration items and do not upgrade absolute Shadbala truth."
-    },
-    {
-      "packet_id": "raman_shadbala_raw_replay_and_input_drift_2026_07_22",
-      "path": "references/oracle/raman_shadbala_raw_replay_and_input_drift_2026_07_22.json",
-      "domain": "shadbala_component_closure",
-      "claim_status": "blocked",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Raman Shadbala sample is not promoted: declared raw artifact is absent and fresh PyJHora replay proves input-contract drift."
-    },
-    {
-      "packet_id": "timing_rectification_public_holdout_candidate_queue_2026_07_22",
-      "path": "references/oracle/timing_rectification_public_holdout_candidate_queue_2026_07_22.json",
-      "domain": "timing_holdout_rectification",
-      "claim_status": "blocked_until_human_labels",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Positive public event candidates are queued, but no independent negative labels are frozen; timing and birth-time truth upgrades remain blocked."
-    },
-    {
-      "packet_id": "ul_a7_a10_kp_cusp_three_engine_parity_gap_2026_07_22",
-      "path": "references/oracle/ul_a7_a10_kp_cusp_three_engine_parity_gap_2026_07_22.json",
-      "domain": "rectification_external_parity",
-      "claim_status": "blocked",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "UL/A7/A10/KP cusp same-input external three-engine parity is not closed; local runtime may be used only as candidate signal."
-    },
-    {
-      "packet_id": "ul_a7_a10_kp_cusp_same_input_parity_probe_2026_07_22",
-      "path": "references/oracle/ul_a7_a10_kp_cusp_same_input_parity_probe_2026_07_22.json",
-      "domain": "rectification_external_parity",
-      "claim_status": "blocked",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Same-input local probe exists for UL/A7/A10/KP cusp, but external PyJHora/jyotishganit/VedicAstro parity is not closed."
-    },
-    {
-      "packet_id": "full_technique_invocation_matrix_2026_07_22",
-      "path": "references/oracle/full_technique_invocation_matrix_2026_07_22.json",
-      "domain": "technique_invocation_governance",
-      "claim_status": "open_queue",
-      "consumer_policy": "research_planning_only",
-      "claim_boundary": "Static full-layer scan across skill/API/UI/scripts/references/tests; identifies material not fully invoked and batches migration, but does not upgrade numeric oracle truth or prediction claims."
-    },
-    {
       "packet_id": "jyotishyamitra_steve_jobs_probe_2026_07_23",
       "path": "references/oracle/jyotishyamitra_steve_jobs_probe_2026_07_23.json",
       "domain": "independent_engine_observation",
@@ -1339,100 +467,28 @@
       "claim_boundary": "Pinned MIT wheel replay compared D1/D2/D4/D9/D10 signs with local and Xalen artifacts; agreement and disagreement remain observations, not oracle truth."
     },
     {
-      "packet_id": "jyotishyamitra_d2_mismatch_attribution_2026_07_23",
-      "path": "references/oracle/jyotishyamitra_d2_mismatch_attribution_2026_07_23.json",
-      "domain": "d2_hora_method_variant",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "D2-only disagreement is retained as an unresolved mapping variant; it must not tune wealth interpretation or select an engine by majority vote."
+      "packet_id": "kp_gochara_muhurta_promotion_audit",
+      "path": "references/oracle/technique_promotion_audit_kp_gochara_muhurta_2026_07_19.json",
+      "domain": "kp_gochara_muhurta_panchanga",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Panchanga runtime exists; KP/Muhurta/Gochara remain reference-only or need license/source/oracle closure."
     },
     {
-      "packet_id": "d2_public_formula_example_validation_2026_07_23",
-      "path": "references/oracle/d2_public_formula_example_validation_2026_07_23.json",
-      "domain": "d2_hora_method_variant",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Four publisher-stated arithmetic examples support the declared local Parashara D2 mapping for this limited set; they are not an external software oracle, canonical-school proof, wealth outcome, or timing validation."
-    },
-    {
-      "packet_id": "tajika_steve_jobs_1984_stdout_reconciliation_2026_07_23",
-      "path": "references/oracle/tajika_steve_jobs_1984_stdout_reconciliation_2026_07_23.json",
-      "domain": "tajika_varshaphala",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Nine archived annual fields reconcile to their stored PyJHora stdout and hash; this is archive consistency only, not independent parity, a public worked example, annual judgment validation, or production-tuning permission."
-    },
-    {
-      "packet_id": "kp_ezine159_female_1983_5th_cusp_comparison_2026_07_23",
-      "path": "references/oracle/kp_ezine159_female_1983_5th_cusp_comparison_2026_07_23.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "One public fifth-cusp row agrees with an isolated VedicAstro replay through sub-sub lord and within 60 arcseconds. KP New/Krishnamurti equivalence, remaining cusp rows, hosted identity, timing, and outcomes remain unverified."
-    },
-    {
-      "packet_id": "kp_ezine159_female_1983_11_cusp_label_comparison_2026_07_23",
-      "path": "references/oracle/kp_ezine159_female_1983_11_cusp_label_comparison_2026_07_23.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "observation_only",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Eleven transcribed public KP cusp label rows agree with an isolated VedicAstro replay; exact longitudes, twelfth cusp, software identity, significator workflow, timing and outcomes remain blocked."
-    },
-    {
-      "packet_id": "muhurta_oss_worked_example_readiness_2026_07_23",
-      "path": "references/oracle/muhurta_oss_worked_example_readiness_2026_07_23.json",
-      "domain": "muhurta_factor_scoring",
-      "claim_status": "candidate_source_matrix",
-      "consumer_policy": "reference_only_until_pinned_adapter",
-      "claim_boundary": "Public/open-source Muhurta sources are candidate references only; no numeric oracle, pinned adapter, or final auspicious-date verdict is ready."
-    },
-    {
-      "packet_id": "shadbala_remaining_component_arbitration_v3_2026_07_23",
-      "path": "references/oracle/shadbala_remaining_component_arbitration_v3_2026_07_23.json",
-      "domain": "shadbala_component_closure",
-      "claim_status": "component_explanatory_partial",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "Dig/Drik/Sthana/Kala/Chesta now have named subformula closure queues, but all still require numeric worked examples before truth upgrade."
-    },
-    {
-      "packet_id": "kp_significator_workflow_gate_2026_07_23",
-      "path": "references/oracle/kp_significator_workflow_gate_2026_07_23.json",
-      "domain": "kp_precision_timing",
-      "claim_status": "calculable_displayable_public_oracle_blocked",
-      "consumer_policy": "research_observation_only",
-      "claim_boundary": "KP exact cusp, planetary star/sub raw, significator ABCD table, ruling planets, and timing holdout are defined as workflow gates; verified KP prediction remains blocked."
-    },
-    {
-      "packet_id": "numeric_oracle_gap_queue_v3_2026_07_23",
-      "path": "references/oracle/numeric_oracle_gap_queue_v3_2026_07_23.json",
-      "domain": "external_numeric_oracles",
+      "claim_boundary": "Template and validator for KP 12 cusp, Prashna/Sphuta and Tajika/Saham numeric packet intake. Blank or incomplete packets remain candidate_queue and cannot enter the truth matrix.",
       "claim_status": "candidate_queue",
-      "consumer_policy": "reference_only_until_complete_input_expected_values_and_replay",
-      "claim_boundary": "KP, Prashna, Tajika, Saham, Gulika and Sphuta candidates are recorded, but none is ready as a numeric oracle packet."
+      "consumer_policy": "candidate_packet_shape_gate_no_truth_upgrade",
+      "domain": "kp_prashna_saham_sphuta_tajika_numeric_oracle_intake",
+      "packet_id": "numeric_oracle_packet_intake_template_2026_07_23",
+      "path": "references/oracle/numeric_oracle_packet_intake_template_2026_07_23.json"
     },
     {
-      "packet_id": "hard_gap_source_hunt_2026_07_23",
-      "path": "references/oracle/hard_gap_source_hunt_2026_07_23.json",
-      "domain": "external_numeric_oracles",
-      "claim_status": "source_hunt_only",
-      "consumer_policy": "reference_only_until_complete_numeric_replay",
-      "claim_boundary": "KP 12 cusp, KP timing, Gulika/Sphuta, Prashna/Sphuta and Tajika/Saham sources were reviewed; no complete numeric oracle is ready."
-    },
-    {
-      "packet_id": "superpowers_prashna_worktree_reuse_ledger_2026_07_23",
-      "path": "references/oracle/superpowers_prashna_worktree_reuse_ledger_2026_07_23.json",
-      "domain": "fragment_governance",
-      "claim_status": "fragment_audit_only",
-      "consumer_policy": "not_runtime_source",
-      "claim_boundary": "Old guarded Prashna/KP/Tajika/Gulika/Saham worktree was audited; current repo already contains same-name code/tests or newer tests, remaining docs are reference-only."
-    },
-    {
-      "packet_id": "reference_only_line_audit_v2_2026_07_23",
-      "path": "references/oracle/reference_only_line_audit_v2_2026_07_23.json",
-      "domain": "fragment_governance",
-      "claim_status": "fragment_audit_only",
-      "consumer_policy": "not_runtime_source",
-      "claim_boundary": "Three guarded-worktree reference-only files were line-audited; no runtime migration or numeric oracle is allowed."
+      "claim_boundary": "PanchangBodh KP Placidus screenshot provides complete 12 cusp degree/star/sub/sub-sub rows. Local VedicAstro replay is degree-close with one cusp-1 sub-sub-lord mismatch; timezone, ayanamsa and node mode are not page-visible, so this is not final truth or verified timing.",
+      "claim_status": "ready_for_replay_packet",
+      "consumer_policy": "numeric_replay_packet_no_truth_upgrade",
+      "domain": "kp_precision_timing",
+      "packet_id": "kp_12_cusp_panchangbodh_steve_jobs_2026_07_23",
+      "path": "references/oracle/cases/kp_12_cusp_panchangbodh_steve_jobs_2026_07_23.json"
     },
     {
       "packet_id": "kp_api_pinned_raw_capture_readiness_2026_07_23",
@@ -1443,36 +499,396 @@
       "claim_boundary": "RoxyAPI/AstrologyAPI/AjmerAstro KP capture requires key, terms, version, retention permission and canonical request before raw archival."
     },
     {
-      "packet_id": "external_evidence_reuse_matrix_2026_07_23",
-      "path": "references/oracle/external_evidence_reuse_matrix_2026_07_23.json",
-      "domain": "external_numeric_oracles",
-      "claim_status": "reuse_plan_only",
-      "consumer_policy": "no_truth_upgrade_without_numeric_or_human_labels",
-      "claim_boundary": "Open-source and local fragments can reduce implementation/replay effort, but cannot replace missing terms, expected numeric values, raw/hash capture, or independent human labels."
+      "packet_id": "kp_archive_numeric_extraction_result_2026_07_21",
+      "path": "references/oracle/kp_archive_numeric_extraction_result_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "blocked_until_oracle",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Machine extraction found one partial 11th cusp degree from KP archive text but no complete input/star-sub-sub table; oracle remains blocked."
     },
     {
-      "packet_id": "pyjhora_traditional_branch_oracle_boundary_2026_07_23",
-      "path": "references/oracle/pyjhora_traditional_branch_oracle_boundary_2026_07_23.json",
-      "domain": "tajika_kp_advanced_av_boundary",
-      "claim_status": "observation_boundary_matrix",
-      "consumer_policy": "sync_matrix_only_do_not_vendor_agpl_implementation",
-      "claim_boundary": "Tajika, KP exact cusp and advanced AV fields are mapped for local calculation, PyJHora observation, jyotishganit/VedicAstro reference, public worked-example status and commercial output allowance; no PyJHora implementation is synced."
+      "packet_id": "kp_archive_numeric_locator_packet_2026_07_21",
+      "path": "references/oracle/kp_archive_numeric_locator_packet_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Hash-stable KP archive locator with candidate numeric line numbers; still requires permitted extraction and replay before oracle use."
     },
     {
-      "packet_id": "vedastro_keyed_capture_closure_2026_07_23",
-      "path": "references/oracle/vedastro_keyed_capture_closure_2026_07_23.json",
-      "domain": "vedastro_identity_and_numeric_oracles",
-      "claim_status": "keyed_observation_partial",
-      "consumer_policy": "research_observation_only_no_secret_material",
-      "claim_boundary": "Keyed VedAstro raw and method catalog capture are available without persisting the secret; hosted build identity, KP 12-cusp oracle, Prashna/Saham/Sphuta endpoints, selected Gulika/Tajika payload contracts and timing labels remain blocked."
+      "packet_id": "kp_archive_worked_example_candidate_2026_07_21",
+      "path": "references/oracle/kp_archive_worked_example_candidate_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Internet Archive KP cuspal-system text is a worked-example candidate, but remains blocked until structured numeric extraction, copyright/source review, and replay."
     },
     {
-      "packet_id": "timing_rectification_reviewer_freeze_status_2026_07_23",
-      "path": "references/real_case_calibration/timing_rectification_reviewer_freeze_status_2026_07_23.json",
-      "domain": "timing_rectification_governance",
-      "claim_status": "one_reviewer_confirmed_second_required",
-      "consumer_policy": "human_review_required",
-      "claim_boundary": "One reviewer confirmation advances candidate governance but reviewer 2 is still missing, so the two-reviewer freeze requirement and timing claim upgrade remain unsatisfied."
+      "packet_id": "kp_cusp_precision_contract",
+      "path": "references/oracle/kp_cusp_precision_contract_2026_07_19.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "blocked",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Exact KP cusp contract is defined, but numeric cusp oracle and negative timing holdout are missing; current runtime remains supporting probe only."
+    },
+    {
+      "packet_id": "kp_cusp_worked_example_oracle_queue",
+      "path": "references/oracle/kp_cusp_worked_example_oracle_queue_2026_07_19.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "blocked",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Exact KP cusp worked-example queue defines required oracle fields; remains awaiting public numeric examples."
+    },
+    {
+      "packet_id": "kp_exact_cusp_invocation_closure_2026_07_21",
+      "path": "references/oracle/kp_exact_cusp_invocation_closure_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Closes exact KP cusp/star/sub/sub-sub runtime invocation using VedicAstro raw; public numeric worked-example oracle remains blocked."
+    },
+    {
+      "packet_id": "kp_exact_cusp_public_worked_example_hunt_2026_07_22",
+      "path": "references/oracle/kp_exact_cusp_public_worked_example_hunt_2026_07_22.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "blocked_until_oracle",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "KP exact cusp public worked-example hunt found only candidate/reference sources; required exact cusp/star/sub/sub-sub oracle remains missing."
+    },
+    {
+      "packet_id": "kp_exact_cusp_public_worked_example_hunt_v2_2026_07_22",
+      "path": "references/oracle/kp_exact_cusp_public_worked_example_hunt_v2_2026_07_22.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "blocked",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "KP exact cusp remains blocked as an external oracle; runtime/API candidates can support observation sync only."
+    },
+    {
+      "packet_id": "kp_external_table_hash_manifest",
+      "path": "scripts/kp_external_table_hash_manifest.py",
+      "domain": "kp_precision_timing",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "KP external sub-lord table hash runner fixes fixture hash when present and reports fixture_missing when absent; no timing truth upgrade."
+    },
+    {
+      "packet_id": "kp_external_table_hash_manifest_2026_07_20",
+      "path": "references/oracle/kp_external_table_hash_manifest_2026_07_20.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "blocked",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Current repo lacks legal pinned KP_SL_Divisions.csv fixture; exact KP cusp and timing oracle remain blocked until table hash and replay evidence are archived."
+    },
+    {
+      "packet_id": "kp_ezine159_female_1983_11_cusp_label_comparison_2026_07_23",
+      "path": "references/oracle/kp_ezine159_female_1983_11_cusp_label_comparison_2026_07_23.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Eleven transcribed public KP cusp label rows agree with an isolated VedicAstro replay; exact longitudes, twelfth cusp, software identity, significator workflow, timing and outcomes remain blocked."
+    },
+    {
+      "packet_id": "kp_ezine159_female_1983_5th_cusp_comparison_2026_07_23",
+      "path": "references/oracle/kp_ezine159_female_1983_5th_cusp_comparison_2026_07_23.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "One public fifth-cusp row agrees with an isolated VedicAstro replay through sub-sub lord and within 60 arcseconds. KP New/Krishnamurti equivalence, remaining cusp rows, hosted identity, timing, and outcomes remain unverified."
+    },
+    {
+      "packet_id": "kp_observation_sync_contract_2026_07_22",
+      "path": "references/oracle/kp_observation_sync_contract_2026_07_22.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "KP is calculable/displayable as technical observation only; public numeric oracle and verified prediction remain blocked."
+    },
+    {
+      "packet_id": "kp_precision_timing_gap_registry",
+      "path": "references/oracle/kp_precision_timing_gap_registry_2026_07_19.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "KP precision timing gap registry exists; star/sub-lord, ruling planets and significator tables remain blocked until source/oracle/holdout gates close."
+    },
+    {
+      "packet_id": "kp_precision_timing_probe",
+      "path": "scripts/kp_precision_timing_probe.py",
+      "domain": "kp_precision_timing",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "KP star/sub-lord and significator probe exposes raw fields and hash, but cannot drive precise event timing without exact KP cusp oracle and independent negative holdout validation."
+    },
+    {
+      "packet_id": "kp_public_source_candidate_update_2026_07_22",
+      "path": "references/oracle/kp_public_source_candidate_update_2026_07_22.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "blocked_until_oracle",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "KP public reference-table candidates and one partial archive cusp fact are recorded; exact cusp/star-sub-sub oracle remains blocked."
+    },
+    {
+      "packet_id": "kp_public_worked_example_candidate_queue_2026_07_21",
+      "path": "references/oracle/kp_public_worked_example_candidate_queue_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Public KP sources were triaged as formula/runtime candidates; none yet provide stable full numeric cusp star/sub/sub-sub rows for oracle upgrade."
+    },
+    {
+      "packet_id": "kp_significator_workflow_gate_2026_07_23",
+      "path": "references/oracle/kp_significator_workflow_gate_2026_07_23.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "calculable_displayable_public_oracle_blocked",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "KP exact cusp, planetary star/sub raw, significator ABCD table, ruling planets, and timing holdout are defined as workflow gates; verified KP prediction remains blocked."
+    },
+    {
+      "packet_id": "roxyapi_kp_surface_contract_2026_07_21",
+      "path": "references/oracle/roxyapi_kp_surface_contract_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "reference_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Pins RoxyAPI KP endpoint/field surface as reference-only; same-input numeric replay and public worked example remain required before oracle use."
+    },
+    {
+      "packet_id": "vedicastro_flatlib_sidereal_install_probe",
+      "path": "references/oracle/vedicastro_flatlib_sidereal_install_probe_2026_07_19.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "VedicAstro official fork diliprk/flatlib@sidereal is pinned and KP API surface is callable in isolated temp env; no truth upgrade until numeric KP worked-example replay."
+    },
+    {
+      "packet_id": "vedicastro_kp_api_probe",
+      "path": "references/oracle/vedicastro_kp_api_probe_2026_07_19.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "VedicAstro KP API/source hash captured; exact cusp truth still requires public numeric worked examples."
+    },
+    {
+      "packet_id": "vedicastro_kp_api_probe_flatlib_polars_tmp",
+      "path": "references/oracle/vedicastro_kp_api_probe_flatlib_polars_tmp_2026_07_19.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Temporary flatlib/polars probe reaches flatlib.const AY_* API mismatch; no runtime truth upgrade."
+    },
+    {
+      "packet_id": "vedicastro_kp_api_probe_flatlib_tmp",
+      "path": "references/oracle/vedicastro_kp_api_probe_flatlib_tmp_2026_07_19.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Temporary flatlib import probe only; dependency version conflicts prevent runtime truth promotion."
+    },
+    {
+      "packet_id": "vedicastro_kp_cusp_batch_probe",
+      "path": "references/oracle/vedicastro_kp_cusp_batch_probe_2026_07_19.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "VedicAstro KP cusp batch raw/hash over public cases; public numeric oracle still pending."
+    },
+    {
+      "packet_id": "vedicastro_kp_house_cusp_probe",
+      "path": "references/oracle/vedicastro_kp_house_cusp_probe_steve_jobs_2026_07_19.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "VedicAstro runtime house cusp star/sub/sub-sub raw/hash captured; public numeric KP oracle still missing."
+    },
+    {
+      "packet_id": "vedicastro_kp_house_cusp_probe_steve_jobs_2026_07_23",
+      "path": "references/oracle/vedicastro_kp_house_cusp_probe_steve_jobs_2026_07_23.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Fresh isolated runtime capture with source hash and explicit KP settings; public same-input numeric oracle and negative holdout remain required."
+    },
+    {
+      "packet_id": "vedicastro_kp_house_cusp_raw_2026_07_21",
+      "path": "references/oracle/vedicastro_kp_house_cusp_raw_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Archives VedicAstro KP house cusp star/sub/sub-sub raw for Steve Jobs public case; observation-only until public numeric worked-example replay."
+    },
+    {
+      "packet_id": "vedicastro_kp_surface_locator",
+      "path": "scripts/vedicastro_kp_surface_locator.py",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Locates KP source surface and missing/candidate table paths; no cusp truth upgrade."
+    },
+    {
+      "packet_id": "vedicastro_kp_tmp_env_identity_2026_07_21",
+      "path": "references/oracle/vedicastro_kp_tmp_env_identity_2026_07_21.json",
+      "domain": "kp_precision_timing",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Pins isolated /tmp VedicAstro KP dependency identity; dependency readiness only, no oracle truth."
+    },
+    {
+      "packet_id": "vedicastro_kp_runtime_surface_probe",
+      "path": "references/oracle/vedicastro_kp_runtime_surface_probe_2026_07_19.json",
+      "domain": "kp_precision_timing_dependency",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "VedicAstro KP lord/sub/sub-sub runtime surface is callable in isolated sidereal flatlib environment; no precision-timing truth upgrade until public numeric KP worked-example replay closes."
+    },
+    {
+      "claim_boundary": "KP star/sub-lord and significator fields are observable in local runtime, but exact timing remains blocked until external numeric oracle and negative holdout close.",
+      "claim_status": "probe_only_not_timing_truth",
+      "consumer_policy": "supporting_probe_only",
+      "domain": "kp_precision_timing_probe",
+      "packet_id": "kp_precision_timing_probe_2026_07_23",
+      "path": "references/oracle/kp_precision_timing_probe_2026_07_23.json"
+    },
+    {
+      "claim_boundary": "Local runtime can expose KP star/sub-lord and significator fields, but it remains observation-only. Exact KP timing stays blocked until a public numeric oracle and independent negative holdout close.",
+      "claim_status": "observation_only",
+      "consumer_policy": "supporting_probe_only",
+      "domain": "kp_significator_runtime_delta",
+      "packet_id": "kp_significator_runtime_delta_2026_07_23",
+      "path": "references/oracle/kp_significator_runtime_delta_2026_07_23.json"
+    },
+    {
+      "packet_id": "muhurta_factor_probe",
+      "path": "scripts/muhurta_factor_probe.py",
+      "domain": "muhurta",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Muhurta factor probe exposes Tarabala/Chandrabala/Rahu Kalam/Abhijit observations only; no verified Muhurta verdict."
+    },
+    {
+      "packet_id": "muhurta_full_system_gap_registry",
+      "path": "references/oracle/muhurta_full_system_gap_registry_2026_07_19.json",
+      "domain": "muhurta",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Panchanga base exists, but full Muhurta scoring remains blocked until Tarabala/Chandrabala/Panchaka/Rahu Kalam examples and source contracts close."
+    },
+    {
+      "packet_id": "muhurta_oss_factor_scoring_queue",
+      "path": "references/oracle/muhurta_oss_factor_scoring_queue_2026_07_19.json",
+      "domain": "muhurta",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "OSS Muhurta scoring surfaces queued; no final verdict until license/formula/examples/negative controls close."
+    },
+    {
+      "claim_boundary": "Muhurta factor probe is exploratory and comparison-only; factor scorecard is not a final electional verdict.",
+      "claim_status": "exploratory_muhurta_candidate",
+      "consumer_policy": "supporting_context_only",
+      "domain": "muhurta_factor_probe",
+      "packet_id": "muhurta_factor_probe_2026_07_23",
+      "path": "references/oracle/muhurta_factor_probe_2026_07_23.json"
+    },
+    {
+      "packet_id": "muhurta_factor_scoring_readiness",
+      "path": "references/oracle/muhurta_factor_scoring_readiness_2026_07_19.json",
+      "domain": "muhurta_factor_scoring",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies Muhurta factors as supporting-context only; no scored verdict readiness until formulas, weights, public examples, and replay hashes close."
+    },
+    {
+      "packet_id": "muhurta_full_scoring_matrix_queue_2026_07_22",
+      "path": "references/oracle/muhurta_full_scoring_matrix_queue_2026_07_22.json",
+      "domain": "muhurta_factor_scoring",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Muhurta full scoring factors are queued; factor observations allowed, final electional verdict forbidden until oracle closure."
+    },
+    {
+      "packet_id": "muhurta_numeric_candidate_capture_packet_2026_07_20",
+      "path": "references/oracle/muhurta_numeric_candidate_capture_packet_2026_07_20.json",
+      "domain": "muhurta_factor_scoring",
+      "claim_status": "source_intake_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Stages two Muhurta numeric candidates for raw page capture; does not calculate, replay, or validate Muhurta verdicts."
+    },
+    {
+      "packet_id": "muhurta_observation_factor_packet_2026_07_22",
+      "path": "references/oracle/muhurta_observation_factor_packet_2026_07_22.json",
+      "domain": "muhurta_factor_scoring",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Tarabala/Chandrabala/Rahu Kalam/Abhijit are captured as observation factors only; no final Muhurta verdict."
+    },
+    {
+      "packet_id": "muhurta_oss_worked_example_readiness_2026_07_23",
+      "path": "references/oracle/muhurta_oss_worked_example_readiness_2026_07_23.json",
+      "domain": "muhurta_factor_scoring",
+      "claim_status": "candidate_source_matrix",
+      "consumer_policy": "reference_only_until_pinned_adapter",
+      "claim_boundary": "Public/open-source Muhurta sources are candidate references only; no numeric oracle, pinned adapter, or final auspicious-date verdict is ready."
+    },
+    {
+      "packet_id": "muhurta_full_scoring_closure_queue_v2_2026_07_22",
+      "path": "references/oracle/muhurta_full_scoring_closure_queue_v2_2026_07_22.json",
+      "domain": "muhurta_full_system",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Muhurta factors can be shown as observations and avoidance windows; full scoring verdict remains blocked."
+    },
+    {
+      "claim_boundary": "fusionstrings/panchangam is MIT and exposes Panchanga/Muhurta factor surfaces, but runtime import needs package/WASM hash, same-input replay, and worked examples before any scoring upgrade.",
+      "claim_status": "source_intake_only",
+      "consumer_policy": "source_queue_no_truth_upgrade",
+      "domain": "muhurta_open_source_reuse_audit",
+      "packet_id": "fusionstrings_panchangam_license_api_probe_2026_07_23",
+      "path": "references/oracle/fusionstrings_panchangam_license_api_probe_2026_07_23.json"
+    },
+    {
+      "packet_id": "panchanga_api_observation_manifest",
+      "path": "references/oracle/panchanga_api_observation_manifest_2026_07_19.json",
+      "domain": "muhurta_panchanga",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "panchanga_api local snapshot is docs-only; no numeric parity claim."
+    },
+    {
+      "claim_boundary": "Three public candidate cases replayed through native, PyJHora/JHora, and jyotishganit for computational observation. VedAstro requires per-case official raw before inclusion. Engine agreement or disagreement does not validate event timing and cannot validate historical-event causality, forecasting accuracy, or birth-time truth.",
+      "claim_status": "observation_only",
+      "consumer_policy": "calculation_consistency_only_no_outcome_scoring",
+      "domain": "multi_engine_candidate_case_observation",
+      "packet_id": "candidate_multi_engine_observation_replay_2026_07_23",
+      "path": "references/oracle/candidate_multi_engine_observation_replay_2026_07_23.json"
+    },
+    {
+      "claim_boundary": "Open-source and public sources are ranked for KP, Muhurta, Prashna/Sphuta/Gulika, Tajika/Saham, and VedAstro probes. Rows reduce search/replay cost but require license review, pinned versions/hashes, complete inputs, expected numeric fields, and local replay before truth upgrade.",
+      "claim_status": "source_hunt_only",
+      "consumer_policy": "source_queue_no_truth_upgrade",
+      "domain": "open_source_oracle_intake",
+      "packet_id": "open_source_oracle_intake_2026_07_23",
+      "path": "references/oracle/open_source_oracle_intake_2026_07_23.json"
+    },
+    {
+      "packet_id": "local_oss_observation_inventory",
+      "path": "scripts/local_oss_observation_inventory.py",
+      "domain": "oss_reuse_and_worked_examples",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Local OSS fragments are inventoried with hash/license/API hints only; no runtime dependency or truth upgrade."
+    },
+    {
+      "packet_id": "permissive_oss_worked_example_registry",
+      "path": "references/oracle/permissive_oss_worked_example_registry_2026_07_19.json",
+      "domain": "oss_reuse_and_worked_examples",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Permissive OSS candidates and worked-example queues are registered for probes only; no truth-matrix or production-tuning upgrade."
+    },
+    {
+      "packet_id": "authoritative_oss_jyotish_source_intake",
+      "path": "references/oracle/authoritative_oss_jyotish_source_intake_2026_07_19.json",
+      "domain": "oss_source_reuse_governance",
+      "claim_status": "source_intake_only",
+      "consumer_policy": "pin_hash_license_gate_before_runtime_use",
+      "claim_boundary": "Open-source Jyotish projects may provide source candidates, probes, raw artifacts, and worked-example leads; they are not final truth until license, commit/hash, input contract, and field-level oracle gates close."
     },
     {
       "claim_boundary": "Three fixed public/synthetic PyJHora cases show Panchanga field observations and Gulika formula deltas. Maandi and Muhurta windows remain raw observations; no automatic election, prediction, or truth upgrade is permitted.",
@@ -1483,12 +899,780 @@
       "path": "references/oracle/pyjhora_multi_case_panchanga_gulika_replay_2026_07_23.json"
     },
     {
+      "claim_boundary": "Fixed-input PyJHora 4.8.7 raw fields are captured with Lahiri, timezone, package metadata and a normalized hash. No automated Muhurta verdict, timing truth, prediction, or birth-time upgrade is permitted.",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "domain": "panchanga_gulika_muhurta",
+      "packet_id": "pyjhora_panchanga_gulika_maandi_muhurta_probe_2026_07_23",
+      "path": "references/oracle/pyjhora_panchanga_gulika_maandi_muhurta_probe_2026_07_23.json"
+    },
+    {
+      "claim_boundary": "Ranked public/open-source candidate queue for KP, Gulika/Mandi, Prashna/Sphuta and Tajika/Saham. Only PanchangBodh KP is replay-ready; all other rows still lack complete input, expected numeric fields, replay, or license/page review.",
+      "claim_status": "open_queue",
+      "consumer_policy": "source_queue_no_truth_upgrade",
+      "domain": "prashna_tajika_saham_gulika_sphuta_numeric_source_queue",
+      "packet_id": "prashna_tajika_numeric_packet_source_queue_2026_07_23",
+      "path": "references/oracle/prashna_tajika_numeric_packet_source_queue_2026_07_23.json"
+    },
+    {
+      "packet_id": "profile_schema_contract",
+      "path": "references/oracle/profile_schema_contract_2026_07_19.json",
+      "domain": "profile_schema",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Profile schema contract is ready; UI/API adoption must prove gender optional fields do not affect core chart math."
+    },
+    {
+      "packet_id": "real_case_website_e2e_eval_2026_07_20",
+      "path": "references/real_case_calibration/real_case_website_e2e_eval_2026_07_20.json",
+      "domain": "real_case_website_e2e",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "20 public real-case website E2E quality contract; product QA only, not an accuracy benchmark or independent holdout."
+    },
+    {
+      "packet_id": "ul_a7_a10_kp_cusp_same_input_parity_probe_2026_07_22",
+      "path": "references/oracle/ul_a7_a10_kp_cusp_same_input_parity_probe_2026_07_22.json",
+      "domain": "rectification_external_parity",
+      "claim_status": "blocked",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Same-input local probe exists for UL/A7/A10/KP cusp, but external PyJHora/jyotishganit/VedicAstro parity is not closed."
+    },
+    {
+      "packet_id": "ul_a7_a10_kp_cusp_three_engine_parity_gap_2026_07_22",
+      "path": "references/oracle/ul_a7_a10_kp_cusp_three_engine_parity_gap_2026_07_22.json",
+      "domain": "rectification_external_parity",
+      "claim_status": "blocked",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "UL/A7/A10/KP cusp same-input external three-engine parity is not closed; local runtime may be used only as candidate signal."
+    },
+    {
+      "packet_id": "gender_interpretation_contract",
+      "path": "references/oracle/gender_interpretation_contract_2026_07_19.json",
+      "domain": "relationship_interpretation",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Gender affects only optional relationship/birth-context interpretation, not chart calculation."
+    },
+    {
+      "packet_id": "relationship_gender_role_registry",
+      "path": "references/relationship_gender_role_technique_registry_2026_07_19.json",
+      "domain": "relationship_interpretation",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Technique registry only; no predictive truth upgrade."
+    },
+    {
+      "packet_id": "relationship_combinations_rule_family_registry",
+      "path": "references/oracle/relationship_combinations_rule_family_registry_2026_07_19.json",
+      "domain": "relationship_rule_families",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Relationship/children/hostility combination families are indexed but require source packets, deduplication, tests, and claim gates before runtime use."
+    },
+    {
+      "packet_id": "research_birth_time_journey_ui_contract_2026_07_21",
+      "path": "references/oracle/research_birth_time_journey_ui_contract_2026_07_21.json",
+      "domain": "research_web_birth_time_journey",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_local_ui_contract_only",
+      "claim_boundary": "Ports commercial birth-time journey behavior contracts only; no Supabase, credits, auth, or commercial code imported."
+    },
+    {
+      "packet_id": "research_web_skill_commercial_gap_registry_2026_07_20",
+      "path": "references/oracle/research_web_skill_commercial_gap_registry_2026_07_20.json",
+      "domain": "research_web_skill_sync",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_only_no_commercial_runtime_import",
+      "claim_boundary": "Compares research web/skill maturity with commercial UI patterns; may guide local research UX only and does not import Supabase, credits, payments, dirty commercial code, or truth upgrades."
+    },
+    {
+      "packet_id": "research_web_skill_invocation_gap_matrix_2026_07_22",
+      "path": "references/oracle/research_web_skill_invocation_gap_matrix_2026_07_22.json",
+      "domain": "research_web_skill_sync",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_planning_only",
+      "claim_boundary": "Tracks code/skill/API/UI/oracle/commercial sync gaps; does not upgrade any technique to truth-ready."
+    },
+    {
+      "packet_id": "local_oss_reuse_sweep_kp_muhurta_av_compat",
+      "path": "references/oracle/local_oss_reuse_sweep_kp_muhurta_av_compat_2026_07_19.json",
+      "domain": "reuse_governance",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Records local/OSS reusable candidates for KP, Muhurta, AV and compatibility; discovery only, no runtime truth upgrade."
+    },
+    {
+      "packet_id": "jyotishganit_shadbala_surface_probe",
+      "path": "references/oracle/jyotishganit_shadbala_surface_probe_steve_jobs_2026_07_19.json",
+      "domain": "shadbala",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "jyotishganit Shadbala object surface raw/hash captured; component unit parity still pending."
+    },
+    {
+      "packet_id": "shadbala_component_closure_matrix",
+      "path": "references/oracle/shadbala_component_closure_matrix_2026_07_19.json",
+      "domain": "shadbala",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "42 Shadbala component rows have jyotishganit raw and Xalen/VP Jain/provenance hooks; same-unit absolute parity still pending."
+    },
+    {
+      "packet_id": "xalen_shadbala_av_delta_report",
+      "path": "references/oracle/xalen_shadbala_av_component_delta_report_2026_07_19.json",
+      "domain": "shadbala_ashtakavarga",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Deltas grouped by component; formulas/units/school variants remain open."
+    },
+    {
+      "packet_id": "raman_shadbala_raw_replay_and_input_drift_2026_07_22",
+      "path": "references/oracle/raman_shadbala_raw_replay_and_input_drift_2026_07_22.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "blocked",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Raman Shadbala sample is not promoted: declared raw artifact is absent and fresh PyJHora replay proves input-contract drift."
+    },
+    {
+      "packet_id": "shadbala_chesta_variant_packet_2026_07_20",
+      "path": "references/oracle/shadbala_chesta_variant_packet_2026_07_20.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Splits Cheshtabala into luminary policy, mean-motion/Seeghrochcha method variants, and Venus formula/unit mismatch; no absolute Shadbala parity upgrade."
+    },
+    {
+      "packet_id": "shadbala_component_arbitration_queue_v2_2026_07_22",
+      "path": "references/oracle/shadbala_component_arbitration_queue_v2_2026_07_22.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Component-level queue only: Naisargika is same-unit closed; Dig/Drik/Kala/Sthana/Chesta remain arbitration items and do not upgrade absolute Shadbala truth."
+    },
+    {
+      "packet_id": "shadbala_component_closure_ledger",
+      "path": "references/oracle/shadbala_component_closure_ledger_2026_07_19.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies all 42 same-unit Shadbala rows into closed observation, method variant, or open mismatch; does not assert absolute formula truth."
+    },
+    {
+      "packet_id": "shadbala_component_closure_queue_v2",
+      "path": "references/oracle/shadbala_component_closure_queue_v2_2026_07_19.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "42 same-unit Shadbala rows converted into field-level closure tickets; no absolute parity or majority-vote truth."
+    },
+    {
+      "packet_id": "shadbala_component_closure_rollup_2026_07_22",
+      "path": "references/oracle/shadbala_component_closure_rollup_2026_07_22.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "42 same-unit component rows are summarized for display; only Naisargika is tolerance-ready observation, no absolute Virupa truth upgrade."
+    },
+    {
+      "packet_id": "shadbala_dig_source_of_truth_audit_2026_07_22",
+      "path": "references/oracle/shadbala_dig_source_of_truth_audit_2026_07_22.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Two externally captured cases compare three Dig Bala models; the current error ranking is diagnostic only and does not select an absolute formula truth."
+    },
+    {
+      "packet_id": "shadbala_digbala_formula_packet_2026_07_20",
+      "path": "references/oracle/shadbala_digbala_formula_packet_2026_07_20.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies Digbala rows as formula/unit mismatch and routes them to angular-reference formula arbitration; no absolute parity upgrade."
+    },
+    {
+      "packet_id": "shadbala_formula_arbitration_queue_v2_2026_07_22",
+      "path": "references/oracle/shadbala_formula_arbitration_queue_v2_2026_07_22.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Dig/Drik/Kala/Sthana/Chesta formula policies are queued for arbitration; no absolute Virupa truth upgrade."
+    },
+    {
+      "packet_id": "shadbala_naisargika_closure_packet_2026_07_20",
+      "path": "references/oracle/shadbala_naisargika_closure_packet_2026_07_20.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Freezes Naisargikabala same-unit within-tolerance observation across five sources for one chart; no absolute Shadbala parity or production tuning upgrade."
+    },
+    {
+      "packet_id": "shadbala_remaining_component_arbitration_v3_2026_07_23",
+      "path": "references/oracle/shadbala_remaining_component_arbitration_v3_2026_07_23.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "component_explanatory_partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Dig/Drik/Sthana/Kala/Chesta now have named subformula closure queues, but all still require numeric worked examples before truth upgrade."
+    },
+    {
+      "packet_id": "shadbala_same_unit_normalizer",
+      "path": "references/oracle/shadbala_same_unit_normalizer_2026_07_19.json",
+      "domain": "shadbala_component_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Normalizes local/Xalen/jyotishganit/VP Jain Shadbala rows into Virupa/Rupa where available; classifications are arbitration queues, not absolute truth."
+    },
+    {
+      "packet_id": "pyjhora_steve_jobs_shadbala_stdout_components_2026_07_21",
+      "path": "references/oracle/pyjhora_steve_jobs_shadbala_stdout_components_2026_07_21.json",
+      "domain": "shadbala_oracle",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Parses WorkBuddy/PyJHora Steve Jobs Shadbala stdout into 42 same-unit component rows; observation only, no formula arbitration or absolute parity upgrade."
+    },
+    {
+      "packet_id": "shadbala_component_joined_closure_packet_2026_07_21",
+      "path": "references/oracle/shadbala_component_joined_closure_packet_2026_07_21.json",
+      "domain": "shadbala_oracle",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Joins parsed PyJHora WorkBuddy 42 component rows to same-unit Shadbala closure queue; explanatory partial only, no absolute truth upgrade."
+    },
+    {
+      "packet_id": "shadbala_hard_component_arbitration_2026_07_22",
+      "path": "references/oracle/shadbala_hard_component_arbitration_2026_07_22.json",
+      "domain": "shadbala_oracle",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies Chesta/Sthana/Kala as hard Shadbala components with method/formula blockers; no absolute truth upgrade."
+    },
+    {
+      "packet_id": "shadbala_priority_component_arbitration_2026_07_22",
+      "path": "references/oracle/shadbala_priority_component_arbitration_2026_07_22.json",
+      "domain": "shadbala_oracle",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Prioritizes Naisargika/Dig/Drik Shadbala component arbitration; explanatory partial only, no absolute formula truth selected."
+    },
+    {
+      "packet_id": "effective_skill_capability_view",
+      "path": "references/oracle/effective_skill_capability_view_2026_07_19.json",
+      "domain": "skill_capability_truth",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Effective skill view applies the truth overlay before capability claims; raw technique_registry status is not sufficient."
+    },
+    {
+      "packet_id": "skill_truth_overlay",
+      "path": "references/oracle/skill_truth_overlay_2026_07_19.json",
+      "domain": "skill_capability_truth",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Corrects optimistic technique_registry statuses before any skill completeness claim."
+    },
+    {
+      "packet_id": "product_skill_source_boundary",
+      "path": "references/oracle/product_skill_source_boundary_2026_07_19.json",
+      "domain": "skill_product_reference",
+      "claim_status": "reference_only",
+      "consumer_policy": "skill_prompt_reference_only",
+      "claim_boundary": "rishi-ai-mcp and vedic-astro-skills stay out of numeric truth layer."
+    },
+    {
+      "packet_id": "screenshot_technique_gap_audit",
+      "path": "references/oracle/screenshot_technique_gap_audit_2026_07_19.json",
+      "domain": "source_ingestion",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Screenshot labels identify missing conception-chart and relationship-combination families, but unreadable images and source packets remain unresolved."
+    },
+    {
+      "packet_id": "source_runtime_closure_queue_2026_07_21",
+      "path": "references/oracle/source_runtime_closure_queue_2026_07_21.json",
+      "domain": "source_runtime_closure",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Prioritizes not-fully-invoked source assets such as jyotishganit and VedicAstro KP; queue only, no adapter or truth upgrade."
+    },
+    {
+      "packet_id": "vimsopaka_avastha_promotion_audit",
+      "path": "references/oracle/technique_promotion_audit_vimsopaka_avastha_2026_07_19.json",
+      "domain": "strength_state_layers",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Runtime usage exists; formula source/oracle/display contracts remain."
+    },
+    {
+      "packet_id": "pyjhora_traditional_branch_oracle_boundary_2026_07_23",
+      "path": "references/oracle/pyjhora_traditional_branch_oracle_boundary_2026_07_23.json",
+      "domain": "tajika_kp_advanced_av_boundary",
+      "claim_status": "observation_boundary_matrix",
+      "consumer_policy": "sync_matrix_only_do_not_vendor_agpl_implementation",
+      "claim_boundary": "Tajika, KP exact cusp and advanced AV fields are mapped for local calculation, PyJHora observation, jyotishganit/VedicAstro reference, public worked-example status and commercial output allowance; no PyJHora implementation is synced."
+    },
+    {
+      "packet_id": "tajika_steve_jobs_1984_extraction_contract_2026_07_21",
+      "path": "references/oracle/tajika_steve_jobs_1984_extraction_contract_2026_07_21.json",
+      "domain": "tajika_oracle",
+      "claim_status": "blocked_until_oracle",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Keeps Steve Jobs 1984 Tajika/Varshaphala template blocked until citable external numeric fields are captured and replayed."
+    },
+    {
+      "packet_id": "tajika_yumpu_access_locator_2026_07_21",
+      "path": "references/oracle/tajika_yumpu_access_locator_2026_07_21.json",
+      "domain": "tajika_oracle",
+      "claim_status": "blocked_until_oracle",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Yumpu source is reachable and mentions Steve Jobs, but no authorized numeric Tajika/Varshaphala extraction or replay has occurred."
+    },
+    {
+      "packet_id": "tajika_yumpu_source_review_gate_2026_07_21",
+      "path": "references/oracle/tajika_yumpu_source_review_gate_2026_07_21.json",
+      "domain": "tajika_oracle",
+      "claim_status": "blocked_until_oracle",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Keeps Yumpu Steve Jobs Varshaphala candidate blocked until copyright/source review, structured capture, hash, and local replay are complete."
+    },
+    {
+      "packet_id": "tajika_steve_jobs_1984_stdout_reconciliation_2026_07_23",
+      "path": "references/oracle/tajika_steve_jobs_1984_stdout_reconciliation_2026_07_23.json",
+      "domain": "tajika_varshaphala",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Nine archived annual fields reconcile to their stored PyJHora stdout and hash; this is archive consistency only, not independent parity, a public worked example, annual judgment validation, or production-tuning permission."
+    },
+    {
+      "packet_id": "technique_fragment_inventory",
+      "path": "references/oracle/technique_fragment_inventory_2026_07_19.json",
+      "domain": "technique_fragments",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Inventory prevents missed fragments; files are not capability closure by themselves."
+    },
+    {
+      "packet_id": "technique_invocation_matrix_current_2026_07_21",
+      "path": "references/oracle/technique_invocation_matrix_current_2026_07_21.json",
+      "domain": "technique_invocation",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Tracks current code/skill/API/UI/gate/oracle status for Shadbala, KP, Tajika, rectification and timing; no truth upgrade."
+    },
+    {
+      "packet_id": "full_technique_invocation_matrix_2026_07_22",
+      "path": "references/oracle/full_technique_invocation_matrix_2026_07_22.json",
+      "domain": "technique_invocation_governance",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_planning_only",
+      "claim_boundary": "Static full-layer scan across skill/API/UI/scripts/references/tests; identifies material not fully invoked and batches migration, but does not upgrade numeric oracle truth or prediction claims."
+    },
+    {
+      "packet_id": "d10_rahu_ketu_node_mode_attribution",
+      "path": "references/oracle/d10_rahu_ketu_node_mode_attribution_2026_07_19.json",
+      "domain": "three_engine_field_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "D10 Rahu/Ketu remaining mismatch attributed to node/shadow handling pending raw node settings."
+    },
+    {
+      "packet_id": "jyotishganit_field_closure_queue",
+      "path": "references/oracle/jyotishganit_field_closure_queue_2026_07_19.json",
+      "domain": "three_engine_field_closure",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Field-level closure queue only; does not resolve mismatch rows."
+    },
+    {
+      "packet_id": "jyotishganit_field_probe",
+      "path": "references/oracle/jyotishganit_field_probe_steve_jobs_2026_07_19.json",
+      "domain": "three_engine_field_closure",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "jyotishganit D2/D4/D9/D10 Panchanga AV raw/hash attached; Shadbala missing remains partial."
+    },
+    {
+      "packet_id": "jyotishganit_mismatch_attribution_queue",
+      "path": "references/oracle/jyotishganit_mismatch_attribution_queue_2026_07_19.json",
+      "domain": "three_engine_field_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "After D4 alias normalization, only D10 Rahu/Ketu mismatch remains queued as node/shadow handling."
+    },
+    {
+      "packet_id": "jyotishganit_node_source_attribution",
+      "path": "references/oracle/jyotishganit_node_source_attribution_2026_07_19.json",
+      "domain": "three_engine_field_closure",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Remaining D10 Rahu/Ketu mismatch attributed to node longitude source plus ayanamsa boundary crossing, not D10 formula."
+    },
+    {
+      "packet_id": "jyotishganit_vs_local_field_comparison",
+      "path": "references/oracle/jyotishganit_vs_local_field_comparison_steve_jobs_2026_07_19.json",
+      "domain": "three_engine_field_closure",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Local vs jyotishganit D2/D4/D9/D10 sign comparison with hash; mismatch attribution still pending."
+    },
+    {
+      "packet_id": "jyotishganit_field_closure_rows_2026_07_21",
+      "path": "references/oracle/jyotishganit_field_closure_rows_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Routes jyotishganit D2/D4/D9/D10, Panchanga and BAV/SAV selected raw fields into closure rows; Shadbala remains explicit gap."
+    },
+    {
+      "packet_id": "jyotishganit_three_engine_closure_bridge_2026_07_21",
+      "path": "references/oracle/jyotishganit_three_engine_closure_bridge_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Routes available jyotishganit D2/D4/D9/D10, Panchanga and BAV/SAV fields to closure queues; Shadbala remains explicit gap."
+    },
+    {
+      "packet_id": "panchanga_local_jyotishganit_comparison_2026_07_21",
+      "path": "references/oracle/panchanga_local_jyotishganit_comparison_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Compares local calc_panchanga against jyotishganit for five Panchanga labels; one Karana alias remains naming-only and no global truth upgrade is made."
+    },
+    {
+      "packet_id": "panchanga_temcq_061_schema_packet_2026_07_21",
+      "path": "references/oracle/panchanga_temcq_061_schema_packet_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Creates TEMCQ-061 Panchanga schema mapping queue from jyotishganit raw; local/PyJHora/VedAstro normalized fields remain missing or unpinned."
+    },
+    {
+      "packet_id": "three_engine_bav_sav_field_closure_packet_2026_07_21",
+      "path": "references/oracle/three_engine_bav_sav_field_closure_packet_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies BAV/SAV rows into partial consensus or multi-engine variant; public worked table and method metadata still required."
+    },
+    {
+      "packet_id": "three_engine_d2_field_closure_packet_2026_07_21",
+      "path": "references/oracle/three_engine_d2_field_closure_packet_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "D2 rows show local/PyJHora/jyotishganit agreement while VedAstro endpoint semantics remain blocked; no global truth upgrade."
+    },
+    {
+      "packet_id": "three_engine_d4_d9_d10_field_closure_packet_2026_07_21",
+      "path": "references/oracle/three_engine_d4_d9_d10_field_closure_packet_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "D4/D9/D10 Moon.sign rows show local/PyJHora/jyotishganit agreement while VedAstro endpoint semantics remain blocked; no global truth upgrade."
+    },
+    {
+      "packet_id": "three_engine_field_status_batch_2026_07_21",
+      "path": "references/oracle/three_engine_field_status_batch_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies 18 jyotishganit-applied TEMCQ rows and creates a Panchanga ticket placeholder; status only, no numeric truth upgrade."
+    },
+    {
+      "packet_id": "three_engine_jyotishganit_bridge_applied_2026_07_21",
+      "path": "references/oracle/three_engine_jyotishganit_bridge_applied_2026_07_21.json",
+      "domain": "three_engine_parity",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Applies jyotishganit field bridge to existing TEMCQ D2/D4/D9/D10/BAV/SAV tickets and marks Panchanga as new-ticket-needed; no truth upgrade."
+    },
+    {
+      "packet_id": "three_engine_mismatch_closure_queue",
+      "path": "references/oracle/three_engine_mismatch_closure_queue_2026_07_19.json",
+      "domain": "three_engine_parity",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_only",
+      "claim_boundary": "60 tickets remain open; no majority-vote truth."
+    },
+    {
+      "packet_id": "three_engine_mismatch_progress_ledger",
+      "path": "references/oracle/three_engine_mismatch_progress_ledger_2026_07_19.json",
+      "domain": "three_engine_parity",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Tracks explanation progress for mismatch rows; does not close original queue or allow majority-vote truth."
+    },
+    {
+      "packet_id": "three_engine_owner_track_batch_plan_2026_07_20",
+      "path": "references/oracle/three_engine_owner_track_batch_plan_2026_07_20.json",
+      "domain": "three_engine_parity",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Groups remaining three-engine mismatches by owner track for closure planning; no production tuning or truth upgrade."
+    },
+    {
+      "packet_id": "three_engine_worked_example_bridge_2026_07_20",
+      "path": "references/oracle/three_engine_worked_example_bridge_2026_07_20.json",
+      "domain": "three_engine_parity",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "Links three-engine owner tracks to worked-example intake domains; no mismatch row is closed without replay or method-variant attribution."
+    },
+    {
+      "packet_id": "day_level_holdout_intake",
+      "path": "scripts/day_level_holdout_intake.py",
+      "domain": "timing_holdout",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Human annotation intake appends frozen independent labels; production tuning remains blocked until frozen gate passes."
+    },
+    {
+      "packet_id": "day_level_holdout_readiness_ledger",
+      "path": "references/real_case_calibration/day_level_holdout_readiness_ledger_2026_07_19.json",
+      "domain": "timing_holdout",
+      "claim_status": "blocked",
+      "consumer_policy": "human_review_required",
+      "claim_boundary": "Reports frozen-label gap for day-level timing holdout; current pilot candidates are not independent labels and cannot unlock day/month claims."
+    },
+    {
+      "packet_id": "day_level_human_annotation_packet",
+      "path": "references/real_case_calibration/day_level_holdout_v3_human_annotation_packet_2026_07_19.json",
+      "domain": "timing_holdout",
+      "claim_status": "blocked",
+      "consumer_policy": "human_review_required",
+      "claim_boundary": "Final labels are blank; blind evaluation must not run until independent human review and freeze."
+    },
+    {
+      "packet_id": "timing_rectification_holdout_freeze_contract_2026_07_22",
+      "path": "references/oracle/timing_rectification_holdout_freeze_contract_2026_07_22.json",
+      "domain": "timing_holdout_rectification",
+      "claim_status": "blocked",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Exact day/month timing and birth-time truth upgrades are blocked until independent human labels are frozen before blind ranking."
+    },
+    {
+      "packet_id": "timing_rectification_public_holdout_candidate_queue_2026_07_22",
+      "path": "references/oracle/timing_rectification_public_holdout_candidate_queue_2026_07_22.json",
+      "domain": "timing_holdout_rectification",
+      "claim_status": "blocked_until_human_labels",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Positive public event candidates are queued, but no independent negative labels are frozen; timing and birth-time truth upgrades remain blocked."
+    },
+    {
+      "packet_id": "timing_rectification_reviewer_freeze_status_2026_07_23",
+      "path": "references/real_case_calibration/timing_rectification_reviewer_freeze_status_2026_07_23.json",
+      "domain": "timing_rectification_governance",
+      "claim_status": "one_reviewer_confirmed_second_required",
+      "consumer_policy": "human_review_required",
+      "claim_boundary": "One reviewer confirmation advances candidate governance but reviewer 2 is still missing, so the two-reviewer freeze requirement and timing claim upgrade remain unsatisfied."
+    },
+    {
+      "claim_boundary": "Three machine-prepared public-person candidate labels are available for reviewer freeze: Steve Jobs Apple IPO, Barack Obama 2008 election, and Princess Diana 1981 wedding. These are not independent human labels and cannot start blind replay or upgrade timing claims until two reviewers freeze each case.",
+      "claim_status": "candidate_labels_need_human_freeze",
+      "consumer_policy": "human_review_required",
+      "domain": "timing_rectification_holdout",
+      "packet_id": "timing_rectification_candidate_holdout_labels_2026_07_23",
+      "path": "references/real_case_calibration/timing_rectification_candidate_holdout_labels_2026_07_23.json"
+    },
+    {
+      "claim_boundary": "Freeze audit validates only the human-label process. Current template has no complete two-reviewer frozen labels, so blind replay, production tuning, and birth-time truth upgrades remain blocked.",
+      "claim_status": "blocked_until_human_labels",
+      "consumer_policy": "human_review_required",
+      "domain": "timing_rectification_holdout",
+      "packet_id": "timing_rectification_holdout_freeze_audit_2026_07_23",
+      "path": "references/real_case_calibration/timing_rectification_holdout_freeze_audit_2026_07_23.json"
+    },
+    {
+      "claim_boundary": "Blank frozen-label template only. Timing and birth-time rectification remain exploratory until at least three independent public cases include one positive event and two explicit non-event windows each.",
+      "claim_status": "blocked_until_human_labels",
+      "consumer_policy": "human_review_required",
+      "domain": "timing_rectification_holdout",
+      "packet_id": "timing_rectification_human_holdout_template_2026_07_23",
+      "path": "references/real_case_calibration/timing_rectification_human_holdout_template_2026_07_23.json"
+    },
+    {
+      "claim_boundary": "Owner authorized an internal pilot over the three candidate cases. This is not a second independent reviewer and cannot upgrade timing, rectification, or production tuning claims.",
+      "claim_status": "owner_authorized_internal_pilot_only",
+      "consumer_policy": "internal_pilot_no_truth_upgrade",
+      "domain": "timing_rectification_holdout",
+      "packet_id": "timing_rectification_owner_authorized_internal_pilot_2026_07_23",
+      "path": "references/real_case_calibration/timing_rectification_owner_authorized_internal_pilot_2026_07_23.json"
+    },
+    {
+      "claim_boundary": "Public sources corroborate the three machine-prepared cases for internal pilot use, but this is not a second independent human reviewer and cannot upgrade timing or birth-rectification claims.",
+      "claim_status": "public_source_corroborated_internal_pilot_only",
+      "consumer_policy": "internal_pilot_no_truth_upgrade",
+      "domain": "timing_rectification_holdout",
+      "packet_id": "timing_rectification_public_source_corroboration_2026_07_23",
+      "path": "references/real_case_calibration/timing_rectification_public_source_corroboration_2026_07_23.json"
+    },
+    {
+      "packet_id": "truth_source_runtime_identity",
+      "path": "references/oracle/truth_source_runtime_identity_2026_07_21.json",
+      "domain": "truth_source_governance",
+      "claim_status": "ready_contract",
+      "consumer_policy": "research_to_commercial_startup_contract",
+      "claim_boundary": "Pins the main research repo as the only truth source, exposes runtime identity, and quarantines old WorkBuddy fragments; no oracle truth upgrade."
+    },
+    {
+      "packet_id": "varga_karaka_promotion_audit",
+      "path": "references/oracle/technique_promotion_audit_varga_karaka_2026_07_19.json",
+      "domain": "varga_jaimini",
+      "claim_status": "partial",
+      "consumer_policy": "research_only",
+      "claim_boundary": "Runtime coverage exists; entry/display/source/oracle contracts remain."
+    },
+    {
+      "packet_id": "d1_d60_generic_gap_queue",
+      "path": "references/oracle/d1_d60_generic_gap_queue_2026_07_19.json",
+      "domain": "varga_mapping",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "40 generic-only Dn rows require source/formula/oracle closure or remain hidden generic fallback."
+    },
+    {
+      "packet_id": "d1_d60_public_source_candidate_queue",
+      "path": "references/oracle/d1_d60_public_source_candidate_queue_2026_07_19.json",
+      "domain": "varga_mapping",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_queue_only",
+      "claim_boundary": "Public D1-D60 source text candidates only; not numeric oracle."
+    },
+    {
+      "packet_id": "d1_d60_source_use_readiness",
+      "path": "references/oracle/d1_d60_source_use_readiness_2026_07_19.json",
+      "domain": "varga_mapping",
+      "claim_status": "partial",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies D1-D60 sources for names/use notes only; generic-only Dn remains hidden until formula/source/oracle gates close."
+    },
+    {
+      "packet_id": "d1_d60_varga_mapping_registry",
+      "path": "references/oracle/d1_d60_varga_mapping_registry_2026_07_19.json",
+      "domain": "varga_mapping",
+      "claim_status": "partial",
+      "consumer_policy": "research_to_commercial_contract_only",
+      "claim_boundary": "D1-D60 rows are enumerated; generic fallback rows are not verified formal varga support."
+    },
+    {
+      "packet_id": "vedastro_divisional_degree_contract_probe_2026_07_21",
+      "path": "references/oracle/artifacts/vedastro_divisional_degree_contract_probe.json",
+      "domain": "vedastro_contract_probe",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Validates only VedAstro DivisionalLongitude degree transformation for a fixed scalar input; does not establish hosted chart sign, ayanamsa, node, timezone, or full D2/D4/D9/D10 parity."
+    },
+    {
+      "claim_boundary": "Typed bridge payloads can call VedAstro GulikaLongitude and TajikaDateForYear2 for the fixed Steve Jobs case; remaining Tajika planet/date methods are blocked by upstream runtime errors and no truth upgrade is permitted.",
+      "claim_status": "tooling_observation_only",
+      "consumer_policy": "research_observation_only_no_secret_material",
+      "domain": "vedastro_gulika_tajika_payload_contract",
+      "packet_id": "vedastro_gulika_tajika_payload_contract_probe_2026_07_23",
+      "path": "references/oracle/vedastro_gulika_tajika_payload_contract_probe_2026_07_23.json"
+    },
+    {
+      "claim_boundary": "VedAstro source/NuGet/DLL/base image fields are pinned, but hosted API build metadata, deployed source commit, hosted/self-host image digest, method inventory hash and canonical replay hashes remain missing.",
+      "claim_status": "blocked_until_reproducible_identity",
+      "consumer_policy": "identity_delta_no_truth_upgrade",
+      "domain": "vedastro_identity",
+      "packet_id": "vedastro_identity_completeness_delta_2026_07_23",
+      "path": "references/oracle/vedastro_identity_completeness_delta_2026_07_23.json"
+    },
+    {
+      "claim_boundary": "Blank self-host identity template only. VedAstro hosted/self-host identity remains blocked until source commit, package/DLL/method hashes, image digests and canonical replay hashes are filled and validated.",
+      "claim_status": "blocked_until_reproducible_identity",
+      "consumer_policy": "identity_template_no_truth_upgrade",
+      "domain": "vedastro_identity",
+      "packet_id": "vedastro_self_host_identity_manifest_template_2026_07_23",
+      "path": "references/oracle/vedastro_self_host_identity_manifest_template_2026_07_23.json"
+    },
+    {
+      "packet_id": "vedastro_keyed_capture_closure_2026_07_23",
+      "path": "references/oracle/vedastro_keyed_capture_closure_2026_07_23.json",
+      "domain": "vedastro_identity_and_numeric_oracles",
+      "claim_status": "keyed_observation_partial",
+      "consumer_policy": "research_observation_only_no_secret_material",
+      "claim_boundary": "Keyed VedAstro raw and method catalog capture are available without persisting the secret; hosted build identity, KP 12-cusp oracle, Prashna/Saham/Sphuta endpoints, selected Gulika/Tajika payload contracts and timing labels remain blocked."
+    },
+    {
       "claim_boundary": "KP house cusp star/sub/sub-sub raw from VedicAstro runtime. Observation-only until matched against complete public numeric KP worked examples.",
       "claim_status": "observation_only",
       "consumer_policy": "observation_only",
       "domain": "vedastro_kp_house_cusp_runtime",
       "packet_id": "vedicastro_kp_house_cusp_probe_steve_jobs_sf_runtime_2026_07_23",
       "path": "references/oracle/vedicastro_kp_house_cusp_probe_steve_jobs_sf_runtime_2026_07_23.json"
+    },
+    {
+      "packet_id": "kp_muhurta_shadbala_numeric_packet_queue",
+      "path": "references/oracle/kp_muhurta_shadbala_numeric_packet_queue_2026_07_19.json",
+      "domain": "worked_example_collection",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_queue_only",
+      "claim_boundary": "KP runtime raw is attached; KP/Muhurta/Shadbala rows remain blocked until public numeric fields and raw hashes are captured."
+    },
+    {
+      "packet_id": "kp_tajika_public_oracle_source_candidates_2026_07_21",
+      "path": "references/oracle/kp_tajika_public_oracle_source_candidates_2026_07_21.json",
+      "domain": "worked_example_collection",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Records public KP and Tajika/Varshaphala candidate sources found during WorkBuddy closure; none is a complete numeric oracle yet."
+    },
+    {
+      "packet_id": "kp_tajika_public_oracle_source_triage_round2_2026_07_21",
+      "path": "references/oracle/kp_tajika_public_oracle_source_triage_round2_2026_07_21.json",
+      "domain": "worked_example_collection",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Round2 web triage adds KP API-surface and Steve Jobs Varshaphala numeric candidates; both remain non-oracle until source/hash/extraction/replay close."
+    },
+    {
+      "packet_id": "oss_worked_example_source_matrix_2026_07_20",
+      "path": "references/oracle/oss_worked_example_source_matrix_2026_07_20.json",
+      "domain": "worked_example_collection",
+      "claim_status": "source_intake_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Open-source/public worked-example source matrix only; no source upgrades truth until license/version/raw hash/input contract/replay comparison are archived."
+    },
+    {
+      "packet_id": "public_worked_example_candidate_numeric_audit",
+      "path": "references/oracle/public_worked_example_candidate_numeric_audit_2026_07_19.json",
+      "domain": "worked_example_collection",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_queue_only",
+      "claim_boundary": "Candidate URLs audited; no numeric oracle-ready row yet."
+    },
+    {
+      "packet_id": "public_worked_example_queue",
+      "path": "references/oracle/public_worked_example_queue_2026_07_19.json",
+      "domain": "worked_example_collection",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_queue_only",
+      "claim_boundary": "Public worked-example queue only; URLs/search terms are not oracle-ready until numeric fields and hashes are captured."
+    },
+    {
+      "packet_id": "public_worked_example_source_triage_2026_07_20",
+      "path": "references/oracle/public_worked_example_source_triage_2026_07_20.json",
+      "domain": "worked_example_collection",
+      "claim_status": "source_intake_only",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Triage of public KP, Muhurta, and Shadbala source candidates; no source is oracle-ready until raw capture, exact settings, expected values, hash, and replay comparison are archived."
+    },
+    {
+      "packet_id": "worked_example_numeric_packet_eligibility_2026_07_20",
+      "path": "references/oracle/worked_example_numeric_packet_eligibility_2026_07_20.json",
+      "domain": "worked_example_collection",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Classifies public worked-example candidates by numeric-packet eligibility; no row is oracle-ready."
+    },
+    {
+      "packet_id": "worked_example_packet_intake_plan_2026_07_20",
+      "path": "references/oracle/worked_example_packet_intake_plan_2026_07_20.json",
+      "domain": "worked_example_collection",
+      "claim_status": "open_queue",
+      "consumer_policy": "research_observation_only",
+      "claim_boundary": "Groups KP, Muhurta, and Shadbala worked-example candidates into intake queues; no candidate is upgraded until numeric expected values, raw/hash, and replay comparison are archived."
     }
   ]
 }

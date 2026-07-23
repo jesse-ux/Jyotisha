@@ -1,0 +1,64 @@
+{
+  "scope": "timing_rectification_human_holdout_template",
+  "created_at": "2026-07-23",
+  "claim_status": "blocked_until_human_labels",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "review_policy": {
+    "minimum_public_people": 3,
+    "minimum_positive_events_per_person": 1,
+    "minimum_negative_windows_per_person": 2,
+    "labels_frozen_before_scoring_required": true,
+    "minimum_distinct_reviewers_per_case": 2,
+    "existing_control_dates_allowed_for_tuning": false
+  },
+  "cases": [
+    {
+      "case_id": "",
+      "public_person": "",
+      "birth_data": {
+        "date": "",
+        "time": "",
+        "place": "",
+        "source_url": "",
+        "source_quality": "Rodden_AA_or_equivalent_required"
+      },
+      "positive_event": {
+        "event_type": "",
+        "start": "",
+        "end": "",
+        "source_url": "",
+        "source_hash": ""
+      },
+      "negative_windows": [
+        {
+          "start": "",
+          "end": "",
+          "review_note": "",
+          "source_url": ""
+        },
+        {
+          "start": "",
+          "end": "",
+          "review_note": "",
+          "source_url": ""
+        }
+      ],
+      "human_reviews": [
+        {
+          "reviewer_id": "",
+          "frozen_at": "",
+          "independent_of_model_run": true,
+          "allowed_for_tuning": false
+        },
+        {
+          "reviewer_id": "",
+          "frozen_at": "",
+          "independent_of_model_run": true,
+          "allowed_for_tuning": false
+        }
+      ]
+    }
+  ],
+  "boundary": "Blank template only. Timing and rectification remain exploratory until independently reviewed labels are frozen and validated."
+}

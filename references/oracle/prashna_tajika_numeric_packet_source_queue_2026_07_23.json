@@ -1,0 +1,150 @@
+{
+  "boundary": "Queue only. Public/open-source sources reduce search space but do not replace replay, license review, or human label gates.",
+  "claim_status": "open_queue",
+  "created_at": "2026-07-23",
+  "next_action": "Promote only rows with complete input, expected numeric values, source hash, and local replay. Formula-only sources remain reference-only.",
+  "production_tuning_allowed": false,
+  "ranked_sources": [
+    {
+      "domain": "KP exact cusp",
+      "field_status": "complete_12_cusp_numeric_replay_ready",
+      "has_complete_input": true,
+      "has_expected_numeric": true,
+      "has_replay": true,
+      "license_or_access": "public_web_calculator_output_from_user_screenshots",
+      "next_action": "Use as KP replay packet only; do not upgrade timing/outcome oracle.",
+      "remaining_blockers": [
+        "timezone_ayanamsa_node_mode_not_page_visible",
+        "one_cusp_1_sub_sub_lord_delta"
+      ],
+      "source_id": "panchangbodh_kp_12_cusp_packet",
+      "url": "https://panchangbodh.com/kp-birth-chart-calculator"
+    },
+    {
+      "confirmed_fields": [
+        "Ahmedabad",
+        "2023-01-27 02:30:15 local Gulika start",
+        "2023-01-26 sunset 18:19 and next sunrise 07:25",
+        "expected Gulika Scorpio 2d59m34.66s",
+        "source_sha256 94d66d94425670903202327255a83bd8b8eac92a3fd4ce37531d40d760d441f4"
+      ],
+      "domain": "Gulika/Mandi",
+      "field_status": "public_numeric_candidate_settings_incomplete",
+      "has_complete_input": false,
+      "has_expected_numeric": true,
+      "has_replay": true,
+      "license_or_access": "public_pdf_candidate_manual_review_required",
+      "local_replay": "Lahiri Swiss replay after night-weekday correction: Scorpio 2d48m21.78s; 11.2 arcmin delta, not promoted.",
+      "next_action": "Retain as a hash-pinned numeric candidate. Require source settings or an independent same-input output before oracle promotion.",
+      "remaining_blockers": [
+        "source_ayanamsa_not_declared",
+        "source_coordinates_not_declared",
+        "source_house_table_ephemeris_not_declared",
+        "source_gulika_mandi_variant_not_unambiguous"
+      ],
+      "source_id": "saptarishis_mandi_pdf_ahmedabad_example",
+      "url": "https://saptarishisastrology.com/wp-content/uploads/2023/01/astrological-study-of-mandi-part-1-by-upendra-singh-bhadoriya-and-bhavika-joshi.pdf"
+    },
+    {
+      "domain": "Gulika/Mandi",
+      "field_status": "formula_plus_partial_time_example",
+      "has_complete_input": false,
+      "has_expected_numeric": false,
+      "has_replay": false,
+      "license_or_access": "public_forum_reference",
+      "next_action": "Keep as formula/method-variant evidence only.",
+      "remaining_blockers": [
+        "forum_not_authoritative_oracle",
+        "no_full_chart_input",
+        "no_expected_longitude_table"
+      ],
+      "source_id": "indiadivine_mandi_calculation_thread",
+      "url": "https://www.indiadivine.org/content/topic/1516171-mandi-calculation-in-jhora-correct/"
+    },
+    {
+      "domain": "Prashna/Sphuta",
+      "field_status": "formula_locator_only",
+      "has_complete_input": false,
+      "has_expected_numeric": false,
+      "has_replay": false,
+      "license_or_access": "public_blog_formula_reference",
+      "next_action": "Use to pin Trisphuta formula family; continue searching for worked numeric example.",
+      "remaining_blockers": [
+        "no_question_time_place",
+        "no_expected_numeric_sphuta_rows"
+      ],
+      "source_id": "varahamihira_trisphuta_prashna",
+      "url": "https://varahamihira.blogspot.com/2008/01/prashna-ii-use-of-trisphuta-in-prashna.html"
+    },
+    {
+      "domain": "Prashna/Sphuta",
+      "field_status": "source_text_locator_only",
+      "has_complete_input": false,
+      "has_expected_numeric": false,
+      "has_replay": false,
+      "license_or_access": "archive_text_locator_copyright_review_required",
+      "next_action": "Use for formula/source lookup only unless a numeric worked example is identified.",
+      "remaining_blockers": [
+        "citation_safe_page_review",
+        "no_complete_worked_example_input",
+        "no_replayable_expected_values"
+      ],
+      "source_id": "prasna_marga_archive_text",
+      "url": "https://archive.org/stream/PrasnaMargaBVR/Prasna%20Marga%201_djvu.txt"
+    },
+    {
+      "domain": "Saham/Tajika",
+      "field_status": "formula_reference_only",
+      "has_complete_input": false,
+      "has_expected_numeric": false,
+      "has_replay": false,
+      "license_or_access": "public_formula_reference",
+      "next_action": "Use to pin Punya/Vivaha Saham formula variants; not a numeric packet.",
+      "remaining_blockers": [
+        "no_solar_return_input",
+        "no_expected_saham_longitude"
+      ],
+      "source_id": "astrogle_saham_formula_reference",
+      "url": "https://www.astrogle.com/astrology/important-role-of-sahams-in-varshaphala-annual-chart.html"
+    },
+    {
+      "domain": "Tajika/Varshaphala/Saham",
+      "field_status": "candidate_textbook_numeric_tables_unknown",
+      "has_complete_input": false,
+      "has_expected_numeric": false,
+      "has_replay": false,
+      "license_or_access": "public_pdf_candidate_manual_review_required",
+      "next_action": "Review only pages with explicit input + numeric table; do not bulk extract.",
+      "remaining_blockers": [
+        "manual_table_review",
+        "page_hash_needed",
+        "complete_annual_input_needed"
+      ],
+      "source_id": "ms_mehta_varshaphala_pdf_candidate",
+      "url": "https://astrofoxx.files.wordpress.com/2018/11/jyotish_annual-horoscope_varshaphala_m-s-mehta.pdf"
+    },
+    {
+      "domain": "Tajika/Varshaphala/Saham",
+      "field_status": "reference_candidate_not_numeric_packet",
+      "has_complete_input": false,
+      "has_expected_numeric": false,
+      "has_replay": false,
+      "license_or_access": "book_preview_metadata_only",
+      "next_action": "Use as bibliography/reference pointer only.",
+      "remaining_blockers": [
+        "preview_limited",
+        "no_replayable_numeric_table_confirmed"
+      ],
+      "source_id": "ks_charak_varshaphala_google_books",
+      "url": "https://books.google.com/books/about/A_Textbook_of_Varshaphala.html?id=J3AvLZTArgIC"
+    }
+  ],
+  "scope": "prashna_tajika_numeric_packet_source_queue",
+  "summary": {
+    "blocked_truth_upgrade_count": 7,
+    "candidate_count": 8,
+    "partial_numeric_candidate_count": 1,
+    "ready_for_packet_count": 1
+  },
+  "truth_matrix_allowed": false
+}

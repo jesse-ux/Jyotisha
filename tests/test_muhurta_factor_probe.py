@@ -30,6 +30,44 @@ def test_muhurta_factor_probe_outputs_observation_not_verdict() -> None:
     assert report["candidate_windows"][0]["confidence_cap"] == "low"
 
 
+def test_muhurta_factor_probe_outputs_full_factor_only_scoring_set() -> None:
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(PROBE),
+            "--date",
+            "2026-07-19",
+            "--birth-moon-nakshatra-index",
+            "4",
+            "--birth-moon-sign-index",
+            "1",
+        ],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    report = json.loads(completed.stdout)
+
+    assert report["verified_muhurta_verdict"] is False
+    assert report["full_scoring_status"] == "factor_only_scoring_observation"
+    required = {
+        "tarabala",
+        "chandrabala",
+        "rahu_kalam",
+        "yamaganda",
+        "gulika_kalam",
+        "abhijit_muhurta",
+        "panchaka",
+        "sankranti",
+        "vyatipata",
+        "vaidhriti",
+    }
+    assert required <= set(report["factors"])
+    assert report["factor_scorecard"]["claim_status"] == "factor_only_not_final_muhurta_verdict"
+    assert report["factor_scorecard"]["score_cap"] == "low"
+
+
 def test_muhurta_factor_probe_keeps_full_scoring_blocked() -> None:
     completed = subprocess.run(
         [sys.executable, str(PROBE), "--date", "2026-07-19"],
@@ -39,7 +77,8 @@ def test_muhurta_factor_probe_keeps_full_scoring_blocked() -> None:
         text=True,
     )
     report = json.loads(completed.stdout)
-    assert report["full_scoring_status"] == "blocked_until_oracle"
+    assert report["full_scoring_status"] == "factor_only_scoring_observation"
+    assert report["final_muhurta_verdict_status"] == "blocked_until_oracle"
     assert "不能作为确定择日承诺" in report["boundary"]
 
 

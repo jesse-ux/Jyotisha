@@ -1,0 +1,25 @@
+{
+  "scope": "timing_rectification_holdout_freeze_audit",
+  "status": "blocked_until_human_labels",
+  "blind_replay_allowed": false,
+  "production_tuning_allowed": false,
+  "requirements": [
+    "two_distinct_reviewers",
+    "public_birth_source",
+    "positive_event_with_source_hash",
+    "two_negative_windows_with_sources",
+    "frozen_at_before_scoring",
+    "independent_of_model_run"
+  ],
+  "case_count": 1,
+  "ready_case_count": 0,
+  "minimum_case_count": 3,
+  "issues": [
+    {
+      "case_index": 0,
+      "case_id": null,
+      "error": "incomplete_two_reviewer_freeze"
+    }
+  ],
+  "boundary": "A freeze audit validates label process only. It does not establish timing accuracy or birth-time truth."
+}

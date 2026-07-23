@@ -1,0 +1,47 @@
+{
+  "scope": "numeric_oracle_packet_intake_template",
+  "created_at": "2026-07-23",
+  "claim_status": "candidate_queue",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "packets": [
+    {
+      "packet_id": "",
+      "domain": "kp_12_cusp",
+      "birth_or_question_input": {},
+      "timezone": "",
+      "ayanamsa": "",
+      "house_system": "",
+      "twelve_exact_cusp_longitudes": [],
+      "twelve_star_lords": [],
+      "twelve_sub_lords": [],
+      "twelve_sub_sub_lords": [],
+      "source_provenance": {
+        "url": "",
+        "page_or_artifact_hash": ""
+      },
+      "local_replay": {
+        "status": "",
+        "delta_summary": ""
+      }
+    },
+    {
+      "packet_id": "",
+      "domain": "advanced_ashtakavarga",
+      "complete_chart_input": {},
+      "location_timezone": {},
+      "ayanamsa_node_mode": "",
+      "technique_variant": "",
+      "expected_numeric_values": {},
+      "source_provenance": {
+        "url": "",
+        "page_or_artifact_hash": ""
+      },
+      "local_replay": {
+        "status": "",
+        "delta_summary": ""
+      }
+    }
+  ],
+  "boundary": "Template only. A packet is not a numeric oracle until the validator reports ready_for_replay_packet."
+}

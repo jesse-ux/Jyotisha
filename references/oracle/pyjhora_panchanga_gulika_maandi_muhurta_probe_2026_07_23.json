@@ -1,0 +1,80 @@
+{
+  "scope": "pyjhora_panchanga_gulika_maandi_muhurta_probe",
+  "claim_status": "observation_only",
+  "consumer_policy": "research_observation_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "license_boundary": "agpl_observation_only_do_not_vendor",
+  "input": {
+    "date": "1996-12-07",
+    "time": "10:34:00",
+    "place": "Chennai",
+    "latitude": 13.0878,
+    "longitude": 80.2785,
+    "timezone": "+05:30",
+    "ayanamsa": "Lahiri",
+    "julian_day_local_civil": 2450424.9402777776
+  },
+  "package_metadata": {
+    "package": "PyJHora",
+    "version": "4.8.7",
+    "module_file": "/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/jhora/__init__.py",
+    "record_sha256": "8a8f0763a29fb2873f79b694f66a1b748c9d8a8a5542512b9e6aa4e12aafd402",
+    "metadata_sha256": "62fb6f4a403be0a7f3c14a84133a544d5ba40f5edbf772f24d1ffd1c0d9164a6",
+    "captured_import_stdout_sha256": "4125f3142d8d33fd027b4df1b61341e6a91b3e225ae3065c8911b3d10c1e3db5",
+    "captured_import_stderr_sha256": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126"
+  },
+  "raw_outputs": {
+    "gulika": [
+      7,
+      21.383659705803353
+    ],
+    "maandi": [
+      8,
+      0.9728038266439683
+    ],
+    "tithi": [
+      27,
+      3.794324939203282,
+      27.737153187822777
+    ],
+    "nakshatra": [
+      15,
+      1,
+      10.027826442502807,
+      34.17010921765149,
+      16,
+      1,
+      57.534226468779096
+    ],
+    "yogam": [
+      5,
+      1.708026918006322,
+      24.459678359544334,
+      0.6106375061410549
+    ],
+    "karana": [
+      53,
+      3.794324939203282,
+      15.76573906351303
+    ],
+    "raahu_kaalam": [
+      "09:11:27",
+      "10:35:55"
+    ],
+    "yamaganda_kaalam": [
+      "13:24:50",
+      "14:49:18"
+    ],
+    "durmuhurtam": [
+      "07:52:37",
+      "08:37:40"
+    ],
+    "abhijit_muhurta": [
+      "11:37:51",
+      "12:22:54"
+    ]
+  },
+  "boundary": "Fixed-input AGPL black-box observation only. It neither authorizes automated Muhurta selection nor upgrades timing, prediction, or birth-time claims.",
+  "raw_sha256": "8db2755ca1f09258cb9d16622b88c2cbafaabe6634e37ad358c0ebf6e8f7e12a"
+}

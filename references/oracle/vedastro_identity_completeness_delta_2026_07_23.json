@@ -1,0 +1,40 @@
+{
+  "boundary": "NuGet/source artifacts are pinned, but hosted api.vedastro.org identity is still not proven. This delta improves traceability only; it does not upgrade VedAstro hosted outputs to truth.",
+  "claim_status": "blocked_until_reproducible_identity",
+  "completion_ratio": {
+    "missing_count": 6,
+    "pinned_count": 9
+  },
+  "created_at": "2026-07-23",
+  "missing_fields": [
+    "hosted_api_build_metadata",
+    "hosted_api_deployed_source_commit",
+    "hosted_api_container_image_digest",
+    "self_host_container_image_digest",
+    "self_host_public_method_inventory_hash",
+    "canonical_same_chart_replay_hashes_bound_to_self_host_image"
+  ],
+  "next_commands": [
+    "Ask upstream for hosted build metadata/source commit/image digest, or",
+    "Build a self-host image from the pinned source commit and archive image digest + public method inventory + canonical replay raw hashes."
+  ],
+  "pinned_fields": {
+    "base_image_digest": "mcr.microsoft.com/dotnet/sdk:7.0@sha256:d32bd65cf5843f413e81f5d917057c82da99737cb1637e905a1a4bc2e7ec6c8d",
+    "library_dll_sha256": "e4ec61b07ac1c15fcc65d9ffdc54bc2d26497597760572e2888f1992fc7b1ca8",
+    "library_version": "1.2.0",
+    "license": "MIT",
+    "nuget_package_sha256": "f753df4e76c75b9ad219c2f5a8fe4b17361065d6f4fa1198897cf117b7bc55d5",
+    "official_repository_head": "1f3a46482ab98eb414ab03fa44496a37d35a3a96",
+    "source_contract_commit": "1f3a46482ab98eb414ab03fa44496a37d35a3a96",
+    "target_framework": "net7.0",
+    "verified_library_methods": [
+      "GetAllPlanetLongitude",
+      "GetPlanetNirayanaLongitude",
+      "GetPlanetRasiSign",
+      "GetPlanetShadbalaPinda"
+    ]
+  },
+  "production_tuning_allowed": false,
+  "scope": "vedastro_identity_completeness_delta",
+  "truth_matrix_allowed": false
+}
