@@ -287,6 +287,9 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
   assert.match(css, /\.conversation\.is-rectification[^}]*padding-bottom:\s*0/);
   assert.match(css, /\.rectification-chat[^}]*height:\s*100%[^}]*display:\s*flex/);
   assert.match(css, /\.rectification-message-list[^}]*flex:\s*1[^}]*overflow-y:\s*auto/);
+  assert.match(css, /\.rectification-message-list[^}]*scrollbar-width:\s*thin/);
+  assert.match(css, /\.rectification-message-list::\-webkit-scrollbar-thumb[^}]*background-clip:\s*padding-box/);
+  assert.match(css, /\.rectification-message-list::\-webkit-scrollbar-thumb:hover[^}]*color-mix/);
   assert.match(css, /\.rectification-message-details button[^}]*min-height:\s*44px/);
   assert.match(css, /\.composer:focus-within[^}]*border-color:/);
   assert.match(css, /\.composer textarea[^}]*border:\s*0/);
