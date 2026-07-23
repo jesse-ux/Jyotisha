@@ -1,0 +1,127 @@
+{
+  "boundary": "Machine-selected public cases are intake candidates only. They do not satisfy the independent human holdout requirement and cannot upgrade timing or rectification claims.",
+  "cases": [
+    {
+      "birth_data": {
+        "date": "1955-02-24",
+        "place": "San Francisco, California, USA",
+        "source_quality": "public_astrodatabank_candidate",
+        "source_url": "https://www.astro.com/astro-databank/Jobs,_Steve",
+        "time": "19:15"
+      },
+      "case_id": "candidate_steve_jobs_apple_ipo_1980",
+      "human_reviews": [],
+      "machine_prepared": true,
+      "negative_windows": [
+        {
+          "end": "1980-10-14",
+          "review_note": "candidate negative window for no Apple IPO / same-class public listing event",
+          "source_url": "https://en.wikipedia.org/wiki/Apple_Inc.",
+          "start": "1980-10-01"
+        },
+        {
+          "end": "1981-02-14",
+          "review_note": "candidate negative window for no Apple IPO / same-class public listing event",
+          "source_url": "https://en.wikipedia.org/wiki/Apple_Inc.",
+          "start": "1981-02-01"
+        }
+      ],
+      "positive_event": {
+        "end": "1980-12-12",
+        "event_type": "career_wealth",
+        "label": "Apple initial public offering",
+        "source_hash": "sha256:bfc04055876aeac7816e5fbba86b3fd622b4e240a441d314df0ab45a775d6420",
+        "source_url": "https://en.wikipedia.org/wiki/Apple_Inc.",
+        "start": "1980-12-12"
+      },
+      "public_person": "Steve Jobs"
+    },
+    {
+      "birth_data": {
+        "date": "1961-08-04",
+        "place": "Honolulu, Hawaii, USA",
+        "source_quality": "public_astrodatabank_candidate",
+        "source_url": "https://www.astro.com/astro-databank/Obama,_Barack",
+        "time": "19:24"
+      },
+      "case_id": "candidate_barack_obama_2008_election",
+      "human_reviews": [],
+      "machine_prepared": true,
+      "negative_windows": [
+        {
+          "end": "2008-09-14",
+          "review_note": "candidate negative window for no presidential election win / same-class election outcome",
+          "source_url": "https://en.wikipedia.org/wiki/2008_United_States_presidential_election",
+          "start": "2008-09-01"
+        },
+        {
+          "end": "2009-02-14",
+          "review_note": "candidate negative window after inauguration for no same-class election outcome",
+          "source_url": "https://en.wikipedia.org/wiki/Presidency_of_Barack_Obama",
+          "start": "2009-02-01"
+        }
+      ],
+      "positive_event": {
+        "end": "2008-11-04",
+        "event_type": "career_status",
+        "label": "Elected President of the United States",
+        "source_hash": "sha256:16b363185a1dd64090615007f453bd1a91f204e3b65b428eececba6827c0dcc2",
+        "source_url": "https://en.wikipedia.org/wiki/2008_United_States_presidential_election",
+        "start": "2008-11-04"
+      },
+      "public_person": "Barack Obama"
+    },
+    {
+      "birth_data": {
+        "date": "1961-07-01",
+        "place": "Sandringham, Norfolk, England",
+        "source_quality": "public_astrodatabank_candidate",
+        "source_url": "https://www.astro.com/astro-databank/Diana,_Princess_of_Wales",
+        "time": "19:45"
+      },
+      "case_id": "candidate_princess_diana_wedding_1981",
+      "human_reviews": [],
+      "machine_prepared": true,
+      "negative_windows": [
+        {
+          "end": "1981-05-14",
+          "review_note": "candidate negative window for no same marriage ceremony event",
+          "source_url": "https://en.wikipedia.org/wiki/Wedding_of_Prince_Charles_and_Lady_Diana_Spencer",
+          "start": "1981-05-01"
+        },
+        {
+          "end": "1981-09-14",
+          "review_note": "candidate negative window for no same marriage ceremony event",
+          "source_url": "https://en.wikipedia.org/wiki/Wedding_of_Prince_Charles_and_Lady_Diana_Spencer",
+          "start": "1981-09-01"
+        }
+      ],
+      "positive_event": {
+        "end": "1981-07-29",
+        "event_type": "marriage",
+        "label": "Wedding of Prince Charles and Lady Diana Spencer",
+        "source_hash": "sha256:ab8415e1bb1d26cb99c57b4503503e4688636568f22b80ddd4b1c9c64b59f22a",
+        "source_url": "https://en.wikipedia.org/wiki/Wedding_of_Prince_Charles_and_Lady_Diana_Spencer",
+        "start": "1981-07-29"
+      },
+      "public_person": "Diana, Princess of Wales"
+    }
+  ],
+  "claim_status": "candidate_labels_need_human_freeze",
+  "created_at": "2026-07-23",
+  "next_action": "A human reviewer must verify birth data, event source, and negative windows, then add two distinct frozen reviews before blind replay.",
+  "production_tuning_allowed": false,
+  "review_policy": {
+    "machine_prepared_labels_are_not_independent_human_labels": true,
+    "minimum_distinct_reviewers_per_case": 2,
+    "minimum_public_people": 3
+  },
+  "scope": "timing_rectification_candidate_holdout_labels",
+  "summary": {
+    "candidate_case_count": 3,
+    "negative_window_count": 6,
+    "positive_event_count": 3,
+    "ready_for_blind_replay_count": 0
+  },
+  "truth_matrix_allowed": false
+}

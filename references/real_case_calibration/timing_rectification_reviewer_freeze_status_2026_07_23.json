@@ -1,0 +1,51 @@
+{
+  "boundary": "One reviewer confirmation advances candidate governance but does not satisfy the two-reviewer freeze requirement or upgrade timing claims.",
+  "claim_status": "one_reviewer_confirmed_second_required",
+  "created_at": "2026-07-23",
+  "next_action": "Collect a second independent reviewer confirmation before running blind timing/rectification replay.",
+  "production_tuning_allowed": false,
+  "reviewer_1": {
+    "allowed_for_tuning": false,
+    "confirmation_text": "我确认这 3 个候选案例可以作为第一轮 holdout。",
+    "confirmed_at": "2026-07-23",
+    "independent_of_model_run": false,
+    "reviewer_id": "user_confirmed_business_owner",
+    "scope": "first_reviewer_acceptance_of_machine_prepared_candidates"
+  },
+  "reviewer_2_required": true,
+  "rows": [
+    {
+      "case_id": "candidate_steve_jobs_apple_ipo_1980",
+      "freeze_status": "one_reviewer_confirmed_second_required",
+      "positive_event_label": "Apple initial public offering",
+      "public_person": "Steve Jobs",
+      "reviewer_1_status": "confirmed",
+      "reviewer_2_status": "missing"
+    },
+    {
+      "case_id": "candidate_barack_obama_2008_election",
+      "freeze_status": "one_reviewer_confirmed_second_required",
+      "positive_event_label": "Elected President of the United States",
+      "public_person": "Barack Obama",
+      "reviewer_1_status": "confirmed",
+      "reviewer_2_status": "missing"
+    },
+    {
+      "case_id": "candidate_princess_diana_wedding_1981",
+      "freeze_status": "one_reviewer_confirmed_second_required",
+      "positive_event_label": "Wedding of Prince Charles and Lady Diana Spencer",
+      "public_person": "Diana, Princess of Wales",
+      "reviewer_1_status": "confirmed",
+      "reviewer_2_status": "missing"
+    }
+  ],
+  "scope": "timing_rectification_reviewer_freeze_status",
+  "source_candidate_packet": "references/real_case_calibration/timing_rectification_candidate_holdout_labels_2026_07_23.json",
+  "summary": {
+    "case_count": 3,
+    "ready_for_blind_replay_count": 0,
+    "reviewer_1_confirmed_count": 3,
+    "reviewer_2_confirmed_count": 0
+  },
+  "truth_matrix_allowed": false
+}

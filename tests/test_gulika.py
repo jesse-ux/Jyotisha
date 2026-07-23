@@ -32,3 +32,10 @@ def test_gulika_matches_public_pyjhora_smoke_oracle() -> None:
     assert result["method"] == "saturn_part_start"
     assert result["sign_idx"] == expected["sign_index"]
     assert abs(result["degree_in_sign"] - expected["degree_in_sign"]) <= 0.5
+
+
+def test_gulika_night_uses_weekday_of_preceding_sunset() -> None:
+    result = calculate_gulika(datetime(2023, 1, 27, 2, 30, 15), lat=23.0225, lon=72.5714, tz=5.5)
+    assert result["period"] == "night"
+    assert result["weekday"] == 3
+    assert result["sign_idx"] == 7

@@ -60,13 +60,15 @@ def calculate_gulika(
     end_jd = daynight["sunset_jd_ut"] if is_day else daynight["sunrise_jd_ut"] + 1.0
     if end_jd <= start_jd:
         end_jd += 1.0
+    start_year, start_month, start_day, _ = swe.revjul(start_jd + float(tz) / 24.0)
+    period_weekday = datetime(int(start_year), int(start_month), int(start_day)).weekday()
     if method == "saturn_part_start":
-        part_index = SATURN_PART_START[moment.weekday()][period]
+        part_index = SATURN_PART_START[period_weekday][period]
         segment_fraction = part_index / 8.0
         ghatika_end = None
     elif method == "legacy_ghatika_end":
         part_index = None
-        ghatika_end = GHATIKA_END[moment.weekday()][period]
+        ghatika_end = GHATIKA_END[period_weekday][period]
         segment_fraction = ghatika_end / 30.0
     else:
         raise ValueError("method must be saturn_part_start or legacy_ghatika_end")
@@ -79,7 +81,8 @@ def calculate_gulika(
         "sign_idx": int(longitude / 30) % 12,
         "degree_in_sign": round(longitude % 30, 6),
         "period": period,
-        "weekday": moment.weekday(),
+        "weekday": period_weekday,
+        "moment_weekday": moment.weekday(),
         "method": method,
         "part_index": part_index,
         "segment_fraction": segment_fraction,
