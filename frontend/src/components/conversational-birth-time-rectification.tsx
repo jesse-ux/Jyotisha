@@ -9,7 +9,10 @@ import {
   useConversationalRectification,
   type ConversationalRectificationController,
 } from "../hooks/use-conversational-rectification.ts";
-import type { ConversationalRectificationTurn } from "../lib/conversational-rectification/contracts.ts";
+import type {
+  ConversationalRectificationResponse,
+  ConversationalRectificationTurn,
+} from "../lib/conversational-rectification/contracts.ts";
 
 type SurfaceProps = Readonly<{
   controller: ConversationalRectificationController;
@@ -249,10 +252,10 @@ export function ConversationalRectificationSurface({
 }
 
 type ConversationalBirthTimeRectificationProps = Readonly<{
-  initialTurn?: ConversationalRectificationTurn | null;
+  initialTurn?: ConversationalRectificationResponse | null;
   pendingConsultationQuestion?: string | null;
   continuationPending?: boolean;
-  onTurn?: (turn: ConversationalRectificationTurn) => void;
+  onTurn?: (turn: ConversationalRectificationResponse) => void;
   onPendingChange?: (pending: boolean) => void;
   onContinueOriginalQuestion?: (question: string) => void;
 }>;

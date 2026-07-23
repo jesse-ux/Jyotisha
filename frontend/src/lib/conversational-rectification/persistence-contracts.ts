@@ -1,5 +1,8 @@
 import { z } from "zod";
-import { conversationalRectificationTurnSchema } from "./contracts.ts";
+import {
+  conversationalRectificationMessageHistoryEntrySchema,
+  conversationalRectificationTurnSchema,
+} from "./contracts.ts";
 import { boundedJson } from "./json-bounds.ts";
 
 const uuidSchema = z.string().uuid();
@@ -247,6 +250,7 @@ export const storedCaseRowSchema = boundedJson(z.object({
   pending_consultation_question: boundedText(500).nullable(),
   billing_state: z.enum(["reserved", "charged", "released", "migration_waived"]).nullable(),
   latest_turn: conversationalRectificationTurnSchema,
+  message_history: z.array(conversationalRectificationMessageHistoryEntrySchema).max(200).optional(),
   declared_birth_input: declaredBirthInputSchema.optional(),
   private_candidate: privateCandidateSchema.optional(),
   event_evidence: z.array(lifeEventEvidenceSchema).max(2_000).optional(),

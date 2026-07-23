@@ -10,6 +10,7 @@ import {
 } from "../lib/conversational-rectification/client.ts";
 import type {
   ConversationalRectificationCommand,
+  ConversationalRectificationResponse,
   ConversationalRectificationTurn,
 } from "../lib/conversational-rectification/contracts.ts";
 
@@ -28,30 +29,27 @@ function assistantText(turn: ConversationalRectificationTurn): string {
   return turn.narrative.trim();
 }
 
-function initialMessages(turn: ConversationalRectificationTurn | null): ConversationalRectificationMessage[] {
+function initialMessages(turn: ConversationalRectificationResponse | null): ConversationalRectificationMessage[] {
   if (!turn) return [];
-  if (turn.evidenceRecap.length === 0) {
-    return [{ role: "assistant", text: assistantText(turn), renderKey: `assistant-${turn.turnVersion}` }];
+  if (turn.messageHistory?.length) {
+    return turn.messageHistory.flatMap((entry) => [
+      ...(entry.userMessage ? [{
+        role: "user" as const,
+        text: entry.userMessage,
+        renderKey: `user-turn-${entry.turnVersion}`,
+      }] : []),
+      {
+        role: "assistant" as const,
+        text: entry.narrative.trim(),
+        renderKey: `assistant-turn-${entry.turnVersion}`,
+      },
+    ]);
   }
-  return turn.evidenceRecap.flatMap((entry, index) => {
-    const user = {
-      role: "user" as const,
-      text: `${entry.dateLabel} · ${entry.summary}${entry.isCorrection ? "（已修订）" : ""}`,
-      renderKey: `user-${entry.id}`,
-    };
-    const assistant = index === turn.evidenceRecap.length - 1
-      ? assistantText(turn)
-      : `已记录这段经历：${entry.dateLabel} · ${entry.summary}。`;
-    return [user, {
-      role: "assistant" as const,
-      text: assistant,
-      renderKey: `assistant-history-${entry.id}`,
-    }];
-  });
+  return [{ role: "assistant", text: assistantText(turn), renderKey: `assistant-${turn.turnVersion}` }];
 }
 
 export type ConversationalRectificationControllerSnapshot = Readonly<{
-  turn: ConversationalRectificationTurn | null;
+  turn: ConversationalRectificationResponse | null;
   messages?: readonly ConversationalRectificationMessage[];
   draft: string;
   selectedDomain: EvidenceDomain | null;
@@ -60,12 +58,12 @@ export type ConversationalRectificationControllerSnapshot = Readonly<{
   error: string;
 }>;
 
-type MutationResult = Promise<ConversationalRectificationTurn | null>;
+type MutationResult = Promise<ConversationalRectificationResponse | null>;
 
 export type ConversationalRectificationController = ConversationalRectificationControllerSnapshot & Readonly<{
   getSnapshot(): ConversationalRectificationControllerSnapshot;
   subscribe(listener: () => void): () => void;
-  synchronizeInitialTurn(turn: ConversationalRectificationTurn | null): void;
+  synchronizeInitialTurn(turn: ConversationalRectificationResponse | null): void;
   setDraft(value: string): void;
   selectDomain(domain: EvidenceDomain | null): void;
   beginEvidenceCorrection(evidenceId: string): void;
@@ -79,10 +77,10 @@ export type ConversationalRectificationController = ConversationalRectificationC
 }>;
 
 type ControllerInput = Readonly<{
-  initialTurn?: ConversationalRectificationTurn | null;
-  send?: (command: ConversationalRectificationCommand) => Promise<ConversationalRectificationTurn>;
+  initialTurn?: ConversationalRectificationResponse | null;
+  send?: (command: ConversationalRectificationCommand) => Promise<ConversationalRectificationResponse>;
   createActionId?: () => string;
-  onTurn?: (turn: ConversationalRectificationTurn) => void;
+  onTurn?: (turn: ConversationalRectificationResponse) => void;
   onPendingChange?: (pending: boolean) => void;
 }>;
 
@@ -108,7 +106,7 @@ function createLatestControllerInput(initial: ControllerInput) {
     send(command: ConversationalRectificationCommand) {
       return (current.send ?? sendConversationalRectificationCommand)(command);
     },
-    onTurn(turn: ConversationalRectificationTurn) {
+    onTurn(turn: ConversationalRectificationResponse) {
       current.onTurn?.(turn);
     },
     onPendingChange(pending: boolean) {
@@ -164,7 +162,7 @@ export function createConversationalRectificationController(
     }
   };
   const acceptTurn = (
-    turn: ConversationalRectificationTurn,
+    turn: ConversationalRectificationResponse,
     clearDraft: boolean,
     expectedCaseContext: number,
     userMessage?: string,
@@ -203,7 +201,7 @@ export function createConversationalRectificationController(
     }
     return turn;
   };
-  const recoverLatest = async (turn: ConversationalRectificationTurn) => registry.run({
+  const recoverLatest = async (turn: ConversationalRectificationResponse) => registry.run({
     caseId: turn.caseId,
     turnVersion: turn.turnVersion,
     operation: "resume",
@@ -264,7 +262,7 @@ export function createConversationalRectificationController(
   const currentMutation = (
     operation: Exclude<ConversationalRectificationCommand["type"], "start">,
     payload: unknown,
-    command: (turn: ConversationalRectificationTurn, actionId: string) => ConversationalRectificationCommand,
+    command: (turn: ConversationalRectificationResponse, actionId: string) => ConversationalRectificationCommand,
     clearDraftOnSuccess = false,
     userMessage?: string,
   ): MutationResult => {
@@ -296,7 +294,7 @@ export function createConversationalRectificationController(
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    synchronizeInitialTurn(turn: ConversationalRectificationTurn | null) {
+    synchronizeInitialTurn(turn: ConversationalRectificationResponse | null) {
       const current = snapshot.turn;
       if (turn === null) {
         if (current === null) return;
@@ -340,10 +338,12 @@ export function createConversationalRectificationController(
       if (turn.turnVersion <= current.turnVersion) return;
       patch({
         turn,
-        messages: [
-          ...(snapshot.messages ?? []),
-          { role: "assistant", text: assistantText(turn), renderKey: `assistant-${turn.turnVersion}` },
-        ],
+        messages: turn.messageHistory?.length
+          ? initialMessages(turn)
+          : [
+            ...(snapshot.messages ?? []),
+            { role: "assistant", text: assistantText(turn), renderKey: `assistant-${turn.turnVersion}` },
+          ],
         error: "",
         selectedDomain: snapshot.selectedDomain
           && turn.evidenceRequest?.domains.includes(snapshot.selectedDomain)

@@ -49,7 +49,10 @@ import {
 } from "@/lib/birth-time-consultation-consent";
 import type { ConsultationBirthTimeMode } from "@/lib/consultation-birth-time-mode";
 import { sendConversationalRectificationCommand } from "@/lib/conversational-rectification/client";
-import type { ConversationalRectificationTurn } from "@/lib/conversational-rectification/contracts";
+import type {
+  ConversationalRectificationResponse,
+  ConversationalRectificationTurn,
+} from "@/lib/conversational-rectification/contracts";
 import {
   createDurableRectificationQuestionHandoffClient,
   createRectificationQuestionHandoffCoordinator,
@@ -818,7 +821,7 @@ export default function Home() {
   );
   const [rectificationSessionId, setRectificationSessionId] = useState<string | null>(null);
   const [rectificationReturnSessionId, setRectificationReturnSessionId] = useState<string | null>(null);
-  const [rectificationInitialTurn, setRectificationInitialTurn] = useState<ConversationalRectificationTurn | null>(null);
+  const [rectificationInitialTurn, setRectificationInitialTurn] = useState<ConversationalRectificationResponse | null>(null);
   const [rectificationPendingQuestion, setRectificationPendingQuestion] = useState<string | null>(null);
   const [rectificationLoading, setRectificationLoading] = useState(false);
   const [rectificationMutationPending, setRectificationMutationPending] = useState(false);
@@ -1963,7 +1966,7 @@ export default function Home() {
     activeSessionIdRef.current = rectificationSession.id;
     setActiveSessionId(rectificationSession.id);
     try {
-      let turn: ConversationalRectificationTurn;
+      let turn: ConversationalRectificationResponse;
       if (!resumeTarget) {
         const durable = await durableRectificationQuestionHandoff.current.load();
         turn = durable && durable.status !== "consumed"
@@ -2052,7 +2055,7 @@ export default function Home() {
     void openBirthTimeRectification(null, session);
   };
 
-  function handleConversationalRectificationTurn(turn: ConversationalRectificationTurn) {
+  function handleConversationalRectificationTurn(turn: ConversationalRectificationResponse) {
     const requestIdentity = accountRefreshGuard.current.begin();
     setRectificationInitialTurn(turn);
     synchronizeRectificationQuestion(turn);

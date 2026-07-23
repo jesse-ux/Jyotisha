@@ -28,6 +28,34 @@ test("local PostgreSQL applies the reviewed business schema and serves authentic
     assert.equal(migration.status, 0, migration.stderr);
     assert.match(migration.stdout, /applied 20260715000000_account_credits\.sql/);
     assert.match(migration.stdout, /applied 20260721150000_align_conversational_finance_domain\.sql/);
+    assert.match(migration.stdout, /applied 20260723010000_restore_conversational_message_history\.sql/);
+
+    assert.equal(
+      fixture.psql(`
+        select is_nullable || ':' || data_type
+        from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'birth_time_rectification_turns'
+          and column_name = 'user_message'
+      `),
+      "YES:text",
+    );
+    assert.equal(
+      fixture.psql(`
+        select
+          has_function_privilege(
+            'service_role',
+            'public.load_conversational_rectification_case_with_history(uuid, uuid)',
+            'execute'
+          ) || ':' ||
+          has_function_privilege(
+            'authenticated',
+            'public.load_conversational_rectification_case_with_history(uuid, uuid)',
+            'execute'
+          )
+      `),
+      "true:f",
+    );
 
     assert.equal(
       fixture.psql(`

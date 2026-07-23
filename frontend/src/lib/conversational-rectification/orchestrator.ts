@@ -3,6 +3,7 @@ import {
   conversationalRectificationCommandSchema,
   conversationalRectificationTurnSchema,
   type ConversationalRectificationCommand,
+  type ConversationalRectificationResponse,
   type ConversationalRectificationTurn,
 } from "./contracts.ts";
 import { ConversationalRectificationError } from "./errors.ts";
@@ -188,7 +189,7 @@ function visibleEvidenceSummary(value: string): string {
   return cleaned || value;
 }
 
-function publicTurn(value: StoredConversationalRectificationCase): ConversationalRectificationTurn {
+function publicTurn(value: StoredConversationalRectificationCase): ConversationalRectificationResponse {
   const parsed = conversationalRectificationTurnSchema.safeParse(value.latestTurn);
   if (!parsed.success) throw new ConversationalRectificationError("store_unavailable");
   const evidenceDomains = new Map(
@@ -196,6 +197,7 @@ function publicTurn(value: StoredConversationalRectificationCase): Conversationa
   );
   return {
     ...parsed.data,
+    ...(value.messageHistory ? { messageHistory: [...value.messageHistory] } : {}),
     evidenceRecap: parsed.data.evidenceRecap.map((item) => ({
       ...item,
       summary: visibleEvidenceSummary(item.summary),
@@ -1085,6 +1087,7 @@ export function createConversationalRectificationService(
             expectedVersion: command.turnVersion,
             actionId: command.actionId,
             commandFingerprint: fingerprint,
+            userMessage: command.answer,
             turn: current.latestTurn,
             evidence,
             validationReceipt: latestReceipt(current),
@@ -1157,6 +1160,7 @@ export function createConversationalRectificationService(
               expectedVersion: command.turnVersion,
               actionId: command.actionId,
               commandFingerprint: fingerprint,
+              userMessage: command.answer,
               turn: next.turn,
               evidence,
               validationReceipt: next.receipt,
@@ -1201,6 +1205,7 @@ export function createConversationalRectificationService(
               expectedVersion: command.turnVersion,
               actionId: command.actionId,
               commandFingerprint: fingerprint,
+              userMessage: command.answer,
               turn: next.turn,
               evidence,
               validationReceipt: narrative.validationReceipt,
@@ -1230,6 +1235,7 @@ export function createConversationalRectificationService(
             expectedVersion: command.turnVersion,
             actionId: command.actionId,
             commandFingerprint: fingerprint,
+            userMessage: command.answer,
             turn,
             evidence,
             validationReceipt: narrative.validationReceipt,
@@ -1254,6 +1260,7 @@ export function createConversationalRectificationService(
             expectedVersion: command.turnVersion,
             actionId: command.actionId,
             commandFingerprint: fingerprint,
+            userMessage: command.answer,
             turn: next.turn,
             evidence,
             validationReceipt: next.receipt,
@@ -1349,6 +1356,7 @@ export function createConversationalRectificationService(
           expectedVersion: command.turnVersion,
           actionId: command.actionId,
           commandFingerprint: fingerprint,
+          userMessage: command.answer,
           turn,
           evidence,
           validationReceipt: narrative.validationReceipt,

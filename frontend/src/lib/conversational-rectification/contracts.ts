@@ -94,7 +94,7 @@ const evidenceRecapSchema = boundedJson(
   24_576,
 );
 
-export const conversationalRectificationTurnSchema = boundedJson(z.object({
+const conversationalRectificationTurnObjectSchema = z.object({
   caseId: caseIdSchema,
   journeyProtocol: z.literal("conversational-evidence-v3"),
   status: z.enum(["active", "paused", "confirming", "completed", "abandoned"]),
@@ -112,6 +112,32 @@ export const conversationalRectificationTurnSchema = boundedJson(z.object({
     "continue_original_question",
   ])).max(5),
   pendingConsultationQuestion: boundedNonblankText(500).nullable(),
-}).strict(), 65_536);
+}).strict();
+
+export const conversationalRectificationTurnSchema = boundedJson(
+  conversationalRectificationTurnObjectSchema,
+  65_536,
+);
 
 export type ConversationalRectificationTurn = z.infer<typeof conversationalRectificationTurnSchema>;
+
+export const conversationalRectificationMessageHistoryEntrySchema = boundedJson(z.object({
+  turnVersion: turnVersionSchema,
+  userMessage: boundedNonblankText(4_000).nullable(),
+  narrative: boundedNonblankText(12_000),
+}).strict(), 20_000);
+
+export type ConversationalRectificationMessageHistoryEntry = z.infer<
+  typeof conversationalRectificationMessageHistoryEntrySchema
+>;
+
+export const conversationalRectificationResponseSchema = boundedJson(
+  conversationalRectificationTurnObjectSchema.extend({
+    messageHistory: z.array(conversationalRectificationMessageHistoryEntrySchema).max(200).optional(),
+  }).strict(),
+  3_500_000,
+);
+
+export type ConversationalRectificationResponse = z.infer<
+  typeof conversationalRectificationResponseSchema
+>;

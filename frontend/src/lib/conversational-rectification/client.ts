@@ -2,9 +2,9 @@ import { z } from "zod";
 import { postJson } from "../birth-time-client-transport.ts";
 import {
   conversationalRectificationCommandSchema,
-  conversationalRectificationTurnSchema,
+  conversationalRectificationResponseSchema,
   type ConversationalRectificationCommand,
-  type ConversationalRectificationTurn,
+  type ConversationalRectificationResponse,
 } from "./contracts.ts";
 
 export const CONVERSATIONAL_RECTIFICATION_UNAVAILABLE = "生时校正暂时无法继续，请稍后重试。";
@@ -118,7 +118,7 @@ async function postCommandWithOneReplay(body: string) {
 
 export async function sendConversationalRectificationCommand(
   command: ConversationalRectificationCommand,
-): Promise<ConversationalRectificationTurn> {
+): Promise<ConversationalRectificationResponse> {
   const request = conversationalRectificationCommandSchema.parse(command);
   const body = JSON.stringify(request);
   try {
@@ -134,7 +134,7 @@ export async function sendConversationalRectificationCommand(
         safeServerMessage,
       );
     }
-    return conversationalRectificationTurnSchema.parse(payload);
+    return conversationalRectificationResponseSchema.parse(payload);
   } catch (error) {
     if (error instanceof ConversationalRectificationRequestError) throw error;
     throw new ConversationalRectificationRequestError(
