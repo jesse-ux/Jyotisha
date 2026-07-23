@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { postJson } from "../birth-time-client-transport.ts";
 import {
   conversationalRectificationCommandSchema,
   conversationalRectificationResponseSchema,
@@ -13,6 +12,18 @@ const publicErrorSchema = z.object({
   code: z.string(),
   message: z.string(),
 }).passthrough();
+
+const streamEventSchema = z.discriminatedUnion("type", [
+  z.object({ type: z.literal("delta"), text: z.string() }).strict(),
+  z.object({
+    type: z.literal("turn"),
+    turn: conversationalRectificationResponseSchema,
+  }).strict(),
+]);
+
+export type ConversationalRectificationStreamOptions = Readonly<{
+  onNarrativeDelta?: (text: string) => void;
+}>;
 
 export class ConversationalRectificationRequestError extends Error {
   readonly name = "ConversationalRectificationRequestError";
@@ -95,21 +106,75 @@ function isRetryableTransportError(error: unknown): boolean {
   );
 }
 
-async function postCommandWithOneReplay(body: string) {
+async function readJsonPayload(response: Response): Promise<unknown> {
+  return response.json().catch(() => null);
+}
+
+async function readStreamedTurn(
+  response: Response,
+  options: ConversationalRectificationStreamOptions,
+): Promise<ConversationalRectificationResponse> {
+  if (!response.body) throw new SyntaxError("missing rectification response stream");
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffered = "";
+  let turn: ConversationalRectificationResponse | null = null;
+  const consumeLine = (line: string) => {
+    if (!line.trim()) return;
+    const event = streamEventSchema.parse(JSON.parse(line));
+    if (event.type === "delta") options.onNarrativeDelta?.(event.text);
+    else turn = event.turn;
+  };
+  while (true) {
+    const { done, value } = await reader.read();
+    buffered += decoder.decode(value, { stream: !done });
+    let newline = buffered.indexOf("\n");
+    while (newline >= 0) {
+      consumeLine(buffered.slice(0, newline));
+      buffered = buffered.slice(newline + 1);
+      newline = buffered.indexOf("\n");
+    }
+    if (done) break;
+  }
+  consumeLine(buffered);
+  if (!turn) throw new SyntaxError("missing rectification turn event");
+  return turn;
+}
+
+async function postCommandWithOneReplay(
+  body: string,
+  options: ConversationalRectificationStreamOptions,
+) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
+    let emittedNarrative = false;
     try {
-      const result = await postJson({
-        url: "/api/birth-time-conversation",
+      const response = await fetch("/api/birth-time-conversation", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          Accept: "application/x-ndjson, application/json",
+          "Content-Type": "application/json",
+        },
         body,
-        retryLostResponse: false,
       });
-      // postJson deliberately projects an unparseable non-ok body to null. Treating all null
-      // error payloads as replayable also covers proxies that mislabel HTML as application/json.
-      const nonJsonFailure = !result.response.ok && result.payload === null;
-      if (attempt === 0 && (result.response.status === 502 || nonJsonFailure)) continue;
-      return result;
+      if (!response.ok) {
+        const payload = await readJsonPayload(response);
+        const nonJsonFailure = payload === null;
+        if (attempt === 0 && (response.status === 502 || nonJsonFailure)) continue;
+        return { response, payload, turn: null };
+      }
+      if (response.headers.get("content-type")?.includes("application/x-ndjson")) {
+        const turn = await readStreamedTurn(response, {
+          onNarrativeDelta(text) {
+            emittedNarrative = true;
+            options.onNarrativeDelta?.(text);
+          },
+        });
+        return { response, payload: null, turn };
+      }
+      return { response, payload: await readJsonPayload(response), turn: null };
     } catch (error) {
-      if (attempt === 0 && isRetryableTransportError(error)) continue;
+      if (attempt === 0 && !emittedNarrative && isRetryableTransportError(error)) continue;
       throw error;
     }
   }
@@ -118,11 +183,12 @@ async function postCommandWithOneReplay(body: string) {
 
 export async function sendConversationalRectificationCommand(
   command: ConversationalRectificationCommand,
+  options: ConversationalRectificationStreamOptions = {},
 ): Promise<ConversationalRectificationResponse> {
   const request = conversationalRectificationCommandSchema.parse(command);
   const body = JSON.stringify(request);
   try {
-    const { response, payload } = await postCommandWithOneReplay(body);
+    const { response, payload, turn } = await postCommandWithOneReplay(body, options);
     if (!response.ok) {
       const parsed = publicErrorSchema.safeParse(payload);
       const safeServerMessage = response.status < 500 && parsed.success
@@ -134,7 +200,7 @@ export async function sendConversationalRectificationCommand(
         safeServerMessage,
       );
     }
-    return conversationalRectificationResponseSchema.parse(payload);
+    return turn ?? conversationalRectificationResponseSchema.parse(payload);
   } catch (error) {
     if (error instanceof ConversationalRectificationRequestError) throw error;
     throw new ConversationalRectificationRequestError(

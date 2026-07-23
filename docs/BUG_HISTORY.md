@@ -648,4 +648,20 @@
 - 防复发：消息历史必须携带来源可信度，事件 evidence 不得默认等价于聊天原文；跨服务的事件数量上限必须由同一契约测试锁定。
 - 相关记录：BUG-034、BUG-037
 - 复发自：BUG-037
-- 修复版本：待提交
+- 修复版本：0850619eaf5002736542463394720b0ab1949ce9
+
+## BUG-039 | 生时校正 Agent 回答等待结束后一次性出现
+
+- 状态：resolved
+- 首次发现：2026-07-23
+- 最近更新：2026-07-23
+- 影响面：生时校正首次进入、回答传输、Agent 生成状态、移动端对话可读性
+- 用户现象：首次进入时只显示“正在建立校正记录”，看不到后台生成的第一条 Agent 引导；用户发送经历后也只能看到“正在核对星盘信息”，待模型、校验和保存全部完成后，Agent 整段回答一次性出现，与普通 session 的逐段生成体验不一致。
+- 触发条件：任意生时校正 `start`、`resume` 或 `answer` 命令成功返回自然语言 narrative。
+- 根因：`/api/birth-time-conversation` 固定使用 `Response.json(turn)`，客户端也完整读取并校验 JSON 后才更新控制器；即使 narrative 已生成，传输层和聊天渲染层都没有增量事件契约。首次入口另由首页直接执行 `start/resume`，没有把生成中的首条 narrative 投影给尚未初始化的校正组件。
+- 修复：成功响应在客户端声明支持时改用 `application/x-ndjson`；服务端只对已经完成技法校验并持久化的 narrative 分块发送 `delta`，最后发送完整 durable turn。客户端逐行解析并即时投影到同一个 assistant 气泡，首次 `start/resume` 也把增量引导传入空白校正界面；最终 turn 到达后无缝转为 settled 历史。错误响应继续使用既有安全 JSON，已输出 delta 的中断不自动重放，避免重复文字。代理技法校验、事件事务和分钟安全门禁均保持在流输出之前。
+- 验证：新增 route 分块顺序与禁用代理缓冲回归、client NDJSON 增量解析回归、controller 在 durable turn 未到达前发布流式文本回归、组件 streaming 气泡回归；聚焦校正测试、真实 Chromium 390px 组件测试、ESLint、TypeScript 与 production build 通过。
+- 防复发：生时校正成功响应不得退回一次性 JSON 作为唯一前端路径；可见增量内容必须来自已校验 narrative，不得直接透传未完成或未通过约束的模型 token。
+- 相关记录：BUG-034、BUG-037、BUG-038
+- 复发自：无
+- 修复版本：本次流式修复提交

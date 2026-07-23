@@ -822,6 +822,7 @@ export default function Home() {
   const [rectificationSessionId, setRectificationSessionId] = useState<string | null>(null);
   const [rectificationReturnSessionId, setRectificationReturnSessionId] = useState<string | null>(null);
   const [rectificationInitialTurn, setRectificationInitialTurn] = useState<ConversationalRectificationResponse | null>(null);
+  const [rectificationOpeningAssistantText, setRectificationOpeningAssistantText] = useState("");
   const [rectificationPendingQuestion, setRectificationPendingQuestion] = useState<string | null>(null);
   const [rectificationLoading, setRectificationLoading] = useState(false);
   const [rectificationMutationPending, setRectificationMutationPending] = useState(false);
@@ -1951,6 +1952,7 @@ export default function Home() {
     setDraftEntrypoint(null);
     setRectificationPendingQuestion(requestedQuestion);
     setRectificationInitialTurn(null);
+    setRectificationOpeningAssistantText("");
     setRectificationError("");
     setRectificationLoading(true);
     if (!reusingRectificationSession) {
@@ -1975,6 +1977,10 @@ export default function Home() {
               type: "start",
               actionId: globalThis.crypto.randomUUID(),
               pendingConsultationQuestion: requestedQuestion,
+            }, {
+              onNarrativeDelta(text) {
+                setRectificationOpeningAssistantText((current) => current + text);
+              },
             });
       } else {
         let current = resumeTarget;
@@ -2007,6 +2013,10 @@ export default function Home() {
             caseId: current.caseId,
             actionId: globalThis.crypto.randomUUID(),
             turnVersion: current.turnVersion,
+          }, {
+            onNarrativeDelta(text) {
+              setRectificationOpeningAssistantText((value) => value + text);
+            },
           });
         }
       }
@@ -2031,6 +2041,7 @@ export default function Home() {
         }
       }
       setRectificationInitialTurn(turn);
+      setRectificationOpeningAssistantText("");
       synchronizeRectificationQuestion(turn, sourceSession);
       setComposerNotice(sessionSyncFailed ? "校正已经开始，但会话关联暂时未同步到云端。" : "");
     } catch (caught) {
@@ -2038,6 +2049,7 @@ export default function Home() {
         ? caught.message
         : "生时校正暂时无法继续，请稍后重试。";
       setRectificationError(message);
+      setRectificationOpeningAssistantText("");
       setComposerNotice(message);
       if (!reusingRectificationSession) {
         setSessions((current) => current.filter((session) => session.id !== rectificationSession.id));
@@ -3084,6 +3096,7 @@ export default function Home() {
           ) : (
             <ConversationalBirthTimeRectification
               initialTurn={visibleRectificationTurn}
+              openingAssistantText={rectificationOpeningAssistantText}
               pendingConsultationQuestion={rectificationPendingQuestion}
               continuationPending={rectificationContinuationPending}
               onPendingChange={setRectificationMutationPending}

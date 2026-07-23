@@ -16,6 +16,7 @@ import type {
 
 type SurfaceProps = Readonly<{
   controller: ConversationalRectificationController;
+  openingAssistantText?: string;
   pendingConsultationQuestion?: string | null;
   continuationPending?: boolean;
   onContinueOriginalQuestion?: (question: string) => void;
@@ -36,6 +37,7 @@ function candidateStatus(turn: ConversationalRectificationTurn): string {
 
 export function ConversationalRectificationSurface({
   controller,
+  openingAssistantText = "",
   pendingConsultationQuestion,
   continuationPending = false,
   onContinueOriginalQuestion,
@@ -58,7 +60,14 @@ export function ConversationalRectificationSurface({
   if (!turn) {
     return (
       <section className="conversational-rectification" aria-busy={controller.pending} aria-label="生时校正对话">
-        <p className="conversational-empty-state" aria-live="polite" role="status">正在建立校正记录…</p>
+        {openingAssistantText
+          ? <ChatMessageRow message={{
+              role: "assistant",
+              text: openingAssistantText,
+              renderKey: "rectification-opening-assistant",
+              state: "streaming",
+            }} />
+          : <p className="conversational-empty-state" aria-live="polite" role="status">正在建立校正记录…</p>}
         {controller.error && <p className="form-error" role="alert">{controller.error}</p>}
       </section>
     );
@@ -159,7 +168,14 @@ export function ConversationalRectificationSurface({
                 )}
         </details>
         {controller.pending && canAnswer && (
-          <ChatMessageRow message={{ role: "assistant", text: "", renderKey: "rectification-thinking", state: "thinking" }} />
+          controller.streamingAssistantText
+            ? <ChatMessageRow message={{
+                role: "assistant",
+                text: controller.streamingAssistantText,
+                renderKey: `assistant-${turn.turnVersion + 1}`,
+                state: "streaming",
+              }} />
+            : <ChatMessageRow message={{ role: "assistant", text: "", renderKey: "rectification-thinking", state: "thinking" }} />
         )}
         {turn.status === "paused" && <ChatMessageRow message={{ role: "assistant", text: "校正已暂停，输入与现有证据都已保留。", renderKey: "rectification-paused", state: "settled" }} />}
         {turn.status === "abandoned" && <ChatMessageRow message={{ role: "assistant", text: "本次校正已放弃，候选时间没有应用。", renderKey: "rectification-abandoned", state: "settled" }} />}
@@ -253,6 +269,7 @@ export function ConversationalRectificationSurface({
 
 type ConversationalBirthTimeRectificationProps = Readonly<{
   initialTurn?: ConversationalRectificationResponse | null;
+  openingAssistantText?: string;
   pendingConsultationQuestion?: string | null;
   continuationPending?: boolean;
   onTurn?: (turn: ConversationalRectificationResponse) => void;
@@ -274,6 +291,7 @@ export function ConversationalBirthTimeRectification(props: ConversationalBirthT
   return (
     <ConversationalRectificationSurface
       controller={controller}
+      openingAssistantText={props.openingAssistantText}
       pendingConsultationQuestion={props.pendingConsultationQuestion}
       continuationPending={props.continuationPending}
       onContinueOriginalQuestion={props.onContinueOriginalQuestion}

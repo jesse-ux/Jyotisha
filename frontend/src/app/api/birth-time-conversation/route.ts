@@ -3,6 +3,7 @@ import path from "node:path";
 import {
   conversationalRectificationCommandSchema,
   type ConversationalRectificationCommand,
+  type ConversationalRectificationResponse,
   type ConversationalRectificationTurn,
 } from "../../../lib/conversational-rectification/contracts.ts";
 import {
@@ -41,6 +42,53 @@ import {
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+const RECTIFICATION_STREAM_CONTENT_TYPE = "application/x-ndjson; charset=utf-8";
+const RECTIFICATION_STREAM_CHUNK_SIZE = 10;
+const RECTIFICATION_STREAM_CHUNK_DELAY_MS = 18;
+
+function rectificationNarrativeChunks(narrative: string): string[] {
+  const characters = Array.from(narrative);
+  const chunks: string[] = [];
+  for (let index = 0; index < characters.length; index += RECTIFICATION_STREAM_CHUNK_SIZE) {
+    chunks.push(characters.slice(index, index + RECTIFICATION_STREAM_CHUNK_SIZE).join(""));
+  }
+  return chunks;
+}
+
+export function streamConversationalRectificationResponse(
+  turn: ConversationalRectificationResponse,
+  chunkDelayMs = RECTIFICATION_STREAM_CHUNK_DELAY_MS,
+): Response {
+  const encoder = new TextEncoder();
+  let cancelled = false;
+  const body = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        for (const text of rectificationNarrativeChunks(turn.narrative)) {
+          if (cancelled) return;
+          controller.enqueue(encoder.encode(`${JSON.stringify({ type: "delta", text })}\n`));
+          if (chunkDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, chunkDelayMs));
+        }
+        if (cancelled) return;
+        controller.enqueue(encoder.encode(`${JSON.stringify({ type: "turn", turn })}\n`));
+        controller.close();
+      } catch (error) {
+        if (!cancelled) controller.error(error);
+      }
+    },
+    cancel() {
+      cancelled = true;
+    },
+  });
+  return new Response(body, {
+    headers: {
+      "Cache-Control": "no-cache, no-transform",
+      "Content-Type": RECTIFICATION_STREAM_CONTENT_TYPE,
+      "X-Accel-Buffering": "no",
+    },
+  });
+}
 
 const jyotishSkillPath = process.env.JYOTISH_SKILL_PATH?.trim()
   || path.resolve(process.cwd(), "..", "skills", "jyotish-vedic-astrology");
@@ -892,7 +940,9 @@ export function createBirthTimeConversationPostHandler(
         errorCategory: "none",
         deploymentSha,
       });
-      return Response.json(turn);
+      return request.headers.get("accept")?.includes("application/x-ndjson")
+        ? streamConversationalRectificationResponse(turn)
+        : Response.json(turn);
     } catch (error) {
       const publicError = toConversationalRectificationPublicError(error);
       const outcome = service ? conversationalRectificationTelemetryOutcome(service) : null;

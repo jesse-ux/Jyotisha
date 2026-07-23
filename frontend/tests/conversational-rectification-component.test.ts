@@ -169,6 +169,31 @@ test("an uninitialized surface shows progress without a second start card", () =
   assert.doesNotMatch(markup, /系统会先说明候选边界|开始生时校正<\/button>/);
 });
 
+test("the first Agent guidance streams into the empty rectification surface", () => {
+  const emptyController = controller({
+    turn: null,
+    pending: true,
+    getSnapshot: () => ({
+      turn: null,
+      draft: "",
+      selectedDomain: null,
+      correctionTarget: null,
+      pending: true,
+      error: "",
+    }),
+  });
+  const markup = renderToStaticMarkup(React.createElement(
+    ConversationalRectificationSurface,
+    {
+      controller: emptyController,
+      openingAssistantText: "先说一件已经发生、并且记得年月的重要经历。",
+    },
+  ));
+
+  assert.match(markup, /先说一件已经发生、并且记得年月的重要经历/);
+  assert.doesNotMatch(markup, /正在建立校正记录/);
+});
+
 test("evidence is correctable, secondary controls stay hidden, and confirmation is explicit", () => {
   const markup = renderToStaticMarkup(React.createElement(
     ConversationalRectificationSurface,
@@ -236,6 +261,13 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
     ConversationalRectificationSurface,
     { controller: pendingController },
   ));
+  const streamingMarkup = renderToStaticMarkup(React.createElement(
+    ConversationalRectificationSurface,
+    { controller: controller({
+      pending: true,
+      streamingAssistantText: "已记录关系事件，接下来核对开始时间。",
+    }) },
+  ));
   const css = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
   const component = readFileSync(
     new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url),
@@ -247,6 +279,8 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
   assert.match(markup, /Jyotisha 正在核对经历/);
   assert.match(markup, /正在核对这段经历/);
   assert.match(markup, /Jyotisha 正在分析/);
+  assert.match(streamingMarkup, /已记录关系事件，接下来核对开始时间/);
+  assert.doesNotMatch(streamingMarkup, /Jyotisha 正在分析/);
   assert.match(markup, /<textarea[^>]+disabled=""[^>]*>保留中的文字<\/textarea>/);
   assert.match(markup, /aria-label="生时校正对话"/);
   assert.match(markup, /role="alert"|aria-live="polite"/);

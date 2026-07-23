@@ -116,8 +116,10 @@ test("homepage birth-time card opens its dedicated session before the first turn
   assert.match(handler, /rectificationOpenInFlight\.current/);
   assert.match(handler, /rectificationOpenInFlight\.current = true;[\s\S]*?finally \{[\s\S]*?rectificationOpenInFlight\.current = false;/);
   assert.match(handler, /setRectificationReturnSessionId\(sourceSession\.id\)/);
+  assert.match(handler, /type: "start",[\s\S]*?onNarrativeDelta\(text\)[\s\S]*?setRectificationOpeningAssistantText/);
+  assert.match(handler, /type: "resume",[\s\S]*?onNarrativeDelta\(text\)[\s\S]*?setRectificationOpeningAssistantText/);
   assert.match(source, /const rectificationSurfaceOpen = activeRectificationSession\s*&& activeSession\.id === rectificationSessionId/);
-  assert.match(source, /rectificationSurfaceOpen && \(!visibleRectificationTurn && rectificationError \? \([\s\S]*?<ConversationalBirthTimeRectification[\s\S]*?initialTurn=\{visibleRectificationTurn\}/);
+  assert.match(source, /rectificationSurfaceOpen && \(!visibleRectificationTurn && rectificationError \? \([\s\S]*?<ConversationalBirthTimeRectification[\s\S]*?initialTurn=\{visibleRectificationTurn\}[\s\S]*?openingAssistantText=\{rectificationOpeningAssistantText\}/);
 });
 
 test("rectification cards render only inside the active rectification session", () => {

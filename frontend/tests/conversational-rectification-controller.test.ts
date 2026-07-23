@@ -139,6 +139,37 @@ test("controller admits only one in-flight mutation and clears text only after s
   assert.deepEqual(pendingChanges, [true, false]);
 });
 
+test("controller publishes streamed Agent text while the durable rectification turn is pending", async () => {
+  const request = deferred<ConversationalRectificationResponse>();
+  let emit: ((text: string) => void) | undefined;
+  const controller = createConversationalRectificationController({
+    initialTurn: activeTurn(),
+    createActionId: idFactory(),
+    send: async (_command, options) => {
+      emit = options?.onNarrativeDelta;
+      return request.promise;
+    },
+  });
+  controller.setDraft("2024 年 8 月结束一段重要感情");
+
+  const answer = controller.answer("relationship");
+  emit?.("已记录关系事件，");
+  emit?.("接下来核对开始时间。");
+
+  assert.equal(controller.getSnapshot().pending, true);
+  assert.equal(controller.getSnapshot().streamingAssistantText, "已记录关系事件，接下来核对开始时间。");
+
+  request.resolve({
+    ...activeTurn(3),
+    narrative: "已记录关系事件，接下来核对开始时间。",
+  });
+  await answer;
+
+  assert.equal(controller.getSnapshot().pending, false);
+  assert.equal(controller.getSnapshot().streamingAssistantText, "");
+  assert.equal(controller.getSnapshot().messages?.at(-1)?.text, "已记录关系事件，接下来核对开始时间。");
+});
+
 test("controller retains alternating user and Agent messages after each answer", async () => {
   const initial = activeTurn();
   const controller = createConversationalRectificationController({
@@ -476,6 +507,7 @@ test("a case switch detaches the old mutation so the new case can mutate indepen
     selectedDomain: null,
     correctionTarget: null,
     pending: false,
+    streamingAssistantText: "",
     error: "",
   });
 
@@ -521,6 +553,7 @@ test("synchronizing to no case detaches an ordinary failure without publishing i
     selectedDomain: null,
     correctionTarget: null,
     pending: false,
+    streamingAssistantText: "",
     error: "",
   });
 
@@ -533,6 +566,7 @@ test("synchronizing to no case detaches an ordinary failure without publishing i
     selectedDomain: null,
     correctionTarget: null,
     pending: false,
+    streamingAssistantText: "",
     error: "",
   });
 });

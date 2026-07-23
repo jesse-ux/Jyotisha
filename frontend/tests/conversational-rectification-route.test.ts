@@ -6,6 +6,7 @@ import {
   createBirthTimeConversationPostHandler,
   declaredBirthInputForLegacyCase,
   loadProductionConversationalRectificationProfile,
+  streamConversationalRectificationResponse,
   type BirthTimeConversationRouteService,
 } from "../src/app/api/birth-time-conversation/route.ts";
 import { ConversationalRectificationError } from "../src/lib/conversational-rectification/errors.ts";
@@ -20,6 +21,45 @@ const userId = "00000000-0000-4000-8000-000000000711";
 const actionId = "00000000-0000-4000-8000-000000000712";
 const caseId = "00000000-0000-4000-8000-000000000713";
 const requestId = "00000000-0000-4000-8000-000000000714";
+
+test("validated rectification responses stream narrative deltas before the durable turn", async () => {
+  const narrative = "已记录具体经历，并继续追问关系事件。";
+  const turn = {
+    caseId,
+    journeyProtocol: "conversational-evidence-v3" as const,
+    status: "active" as const,
+    turnVersion: 2,
+    narrative,
+    candidate: {
+      status: "pending_validation" as const,
+      representativeTime: "05:30",
+      rangeStart: "04:30",
+      rangeEnd: "06:30",
+    },
+    technicalReceipt: {
+      calculationVersion: "rectification-technical-v1" as const,
+      stableLayers: ["D1"],
+      sensitiveLayers: ["D9"],
+      candidateDifferenceRefs: ["relationship"],
+    },
+    evidenceRequest: {
+      domains: ["relationship" as const],
+      datePrecision: "month_preferred" as const,
+      freeTextAllowed: true as const,
+    },
+    evidenceRecap: [],
+    actions: ["answer" as const],
+    pendingConsultationQuestion: null,
+  };
+
+  const response = streamConversationalRectificationResponse(turn, 0);
+  const lines = (await response.text()).trim().split("\n").map((line) => JSON.parse(line));
+
+  assert.match(response.headers.get("content-type") ?? "", /application\/x-ndjson/);
+  assert.equal(response.headers.get("x-accel-buffering"), "no");
+  assert.equal(lines.filter((event) => event.type === "delta").map((event) => event.text).join(""), narrative);
+  assert.deepEqual(lines.at(-1), { type: "turn", turn });
+});
 
 test("production narrator loads the Jyotish Skill without overriding packet truth", () => {
   const source = readFileSync(new URL("../src/app/api/birth-time-conversation/route.ts", import.meta.url), "utf8");
