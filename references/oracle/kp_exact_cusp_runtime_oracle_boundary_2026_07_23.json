@@ -1,0 +1,81 @@
+{
+  "boundary": "KP exact cusp/star/sub/sub-sub can be displayed from runtime raw as observation; it cannot be used as verified precise event timing until a public numeric worked example closes.",
+  "candidate_sources": [
+    {
+      "id": "archive_kp_reader_candidate",
+      "missing": [
+        "complete input",
+        "full 12-cusp star/sub/sub-sub table"
+      ],
+      "promotion": "queue_only",
+      "source": "references/oracle/kp_archive_numeric_extraction_result_2026_07_21.json"
+    },
+    {
+      "id": "astrosage_kp_cuspal_sub_lord",
+      "missing": [
+        "fixed public input",
+        "published expected 12-cusp output table",
+        "raw hash"
+      ],
+      "promotion": "queue_only",
+      "source": "https://www.astrosage.com/kp/cuspal-sub-lord.asp"
+    },
+    {
+      "id": "vedicastro_python_surface",
+      "missing": [
+        "independent expected values"
+      ],
+      "promotion": "queue_only",
+      "source": "references/open_source_sources/VedicAstro/vedicastro/VedicAstro.py"
+    }
+  ],
+  "claim_status": "calculable_displayable_public_oracle_blocked",
+  "complete_numeric_oracle_count": 0,
+  "created_at": "2026-07-23",
+  "packet_hash": "bf212b1037de58feeaf4c819e78c40b617802381ae758242122fca813a20530e",
+  "production_tuning_allowed": false,
+  "public_numeric_oracle_status": "blocked_missing_complete_worked_example",
+  "required_oracle_fields": [
+    "birth_or_question_input",
+    "ayanamsa",
+    "house_system_or_kp_cusp_method",
+    "exact_cusp_longitudes",
+    "cusp_star_lord",
+    "cusp_sub_lord",
+    "cusp_sub_sub_lord"
+  ],
+  "runtime_raw": {
+    "artifact": "references/oracle/vedicastro_kp_house_cusp_probe_steve_jobs_2026_07_23.json",
+    "artifact_sha256": "468e6aa26ff5ebde8185db3badeaa7b087beca0c81f01ca71c68ce5b6073df8c",
+    "claim_status": "observation_only",
+    "engine": "VedicAstro",
+    "fields": [
+      "cusp_longitude",
+      "star_lord",
+      "sub_lord",
+      "sub_sub_lord"
+    ],
+    "house_count": 12,
+    "raw_hash": "4f0a694b7cd498664785a2f2ab8ea4dc36037e905ac4ba019eae3268c5973d43",
+    "schema_fingerprint": {
+      "fields": [
+        "Object",
+        "HouseNr",
+        "Rasi",
+        "LonDecDeg",
+        "SignLonDMS",
+        "SignLonDecDeg",
+        "DegSize",
+        "Nakshatra",
+        "RasiLord",
+        "NakshatraLord",
+        "SubLord",
+        "SubSubLord"
+      ],
+      "house_count": 12
+    }
+  },
+  "runtime_raw_status": "single_engine_observation_ready",
+  "scope": "kp_exact_cusp_runtime_oracle_boundary",
+  "truth_matrix_allowed": false
+}

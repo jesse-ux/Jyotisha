@@ -1,0 +1,408 @@
+{
+  "scope": "kp_ezine159_full_cusp_label_comparison",
+  "status": "public_kp_eleven_cusp_lord_rows_match_observation",
+  "claim_status": "observation_only",
+  "consumer_policy": "research_observation_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "public_source": {
+    "url": "https://www.scribd.com/document/462272035/KP-Ezine-159-April-2020",
+    "source_boundary": "Publicly visible table rows were transcribed only for available cusp lord labels; this packet does not establish a complete numeric KP oracle."
+  },
+  "summary": {
+    "transcribed_cusp_count": 11,
+    "matched_field_count": 55,
+    "mismatched_field_count": 0,
+    "untranscribed_cusps": [
+      12
+    ]
+  },
+  "comparisons": [
+    {
+      "house": 1,
+      "field": "RasiLord",
+      "public_value": "Saturn",
+      "vedicastro_value": "Saturn",
+      "matches": true
+    },
+    {
+      "house": 1,
+      "field": "Nakshatra",
+      "public_value": "Dhanishta",
+      "vedicastro_value": "Dhanishta",
+      "matches": true
+    },
+    {
+      "house": 1,
+      "field": "NakshatraLord",
+      "public_value": "Mars",
+      "vedicastro_value": "Mars",
+      "matches": true
+    },
+    {
+      "house": 1,
+      "field": "SubLord",
+      "public_value": "Venus",
+      "vedicastro_value": "Venus",
+      "matches": true
+    },
+    {
+      "house": 1,
+      "field": "SubSubLord",
+      "public_value": "Ketu",
+      "vedicastro_value": "Ketu",
+      "matches": true
+    },
+    {
+      "house": 2,
+      "field": "RasiLord",
+      "public_value": "Jupiter",
+      "vedicastro_value": "Jupiter",
+      "matches": true
+    },
+    {
+      "house": 2,
+      "field": "Nakshatra",
+      "public_value": "Revati",
+      "vedicastro_value": "Revati",
+      "matches": true
+    },
+    {
+      "house": 2,
+      "field": "NakshatraLord",
+      "public_value": "Mercury",
+      "vedicastro_value": "Mercury",
+      "matches": true
+    },
+    {
+      "house": 2,
+      "field": "SubLord",
+      "public_value": "Mercury",
+      "vedicastro_value": "Mercury",
+      "matches": true
+    },
+    {
+      "house": 2,
+      "field": "SubSubLord",
+      "public_value": "Ketu",
+      "vedicastro_value": "Ketu",
+      "matches": true
+    },
+    {
+      "house": 3,
+      "field": "RasiLord",
+      "public_value": "Mars",
+      "vedicastro_value": "Mars",
+      "matches": true
+    },
+    {
+      "house": 3,
+      "field": "Nakshatra",
+      "public_value": "Bharani",
+      "vedicastro_value": "Bharani",
+      "matches": true
+    },
+    {
+      "house": 3,
+      "field": "NakshatraLord",
+      "public_value": "Venus",
+      "vedicastro_value": "Venus",
+      "matches": true
+    },
+    {
+      "house": 3,
+      "field": "SubLord",
+      "public_value": "Jupiter",
+      "vedicastro_value": "Jupiter",
+      "matches": true
+    },
+    {
+      "house": 3,
+      "field": "SubSubLord",
+      "public_value": "Jupiter",
+      "vedicastro_value": "Jupiter",
+      "matches": true
+    },
+    {
+      "house": 4,
+      "field": "RasiLord",
+      "public_value": "Venus",
+      "vedicastro_value": "Venus",
+      "matches": true
+    },
+    {
+      "house": 4,
+      "field": "Nakshatra",
+      "public_value": "Rohini",
+      "vedicastro_value": "Rohini",
+      "matches": true
+    },
+    {
+      "house": 4,
+      "field": "NakshatraLord",
+      "public_value": "Moon",
+      "vedicastro_value": "Moon",
+      "matches": true
+    },
+    {
+      "house": 4,
+      "field": "SubLord",
+      "public_value": "Saturn",
+      "vedicastro_value": "Saturn",
+      "matches": true
+    },
+    {
+      "house": 4,
+      "field": "SubSubLord",
+      "public_value": "Mercury",
+      "vedicastro_value": "Mercury",
+      "matches": true
+    },
+    {
+      "house": 5,
+      "field": "RasiLord",
+      "public_value": "Mercury",
+      "vedicastro_value": "Mercury",
+      "matches": true
+    },
+    {
+      "house": 5,
+      "field": "Nakshatra",
+      "public_value": "Ardra",
+      "vedicastro_value": "Ardra",
+      "matches": true
+    },
+    {
+      "house": 5,
+      "field": "NakshatraLord",
+      "public_value": "Rahu",
+      "vedicastro_value": "Rahu",
+      "matches": true
+    },
+    {
+      "house": 5,
+      "field": "SubLord",
+      "public_value": "Jupiter",
+      "vedicastro_value": "Jupiter",
+      "matches": true
+    },
+    {
+      "house": 5,
+      "field": "SubSubLord",
+      "public_value": "Saturn",
+      "vedicastro_value": "Saturn",
+      "matches": true
+    },
+    {
+      "house": 6,
+      "field": "RasiLord",
+      "public_value": "Moon",
+      "vedicastro_value": "Moon",
+      "matches": true
+    },
+    {
+      "house": 6,
+      "field": "Nakshatra",
+      "public_value": "Pushya",
+      "vedicastro_value": "Pushya",
+      "matches": true
+    },
+    {
+      "house": 6,
+      "field": "NakshatraLord",
+      "public_value": "Saturn",
+      "vedicastro_value": "Saturn",
+      "matches": true
+    },
+    {
+      "house": 6,
+      "field": "SubLord",
+      "public_value": "Saturn",
+      "vedicastro_value": "Saturn",
+      "matches": true
+    },
+    {
+      "house": 6,
+      "field": "SubSubLord",
+      "public_value": "Saturn",
+      "vedicastro_value": "Saturn",
+      "matches": true
+    },
+    {
+      "house": 7,
+      "field": "RasiLord",
+      "public_value": "Sun",
+      "vedicastro_value": "Sun",
+      "matches": true
+    },
+    {
+      "house": 7,
+      "field": "Nakshatra",
+      "public_value": "Maghā",
+      "vedicastro_value": "Maghā",
+      "matches": true
+    },
+    {
+      "house": 7,
+      "field": "NakshatraLord",
+      "public_value": "Ketu",
+      "vedicastro_value": "Ketu",
+      "matches": true
+    },
+    {
+      "house": 7,
+      "field": "SubLord",
+      "public_value": "Mars",
+      "vedicastro_value": "Mars",
+      "matches": true
+    },
+    {
+      "house": 7,
+      "field": "SubSubLord",
+      "public_value": "Rahu",
+      "vedicastro_value": "Rahu",
+      "matches": true
+    },
+    {
+      "house": 8,
+      "field": "RasiLord",
+      "public_value": "Mercury",
+      "vedicastro_value": "Mercury",
+      "matches": true
+    },
+    {
+      "house": 8,
+      "field": "Nakshatra",
+      "public_value": "Hasta",
+      "vedicastro_value": "Hasta",
+      "matches": true
+    },
+    {
+      "house": 8,
+      "field": "NakshatraLord",
+      "public_value": "Moon",
+      "vedicastro_value": "Moon",
+      "matches": true
+    },
+    {
+      "house": 8,
+      "field": "SubLord",
+      "public_value": "Saturn",
+      "vedicastro_value": "Saturn",
+      "matches": true
+    },
+    {
+      "house": 8,
+      "field": "SubSubLord",
+      "public_value": "Moon",
+      "vedicastro_value": "Moon",
+      "matches": true
+    },
+    {
+      "house": 9,
+      "field": "RasiLord",
+      "public_value": "Venus",
+      "vedicastro_value": "Venus",
+      "matches": true
+    },
+    {
+      "house": 9,
+      "field": "Nakshatra",
+      "public_value": "Vishakha",
+      "vedicastro_value": "Vishakha",
+      "matches": true
+    },
+    {
+      "house": 9,
+      "field": "NakshatraLord",
+      "public_value": "Jupiter",
+      "vedicastro_value": "Jupiter",
+      "matches": true
+    },
+    {
+      "house": 9,
+      "field": "SubLord",
+      "public_value": "Jupiter",
+      "vedicastro_value": "Jupiter",
+      "matches": true
+    },
+    {
+      "house": 9,
+      "field": "SubSubLord",
+      "public_value": "Jupiter",
+      "vedicastro_value": "Jupiter",
+      "matches": true
+    },
+    {
+      "house": 10,
+      "field": "RasiLord",
+      "public_value": "Mars",
+      "vedicastro_value": "Mars",
+      "matches": true
+    },
+    {
+      "house": 10,
+      "field": "Nakshatra",
+      "public_value": "Anuradha",
+      "vedicastro_value": "Anuradha",
+      "matches": true
+    },
+    {
+      "house": 10,
+      "field": "NakshatraLord",
+      "public_value": "Saturn",
+      "vedicastro_value": "Saturn",
+      "matches": true
+    },
+    {
+      "house": 10,
+      "field": "SubLord",
+      "public_value": "Jupiter",
+      "vedicastro_value": "Jupiter",
+      "matches": true
+    },
+    {
+      "house": 10,
+      "field": "SubSubLord",
+      "public_value": "Sun",
+      "vedicastro_value": "Sun",
+      "matches": true
+    },
+    {
+      "house": 11,
+      "field": "RasiLord",
+      "public_value": "Jupiter",
+      "vedicastro_value": "Jupiter",
+      "matches": true
+    },
+    {
+      "house": 11,
+      "field": "Nakshatra",
+      "public_value": "Mula",
+      "vedicastro_value": "Mula",
+      "matches": true
+    },
+    {
+      "house": 11,
+      "field": "NakshatraLord",
+      "public_value": "Ketu",
+      "vedicastro_value": "Ketu",
+      "matches": true
+    },
+    {
+      "house": 11,
+      "field": "SubLord",
+      "public_value": "Jupiter",
+      "vedicastro_value": "Jupiter",
+      "matches": true
+    },
+    {
+      "house": 11,
+      "field": "SubSubLord",
+      "public_value": "Rahu",
+      "vedicastro_value": "Rahu",
+      "matches": true
+    }
+  ],
+  "claim_boundary": "Eleven public cusp label rows agree with one isolated VedicAstro replay. Exact longitudes, the twelfth cusp row, software identity, full KP event significator workflow, and timing outcome validation remain blocked."
+}

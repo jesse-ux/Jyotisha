@@ -1,0 +1,106 @@
+{
+  "boundary": "A source-rule attribution explains the disagreement but does not select a D2 tradition. Do not tune wealth interpretation or select an engine by majority vote.",
+  "candidate_explanation": "Source-rule attribution is complete; external worked-example truth arbitration is still open.",
+  "claim_status": "observation_only",
+  "external_method_references": [
+    {
+      "does_not_support": "Same-input numeric oracle for this public case.",
+      "supports": "Odd/even sign parity maps D2 halves to Leo/Cancer.",
+      "tier": "secondary_calculator_documentation",
+      "url": "https://www.cosmicsquares.com/free-horoscope/hora-chart"
+    },
+    {
+      "does_not_support": "Software implementation identity or a reproducible worked-case replay.",
+      "supports": "Each sign is bisected into 15-degree Sun/Moon Hora halves with Leo/Cancer mapping.",
+      "tier": "secondary_method_reference",
+      "url": "https://sarvpujavidhi.com/hora-chart-in-vedic-astrology/"
+    }
+  ],
+  "joint_disagreements": [
+    {
+      "field": "Jupiter",
+      "jyotishyamitra_value": "Virgo",
+      "local_status": "mismatch",
+      "local_value": "Cancer",
+      "section": "D2",
+      "xalen_status": "mismatch",
+      "xalen_value": "Cancer"
+    },
+    {
+      "field": "Mars",
+      "jyotishyamitra_value": "Aries",
+      "local_status": "mismatch",
+      "local_value": "Leo",
+      "section": "D2",
+      "xalen_status": "mismatch",
+      "xalen_value": "Leo"
+    },
+    {
+      "field": "Mercury",
+      "jyotishyamitra_value": "Scorpio",
+      "local_status": "mismatch",
+      "local_value": "Leo",
+      "section": "D2",
+      "xalen_status": "mismatch",
+      "xalen_value": "Leo"
+    },
+    {
+      "field": "Moon",
+      "jyotishyamitra_value": "Aquarius",
+      "local_status": "mismatch",
+      "local_value": "Cancer",
+      "section": "D2",
+      "xalen_status": "mismatch",
+      "xalen_value": "Cancer"
+    },
+    {
+      "field": "Saturn",
+      "jyotishyamitra_value": "Taurus",
+      "local_status": "mismatch",
+      "local_value": "Cancer",
+      "section": "D2",
+      "xalen_status": "mismatch",
+      "xalen_value": "Cancer"
+    },
+    {
+      "field": "Sun",
+      "jyotishyamitra_value": "Sagittarius",
+      "local_status": "mismatch",
+      "local_value": "Leo",
+      "section": "D2",
+      "xalen_status": "mismatch",
+      "xalen_value": "Leo"
+    },
+    {
+      "field": "Venus",
+      "jyotishyamitra_value": "Virgo",
+      "local_status": "mismatch",
+      "local_value": "Cancer",
+      "section": "D2",
+      "xalen_status": "mismatch",
+      "xalen_value": "Cancer"
+    }
+  ],
+  "production_tuning_allowed": false,
+  "required_before_resolution": [
+    "public numeric D2 worked example with input/settings",
+    "same-input replay against at least two independent engines"
+  ],
+  "scope": "jyotishyamitra_d2_mismatch_attribution",
+  "source_packet": "jyotishyamitra_pinned_adapter_probe",
+  "source_raw_sha256": "d8158d2fb2cf614d05c9b8c33518499b6de9a0b2bf1f4c5e299c48ceda2573ef",
+  "source_rule_attribution": {
+    "engine": "jyotishyamitra 1.4.0",
+    "local_contrast": "Local and Xalen use the Parashara Leo/Cancer Hora mapping by sign parity and half-sign.",
+    "rule_summary": "Assign D2 sign from successive 15-degree chunks across absolute zodiac longitude.",
+    "source_member": "support/mod_divisional.py::hora_from_long"
+  },
+  "source_wheel_sha256": "4f1a16facfa86ef01cb44de505c6de2e66b2f8d2c8b5e125c090e3f8485c6a9d",
+  "status": "d2_source_rule_attributed_external_truth_open",
+  "summary": {
+    "d2_row_count": 9,
+    "joint_disagreement_count": 7,
+    "non_d2_local_disagreement_count": 0
+  },
+  "truth_matrix_allowed": false
+}

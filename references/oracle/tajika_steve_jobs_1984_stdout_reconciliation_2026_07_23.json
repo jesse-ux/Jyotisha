@@ -1,0 +1,232 @@
+{
+  "scope": "tajika_stdout_template_reconciliation",
+  "status": "external_artifact_template_consistent_observation",
+  "claim_status": "observation_only",
+  "consumer_policy": "research_observation_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "raw_artifact": {
+    "path": "references/oracle/artifacts/pyjhora_steve_jobs_varshaphala_1984_lahiri_stdout_20260627.txt",
+    "sha256": "9cdfca16f756ad8fbd297032c49e5744639804cf473ece8fc7f71b2039d964b9",
+    "extraction_prefix": "TAJIKA_ANNUAL_VALUES_JSON"
+  },
+  "evidence_packet": {
+    "path": "references/oracle/artifacts/pending_packets/external_template_steve_jobs_varshaphala_1984_lahiri.json",
+    "capture_id": "external_template_steve_jobs_varshaphala_1984_lahiri",
+    "status": "external_verified"
+  },
+  "field_comparisons": [
+    {
+      "field": "solar_return_datetime",
+      "raw_value": "1984-02-25T05:41:37-08:00",
+      "packet_value": "1984-02-25T05:41:37-08:00",
+      "matches": true
+    },
+    {
+      "field": "varsha_lagna_deg",
+      "raw_value": 287.4007,
+      "packet_value": 287.4007,
+      "matches": true
+    },
+    {
+      "field": "muntha_sign",
+      "raw_value": "Cancer",
+      "packet_value": "Cancer",
+      "matches": true
+    },
+    {
+      "field": "year_lord",
+      "raw_value": "Mars",
+      "packet_value": "Mars",
+      "matches": true
+    },
+    {
+      "field": "mudda_dasha_first_lord",
+      "raw_value": "Sun",
+      "packet_value": "Sun",
+      "matches": true
+    },
+    {
+      "field": "sahams.punya_saham",
+      "raw_value": 249.1148,
+      "packet_value": 249.1148,
+      "matches": true
+    },
+    {
+      "field": "sahams.rajya_saham",
+      "raw_value": 207.6343,
+      "packet_value": 207.6343,
+      "matches": true
+    },
+    {
+      "field": "sahams.vivah_saham",
+      "raw_value": 8.8762,
+      "packet_value": 8.8762,
+      "matches": true
+    },
+    {
+      "field": "tajika_yogas",
+      "raw_value": {
+        "eesarpha": [
+          [
+            0,
+            5
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        "gairi_kamboola": null,
+        "ithasala": [
+          [
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            4,
+            2
+          ],
+          [
+            1,
+            4,
+            3
+          ]
+        ],
+        "kamboola": [
+          true,
+          [
+            [
+              1,
+              4
+            ]
+          ],
+          [
+            [
+              0,
+              4
+            ],
+            [
+              1,
+              4
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              4
+            ]
+          ]
+        ],
+        "khallasara": null,
+        "manahoo": [
+          [
+            0,
+            4,
+            10
+          ]
+        ],
+        "nakta": [],
+        "yamaya": []
+      },
+      "packet_value": {
+        "eesarpha": [
+          [
+            0,
+            5
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            2,
+            6
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        "gairi_kamboola": null,
+        "ithasala": [
+          [
+            0,
+            1,
+            1
+          ],
+          [
+            0,
+            4,
+            2
+          ],
+          [
+            1,
+            4,
+            3
+          ]
+        ],
+        "kamboola": [
+          true,
+          [
+            [
+              1,
+              4
+            ]
+          ],
+          [
+            [
+              0,
+              4
+            ],
+            [
+              1,
+              4
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              0,
+              4
+            ]
+          ]
+        ],
+        "khallasara": null,
+        "manahoo": [
+          [
+            0,
+            4,
+            10
+          ]
+        ],
+        "nakta": [],
+        "yamaya": []
+      },
+      "matches": true
+    }
+  ],
+  "summary": {
+    "field_count": 9,
+    "matched_field_count": 9,
+    "mismatched_field_count": 0
+  },
+  "claim_boundary": "A matching archive proves only that the packet's selected fields are reproducible from its own stored PyJHora stdout. It does not establish independent software parity, a public worked example, traditional formula authority, annual judgment quality, timing accuracy, or production tuning permission.",
+  "remaining_requirements": [
+    "At least one independently citable public Varshaphala/Tajika worked example with settings and numeric fields.",
+    "Independent-engine replay with documented solar-return and timezone/DST conventions."
+  ]
+}

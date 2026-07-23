@@ -1,0 +1,76 @@
+{
+  "scope": "public_secondary_d2_formula_examples",
+  "generated_on": "2026-07-23",
+  "status": "secondary_formula_examples_support_local_parashara_mapping",
+  "claim_status": "observation_only",
+  "consumer_policy": "research_observation_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "source": {
+    "publisher": "AstroAvastha",
+    "url": "https://astroavastha.com/blog/hora-d2-chart/",
+    "tier": "secondary_method_reference",
+    "supports": "Published arithmetic examples for the odd/even-sign Leo/Cancer D2 mapping.",
+    "does_not_support": "Canonical-school selection, software identity, same-input oracle parity, wealth outcomes, or timing."
+  },
+  "variants": {
+    "local_parashara": "Odd signs: 0-<15 Leo, 15-<30 Cancer; even signs invert that order.",
+    "jyotishyamitra_sequential": "Sequential 15-degree chunks across absolute zodiac, observed in support/mod_divisional.py::hora_from_long."
+  },
+  "examples": [
+    {
+      "planet": "Jupiter",
+      "sign": "Aries",
+      "degree": 12.0,
+      "expected_sign": "Leo",
+      "local_parashara_result": "Leo",
+      "local_engine_source": "scripts.divisional_charts_extended.DivisionalChartsCalculator._calculate_d2",
+      "jyotishyamitra_sequential_result": "Aries",
+      "local_parashara_matches": true,
+      "jyotishyamitra_sequential_matches": false
+    },
+    {
+      "planet": "Venus",
+      "sign": "Taurus",
+      "degree": 22.5,
+      "expected_sign": "Leo",
+      "local_parashara_result": "Leo",
+      "local_engine_source": "scripts.divisional_charts_extended.DivisionalChartsCalculator._calculate_d2",
+      "jyotishyamitra_sequential_result": "Cancer",
+      "local_parashara_matches": true,
+      "jyotishyamitra_sequential_matches": false
+    },
+    {
+      "planet": "Mars",
+      "sign": "Scorpio",
+      "degree": 8.25,
+      "expected_sign": "Cancer",
+      "local_parashara_result": "Cancer",
+      "local_engine_source": "scripts.divisional_charts_extended.DivisionalChartsCalculator._calculate_d2",
+      "jyotishyamitra_sequential_result": "Gemini",
+      "local_parashara_matches": true,
+      "jyotishyamitra_sequential_matches": false
+    },
+    {
+      "planet": "Mercury",
+      "sign": "Gemini",
+      "degree": 17.75,
+      "expected_sign": "Cancer",
+      "local_parashara_result": "Cancer",
+      "local_engine_source": "scripts.divisional_charts_extended.DivisionalChartsCalculator._calculate_d2",
+      "jyotishyamitra_sequential_result": "Virgo",
+      "local_parashara_matches": true,
+      "jyotishyamitra_sequential_matches": false
+    }
+  ],
+  "summary": {
+    "example_count": 4,
+    "local_parashara_match_count": 4,
+    "jyotishyamitra_sequential_match_count": 0
+  },
+  "claim_boundary": "These publisher-stated arithmetic examples support the project's declared Parashara-style D2 mapping over the observed sequential alternative for this limited example set. They do not create an external software oracle, settle all Hora traditions, validate a birth chart, or support wealth/timing claims.",
+  "remaining_requirements": [
+    "A same-input, independently reproducible D2 software replay with documented settings.",
+    "A primary or scholarly source that identifies the intended Hora tradition and boundary convention."
+  ]
+}

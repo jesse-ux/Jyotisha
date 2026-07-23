@@ -1,0 +1,19 @@
+{
+  "name": "Steve Jobs",
+  "gender": "male",
+  "place": "San Francisco, CA",
+  "longitude": -122.4194,
+  "latitude": 37.7749,
+  "timezone": -8.0,
+  "birth": {
+    "year": 1955,
+    "month": 2,
+    "day": 24,
+    "hour": 19,
+    "minute": 15,
+    "second": 0
+  },
+  "ayanamsa": "package_default",
+  "node_mode": "package_default",
+  "privacy": "public_benchmark_only"
+}
