@@ -25,8 +25,10 @@ test("production narrator loads the Jyotish Skill without overriding packet trut
   const source = readFileSync(new URL("../src/app/api/birth-time-conversation/route.ts", import.meta.url), "utf8");
 
   assert.match(source, /skills:\s*\[jyotishSkillPath\]/);
-  assert.match(source, /Use the Jyotish Skill only to choose a natural, one-question-at-a-time evidence strategy and wording/);
+  assert.match(source, /Load the Jyotish Skill to choose a natural, one-question-at-a-time evidence strategy/);
+  assert.match(source, /explain the supplied expert workflow/);
   assert.match(source, /supplied packet facts as the exclusive source/);
+  assert.match(source, /blocked or not_evaluated technique must never be described as used/);
   assert.match(source, /Never invent, recalculate, or confirm candidate data/);
 });
 
@@ -652,6 +654,11 @@ test("production packet waits for three supported events and then scores the acc
 
   assert.equal(scoreCalls.length, 1);
   assert.deepEqual(scoreCalls[0]?.map((event) => event.id), evidence.map((item) => item.id));
+  assert.deepEqual(
+    scoreCalls[0]?.map((event) => event.summary),
+    evidence.map((item) => item.eventSummary),
+    "event scoring must retain the concrete user-reported fact, not only domain and date",
+  );
   assert.deepEqual(
     differenceCalls.map((input) => input.events.map((event) => event.id)),
     [evidence.slice(0, 1), evidence.slice(0, 2), evidence].map((items) => items.map((item) => item.id)),

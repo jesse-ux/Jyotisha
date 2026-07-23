@@ -6944,8 +6944,11 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         allowed_domains = {'education', 'relocation', 'relationship', 'career', 'finance', 'health_pressure'}
         formats = {'year': '%Y', 'month': '%Y-%m', 'day': '%Y-%m-%d'}
         for raw_event in events:
-            if not isinstance(raw_event, dict) or set(raw_event) != {'id', 'domain', 'date', 'precision'}:
-                raise BadRequest('each event must contain only id, domain, date, and precision')
+            if not isinstance(raw_event, dict) or set(raw_event) not in (
+                {'id', 'domain', 'date', 'precision'},
+                {'id', 'domain', 'date', 'precision', 'summary'},
+            ):
+                raise BadRequest('each event must contain id, domain, date, precision, and optional summary')
             try:
                 uuid.UUID(str(raw_event['id']))
             except (ValueError, TypeError, AttributeError) as exc:
@@ -6957,6 +6960,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 raise BadRequest('event domain is unsupported')
             if precision not in formats or not isinstance(event_date, str):
                 raise BadRequest('event precision is unsupported')
+            summary = raw_event.get('summary', '')
+            if not isinstance(summary, str) or len(summary.strip()) > 1000:
+                raise BadRequest('event summary must be text up to 1000 characters')
             try:
                 parsed_event_date = datetime.strptime(event_date, formats[precision])
             except ValueError as exc:
@@ -6968,6 +6974,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 'domain': domain,
                 'date': event_date,
                 'precision': precision,
+                'summary': summary.strip(),
             })
         module = _load_local_module('active_rectification_events')
         result = module.score_life_events({

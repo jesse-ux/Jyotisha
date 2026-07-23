@@ -1,9 +1,8 @@
 "use client";
 
-import { ArrowUp } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { ChatMessageContent } from "./chat-message-content.tsx";
-import { AgentAvatar, ChatMessageRow } from "./chat-message-row.tsx";
+import { ArrowUp, Square } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChatMessageRow } from "./chat-message-row.tsx";
 import { Button } from "./ui/button.tsx";
 import { Textarea } from "./ui/textarea.tsx";
 import {
@@ -12,68 +11,14 @@ import {
 } from "../hooks/use-conversational-rectification.ts";
 import type { ConversationalRectificationTurn } from "../lib/conversational-rectification/contracts.ts";
 
-type EvidenceDomain = NonNullable<
-  ConversationalRectificationTurn["evidenceRequest"]
->["domains"][number];
-
-const domainLabels = {
-  career: "事业与身份",
-  education: "学业与学习",
-  finance: "收入与资产",
-  health_pressure: "健康与重大压力",
-  relocation: "搬迁与居住地",
-  relationship: "重要关系",
-  family: "家庭变化",
-  other: "其他关键经历",
-} as const satisfies Readonly<Record<EvidenceDomain, string>>;
-
-function nextEvidenceDomains(turn: ConversationalRectificationTurn): EvidenceDomain[] {
-  const provided = new Set(turn.evidenceRecap.flatMap((item) => item.domain ? [item.domain] : []));
-  return [...(turn.evidenceRequest?.domains ?? [])]
-    .sort((left, right) => Number(provided.has(left)) - Number(provided.has(right)))
-    .slice(0, 2);
-}
-
-function visibleTurnNarrative(turn: ConversationalRectificationTurn): string {
-  if (["paused", "abandoned", "completed"].includes(turn.status)) {
-    return turn.narrative;
-  }
-
-  const suggestedDomains = nextEvidenceDomains(turn).map((domain) => domainLabels[domain]);
-  if (turn.evidenceRecap.length === 0) {
-    const examples = suggestedDomains.length > 0
-      ? suggestedDomains.join("或")
-      : "工作、搬迁、关系或学业";
-    return `为了帮助校正出生时间，请先说一件${examples}方面已经发生的重要经历。最好带上年月，直接像聊天一样描述即可。`;
-  }
-
-  const latestEvidence = turn.evidenceRecap.at(-1)!;
-  if (turn.candidate.status === "ready_for_confirmation") {
-    return [
-      `${latestEvidence.isCorrection ? "已修订" : "已记录"}：${latestEvidence.dateLabel} · ${latestEvidence.summary}。`,
-      "目前已经形成一个待确认候选。你可以展开下方详情核对，也可以继续补充一件带年月的真实经历。",
-    ].join("\n\n");
-  }
-
-  const candidateRange = turn.candidate.rangeStart && turn.candidate.rangeEnd
-    ? `${turn.candidate.rangeStart}–${turn.candidate.rangeEnd}`
-    : turn.candidate.representativeTime ?? "当前候选范围";
-  const nextQuestion = suggestedDomains.length > 0
-    ? `接下来请说一件${suggestedDomains.join("或")}方面已经发生的事，尽量带上年月。`
-    : "接下来请再说一件已经发生的真实经历，尽量带上年月。";
-  return [
-    `${latestEvidence.isCorrection ? "已修订" : "已记录"}：${latestEvidence.dateLabel} · ${latestEvidence.summary}。`,
-    `候选范围现在是 ${candidateRange}。范围暂未变化不代表提交失败，我会结合后续经历继续比较相邻分钟。`,
-    nextQuestion,
-  ].join("\n\n");
-}
-
 type SurfaceProps = Readonly<{
   controller: ConversationalRectificationController;
   pendingConsultationQuestion?: string | null;
   continuationPending?: boolean;
   onContinueOriginalQuestion?: (question: string) => void;
 }>;
+
+const ANSWER_UNDO_WINDOW_MS = 2_500;
 
 function safely(request: Promise<unknown>) {
   void request.catch(() => undefined);
@@ -93,7 +38,16 @@ export function ConversationalRectificationSurface({
   onContinueOriginalQuestion,
 }: SurfaceProps) {
   const composer = useRef<HTMLTextAreaElement>(null);
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [submission, setSubmission] = useState<Readonly<{
+    text: string;
+    phase: "undo" | "generating";
+    turnVersion: number;
+  }> | null>(null);
   const turn = controller.turn;
+  useEffect(() => () => {
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+  }, []);
   const pendingQuestion = turn?.status === "completed"
     ? turn.pendingConsultationQuestion
     : turn?.pendingConsultationQuestion ?? pendingConsultationQuestion ?? null;
@@ -114,42 +68,59 @@ export function ConversationalRectificationSurface({
   const canContinue = turn.actions.includes("continue_original_question")
     && Boolean(pendingQuestion)
     && Boolean(onContinueOriginalQuestion);
-  const submit = async () => {
-    if (!canAnswer || !controller.draft.trim() || controller.pending) return;
-    try {
-      await controller.answer(undefined, controller.draft.trim());
-      composer.current?.focus();
-    } catch {
-      // The controller keeps the draft and owns the visible error.
-    }
+  const busy = controller.pending || submission !== null;
+  const submit = () => {
+    const text = controller.draft.trim();
+    if (!canAnswer || !text || busy) return;
+    controller.setDraft("");
+    setSubmission({ text, phase: "undo", turnVersion: turn.turnVersion });
+    undoTimer.current = setTimeout(async () => {
+      undoTimer.current = null;
+      setSubmission({ text, phase: "generating", turnVersion: turn.turnVersion });
+      try {
+        await controller.answer(undefined, text);
+      } catch {
+        controller.setDraft(text);
+      } finally {
+        setSubmission(null);
+        composer.current?.focus();
+      }
+    }, ANSWER_UNDO_WINDOW_MS);
+  };
+  const undoSubmission = () => {
+    if (submission?.phase !== "undo") return;
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    undoTimer.current = null;
+    controller.setDraft(submission.text);
+    setSubmission(null);
+    requestAnimationFrame(() => composer.current?.focus());
   };
 
   return (
-    <section className="rectification-chat" aria-busy={controller.pending} aria-label="生时校正对话">
+    <section className="rectification-chat" aria-busy={busy} aria-label="生时校正对话">
       <div className="message-list rectification-message-list">
-        <span className="sr-only" aria-live="polite">{controller.pending ? "Jyotisha 正在核对经历" : ""}</span>
-        {turn.evidenceRecap.map((entry) => (
+        <span className="sr-only" aria-live="polite">{submission?.phase === "undo" ? "消息已发送，可以撤回修改" : controller.pending ? "Jyotisha 正在核对经历" : ""}</span>
+        {(controller.messages ?? [{
+          role: "assistant" as const,
+          text: turn.narrative,
+          renderKey: `assistant-${turn.turnVersion}`,
+        }]).map((message) => (
           <ChatMessageRow
-            key={entry.id}
+            key={message.renderKey}
             message={{
-              role: "user",
-              text: `${entry.dateLabel} · ${entry.summary}${entry.isCorrection ? "（已修订）" : ""}`,
-              renderKey: entry.id,
+              role: message.role,
+              text: message.text,
+              renderKey: message.renderKey,
               state: "settled",
             }}
           />
         ))}
-        {controller.pending && controller.draft.trim() && (
+        {submission && turn.turnVersion === submission.turnVersion && (
           <ChatMessageRow
-            message={{ role: "user", text: controller.draft.trim(), renderKey: "pending-evidence", state: "settled" }}
+            message={{ role: "user", text: submission.text, renderKey: "pending-evidence", state: "settled" }}
           />
         )}
-        <article className="message message-assistant" aria-label="Jyotisha">
-          <AgentAvatar />
-          <div className="message-content">
-            <div className="message-bubble">
-              <ChatMessageContent text={visibleTurnNarrative(turn)} />
-              <details className="rectification-message-details">
+        <details className="rectification-message-details rectification-progress-details">
                 <summary>
                   {turn.candidate.representativeTime
                     ? `当前候选 ${turn.candidate.representativeTime} · ${candidateStatus(turn)}`
@@ -169,7 +140,7 @@ export function ConversationalRectificationSurface({
                         {canAnswer && (
                           <button
                             aria-label={`更正这条经历：${entry.summary}`}
-                            disabled={controller.pending}
+                            disabled={busy}
                             type="button"
                             onClick={() => {
                               controller.beginEvidenceCorrection(entry.id);
@@ -183,10 +154,7 @@ export function ConversationalRectificationSurface({
                     ))}
                   </ul>
                 )}
-              </details>
-            </div>
-          </div>
-        </article>
+        </details>
         {controller.pending && canAnswer && (
           <ChatMessageRow message={{ role: "assistant", text: "", renderKey: "rectification-thinking", state: "thinking" }} />
         )}
@@ -209,7 +177,7 @@ export function ConversationalRectificationSurface({
             {canConfirm && (
               <button
                 aria-label={`确认将 ${turn.candidate.representativeTime} 设为当前排盘时间；当前分钟尚未验证`}
-                disabled={controller.pending}
+                disabled={busy}
                 type="button"
                 onClick={() => safely(controller.confirm(turn.candidate.representativeTime ?? undefined))}
               >
@@ -218,7 +186,7 @@ export function ConversationalRectificationSurface({
             )}
             {canContinue && (
               <button
-                disabled={controller.pending || continuationPending}
+                disabled={busy || continuationPending}
                 type="button"
                 onClick={() => onContinueOriginalQuestion?.(pendingQuestion!)}
               >
@@ -231,12 +199,12 @@ export function ConversationalRectificationSurface({
           {controller.correctionTarget && (
             <div className="rectification-correction-target" role="status">
               <p>正在更正：{controller.correctionTarget.dateLabel} · {controller.correctionTarget.summary}</p>
-              <button disabled={controller.pending} type="button" onClick={() => controller.cancelEvidenceCorrection()}>
+              <button disabled={busy} type="button" onClick={() => controller.cancelEvidenceCorrection()}>
                 取消更正
               </button>
             </div>
           )}
-          <form className="composer" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
+          <form className="composer" onSubmit={(event) => { event.preventDefault(); submit(); }}>
           <label className="sr-only" htmlFor="conversational-rectification-answer">
             {controller.correctionTarget ? "输入更正后的经历" : "回答生时校正问题"}
           </label>
@@ -244,7 +212,7 @@ export function ConversationalRectificationSurface({
             id="conversational-rectification-answer"
             ref={composer}
             autoFocus
-            disabled={controller.pending}
+            disabled={busy}
             maxLength={4_000}
             placeholder={controller.correctionTarget
               ? "例如：更正为 2020 年 11 月离职"
@@ -259,12 +227,20 @@ export function ConversationalRectificationSurface({
               }
             }}
           />
-          <Button aria-label={controller.pending ? "正在核对" : "发送"} disabled={controller.pending || !controller.draft.trim()} size="icon" type="submit">
-            <ArrowUp aria-hidden="true" />
-          </Button>
+          {submission?.phase === "undo" ? (
+            <Button aria-label="撤回发送，本次不计入校正" title="撤回发送" size="icon" type="button" onClick={undoSubmission}>
+              <Square aria-hidden="true" />
+            </Button>
+          ) : (
+            <Button aria-label={busy ? "正在核对" : "发送"} disabled={busy || !controller.draft.trim()} size="icon" type="submit">
+              <ArrowUp aria-hidden="true" />
+            </Button>
+          )}
           </form>
           <div className="composer-footer">
-            <p>{controller.pending ? "正在核对这段经历…" : "Enter 发送 · Shift + Enter 换行"}</p>
+            <p>{submission?.phase === "undo"
+              ? "已发送，2.5 秒内可撤回修改，本次不会计入校正。"
+              : busy ? "正在核对这段经历…" : "Enter 发送 · Shift + Enter 换行"}</p>
           </div>
         </>}
       </div>}

@@ -24,6 +24,21 @@ test("preserves raw text and splits two clear facts sharing an explicit month", 
   assert.equal(new Set(evidence.map((item) => item.id)).size, 2);
 });
 
+test("merges same-date same-domain clauses into one scoreable life event", () => {
+  const rawText = "2017年7月入职第一家公司，并从事数据分析工作";
+  const evidence = extractLifeEventEvidence({
+    rawText,
+    sourceTurnId,
+    asOfDate: "2026-07-20",
+  });
+
+  assert.equal(evidence.length, 1);
+  assert.equal(evidence[0]?.domain, "career");
+  assert.equal(evidence[0]?.dateValue, "2017-07");
+  assert.equal(evidence[0]?.eventSummary, "入职第一家公司；从事数据分析工作");
+  assert.equal(evidence[0]?.scoreable, true);
+});
+
 test("removes the date-picker transport labels from the visible event summary", () => {
   const rawText = "发生时间：2016 年 6 月\n事件详情：大学毕业";
   const [evidence] = extractLifeEventEvidence({
@@ -120,6 +135,21 @@ test("classifies dated income and asset changes as finance evidence", () => {
   assert.equal(evidence?.scoreable, true);
   assert.equal(lifeEventEvidenceSchema.safeParse(evidence).success, true);
 });
+
+for (const rawText of [
+  "2020年8月开始承担管理职责",
+  "2020年8月职位发生明显变化",
+  "2020年8月开始任职部门负责人",
+]) {
+  test(`classifies dated role and management changes as career evidence: ${rawText}`, () => {
+    const [evidence] = extractLifeEventEvidence({ rawText, sourceTurnId, asOfDate: "2026-07-20" });
+
+    assert.equal(evidence?.domain, "career");
+    assert.equal(evidence?.dateValue, "2020-08");
+    assert.equal(evidence?.scoreable, true);
+    assert.equal(lifeEventEvidenceSchema.safeParse(evidence).success, true);
+  });
+}
 
 test("keeps a bare year as non-scoreable clarification instead of an event summary", () => {
   const rawText = "2021年";

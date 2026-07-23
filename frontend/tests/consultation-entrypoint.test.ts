@@ -192,13 +192,14 @@ test("rectify-first suggestions hand the source question to a dedicated rectific
   assert.match(source, /onClick=\{\(\) => chooseConversationSuggestion\(question\)\}/);
 });
 
-test("completed handoffs automatically return and continue the source question", () => {
+test("completed handoffs return only after the user clicks and target the source session", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 
-  assert.match(source, /turn\.status !== "completed"/);
-  assert.match(source, /turn\.actions\.includes\("continue_original_question"\)/);
-  assert.match(source, /automaticRectificationContinuation\.current === continuationIdentity/);
-  assert.match(source, /continueRectificationQuestion\.current\(question\)/);
+  assert.doesNotMatch(source, /automaticRectificationContinuation/);
+  assert.match(source, /const returnSession = \(localHandoff/);
+  assert.match(source, /session\.sessionType === "consultation"/);
+  assert.match(source, /onContinueOriginalQuestion=\{\(question\) => void continueRectificationOriginalQuestion\(question\)\}/);
+  assert.match(source, /sessionId: returnSession\.id/);
   assert.match(source, /setActiveSessionId\(context\.sessionId\)/);
   assert.match(source, /clearBirthTimeConsultationConsent\([\s\S]*?context\.sessionId/);
 });

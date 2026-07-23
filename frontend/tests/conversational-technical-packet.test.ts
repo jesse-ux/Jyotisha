@@ -175,6 +175,66 @@ test("builds a deterministic private packet from server-computed engine receipts
   }]);
 });
 
+test("projects the server technique receipt into a bounded expert workflow", () => {
+  const packet = buildRectificationTechnicalPacket({
+    scan,
+    candidateDifferences,
+    eventScore: {
+      ...eventScore,
+      techniqueReceipt: {
+        calculationStatus: "evaluated",
+        usedDivisionalCharts: ["D9", "D10"],
+        usedArudha: ["UL", "A7", "A10"],
+        dashaTracks: ["vimshottari_md_ad_pd", "narayana_md_ad"],
+        missingLayers: ["shadbala_kala_dig_chesta_total"],
+        auxiliaryLayers: ["functional_benefic_malefic", "ashtakavarga"],
+        hardBlockers: ["minute_holdout_not_ready"],
+        confirmationAllowed: false,
+        decision: "continue_rectification",
+        gates: {
+          public_holdout_release: {
+            status: "blocked",
+            reason: "frozen_public_AA_minute_holdout_is_below_20_cases",
+          },
+        },
+      },
+    },
+    consultation: {
+      source: "server_consultation_workflow",
+      calculationVersion: "rectification-technical-v1",
+      availableLayers: ["D1", "D9", "D10"],
+      layerReferences: {
+        D1: ["consult-d1-ascendant"],
+        D9: ["consult-d9-candidate-difference"],
+        D10: ["consult-d10-candidate-difference"],
+      },
+      timeLinkedScanSamples: [
+        { sampleIndex: 0, time: "05:10" },
+        { sampleIndex: 1, time: "05:16" },
+        { sampleIndex: 2, time: "05:17" },
+        { sampleIndex: 3, time: "05:30" },
+      ],
+      boundaryDistanceMinutes: 4,
+      futureWindows: [],
+    },
+  });
+
+  assert.equal(packet.expertWorkflow?.boundary, "not_auto_rectified");
+  assert.deepEqual(packet.expertWorkflow?.candidateWindows, [{
+    startTime: "05:16",
+    endTime: "05:24",
+    status: "pending_validation",
+  }]);
+  const audit = new Map(packet.expertWorkflow?.techniqueAuditTable.map((row) => [row.technique, row]));
+  assert.equal(audit.get("Vimshottari Dasha")?.status, "used");
+  assert.equal(audit.get("Narayana Dasha")?.status, "used");
+  assert.equal(audit.get("UL / A7 / A10")?.status, "used");
+  assert.equal(audit.get("Shadbala / Ashtakavarga")?.status, "partial");
+  assert.equal(audit.get("KP cusp / sub-lord")?.status, "blocked");
+  assert.equal(audit.get("Minute confirmation")?.status, "blocked");
+  assert.equal(packet.expertWorkflow?.confirmationAllowed, false);
+});
+
 test("chooses one strongest technical layer per domain from actual candidate switches", () => {
   const differenceDrivenScan = {
     ...scan,

@@ -492,7 +492,9 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
     type: "answer", caseId, actionId: "00000000-0000-4000-8000-000000009004",
     turnVersion: turn.turnVersion, domain: "career", answer: "后来工作压力很大",
   });
-  assert.match(turn.narrative, /还缺少.*明确时间/);
+  assert.match(turn.narrative, /工作压力很大/);
+  assert.match(turn.narrative, /什么年月/);
+  assert.doesNotMatch(turn.narrative, /请提供.*真实事件/);
   assert.equal(turn.evidenceRecap.at(-1)?.dateLabel, "日期待补充");
 
   const futureEvidenceAction = "00000000-0000-4000-8000-000000009050";

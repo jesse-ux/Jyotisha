@@ -342,7 +342,7 @@ test("save, pause, abandon, confirm, and import carry owner/version/action guard
   assert.deepEqual(calls.map(([name]) => name), [
     "save_conversational_rectification_turn",
     "pause_conversational_rectification_case",
-    "abandon_conversational_rectification_case",
+    "abandon_conversational_rectification_without_result",
     "confirm_conversational_rectification_candidate",
     "import_legacy_conversational_rectification_case",
   ]);

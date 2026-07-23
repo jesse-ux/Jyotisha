@@ -177,6 +177,45 @@ def test_real_local_scoring_uses_dated_events_and_actual_candidate_minutes() -> 
     assert len(result["stability_diagnostics"]["leave_one_event_out"]["runs"]) == 3
 
 
+def test_event_summary_is_fingerprinted_without_unlocking_minute_application() -> None:
+    base_request = {
+        "birth_date": "1993-04-17",
+        "start_time": "14:29",
+        "end_time": "14:30",
+        "lat": 36.683333,
+        "lon": 114.35,
+        "tz": 8.0,
+        "events": [{
+            "id": "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5",
+            "domain": "career",
+            "date": "2019-07",
+            "precision": "month",
+            "summary": "2019 年 7 月第一次承担团队管理职责",
+        }],
+    }
+    changed_request = {
+        **base_request,
+        "events": [{
+            **base_request["events"][0],
+            "summary": "2019 年 7 月离开原公司并开始独立创业",
+        }],
+    }
+
+    contract, input_hash = event_engine._canonical_input_contract(base_request)
+    _, changed_hash = event_engine._canonical_input_contract(changed_request)
+    result = event_engine.adjudicate_event_candidate_rows(
+        base_request,
+        [_row("14:29", 10), _row("14:30", 8)],
+    )
+
+    assert contract["schema_version"] == "rectification-candidate-input-v2"
+    assert contract["events"][0]["summary"] == "2019 年 7 月第一次承担团队管理职责"
+    assert changed_hash != input_hash
+    assert result["canonical_input_hash"] == input_hash
+    assert result["can_apply"] is False
+    assert "minute_holdout_not_ready" in result["reasons"]
+
+
 def test_finance_events_use_d2_d11_and_recompute_both_dashas_per_minute(monkeypatch) -> None:
     calls = {"vimshottari": 0, "narayana": 0, "varga_counts": []}
     original_score_event = event_engine._score_event

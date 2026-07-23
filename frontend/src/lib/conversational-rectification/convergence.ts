@@ -48,12 +48,15 @@ export function rangeCompletionReason(input: Readonly<{
   packet: RectificationTechnicalPacket;
   scoreableEventCount: number;
   plateauCount: number;
+  unansweredSuggestedDomainCount: number;
 }>): RangeCompletionReason | null {
   if (input.packet.candidate.status === "ready_for_confirmation") return null;
   if (input.scoreableEventCount < MINIMUM_SCOREABLE_EVENTS) return null;
-  if (input.scoreableEventCount >= MAXIMUM_SCOREABLE_EVENTS) return "evidence_limit";
+  if (input.scoreableEventCount >= MAXIMUM_SCOREABLE_EVENTS
+    && input.unansweredSuggestedDomainCount === 0) return "evidence_limit";
   if (input.packet.suggestedDomains.length === 0) return "no_discriminating_question";
-  if (input.plateauCount >= MAXIMUM_PLATEAU_ROUNDS) return "range_plateau";
+  if (input.plateauCount >= MAXIMUM_PLATEAU_ROUNDS
+    && input.unansweredSuggestedDomainCount === 0) return "range_plateau";
   return null;
 }
 
