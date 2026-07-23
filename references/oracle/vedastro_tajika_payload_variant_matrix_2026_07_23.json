@@ -1,0 +1,637 @@
+{
+  "scope": "vedastro_tajika_payload_variant_matrix",
+  "created_at": "2026-07-23",
+  "claim_status": "blocked",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "input_contract": {
+    "case_id": "steve_jobs_public_birth_data",
+    "birth_time": "1955-02-24T19:15:00-08:00",
+    "location": "San Francisco",
+    "scan_year": 1984,
+    "planet": "Sun"
+  },
+  "summary": {
+    "method_count": 3,
+    "variant_count": 12,
+    "row_count": 36,
+    "ok_row_count": 0,
+    "blocked_row_count": 36,
+    "ok_methods": []
+  },
+  "rows": [
+    {
+      "method": "PlanetTajikaLongitude",
+      "variant_id": "birth_time_with_geo__int_year__planet_enum",
+      "request_shape_sha256": "b2008bc68bbcd8451c293c1e0208f4a5f01c6c30b2985ac0553b43233f2f417d",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "113bd48e9f3f18f840578cafd0a4eea639bd13c95f4c830011ab25b4a9121f45",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaLongitude",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1866, in PlanetTajikaLongitude\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaConstellation",
+      "variant_id": "birth_time_with_geo__int_year__planet_enum",
+      "request_shape_sha256": "b2008bc68bbcd8451c293c1e0208f4a5f01c6c30b2985ac0553b43233f2f417d",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "a9406623cb463c25a3e46309dac8a74007fec9b9ef3f21df8fea437fe5ad509e",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaConstellation",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1880, in PlanetTajikaConstellation\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaZodiacSign",
+      "variant_id": "birth_time_with_geo__int_year__planet_enum",
+      "request_shape_sha256": "b2008bc68bbcd8451c293c1e0208f4a5f01c6c30b2985ac0553b43233f2f417d",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "e95d70246114c1afd27cd0b3cd5ca49f096591aac5ad9dcb61dd4b5c72a7c789",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaZodiacSign",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1894, in PlanetTajikaZodiacSign\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaLongitude",
+      "variant_id": "birth_time_with_geo__int_year__planet_string",
+      "request_shape_sha256": "09beebc56ad168b460b81a55e690ca23dc32609fa55004b83e12ce95db7154b8",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "3f9035ce71348c8c24db755c57eefe547c6d124501e9592d06579b5c7d28b0f1",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaLongitude",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1862, in PlanetTajikaLongitude\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaConstellation",
+      "variant_id": "birth_time_with_geo__int_year__planet_string",
+      "request_shape_sha256": "09beebc56ad168b460b81a55e690ca23dc32609fa55004b83e12ce95db7154b8",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "58f1b7fcb18cf2b61c7564e2afff23209c27d775b6e9d97a2d723f064fc36b83",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaConstellation",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1876, in PlanetTajikaConstellation\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaZodiacSign",
+      "variant_id": "birth_time_with_geo__int_year__planet_string",
+      "request_shape_sha256": "09beebc56ad168b460b81a55e690ca23dc32609fa55004b83e12ce95db7154b8",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "b5bb0a7ff98e67eaffe16d4eacb655d569831b6c3d4dd548942823849faad9bf",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaZodiacSign",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1890, in PlanetTajikaZodiacSign\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaLongitude",
+      "variant_id": "birth_time_with_geo__string_year__planet_enum",
+      "request_shape_sha256": "064875be2c62f1b3d0e01ec8aa302f4ef49f76d487ad4eea27c977b58fdef010",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "113bd48e9f3f18f840578cafd0a4eea639bd13c95f4c830011ab25b4a9121f45",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaLongitude",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1866, in PlanetTajikaLongitude\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaConstellation",
+      "variant_id": "birth_time_with_geo__string_year__planet_enum",
+      "request_shape_sha256": "064875be2c62f1b3d0e01ec8aa302f4ef49f76d487ad4eea27c977b58fdef010",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "f9916bafc19faab6d15b5cc7aa9376e143c6a747050118a2678e240ef4179445",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaConstellation",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1880, in PlanetTajikaConstellation\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 24, in _make_request\n    response.raise_for_status()\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/requests/models.py\", line 1028, in raise_for_status\n    raise HTTPError(http_error_msg, response=self)\nrequests.exceptions.HTTPError: 500 Server Error: Internal Server Error for url: https://api.vedastro.org/api/Calculate/PlanetTajikaConstellation",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaZodiacSign",
+      "variant_id": "birth_time_with_geo__string_year__planet_enum",
+      "request_shape_sha256": "064875be2c62f1b3d0e01ec8aa302f4ef49f76d487ad4eea27c977b58fdef010",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "e95d70246114c1afd27cd0b3cd5ca49f096591aac5ad9dcb61dd4b5c72a7c789",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaZodiacSign",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1894, in PlanetTajikaZodiacSign\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaLongitude",
+      "variant_id": "birth_time_with_geo__string_year__planet_string",
+      "request_shape_sha256": "88f43199c57f4dca1461bf9b3771f44dbeb14cf8c41217376955ab73d6b39c89",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "3f9035ce71348c8c24db755c57eefe547c6d124501e9592d06579b5c7d28b0f1",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaLongitude",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1862, in PlanetTajikaLongitude\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaConstellation",
+      "variant_id": "birth_time_with_geo__string_year__planet_string",
+      "request_shape_sha256": "88f43199c57f4dca1461bf9b3771f44dbeb14cf8c41217376955ab73d6b39c89",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "58f1b7fcb18cf2b61c7564e2afff23209c27d775b6e9d97a2d723f064fc36b83",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaConstellation",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1876, in PlanetTajikaConstellation\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaZodiacSign",
+      "variant_id": "birth_time_with_geo__string_year__planet_string",
+      "request_shape_sha256": "88f43199c57f4dca1461bf9b3771f44dbeb14cf8c41217376955ab73d6b39c89",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "b5bb0a7ff98e67eaffe16d4eacb655d569831b6c3d4dd548942823849faad9bf",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaZodiacSign",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1890, in PlanetTajikaZodiacSign\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaLongitude",
+      "variant_id": "birth_time_without_geo__int_year__planet_enum",
+      "request_shape_sha256": "bb4fd45dce382d9db2e988ad3a1877afdf65a51d8e513e5af96ffb3141145148",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "e4ae3ce8e88e277c0f09c664a98f1449ede8f6600a188915151a10dcd0aa0394",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaLongitude",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1863, in PlanetTajikaLongitude\n    \"birthTime\": birthTime.to_json(),\n                 ^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/vedastro.py\", line 66, in to_json\n    return {\"StdTime\": self.time_string, \"Location\": self.geolocation.to_json()}\n                                                     ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'to_json'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaConstellation",
+      "variant_id": "birth_time_without_geo__int_year__planet_enum",
+      "request_shape_sha256": "bb4fd45dce382d9db2e988ad3a1877afdf65a51d8e513e5af96ffb3141145148",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "60f0b3ad57a4f39812938805ae05a0e41372c7e3e5e3af6be8bafa52a1de5968",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaConstellation",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1877, in PlanetTajikaConstellation\n    \"birthTime\": birthTime.to_json(),\n                 ^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/vedastro.py\", line 66, in to_json\n    return {\"StdTime\": self.time_string, \"Location\": self.geolocation.to_json()}\n                                                     ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'to_json'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaZodiacSign",
+      "variant_id": "birth_time_without_geo__int_year__planet_enum",
+      "request_shape_sha256": "bb4fd45dce382d9db2e988ad3a1877afdf65a51d8e513e5af96ffb3141145148",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "5fc2de0894177c1c881f320ad40c8d9b68949077925fd57d3ed516f095d8e153",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaZodiacSign",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1891, in PlanetTajikaZodiacSign\n    \"birthTime\": birthTime.to_json(),\n                 ^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/vedastro.py\", line 66, in to_json\n    return {\"StdTime\": self.time_string, \"Location\": self.geolocation.to_json()}\n                                                     ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'to_json'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaLongitude",
+      "variant_id": "birth_time_without_geo__int_year__planet_string",
+      "request_shape_sha256": "d024975b1dc45b4766b80f744a4597ccf2f59e46ecf31c831c44ecfd192a3860",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "3f9035ce71348c8c24db755c57eefe547c6d124501e9592d06579b5c7d28b0f1",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaLongitude",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1862, in PlanetTajikaLongitude\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaConstellation",
+      "variant_id": "birth_time_without_geo__int_year__planet_string",
+      "request_shape_sha256": "d024975b1dc45b4766b80f744a4597ccf2f59e46ecf31c831c44ecfd192a3860",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "58f1b7fcb18cf2b61c7564e2afff23209c27d775b6e9d97a2d723f064fc36b83",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaConstellation",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1876, in PlanetTajikaConstellation\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaZodiacSign",
+      "variant_id": "birth_time_without_geo__int_year__planet_string",
+      "request_shape_sha256": "d024975b1dc45b4766b80f744a4597ccf2f59e46ecf31c831c44ecfd192a3860",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "b5bb0a7ff98e67eaffe16d4eacb655d569831b6c3d4dd548942823849faad9bf",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaZodiacSign",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1890, in PlanetTajikaZodiacSign\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaLongitude",
+      "variant_id": "birth_time_without_geo__string_year__planet_enum",
+      "request_shape_sha256": "251e0e2e5ff23147808c87369179b3d837acaa0d7f3f0b1eaf1ff12d0cc3d649",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "e4ae3ce8e88e277c0f09c664a98f1449ede8f6600a188915151a10dcd0aa0394",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaLongitude",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1863, in PlanetTajikaLongitude\n    \"birthTime\": birthTime.to_json(),\n                 ^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/vedastro.py\", line 66, in to_json\n    return {\"StdTime\": self.time_string, \"Location\": self.geolocation.to_json()}\n                                                     ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'to_json'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaConstellation",
+      "variant_id": "birth_time_without_geo__string_year__planet_enum",
+      "request_shape_sha256": "251e0e2e5ff23147808c87369179b3d837acaa0d7f3f0b1eaf1ff12d0cc3d649",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "60f0b3ad57a4f39812938805ae05a0e41372c7e3e5e3af6be8bafa52a1de5968",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaConstellation",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1877, in PlanetTajikaConstellation\n    \"birthTime\": birthTime.to_json(),\n                 ^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/vedastro.py\", line 66, in to_json\n    return {\"StdTime\": self.time_string, \"Location\": self.geolocation.to_json()}\n                                                     ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'to_json'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaZodiacSign",
+      "variant_id": "birth_time_without_geo__string_year__planet_enum",
+      "request_shape_sha256": "251e0e2e5ff23147808c87369179b3d837acaa0d7f3f0b1eaf1ff12d0cc3d649",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "5fc2de0894177c1c881f320ad40c8d9b68949077925fd57d3ed516f095d8e153",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaZodiacSign",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1891, in PlanetTajikaZodiacSign\n    \"birthTime\": birthTime.to_json(),\n                 ^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/vedastro.py\", line 66, in to_json\n    return {\"StdTime\": self.time_string, \"Location\": self.geolocation.to_json()}\n                                                     ^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'to_json'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaLongitude",
+      "variant_id": "birth_time_without_geo__string_year__planet_string",
+      "request_shape_sha256": "5a2d6dd2fda3b01d7ea45eeb6ccb6e0091aa4e61f7bb7df1c96b072f6095bd95",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "3f9035ce71348c8c24db755c57eefe547c6d124501e9592d06579b5c7d28b0f1",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaLongitude",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1862, in PlanetTajikaLongitude\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaConstellation",
+      "variant_id": "birth_time_without_geo__string_year__planet_string",
+      "request_shape_sha256": "5a2d6dd2fda3b01d7ea45eeb6ccb6e0091aa4e61f7bb7df1c96b072f6095bd95",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "58f1b7fcb18cf2b61c7564e2afff23209c27d775b6e9d97a2d723f064fc36b83",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaConstellation",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1876, in PlanetTajikaConstellation\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaZodiacSign",
+      "variant_id": "birth_time_without_geo__string_year__planet_string",
+      "request_shape_sha256": "5a2d6dd2fda3b01d7ea45eeb6ccb6e0091aa4e61f7bb7df1c96b072f6095bd95",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "b5bb0a7ff98e67eaffe16d4eacb655d569831b6c3d4dd548942823849faad9bf",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaZodiacSign",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1890, in PlanetTajikaZodiacSign\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaLongitude",
+      "variant_id": "tajika_date_for_year2_time_with_geo__int_year__planet_enum",
+      "request_shape_sha256": "446dfc703f5f2740efa034fc78d6bf18677e6863e8ef646f0d75f0739f7b006a",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "113bd48e9f3f18f840578cafd0a4eea639bd13c95f4c830011ab25b4a9121f45",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaLongitude",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1866, in PlanetTajikaLongitude\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaConstellation",
+      "variant_id": "tajika_date_for_year2_time_with_geo__int_year__planet_enum",
+      "request_shape_sha256": "446dfc703f5f2740efa034fc78d6bf18677e6863e8ef646f0d75f0739f7b006a",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "a9406623cb463c25a3e46309dac8a74007fec9b9ef3f21df8fea437fe5ad509e",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaConstellation",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1880, in PlanetTajikaConstellation\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaZodiacSign",
+      "variant_id": "tajika_date_for_year2_time_with_geo__int_year__planet_enum",
+      "request_shape_sha256": "446dfc703f5f2740efa034fc78d6bf18677e6863e8ef646f0d75f0739f7b006a",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "e95d70246114c1afd27cd0b3cd5ca49f096591aac5ad9dcb61dd4b5c72a7c789",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaZodiacSign",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1894, in PlanetTajikaZodiacSign\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaLongitude",
+      "variant_id": "tajika_date_for_year2_time_with_geo__int_year__planet_string",
+      "request_shape_sha256": "51d889e126e0dcd4abca1f8351642acaf17a36dd9778d931ac5848ba41c42e32",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "3f9035ce71348c8c24db755c57eefe547c6d124501e9592d06579b5c7d28b0f1",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaLongitude",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1862, in PlanetTajikaLongitude\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaConstellation",
+      "variant_id": "tajika_date_for_year2_time_with_geo__int_year__planet_string",
+      "request_shape_sha256": "51d889e126e0dcd4abca1f8351642acaf17a36dd9778d931ac5848ba41c42e32",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "58f1b7fcb18cf2b61c7564e2afff23209c27d775b6e9d97a2d723f064fc36b83",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaConstellation",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1876, in PlanetTajikaConstellation\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaZodiacSign",
+      "variant_id": "tajika_date_for_year2_time_with_geo__int_year__planet_string",
+      "request_shape_sha256": "51d889e126e0dcd4abca1f8351642acaf17a36dd9778d931ac5848ba41c42e32",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "b5bb0a7ff98e67eaffe16d4eacb655d569831b6c3d4dd548942823849faad9bf",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaZodiacSign",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1890, in PlanetTajikaZodiacSign\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaLongitude",
+      "variant_id": "tajika_date_for_year2_time_with_geo__string_year__planet_enum",
+      "request_shape_sha256": "0003db95bd1afcb7c382d9807001c48425b482c00b900ba2d839327897b87ae5",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "113bd48e9f3f18f840578cafd0a4eea639bd13c95f4c830011ab25b4a9121f45",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaLongitude",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1866, in PlanetTajikaLongitude\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaConstellation",
+      "variant_id": "tajika_date_for_year2_time_with_geo__string_year__planet_enum",
+      "request_shape_sha256": "0003db95bd1afcb7c382d9807001c48425b482c00b900ba2d839327897b87ae5",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "a9406623cb463c25a3e46309dac8a74007fec9b9ef3f21df8fea437fe5ad509e",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaConstellation",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1880, in PlanetTajikaConstellation\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaZodiacSign",
+      "variant_id": "tajika_date_for_year2_time_with_geo__string_year__planet_enum",
+      "request_shape_sha256": "0003db95bd1afcb7c382d9807001c48425b482c00b900ba2d839327897b87ae5",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "e95d70246114c1afd27cd0b3cd5ca49f096591aac5ad9dcb61dd4b5c72a7c789",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaZodiacSign",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1894, in PlanetTajikaZodiacSign\n    return cls._make_request(endpoint, params)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 27, in _make_request\n    raise RuntimeError(f\"VedAstro API error: {data.get('Payload', 'Unknown error')}\")\nRuntimeError: VedAstro API error: Exception of type 'System.Exception' was thrown.",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaLongitude",
+      "variant_id": "tajika_date_for_year2_time_with_geo__string_year__planet_string",
+      "request_shape_sha256": "5fe44ffe7d8c317ddc0a5af3b694296b1ae558a4d50f9d64ff72368f4ca089d2",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "3f9035ce71348c8c24db755c57eefe547c6d124501e9592d06579b5c7d28b0f1",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaLongitude",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1862, in PlanetTajikaLongitude\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaConstellation",
+      "variant_id": "tajika_date_for_year2_time_with_geo__string_year__planet_string",
+      "request_shape_sha256": "5fe44ffe7d8c317ddc0a5af3b694296b1ae558a4d50f9d64ff72368f4ca089d2",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "58f1b7fcb18cf2b61c7564e2afff23209c27d775b6e9d97a2d723f064fc36b83",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaConstellation",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1876, in PlanetTajikaConstellation\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    },
+    {
+      "method": "PlanetTajikaZodiacSign",
+      "variant_id": "tajika_date_for_year2_time_with_geo__string_year__planet_string",
+      "request_shape_sha256": "5fe44ffe7d8c317ddc0a5af3b694296b1ae558a4d50f9d64ff72368f4ca089d2",
+      "status": "bridge_runtime_error",
+      "available": false,
+      "raw_sha256": "b5bb0a7ff98e67eaffe16d4eacb655d569831b6c3d4dd548942823849faad9bf",
+      "response": {
+        "available": false,
+        "method": "PlanetTajikaZodiacSign",
+        "python_bin": "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3",
+        "source": "vedastro_python_bridge",
+        "status": "bridge_runtime_error",
+        "stderr": "Traceback (most recent call last):\n  File \"<string>\", line 190, in <module>\n  File \"<string>\", line 177, in main\n  File \"/Library/Frameworks/Python.framework/Versions/3.11/lib/python3.11/site-packages/vedastro/calculate.py\", line 1890, in PlanetTajikaZodiacSign\n    \"planetName\": planetName.value,\n                  ^^^^^^^^^^^^^^^^\nAttributeError: 'str' object has no attribute 'value'",
+        "stdout_excerpt": ""
+      }
+    }
+  ],
+  "boundary": "Payload variants are diagnostic only. No Tajika planet longitude, constellation, zodiac, annual timing, or prediction claim is upgraded without stable raw and an external numeric worked example."
+}

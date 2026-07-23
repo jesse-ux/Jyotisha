@@ -1603,6 +1603,14 @@
       "path": "references/oracle/vedicastro_kp_house_cusp_probe_steve_jobs_sf_runtime_2026_07_23.json"
     },
     {
+      "claim_boundary": "Thirty-six controlled payload variants for VedAstro Tajika planet longitude/constellation/zodiac all returned non-ok status; Tajika planet fields remain blocked until upstream semantics or public numeric examples resolve the method contract.",
+      "claim_status": "blocked",
+      "consumer_policy": "research_diagnostic_only",
+      "domain": "vedastro_tajika_runtime_error_arbitration",
+      "packet_id": "vedastro_tajika_payload_variant_matrix_2026_07_23",
+      "path": "references/oracle/vedastro_tajika_payload_variant_matrix_2026_07_23.json"
+    },
+    {
       "packet_id": "kp_muhurta_shadbala_numeric_packet_queue",
       "path": "references/oracle/kp_muhurta_shadbala_numeric_packet_queue_2026_07_19.json",
       "domain": "worked_example_collection",
