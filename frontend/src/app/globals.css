@@ -788,9 +788,13 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
   overflow-y: auto;
   overscroll-behavior: contain;
   padding-bottom: var(--space-6);
-  scrollbar-color: color-mix(in srgb, var(--color-ink-tertiary) 46%, transparent) transparent;
+  scrollbar-color: transparent transparent;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
+}
+.rectification-message-list.is-scrollbar-visible,
+.rectification-message-list:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--color-ink-tertiary) 46%, transparent) transparent;
 }
 .rectification-message-list::-webkit-scrollbar { width: 10px; }
 .rectification-message-list::-webkit-scrollbar-track { background: transparent; }
@@ -798,6 +802,12 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
   min-height: 40px;
   border: 3px solid transparent;
   border-radius: 999px;
+  background: transparent;
+  background-clip: padding-box;
+  transition: background-color 160ms ease;
+}
+.rectification-message-list.is-scrollbar-visible::-webkit-scrollbar-thumb,
+.rectification-message-list:focus-within::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--color-ink-tertiary) 42%, transparent);
   background-clip: padding-box;
 }
@@ -805,19 +815,13 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
   background: color-mix(in srgb, var(--color-ink-secondary) 62%, transparent);
   background-clip: padding-box;
 }
-.rectification-message-details { margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border); color: var(--color-ink-secondary); font-size: var(--type-caption); }
-.rectification-message-details summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-size: var(--type-body-sm); font-weight: 600; }
-.rectification-message-details p { margin: 0 0 var(--space-2); font-size: var(--type-caption); line-height: 1.6; }
-.rectification-message-details ul { display: grid; gap: var(--space-2); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
-.rectification-message-details li { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border); }
-.rectification-message-details button, .rectification-correction-target button { min-height: 44px; padding-inline: var(--space-3); border: 0; background: transparent; color: var(--color-action); cursor: pointer; }
+.rectification-correction-target button { min-height: 44px; padding-inline: var(--space-3); border: 0; background: transparent; color: var(--color-action); cursor: pointer; }
 .rectification-composer-wrap { position: static; flex: 0 0 auto; }
 .rectification-correction-target { width: min(760px, 100%); display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin: 0 auto var(--space-2); color: var(--color-ink-secondary); font-size: var(--type-caption); }
 .rectification-correction-target p { margin: 0; }
 .conversational-empty-state { width: min(760px, 100%); margin: var(--space-8) auto; color: var(--color-ink-secondary); }
 
 @media (max-width: 430px) {
-  .rectification-message-details li { align-items: stretch; grid-template-columns: minmax(0, 1fr); }
   .rectification-correction-target { align-items: stretch; display: grid; }
 }
 

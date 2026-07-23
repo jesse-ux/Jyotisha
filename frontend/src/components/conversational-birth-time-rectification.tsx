@@ -11,7 +11,6 @@ import {
 } from "../hooks/use-conversational-rectification.ts";
 import type {
   ConversationalRectificationResponse,
-  ConversationalRectificationTurn,
 } from "../lib/conversational-rectification/contracts.ts";
 
 type SurfaceProps = Readonly<{
@@ -28,13 +27,6 @@ function safely(request: Promise<unknown>) {
   void request.catch(() => undefined);
 }
 
-function candidateStatus(turn: ConversationalRectificationTurn): string {
-  if (turn.status === "completed" && turn.candidate.status === "confirmed") return "已确认";
-  if (turn.status === "completed") return "范围已保存，分钟未确认";
-  if (turn.candidate.status === "ready_for_confirmation") return "待确认，尚未验证";
-  return "待验证";
-}
-
 export function ConversationalRectificationSurface({
   controller,
   openingAssistantText = "",
@@ -44,6 +36,7 @@ export function ConversationalRectificationSurface({
 }: SurfaceProps) {
   const composer = useRef<HTMLTextAreaElement>(null);
   const messageList = useRef<HTMLDivElement>(null);
+  const scrollbarHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [submission, setSubmission] = useState<Readonly<{
     text: string;
@@ -77,6 +70,7 @@ export function ConversationalRectificationSurface({
   ]);
   useEffect(() => () => {
     if (undoTimer.current) clearTimeout(undoTimer.current);
+    if (scrollbarHideTimer.current) clearTimeout(scrollbarHideTimer.current);
   }, []);
   const pendingQuestion = turn?.status === "completed"
     ? turn.pendingConsultationQuestion
@@ -132,10 +126,31 @@ export function ConversationalRectificationSurface({
     setSubmission(null);
     requestAnimationFrame(() => composer.current?.focus());
   };
+  const revealScrollbar = () => {
+    const list = messageList.current;
+    if (!list) return;
+    list.classList.add("is-scrollbar-visible");
+    if (scrollbarHideTimer.current) clearTimeout(scrollbarHideTimer.current);
+    scrollbarHideTimer.current = setTimeout(() => {
+      list.classList.remove("is-scrollbar-visible");
+      scrollbarHideTimer.current = null;
+    }, 900);
+  };
+  const hideScrollbar = () => {
+    if (scrollbarHideTimer.current) clearTimeout(scrollbarHideTimer.current);
+    scrollbarHideTimer.current = null;
+    messageList.current?.classList.remove("is-scrollbar-visible");
+  };
 
   return (
     <section className="rectification-chat" aria-busy={busy} aria-label="生时校正对话">
-      <div ref={messageList} className="message-list rectification-message-list">
+      <div
+        ref={messageList}
+        className="message-list rectification-message-list"
+        onPointerLeave={hideScrollbar}
+        onPointerMove={revealScrollbar}
+        onScroll={revealScrollbar}
+      >
         <span className="sr-only" aria-live="polite">{submission?.phase === "undo" ? "消息已发送，可以撤回修改" : controller.pending ? "Jyotisha 正在核对经历" : ""}</span>
         {(controller.messages ?? [{
           role: "assistant" as const,
@@ -157,41 +172,6 @@ export function ConversationalRectificationSurface({
             message={{ role: "user", text: submission.text, renderKey: "pending-evidence", state: "settled" }}
           />
         )}
-        <details className="rectification-message-details rectification-progress-details">
-                <summary>
-                  {turn.candidate.representativeTime
-                    ? `当前候选 ${turn.candidate.representativeTime} · ${candidateStatus(turn)}`
-                    : `校正进度 · ${candidateStatus(turn)}`}
-                </summary>
-                <p>
-                  {turn.candidate.rangeStart && turn.candidate.rangeEnd
-                    ? `候选范围 ${turn.candidate.rangeStart}—${turn.candidate.rangeEnd}；已记录 ${turn.evidenceRecap.length} 条经历。`
-                    : `已记录 ${turn.evidenceRecap.length} 条经历，尚未缩小候选范围。`}
-                </p>
-                <p>候选只用于继续验证；这一步不会自动采用候选，未经发布门禁与明确确认不会成为当前排盘时间。</p>
-                {turn.evidenceRecap.length > 0 && (
-                  <ul aria-label="已记录的真实经历">
-                    {turn.evidenceRecap.map((entry) => (
-                      <li key={entry.id}>
-                        <span>{entry.dateLabel} · {entry.summary}{entry.isCorrection ? "（已修订）" : ""}</span>
-                        {canAnswer && (
-                          <button
-                            aria-label={`更正这条经历：${entry.summary}`}
-                            disabled={busy}
-                            type="button"
-                            onClick={() => {
-                              controller.beginEvidenceCorrection(entry.id);
-                              composer.current?.focus();
-                            }}
-                          >
-                            更正
-                          </button>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-        </details>
         {controller.pending && canAnswer && (
           controller.streamingAssistantText
             ? <ChatMessageRow message={{

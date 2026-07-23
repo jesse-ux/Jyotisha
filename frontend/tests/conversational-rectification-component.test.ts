@@ -93,8 +93,8 @@ test("rectification is a language-first exchange with one free-text answer path"
 
   assert.match(markup, /当前判断/);
   assert.match(markup, /D9 与 D10/);
-  assert.match(markup, /2021 年 7 月 · 开始第一份长期工作/);
-  assert.ok(markup.indexOf("当前判断") < markup.indexOf("当前候选 05:18"));
+  assert.doesNotMatch(markup, /已记录的经历|已记录的真实经历|更正这条经历/);
+  assert.doesNotMatch(markup, /当前候选 05:18/);
   assert.doesNotMatch(markup, /目前已经形成一个待确认候选/);
   assert.match(markup, /<textarea[^>]+id="conversational-rectification-answer"/);
   assert.match(markup, /像聊天一样回答即可/);
@@ -104,7 +104,7 @@ test("rectification is a language-first exchange with one free-text answer path"
   assert.doesNotMatch(markup, /2006[^<]*2011|BirthTimeChoiceQuestion|birth-time-choice-question/);
 });
 
-test("a resumed legacy turn preserves its Agent narrative and keeps evidence in progress details", () => {
+test("a resumed legacy turn preserves its Agent narrative without a separate evidence panel", () => {
   const legacyTurn = {
     ...turn,
     status: "active",
@@ -119,7 +119,7 @@ test("a resumed legacy turn preserves its Agent narrative and keeps evidence in 
 
   assert.match(markup, /05:30 是范围内的待验证候选/);
   assert.match(markup, /D1 保持稳定/);
-  assert.match(markup, /2021 年 7 月 · 开始第一份长期工作/);
+  assert.doesNotMatch(markup, /2021 年 7 月 · 开始第一份长期工作|已记录的经历/);
   assert.doesNotMatch(markup, /范围暂未变化不代表提交失败/);
 });
 
@@ -194,28 +194,23 @@ test("the first Agent guidance streams into the empty rectification surface", ()
   assert.doesNotMatch(markup, /正在建立校正记录/);
 });
 
-test("evidence is correctable, secondary controls stay hidden, and confirmation is explicit", () => {
+test("history management stays hidden while final confirmation remains explicit", () => {
   const markup = renderToStaticMarkup(React.createElement(
     ConversationalRectificationSurface,
     { controller: controller() },
   ));
 
-  assert.match(markup, /已记录的真实经历/);
-  assert.match(markup, /2021 年 7 月/);
-  assert.match(markup, /更正这条经历：开始第一份长期工作/);
+  assert.doesNotMatch(markup, /已记录的真实经历|2021 年 7 月|更正这条经历/);
   assert.doesNotMatch(markup, /本轮分析|等待经历验证/);
   assert.doesNotMatch(markup, /本轮技术回执|rectification-technical-v1|consult-d9/);
-  assert.match(markup, /当前候选 05:18/);
-  assert.match(markup, /待确认，尚未验证/);
+  assert.doesNotMatch(markup, /当前候选 05:18/);
   assert.match(markup, /确认采用 05:18（尚未验证）/);
   assert.match(markup, /aria-label="确认将 05:18 设为当前排盘时间；当前分钟尚未验证"/);
-  assert.match(markup, /已记录 1 条经历/);
-  assert.match(markup, /候选只用于继续验证/);
-  assert.match(markup, /这一步不会自动采用候选/);
+  assert.doesNotMatch(markup, /已记录 1 条经历|候选只用于继续验证|这一步不会自动采用候选/);
   assert.doesNotMatch(markup, /暂停，稍后继续|继续校正|放弃本次校正/);
 });
 
-test("correction mode identifies its durable target, can be cancelled, and marks revised recaps", () => {
+test("an existing correction target can still be cancelled without rendering history management", () => {
   const revisedTurn = {
     ...turn,
     evidenceRecap: [{ ...turn.evidenceRecap[0]!, isCorrection: true }],
@@ -241,7 +236,7 @@ test("correction mode identifies its durable target, can be cancelled, and marks
   assert.match(markup, /正在更正/);
   assert.match(markup, /开始第一份长期工作/);
   assert.match(markup, /取消更正/);
-  assert.match(markup, /（已修订）/);
+  assert.doesNotMatch(markup, /（已修订）|已记录的经历|更正这条经历/);
 });
 
 test("pending markup and responsive CSS expose accessibility contracts", () => {
@@ -287,10 +282,12 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
   assert.match(css, /\.conversation\.is-rectification[^}]*padding-bottom:\s*0/);
   assert.match(css, /\.rectification-chat[^}]*height:\s*100%[^}]*display:\s*flex/);
   assert.match(css, /\.rectification-message-list[^}]*flex:\s*1[^}]*overflow-y:\s*auto/);
+  assert.match(css, /\.rectification-message-list[^}]*scrollbar-color:\s*transparent transparent/);
   assert.match(css, /\.rectification-message-list[^}]*scrollbar-width:\s*thin/);
-  assert.match(css, /\.rectification-message-list::\-webkit-scrollbar-thumb[^}]*background-clip:\s*padding-box/);
+  assert.match(css, /\.rectification-message-list::\-webkit-scrollbar-thumb[^}]*background:\s*transparent[^}]*background-clip:\s*padding-box/);
+  assert.match(css, /\.rectification-message-list\.is-scrollbar-visible::\-webkit-scrollbar-thumb[^}]*color-mix/);
   assert.match(css, /\.rectification-message-list::\-webkit-scrollbar-thumb:hover[^}]*color-mix/);
-  assert.match(css, /\.rectification-message-details button[^}]*min-height:\s*44px/);
+  assert.match(css, /\.rectification-correction-target button[^}]*min-height:\s*44px/);
   assert.match(css, /\.composer:focus-within[^}]*border-color:/);
   assert.match(css, /\.composer textarea[^}]*border:\s*0/);
   assert.match(css, /\.rectification-composer-wrap[^}]*position:\s*static/);
@@ -298,8 +295,11 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
   assert.doesNotMatch(css, /\.conversational-domain-picker|\.conversational-event-date/);
   assert.doesNotMatch(css, /button\[aria-label\$="下一步建议"\]/);
   assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
-  assert.match(css, /@media\s*\(max-width:\s*430px\)[\s\S]*\.rectification-message-details/);
+  assert.doesNotMatch(css, /\.rectification-message-details/);
   assert.doesNotMatch(component, /确认放弃且不应用候选|本轮技术回执/);
+  assert.match(component, /onPointerMove=\{revealScrollbar\}/);
+  assert.match(component, /onScroll=\{revealScrollbar\}/);
+  assert.match(component, /classList\.remove\("is-scrollbar-visible"\)/);
   assert.match(component, /controller\.answer\(undefined, text\)/);
   assert.match(component, /event\.key === "Enter" && !event\.shiftKey/);
   assert.match(component, /onPendingChange/);
@@ -802,8 +802,9 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
     );
     await cdp.evaluate("globalThis.__rectificationHarness.setTurn('activeA1')");
     await waitFor(
-      () => cdp?.evaluate<boolean>(`document.body.textContent.includes('当前候选 05:18')
-        && document.body.textContent.includes('2021-07 · 开始第一份长期工作')`) ?? Promise.resolve(false),
+      () => cdp?.evaluate<boolean>(`document.body.textContent.includes('当前判断')
+        && !document.body.textContent.includes('当前候选 05:18')
+        && !document.body.textContent.includes('已记录的经历')`) ?? Promise.resolve(false),
       "streamlined async initial turn",
     );
 
@@ -833,23 +834,6 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
     assert.equal(layout.selectCount, 0, "language-first flow should not render date selects");
     assert.equal(layout.domainChoiceCount, 0, "language-first flow should not render domain buttons");
 
-    await cdp.evaluate("document.querySelector('.rectification-message-details').open = true");
-    await cdp.evaluate("document.querySelector('[aria-label^=\"更正这条经历\"]').click()");
-    await waitFor(
-      () => cdp?.evaluate<boolean>(`(() => {
-        const textarea = document.getElementById('conversational-rectification-answer');
-        return document.body.textContent.includes('正在更正')
-          && document.body.textContent.includes('开始第一份长期工作')
-          && textarea?.value === '';
-      })()`) ?? Promise.resolve(false),
-      "durable correction target selection without polluting the new answer",
-    );
-    await cdp.evaluate("[...document.querySelectorAll('button')].find((button) => button.textContent.includes('取消更正')).click()");
-    await waitFor(
-      () => cdp?.evaluate<boolean>("!document.body.textContent.includes('正在更正') && document.getElementById('conversational-rectification-answer').value === ''") ?? Promise.resolve(false),
-      "correction cancellation",
-    );
-
     const mistakenAnswer = "2020年9月离职写错了";
     await cdp.evaluate(`(() => {
       const textarea = document.getElementById('conversational-rectification-answer');
@@ -874,8 +858,9 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
     await waitFor(
       () => cdp?.evaluate<boolean>(`(() => {
         const text = document.body.textContent;
-        return text.includes('当前候选')
-          && !text.includes('候选时间')
+        return text.includes('当前判断')
+          && !text.includes('当前候选 05:18')
+          && !text.includes('已记录的经历')
           && !text.includes('本轮技术回执')
           && !text.includes('暂停，稍后继续')
           && !text.includes('放弃本次校正')
