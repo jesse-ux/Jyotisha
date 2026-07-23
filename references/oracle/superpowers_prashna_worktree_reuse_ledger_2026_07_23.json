@@ -1,0 +1,167 @@
+{
+  "scope": "superpowers_prashna_worktree_reuse_ledger",
+  "created_at": "2026-07-23",
+  "claim_status": "fragment_audit_only",
+  "truth_matrix_allowed": false,
+  "production_tuning_allowed": false,
+  "source_root": "redacted_local_guarded_prashna_worktree",
+  "rows": [
+    {
+      "path": "redacted_local_guarded_prashna_worktree/scripts/prashna.py",
+      "relative_path": "scripts/prashna.py",
+      "current_exists": true,
+      "diff_shortstat": "",
+      "decision": "duplicate_or_current_newer",
+      "allowed_actions": [
+        "no_action"
+      ]
+    },
+    {
+      "path": "redacted_local_guarded_prashna_worktree/scripts/gulika.py",
+      "relative_path": "scripts/gulika.py",
+      "current_exists": true,
+      "diff_shortstat": "1 file changed, 28 insertions(+), 3 deletions(-)",
+      "decision": "reference_only_review_needed",
+      "allowed_actions": [
+        "migrate_to_test_or_registry_only_after_diff_review"
+      ]
+    },
+    {
+      "path": "redacted_local_guarded_prashna_worktree/scripts/prashna_sphuta.py",
+      "relative_path": "scripts/prashna_sphuta.py",
+      "current_exists": true,
+      "diff_shortstat": "",
+      "decision": "duplicate_or_current_newer",
+      "allowed_actions": [
+        "no_action"
+      ]
+    },
+    {
+      "path": "redacted_local_guarded_prashna_worktree/scripts/saham_daynight.py",
+      "relative_path": "scripts/saham_daynight.py",
+      "current_exists": true,
+      "diff_shortstat": "",
+      "decision": "duplicate_or_current_newer",
+      "allowed_actions": [
+        "no_action"
+      ]
+    },
+    {
+      "path": "redacted_local_guarded_prashna_worktree/scripts/tajika.py",
+      "relative_path": "scripts/tajika.py",
+      "current_exists": true,
+      "diff_shortstat": "1 file changed, 6 insertions(+), 2 deletions(-)",
+      "decision": "reference_only_review_needed",
+      "allowed_actions": [
+        "migrate_to_test_or_registry_only_after_diff_review"
+      ]
+    },
+    {
+      "path": "redacted_local_guarded_prashna_worktree/scripts/kp_system.py",
+      "relative_path": "scripts/kp_system.py",
+      "current_exists": true,
+      "diff_shortstat": "",
+      "decision": "duplicate_or_current_newer",
+      "allowed_actions": [
+        "no_action"
+      ]
+    },
+    {
+      "path": "redacted_local_guarded_prashna_worktree/tests/test_prashna_sphuta.py",
+      "relative_path": "tests/test_prashna_sphuta.py",
+      "current_exists": true,
+      "diff_shortstat": "1 file changed, 27 insertions(+)",
+      "decision": "duplicate_or_current_newer",
+      "allowed_actions": [
+        "no_action"
+      ]
+    },
+    {
+      "path": "redacted_local_guarded_prashna_worktree/tests/test_gulika.py",
+      "relative_path": "tests/test_gulika.py",
+      "current_exists": true,
+      "diff_shortstat": "1 file changed, 19 insertions(+), 2 deletions(-)",
+      "decision": "duplicate_or_current_newer",
+      "allowed_actions": [
+        "no_action"
+      ]
+    },
+    {
+      "path": "redacted_local_guarded_prashna_worktree/tests/test_saham_daynight.py",
+      "relative_path": "tests/test_saham_daynight.py",
+      "current_exists": true,
+      "diff_shortstat": "",
+      "decision": "duplicate_or_current_newer",
+      "allowed_actions": [
+        "no_action"
+      ]
+    },
+    {
+      "path": "redacted_local_guarded_prashna_worktree/tests/test_kp_system.py",
+      "relative_path": "tests/test_kp_system.py",
+      "current_exists": true,
+      "diff_shortstat": "",
+      "decision": "duplicate_or_current_newer",
+      "allowed_actions": [
+        "no_action"
+      ]
+    },
+    {
+      "path": "redacted_local_guarded_prashna_worktree/references/sahams-execution-guide.md",
+      "relative_path": "references/sahams-execution-guide.md",
+      "current_exists": true,
+      "diff_shortstat": "",
+      "decision": "duplicate_or_current_newer",
+      "allowed_actions": [
+        "no_action"
+      ]
+    },
+    {
+      "path": "redacted_local_guarded_prashna_worktree/references/kp-practical-event-timing.md",
+      "relative_path": "references/kp-practical-event-timing.md",
+      "current_exists": true,
+      "diff_shortstat": "",
+      "decision": "duplicate_or_current_newer",
+      "allowed_actions": [
+        "no_action"
+      ]
+    },
+    {
+      "path": "redacted_local_guarded_prashna_worktree/references/prashna-complete-guide.md",
+      "relative_path": "references/prashna-complete-guide.md",
+      "current_exists": true,
+      "diff_shortstat": "",
+      "decision": "duplicate_or_current_newer",
+      "allowed_actions": [
+        "no_action"
+      ]
+    },
+    {
+      "path": "redacted_local_guarded_prashna_worktree/references/kp-astrology-complete-system.md",
+      "relative_path": "references/kp-astrology-complete-system.md",
+      "current_exists": true,
+      "diff_shortstat": "",
+      "decision": "duplicate_or_current_newer",
+      "allowed_actions": [
+        "no_action"
+      ]
+    },
+    {
+      "path": "redacted_local_guarded_prashna_worktree/docs/benchmark/tajika_sahams_annual_benchmark_dashboard.json",
+      "relative_path": "docs/benchmark/tajika_sahams_annual_benchmark_dashboard.json",
+      "current_exists": true,
+      "diff_shortstat": "1 file changed, 3 insertions(+), 2 deletions(-)",
+      "decision": "reference_only_review_needed",
+      "allowed_actions": [
+        "migrate_to_test_or_registry_only_after_diff_review"
+      ]
+    }
+  ],
+  "summary": {
+    "candidate_count": 15,
+    "migrate_now_count": 0,
+    "duplicate_or_current_newer_count": 12,
+    "reference_only_count": 3
+  },
+  "boundary": "Old guarded worktree is not a runtime source. Same-name Prashna/KP/Tajika/Gulika/Saham code mostly already exists in current repo; remaining docs are reference-only until line-level provenance review."
+}

@@ -1,0 +1,215 @@
+{
+  "boundary": "Muhurta factor-only scoring is available for comparison; no final Muhurta verdict or electional promise is allowed until public worked examples close.",
+  "canonical_request": {
+    "birth_moon_nakshatra_index": 4,
+    "birth_moon_sign_index": 1,
+    "date": "2026-07-19"
+  },
+  "claim_status": "observation_only",
+  "created_at": "2026-07-23",
+  "factor_scorecard": {
+    "boundary": "Factor scorecard is for comparison only; it is not a final electional verdict.",
+    "caution_factor_count": 2,
+    "caution_factors": [
+      "yamaganda",
+      "gulika_kalam"
+    ],
+    "claim_status": "factor_only_not_final_muhurta_verdict",
+    "favorable_factor_count": 5,
+    "favorable_factors": [
+      "tarabala",
+      "chandrabala",
+      "sankranti",
+      "vyatipata",
+      "vaidhriti"
+    ],
+    "score_cap": "low"
+  },
+  "factor_status": {
+    "abhijit_muhurta": null,
+    "chandrabala": "computed_rule_probe",
+    "gulika_kalam": "computed_rule_probe",
+    "panchaka": "computed_rule_probe",
+    "rahu_kalam": "present",
+    "sankranti": "boundary_screen_observation",
+    "tarabala": "computed_rule_probe",
+    "vaidhriti": "computed_rule_probe",
+    "vyatipata": "computed_rule_probe",
+    "yamaganda": "computed_rule_probe"
+  },
+  "final_muhurta_verdict_status": "blocked_until_oracle",
+  "observed_factor_keys": [
+    "tarabala",
+    "chandrabala",
+    "rahu_kalam",
+    "yamaganda",
+    "gulika_kalam",
+    "abhijit_muhurta",
+    "panchaka",
+    "sankranti",
+    "vyatipata",
+    "vaidhriti"
+  ],
+  "production_tuning_allowed": false,
+  "raw_observation": {
+    "boundary": "Muhurta factors are observations only；未通过完整 worked examples 与负样本验证，不能作为确定择日承诺。",
+    "candidate_windows": [
+      {
+        "blockers": [],
+        "claim_status": "exploratory_muhurta_candidate",
+        "confidence_cap": "low",
+        "label": "abhijit_reference_window",
+        "signals": [
+          "Tarabala",
+          "Chandrabala",
+          "Abhijit"
+        ]
+      }
+    ],
+    "claim_status": "exploratory_muhurta_candidate",
+    "created_at": "2026-07-19",
+    "date": "2026-07-19",
+    "ephemeris_source": "swisseph",
+    "factor_scorecard": {
+      "boundary": "Factor scorecard is for comparison only; it is not a final electional verdict.",
+      "caution_factor_count": 2,
+      "caution_factors": [
+        "yamaganda",
+        "gulika_kalam"
+      ],
+      "claim_status": "factor_only_not_final_muhurta_verdict",
+      "favorable_factor_count": 5,
+      "favorable_factors": [
+        "tarabala",
+        "chandrabala",
+        "sankranti",
+        "vyatipata",
+        "vaidhriti"
+      ],
+      "score_cap": "low"
+    },
+    "factors": {
+      "abhijit_muhurta": {
+        "description": "Abhijit Muhurta 是一天中最吉祥的时段（正午前后各24分钟）",
+        "duration_minutes": 48,
+        "rule": "日升到日落共15个 muhurta，第8个（中间）即 Abhijit",
+        "warning": "周三（Wednesday/Budha Vara）不宜使用 Abhijit"
+      },
+      "chandrabala": {
+        "favorable": true,
+        "relative_house": 5,
+        "status": "computed_rule_probe"
+      },
+      "gulika_kalam": {
+        "quality": "avoid_or_handle_with_caution",
+        "status": "computed_rule_probe",
+        "window": {
+          "duration_minutes": 90.0,
+          "end": "16:30",
+          "segment": 7,
+          "start": "15:00"
+        }
+      },
+      "panchaka": {
+        "active": false,
+        "moon_sign_index": 5,
+        "quality": "neutral",
+        "status": "computed_rule_probe"
+      },
+      "panchanga": {
+        "auspicious_count": 2,
+        "hora": {
+          "hora_from_sunrise": 6.0,
+          "hora_lord": "Mars",
+          "hora_num": 7,
+          "quality": "asubha"
+        },
+        "karana": {
+          "is_vishti": false,
+          "karana": "Taitila",
+          "karana_num": 11,
+          "quality": "subha"
+        },
+        "nakshatra": {
+          "moon_lon": 159.62,
+          "nakshatra": "Uttara Phalguni",
+          "nakshatra_idx": 11,
+          "pada": 4,
+          "quality": "subha",
+          "type": "sthira"
+        },
+        "overall_quality": "凶（Asubha）",
+        "overall_score": 0.42,
+        "tithi": {
+          "full_name": "Shukla Shashthi",
+          "moon_sun_diff": 67.0,
+          "name": "Shashthi",
+          "paksha": "Shukla",
+          "quality": "mixed",
+          "tithi_in_paksha": 6,
+          "tithi_num": 6
+        },
+        "total_elements": 6,
+        "vara": {
+          "quality": "asubha",
+          "vara": "Sunday",
+          "vara_lord": "Sun",
+          "weekday_idx": 0
+        },
+        "warnings": [
+          "⚠️ Parigha Yoga——不利时段"
+        ],
+        "yoga": {
+          "quality": "asubha",
+          "sun_moon_sum": 252.24,
+          "yoga": "Parigha",
+          "yoga_idx": 18
+        }
+      },
+      "rahu_kalam": null,
+      "sankranti": {
+        "active_or_near": false,
+        "quality": "not_near_boundary",
+        "status": "boundary_screen_observation",
+        "sun_degree_in_sign": 2.619
+      },
+      "tarabala": {
+        "favorable": true,
+        "status": "computed_rule_probe",
+        "tara_class": 8,
+        "tara_position": 8
+      },
+      "vaidhriti": {
+        "active": false,
+        "current_yoga": "Parigha",
+        "quality": "not_active",
+        "status": "computed_rule_probe"
+      },
+      "vyatipata": {
+        "active": false,
+        "current_yoga": "Parigha",
+        "quality": "not_active",
+        "status": "computed_rule_probe"
+      },
+      "yamaganda": {
+        "quality": "avoid",
+        "status": "computed_rule_probe",
+        "window": {
+          "duration_minutes": 90.0,
+          "end": "13:30",
+          "segment": 5,
+          "start": "12:00"
+        }
+      }
+    },
+    "final_muhurta_verdict_status": "blocked_until_oracle",
+    "full_scoring_status": "factor_only_scoring_observation",
+    "production_tuning_allowed": false,
+    "scope": "muhurta_factor_probe",
+    "verified_muhurta_verdict": false
+  },
+  "raw_sha256": "b92f1a756e7508243dd50d825a1e6b95a361ad3a6e42a6ae4b5f47c94a864439",
+  "scope": "muhurta_factor_only_scoring_packet",
+  "truth_matrix_allowed": false,
+  "verified_muhurta_verdict": false
+}

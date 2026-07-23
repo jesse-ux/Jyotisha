@@ -1,0 +1,641 @@
+{
+  "boundary": "Batch 2 advances Sthana/Kala from hard-component summary to row-level formula blocker explanations. All rows remain unresolved until subcomponent formula sources and numeric worked examples close.",
+  "claim_status": "component_explanatory_partial",
+  "created_at": "2026-07-23",
+  "packet_hash": "04b2b0a68a43e6f45e3c023a14319f3b23bc7bad8c4dd7bbcf9a0a2dd4846e4c",
+  "production_tuning_allowed": false,
+  "rows": [
+    {
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "canonical_component": "Sthanabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "method_variant_dignity_policy_unresolved",
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "known_variants": [
+        "moolatrikona_degree_range_vs_whole_sign",
+        "varga dignity table variant",
+        "subcomponent inclusion variant"
+      ],
+      "max_delta_virupa": 82.498162,
+      "next_evidence": "Split Sthana into named subcomponents, pin dignity/Moolatrikona/varga tables, then compare public numeric worked examples subcomponent-by-subcomponent.",
+      "normalized_values_virupa": {
+        "jyotishganit": 153.341,
+        "local": 217.09,
+        "vp_jain_local": 157.05,
+        "vp_jain_published": 172.04,
+        "xalen": 235.83916197045576
+      },
+      "planet": "Sun",
+      "production_tuning_allowed": false,
+      "source_bucket": "method_variant",
+      "source_evidence": [
+        "classical Shadbala six-force tradition",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen Shadbala component delta report"
+      ],
+      "source_formula": "shadbala_sthana_bala",
+      "subcomponent_queue": [
+        "moolatrikona_degree_range",
+        "own/exaltation/debilitation dignity table",
+        "saptavargaja/varga dignity inclusion",
+        "ojayugmarasyamsa odd-even sign rule",
+        "kendradi/drekkana subcomponent inclusion"
+      ],
+      "ticket_id": "shadbala.sun.sthana",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa."
+    },
+    {
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "canonical_component": "Kaalabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_kala_subcomponent_unresolved",
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "known_variants": [
+        "sunrise engine",
+        "local apparent time",
+        "included subcomponents",
+        "hemisphere/ayana convention"
+      ],
+      "max_delta_virupa": 67.093,
+      "next_evidence": "Split Kala into sunrise/day-night/paksha/tribhaga/lord/ayana subcomponents and compare with raw-backed examples using the same local-time contract.",
+      "normalized_values_virupa": {
+        "jyotishganit": 148.893,
+        "local": 140.98,
+        "vp_jain_local": 81.8,
+        "vp_jain_published": 81.8,
+        "xalen": 133.08365500051036
+      },
+      "planet": "Sun",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical temporal strength rules",
+        "sunrise/day-night/hora/month/year lord formulas",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_kala_bala",
+      "subcomponent_queue": [
+        "natonnata/day-night strength",
+        "paksha bala",
+        "tribhaga/day-part strength",
+        "year/month/day/hora lord strength",
+        "ayana bala",
+        "sunrise/sunset and local apparent time contract"
+      ],
+      "ticket_id": "shadbala.sun.kala",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules."
+    },
+    {
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "canonical_component": "Sthanabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_sthana_subcomponent_unresolved",
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "known_variants": [
+        "moolatrikona_degree_range_vs_whole_sign",
+        "varga dignity table variant",
+        "subcomponent inclusion variant"
+      ],
+      "max_delta_virupa": 169.17,
+      "next_evidence": "Split Sthana into named subcomponents, pin dignity/Moolatrikona/varga tables, then compare public numeric worked examples subcomponent-by-subcomponent.",
+      "normalized_values_virupa": {
+        "jyotishganit": 141.341,
+        "local": 246.34,
+        "vp_jain_local": 77.17,
+        "vp_jain_published": 77.17,
+        "xalen": 193.83884030327874
+      },
+      "planet": "Moon",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical Shadbala six-force tradition",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen Shadbala component delta report"
+      ],
+      "source_formula": "shadbala_sthana_bala",
+      "subcomponent_queue": [
+        "moolatrikona_degree_range",
+        "own/exaltation/debilitation dignity table",
+        "saptavargaja/varga dignity inclusion",
+        "ojayugmarasyamsa odd-even sign rule",
+        "kendradi/drekkana subcomponent inclusion"
+      ],
+      "ticket_id": "shadbala.moon.sthana",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa."
+    },
+    {
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "canonical_component": "Kaalabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_kala_subcomponent_unresolved",
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "known_variants": [
+        "sunrise engine",
+        "local apparent time",
+        "included subcomponents",
+        "hemisphere/ayana convention"
+      ],
+      "max_delta_virupa": 99.043655,
+      "next_evidence": "Split Kala into sunrise/day-night/paksha/tribhaga/lord/ayana subcomponents and compare with raw-backed examples using the same local-time contract.",
+      "normalized_values_virupa": {
+        "jyotishganit": 183.112,
+        "local": 149.61,
+        "vp_jain_local": 205.96,
+        "vp_jain_published": 205.85,
+        "xalen": 106.91634499948964
+      },
+      "planet": "Moon",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical temporal strength rules",
+        "sunrise/day-night/hora/month/year lord formulas",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_kala_bala",
+      "subcomponent_queue": [
+        "natonnata/day-night strength",
+        "paksha bala",
+        "tribhaga/day-part strength",
+        "year/month/day/hora lord strength",
+        "ayana bala",
+        "sunrise/sunset and local apparent time contract"
+      ],
+      "ticket_id": "shadbala.moon.kala",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules."
+    },
+    {
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "canonical_component": "Sthanabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_sthana_subcomponent_unresolved",
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "known_variants": [
+        "moolatrikona_degree_range_vs_whole_sign",
+        "varga dignity table variant",
+        "subcomponent inclusion variant"
+      ],
+      "max_delta_virupa": 47.438,
+      "next_evidence": "Split Sthana into named subcomponents, pin dignity/Moolatrikona/varga tables, then compare public numeric worked examples subcomponent-by-subcomponent.",
+      "normalized_values_virupa": {
+        "jyotishganit": 232.378,
+        "local": 198.63,
+        "vp_jain_local": 184.94,
+        "vp_jain_published": 184.94,
+        "xalen": 213.63005915206912
+      },
+      "planet": "Mars",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical Shadbala six-force tradition",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen Shadbala component delta report"
+      ],
+      "source_formula": "shadbala_sthana_bala",
+      "subcomponent_queue": [
+        "moolatrikona_degree_range",
+        "own/exaltation/debilitation dignity table",
+        "saptavargaja/varga dignity inclusion",
+        "ojayugmarasyamsa odd-even sign rule",
+        "kendradi/drekkana subcomponent inclusion"
+      ],
+      "ticket_id": "shadbala.mars.sthana",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa."
+    },
+    {
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "canonical_component": "Kaalabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_kala_subcomponent_unresolved",
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "known_variants": [
+        "sunrise engine",
+        "local apparent time",
+        "included subcomponents",
+        "hemisphere/ayana convention"
+      ],
+      "max_delta_virupa": 72.756345,
+      "next_evidence": "Split Kala into sunrise/day-night/paksha/tribhaga/lord/ayana subcomponents and compare with raw-backed examples using the same local-time contract.",
+      "normalized_values_virupa": {
+        "jyotishganit": 106.407,
+        "local": 127.92,
+        "vp_jain_local": 158.34,
+        "vp_jain_published": 158.08,
+        "xalen": 85.58365500051036
+      },
+      "planet": "Mars",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical temporal strength rules",
+        "sunrise/day-night/hora/month/year lord formulas",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_kala_bala",
+      "subcomponent_queue": [
+        "natonnata/day-night strength",
+        "paksha bala",
+        "tribhaga/day-part strength",
+        "year/month/day/hora lord strength",
+        "ayana bala",
+        "sunrise/sunset and local apparent time contract"
+      ],
+      "ticket_id": "shadbala.mars.kala",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules."
+    },
+    {
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "canonical_component": "Sthanabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "method_variant_dignity_policy_unresolved",
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "known_variants": [
+        "moolatrikona_degree_range_vs_whole_sign",
+        "varga dignity table variant",
+        "subcomponent inclusion variant"
+      ],
+      "max_delta_virupa": 126.456,
+      "next_evidence": "Split Sthana into named subcomponents, pin dignity/Moolatrikona/varga tables, then compare public numeric worked examples subcomponent-by-subcomponent.",
+      "normalized_values_virupa": {
+        "jyotishganit": 111.704,
+        "local": 167.96,
+        "vp_jain_local": 223.16,
+        "vp_jain_published": 238.16,
+        "xalen": 134.20630911404785
+      },
+      "planet": "Mercury",
+      "production_tuning_allowed": false,
+      "source_bucket": "method_variant",
+      "source_evidence": [
+        "classical Shadbala six-force tradition",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen Shadbala component delta report"
+      ],
+      "source_formula": "shadbala_sthana_bala",
+      "subcomponent_queue": [
+        "moolatrikona_degree_range",
+        "own/exaltation/debilitation dignity table",
+        "saptavargaja/varga dignity inclusion",
+        "ojayugmarasyamsa odd-even sign rule",
+        "kendradi/drekkana subcomponent inclusion"
+      ],
+      "ticket_id": "shadbala.mercury.sthana",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa."
+    },
+    {
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "canonical_component": "Kaalabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_kala_subcomponent_unresolved",
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "known_variants": [
+        "sunrise engine",
+        "local apparent time",
+        "included subcomponents",
+        "hemisphere/ayana convention"
+      ],
+      "max_delta_virupa": 139.391,
+      "next_evidence": "Split Kala into sunrise/day-night/paksha/tribhaga/lord/ayana subcomponents and compare with raw-backed examples using the same local-time contract.",
+      "normalized_values_virupa": {
+        "jyotishganit": 72.089,
+        "local": 121.79,
+        "vp_jain_local": 211.48,
+        "vp_jain_published": 210.68,
+        "xalen": 85.66634499948964
+      },
+      "planet": "Mercury",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical temporal strength rules",
+        "sunrise/day-night/hora/month/year lord formulas",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_kala_bala",
+      "subcomponent_queue": [
+        "natonnata/day-night strength",
+        "paksha bala",
+        "tribhaga/day-part strength",
+        "year/month/day/hora lord strength",
+        "ayana bala",
+        "sunrise/sunset and local apparent time contract"
+      ],
+      "ticket_id": "shadbala.mercury.kala",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules."
+    },
+    {
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "canonical_component": "Sthanabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_sthana_subcomponent_unresolved",
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "known_variants": [
+        "moolatrikona_degree_range_vs_whole_sign",
+        "varga dignity table variant",
+        "subcomponent inclusion variant"
+      ],
+      "max_delta_virupa": 73.208,
+      "next_evidence": "Split Sthana into named subcomponents, pin dignity/Moolatrikona/varga tables, then compare public numeric worked examples subcomponent-by-subcomponent.",
+      "normalized_values_virupa": {
+        "jyotishganit": 226.178,
+        "local": 201.81,
+        "vp_jain_local": 152.97,
+        "vp_jain_published": 152.98,
+        "xalen": 211.17574521147395
+      },
+      "planet": "Jupiter",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical Shadbala six-force tradition",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen Shadbala component delta report"
+      ],
+      "source_formula": "shadbala_sthana_bala",
+      "subcomponent_queue": [
+        "moolatrikona_degree_range",
+        "own/exaltation/debilitation dignity table",
+        "saptavargaja/varga dignity inclusion",
+        "ojayugmarasyamsa odd-even sign rule",
+        "kendradi/drekkana subcomponent inclusion"
+      ],
+      "ticket_id": "shadbala.jupiter.sthana",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa."
+    },
+    {
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "canonical_component": "Kaalabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_kala_subcomponent_unresolved",
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "known_variants": [
+        "sunrise engine",
+        "local apparent time",
+        "included subcomponents",
+        "hemisphere/ayana convention"
+      ],
+      "max_delta_virupa": 156.567655,
+      "next_evidence": "Split Kala into sunrise/day-night/paksha/tribhaga/lord/ayana subcomponents and compare with raw-backed examples using the same local-time contract.",
+      "normalized_values_virupa": {
+        "jyotishganit": 250.984,
+        "local": 199.32,
+        "vp_jain_local": 143.34,
+        "vp_jain_published": 144.22,
+        "xalen": 94.41634499948964
+      },
+      "planet": "Jupiter",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical temporal strength rules",
+        "sunrise/day-night/hora/month/year lord formulas",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_kala_bala",
+      "subcomponent_queue": [
+        "natonnata/day-night strength",
+        "paksha bala",
+        "tribhaga/day-part strength",
+        "year/month/day/hora lord strength",
+        "ayana bala",
+        "sunrise/sunset and local apparent time contract"
+      ],
+      "ticket_id": "shadbala.jupiter.kala",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules."
+    },
+    {
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "canonical_component": "Sthanabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_sthana_subcomponent_unresolved",
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "known_variants": [
+        "moolatrikona_degree_range_vs_whole_sign",
+        "varga dignity table variant",
+        "subcomponent inclusion variant"
+      ],
+      "max_delta_virupa": 85.274,
+      "next_evidence": "Split Sthana into named subcomponents, pin dignity/Moolatrikona/varga tables, then compare public numeric worked examples subcomponent-by-subcomponent.",
+      "normalized_values_virupa": {
+        "jyotishganit": 112.816,
+        "local": 154.06,
+        "vp_jain_local": 198.09,
+        "vp_jain_published": 198.08,
+        "xalen": 165.31374287471633
+      },
+      "planet": "Venus",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical Shadbala six-force tradition",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen Shadbala component delta report"
+      ],
+      "source_formula": "shadbala_sthana_bala",
+      "subcomponent_queue": [
+        "moolatrikona_degree_range",
+        "own/exaltation/debilitation dignity table",
+        "saptavargaja/varga dignity inclusion",
+        "ojayugmarasyamsa odd-even sign rule",
+        "kendradi/drekkana subcomponent inclusion"
+      ],
+      "ticket_id": "shadbala.venus.sthana",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa."
+    },
+    {
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "canonical_component": "Kaalabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_kala_subcomponent_unresolved",
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "known_variants": [
+        "sunrise engine",
+        "local apparent time",
+        "included subcomponents",
+        "hemisphere/ayana convention"
+      ],
+      "max_delta_virupa": 72.704,
+      "next_evidence": "Split Kala into sunrise/day-night/paksha/tribhaga/lord/ayana subcomponents and compare with raw-backed examples using the same local-time contract.",
+      "normalized_values_virupa": {
+        "jyotishganit": 63.186,
+        "local": 113.45,
+        "vp_jain_local": 135.84,
+        "vp_jain_published": 135.89,
+        "xalen": 109.41634499948964
+      },
+      "planet": "Venus",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical temporal strength rules",
+        "sunrise/day-night/hora/month/year lord formulas",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_kala_bala",
+      "subcomponent_queue": [
+        "natonnata/day-night strength",
+        "paksha bala",
+        "tribhaga/day-part strength",
+        "year/month/day/hora lord strength",
+        "ayana bala",
+        "sunrise/sunset and local apparent time contract"
+      ],
+      "ticket_id": "shadbala.venus.kala",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules."
+    },
+    {
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "canonical_component": "Sthanabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_sthana_subcomponent_unresolved",
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "known_variants": [
+        "moolatrikona_degree_range_vs_whole_sign",
+        "varga dignity table variant",
+        "subcomponent inclusion variant"
+      ],
+      "max_delta_virupa": 67.506,
+      "next_evidence": "Split Sthana into named subcomponents, pin dignity/Moolatrikona/varga tables, then compare public numeric worked examples subcomponent-by-subcomponent.",
+      "normalized_values_virupa": {
+        "jyotishganit": 151.104,
+        "local": 218.61,
+        "vp_jain_local": 206.3,
+        "vp_jain_published": 206.31,
+        "xalen": 199.85598657098197
+      },
+      "planet": "Saturn",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical Shadbala six-force tradition",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen Shadbala component delta report"
+      ],
+      "source_formula": "shadbala_sthana_bala",
+      "subcomponent_queue": [
+        "moolatrikona_degree_range",
+        "own/exaltation/debilitation dignity table",
+        "saptavargaja/varga dignity inclusion",
+        "ojayugmarasyamsa odd-even sign rule",
+        "kendradi/drekkana subcomponent inclusion"
+      ],
+      "ticket_id": "shadbala.saturn.sthana",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa."
+    },
+    {
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "canonical_component": "Kaalabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_kala_subcomponent_unresolved",
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "known_variants": [
+        "sunrise engine",
+        "local apparent time",
+        "included subcomponents",
+        "hemisphere/ayana convention"
+      ],
+      "max_delta_virupa": 67.701,
+      "next_evidence": "Split Kala into sunrise/day-night/paksha/tribhaga/lord/ayana subcomponents and compare with raw-backed examples using the same local-time contract.",
+      "normalized_values_virupa": {
+        "jyotishganit": 71.929,
+        "local": 136.76,
+        "vp_jain_local": 139.63,
+        "vp_jain_published": 139.56,
+        "xalen": 85.58365500051036
+      },
+      "planet": "Saturn",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical temporal strength rules",
+        "sunrise/day-night/hora/month/year lord formulas",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_kala_bala",
+      "subcomponent_queue": [
+        "natonnata/day-night strength",
+        "paksha bala",
+        "tribhaga/day-part strength",
+        "year/month/day/hora lord strength",
+        "ayana bala",
+        "sunrise/sunset and local apparent time contract"
+      ],
+      "ticket_id": "shadbala.saturn.kala",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules."
+    }
+  ],
+  "scope": "shadbala_component_closure_batch2",
+  "source_packet_hashes": {
+    "formula_source_knowledge_base_sha256": "3ce037af32c16dd613555f08e9705008d0d8074303d9808987625be1974445c4",
+    "hard_component_arbitration_sha256": "aa40c27cb5cf2dd9e17bbe78ad270f11d46fcdcbfb491af5f7958bc4bab93c01",
+    "joined_closure_sha256": "98ea50de9edbec32e2cd0fef2ec037f4a226da51e8413c2ef428c42a4f004593"
+  },
+  "source_packets": {
+    "formula_source_knowledge_base": "references/oracle/formula_source_knowledge_base_2026_07_19.json",
+    "hard_component_arbitration": "references/oracle/shadbala_hard_component_arbitration_2026_07_22.json",
+    "joined_closure": "references/oracle/shadbala_component_joined_closure_packet_2026_07_21.json"
+  },
+  "summary": {
+    "absolute_truth_upgrade_count": 0,
+    "blocked_or_unresolved_row_count": 14,
+    "closure_status_counts": {
+      "formula_mismatch_kala_subcomponent_unresolved": 7,
+      "formula_mismatch_sthana_subcomponent_unresolved": 5,
+      "method_variant_dignity_policy_unresolved": 2
+    },
+    "component_counts": {
+      "kala": 7,
+      "sthana": 7
+    },
+    "row_count": 14,
+    "target_components": [
+      "sthana",
+      "kala"
+    ]
+  },
+  "truth_matrix_allowed": false
+}

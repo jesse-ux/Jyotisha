@@ -1,0 +1,1634 @@
+{
+  "boundary": "All 42 Shadbala rows now have row-level explanatory closure status; this is not absolute Virupa parity and cannot tune production prediction.",
+  "claim_status": "component_explanatory_partial",
+  "created_at": "2026-07-23",
+  "packet_hash": "41594fa80293c0d1c5aa7b23f24a0534d718acb8161b7e0c46013a25fc08ad23",
+  "production_tuning_allowed": false,
+  "rows": [
+    {
+      "canonical_component": "Cheshtabala",
+      "claim_boundary": "Do not tune Chesta to majority values. Keep method variants explicit until authoritative formula source and second public numeric case close.",
+      "claim_upgrade": "none",
+      "closure_status": "method_variant_chesta_policy_unresolved",
+      "component": "chesta",
+      "known_variants": [
+        "luminary_chesta_policy",
+        "mean-motion vs apparent-speed",
+        "Seeghrochcha model"
+      ],
+      "max_delta_virupa": 51.57,
+      "next_evidence": "Pin mean-motion/retrograde/Seeghrochcha/luminary policy against source-cited public numeric examples.",
+      "normalized_values_virupa": {
+        "jyotishganit": 36.424,
+        "local": 46.49,
+        "vp_jain_local": 11.23,
+        "vp_jain_published": 8.43,
+        "xalen": 60.0
+      },
+      "planet": "Jupiter",
+      "production_tuning_allowed": false,
+      "source_bucket": "method_variant",
+      "source_evidence": [
+        "classical motional strength rules",
+        "mean-motion/Seeghrochcha requirement",
+        "VP Jain fixture variants"
+      ],
+      "source_formula": "shadbala_chesta_bala",
+      "ticket_id": "shadbala.jupiter.chesta",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa motional-strength component; speed basis, luminary policy, retrograde handling, and Seeghrochcha model must be explicit.",
+      "variant_family": "mean_motion_seeghrochcha_variant"
+    },
+    {
+      "canonical_component": "Cheshtabala",
+      "claim_boundary": "Do not tune Chesta to majority values. Keep method variants explicit until authoritative formula source and second public numeric case close.",
+      "claim_upgrade": "none",
+      "closure_status": "method_variant_chesta_policy_unresolved",
+      "component": "chesta",
+      "known_variants": [
+        "luminary_chesta_policy",
+        "mean-motion vs apparent-speed",
+        "Seeghrochcha model"
+      ],
+      "max_delta_virupa": 7.864,
+      "next_evidence": "Pin mean-motion/retrograde/Seeghrochcha/luminary policy against source-cited public numeric examples.",
+      "normalized_values_virupa": {
+        "jyotishganit": 22.864,
+        "local": 21.6,
+        "vp_jain_local": 19.25,
+        "vp_jain_published": 20.93,
+        "xalen": 15.0
+      },
+      "planet": "Mars",
+      "production_tuning_allowed": false,
+      "source_bucket": "method_variant",
+      "source_evidence": [
+        "classical motional strength rules",
+        "mean-motion/Seeghrochcha requirement",
+        "VP Jain fixture variants"
+      ],
+      "source_formula": "shadbala_chesta_bala",
+      "ticket_id": "shadbala.mars.chesta",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa motional-strength component; speed basis, luminary policy, retrograde handling, and Seeghrochcha model must be explicit.",
+      "variant_family": "mean_motion_seeghrochcha_variant"
+    },
+    {
+      "canonical_component": "Cheshtabala",
+      "claim_boundary": "Do not tune Chesta to majority values. Keep method variants explicit until authoritative formula source and second public numeric case close.",
+      "claim_upgrade": "none",
+      "closure_status": "method_variant_chesta_policy_unresolved",
+      "component": "chesta",
+      "known_variants": [
+        "luminary_chesta_policy",
+        "mean-motion vs apparent-speed",
+        "Seeghrochcha model"
+      ],
+      "max_delta_virupa": 41.92,
+      "next_evidence": "Pin mean-motion/retrograde/Seeghrochcha/luminary policy against source-cited public numeric examples.",
+      "normalized_values_virupa": {
+        "jyotishganit": 35.368,
+        "local": 47.8,
+        "vp_jain_local": 18.08,
+        "vp_jain_published": 28.76,
+        "xalen": 60.0
+      },
+      "planet": "Mercury",
+      "production_tuning_allowed": false,
+      "source_bucket": "method_variant",
+      "source_evidence": [
+        "classical motional strength rules",
+        "mean-motion/Seeghrochcha requirement",
+        "VP Jain fixture variants"
+      ],
+      "source_formula": "shadbala_chesta_bala",
+      "ticket_id": "shadbala.mercury.chesta",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa motional-strength component; speed basis, luminary policy, retrograde handling, and Seeghrochcha model must be explicit.",
+      "variant_family": "mean_motion_seeghrochcha_variant"
+    },
+    {
+      "canonical_component": "Cheshtabala",
+      "claim_boundary": "Do not tune Chesta to majority values. Keep method variants explicit until authoritative formula source and second public numeric case close.",
+      "claim_upgrade": "none",
+      "closure_status": "method_variant_chesta_policy_unresolved",
+      "component": "chesta",
+      "known_variants": [
+        "luminary_chesta_policy",
+        "mean-motion vs apparent-speed",
+        "Seeghrochcha model"
+      ],
+      "max_delta_virupa": 108.76,
+      "next_evidence": "Pin mean-motion/retrograde/Seeghrochcha/luminary policy against source-cited public numeric examples.",
+      "normalized_values_virupa": {
+        "jyotishganit": 10.667,
+        "local": 21.34,
+        "vp_jain_local": 108.76,
+        "vp_jain_published": 0.0,
+        "xalen": 30.0
+      },
+      "planet": "Moon",
+      "production_tuning_allowed": false,
+      "source_bucket": "method_variant",
+      "source_evidence": [
+        "classical motional strength rules",
+        "mean-motion/Seeghrochcha requirement",
+        "VP Jain fixture variants"
+      ],
+      "source_formula": "shadbala_chesta_bala",
+      "ticket_id": "shadbala.moon.chesta",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa motional-strength component; speed basis, luminary policy, retrograde handling, and Seeghrochcha model must be explicit.",
+      "variant_family": "luminary_chesta_policy_conflict"
+    },
+    {
+      "canonical_component": "Cheshtabala",
+      "claim_boundary": "Do not tune Chesta to majority values. Keep method variants explicit until authoritative formula source and second public numeric case close.",
+      "claim_upgrade": "none",
+      "closure_status": "method_variant_chesta_policy_unresolved",
+      "component": "chesta",
+      "known_variants": [
+        "luminary_chesta_policy",
+        "mean-motion vs apparent-speed",
+        "Seeghrochcha model"
+      ],
+      "max_delta_virupa": 53.087,
+      "next_evidence": "Pin mean-motion/retrograde/Seeghrochcha/luminary policy against source-cited public numeric examples.",
+      "normalized_values_virupa": {
+        "jyotishganit": 58.137,
+        "local": 36.99,
+        "vp_jain_local": 6.78,
+        "vp_jain_published": 5.05,
+        "xalen": 30.0
+      },
+      "planet": "Saturn",
+      "production_tuning_allowed": false,
+      "source_bucket": "method_variant",
+      "source_evidence": [
+        "classical motional strength rules",
+        "mean-motion/Seeghrochcha requirement",
+        "VP Jain fixture variants"
+      ],
+      "source_formula": "shadbala_chesta_bala",
+      "ticket_id": "shadbala.saturn.chesta",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa motional-strength component; speed basis, luminary policy, retrograde handling, and Seeghrochcha model must be explicit.",
+      "variant_family": "mean_motion_seeghrochcha_variant"
+    },
+    {
+      "canonical_component": "Cheshtabala",
+      "claim_boundary": "Do not tune Chesta to majority values. Keep method variants explicit until authoritative formula source and second public numeric case close.",
+      "claim_upgrade": "none",
+      "closure_status": "method_variant_chesta_policy_unresolved",
+      "component": "chesta",
+      "known_variants": [
+        "luminary_chesta_policy",
+        "mean-motion vs apparent-speed",
+        "Seeghrochcha model"
+      ],
+      "max_delta_virupa": 70.14,
+      "next_evidence": "Pin mean-motion/retrograde/Seeghrochcha/luminary policy against source-cited public numeric examples.",
+      "normalized_values_virupa": {
+        "jyotishganit": 37.06,
+        "local": 36.0,
+        "vp_jain_local": 70.14,
+        "vp_jain_published": 0.0,
+        "xalen": 30.0
+      },
+      "planet": "Sun",
+      "production_tuning_allowed": false,
+      "source_bucket": "method_variant",
+      "source_evidence": [
+        "classical motional strength rules",
+        "mean-motion/Seeghrochcha requirement",
+        "VP Jain fixture variants"
+      ],
+      "source_formula": "shadbala_chesta_bala",
+      "ticket_id": "shadbala.sun.chesta",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa motional-strength component; speed basis, luminary policy, retrograde handling, and Seeghrochcha model must be explicit.",
+      "variant_family": "luminary_chesta_policy_conflict"
+    },
+    {
+      "canonical_component": "Cheshtabala",
+      "claim_boundary": "Do not tune Chesta to majority values. Keep method variants explicit until authoritative formula source and second public numeric case close.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_chesta_exception_unresolved",
+      "component": "chesta",
+      "known_variants": [
+        "luminary_chesta_policy",
+        "mean-motion vs apparent-speed",
+        "Seeghrochcha model"
+      ],
+      "max_delta_virupa": 31.466,
+      "next_evidence": "Pin mean-motion/retrograde/Seeghrochcha/luminary policy against source-cited public numeric examples.",
+      "normalized_values_virupa": {
+        "jyotishganit": 46.466,
+        "local": 29.36,
+        "vp_jain_local": 27.23,
+        "vp_jain_published": 28.18,
+        "xalen": 15.0
+      },
+      "planet": "Venus",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical motional strength rules",
+        "mean-motion/Seeghrochcha requirement",
+        "VP Jain fixture variants"
+      ],
+      "source_formula": "shadbala_chesta_bala",
+      "ticket_id": "shadbala.venus.chesta",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa motional-strength component; speed basis, luminary policy, retrograde handling, and Seeghrochcha model must be explicit.",
+      "variant_family": "mean_motion_seeghrochcha_formula_or_unit_exception"
+    },
+    {
+      "canonical_component": "Digbala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_angular_reference_unresolved",
+      "component": "dig",
+      "dig_model_diagnostic": {
+        "best_abs_diff_rupa": 0.0001,
+        "best_local_candidate_model": "bhava_madhya_angular_model",
+        "candidate_models": [
+          "bhava_madhya_angular_model",
+          "current_linear_house_model",
+          "house_midpoint_angular_model"
+        ],
+        "diagnostic_boundary": "Two-case diagnostic only; a best local candidate model is not a selected absolute formula truth."
+      },
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "max_delta_virupa": 48.6,
+      "next_evidence": "Use public worked examples to choose house-cusp, bhava-madhya or whole-house angular reference; do not tune by majority vote.",
+      "normalized_values_virupa": {
+        "jyotishganit": 44.095,
+        "local": 80.59,
+        "vp_jain_local": 31.99,
+        "vp_jain_published": 31.99,
+        "xalen": 40.00000000000001
+      },
+      "planet": "Jupiter",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical directional strength rule",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_dig_bala",
+      "ticket_id": "shadbala.jupiter.dig",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; cap/floor and interpolation must be explicit."
+    },
+    {
+      "canonical_component": "Digbala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_angular_reference_unresolved",
+      "component": "dig",
+      "dig_model_diagnostic": {
+        "best_abs_diff_rupa": 0.0008,
+        "best_local_candidate_model": "house_midpoint_angular_model",
+        "candidate_models": [
+          "bhava_madhya_angular_model",
+          "current_linear_house_model",
+          "house_midpoint_angular_model"
+        ],
+        "diagnostic_boundary": "Two-case diagnostic only; a best local candidate model is not a selected absolute formula truth."
+      },
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "max_delta_virupa": 56.43,
+      "next_evidence": "Use public worked examples to choose house-cusp, bhava-madhya or whole-house angular reference; do not tune by majority vote.",
+      "normalized_values_virupa": {
+        "jyotishganit": 46.955,
+        "local": 77.41,
+        "vp_jain_local": 20.98,
+        "vp_jain_published": 20.99,
+        "xalen": 50.0
+      },
+      "planet": "Mars",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical directional strength rule",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_dig_bala",
+      "ticket_id": "shadbala.mars.dig",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; cap/floor and interpolation must be explicit."
+    },
+    {
+      "canonical_component": "Digbala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_angular_reference_unresolved",
+      "component": "dig",
+      "dig_model_diagnostic": {
+        "best_abs_diff_rupa": 0.0001,
+        "best_local_candidate_model": "bhava_madhya_angular_model",
+        "candidate_models": [
+          "bhava_madhya_angular_model",
+          "current_linear_house_model",
+          "house_midpoint_angular_model"
+        ],
+        "diagnostic_boundary": "Two-case diagnostic only; a best local candidate model is not a selected absolute formula truth."
+      },
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "max_delta_virupa": 24.016,
+      "next_evidence": "Use public worked examples to choose house-cusp, bhava-madhya or whole-house angular reference; do not tune by majority vote.",
+      "normalized_values_virupa": {
+        "jyotishganit": 7.954,
+        "local": 12.64,
+        "vp_jain_local": 31.97,
+        "vp_jain_published": 31.97,
+        "xalen": 9.999999999999998
+      },
+      "planet": "Mercury",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical directional strength rule",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_dig_bala",
+      "ticket_id": "shadbala.mercury.dig",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; cap/floor and interpolation must be explicit."
+    },
+    {
+      "canonical_component": "Digbala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_angular_reference_unresolved",
+      "component": "dig",
+      "dig_model_diagnostic": {
+        "best_abs_diff_rupa": 0.0394,
+        "best_local_candidate_model": "house_midpoint_angular_model",
+        "candidate_models": [
+          "bhava_madhya_angular_model",
+          "current_linear_house_model",
+          "house_midpoint_angular_model"
+        ],
+        "diagnostic_boundary": "Two-case diagnostic only; a best local candidate model is not a selected absolute formula truth."
+      },
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "max_delta_virupa": 83.27,
+      "next_evidence": "Use public worked examples to choose house-cusp, bhava-madhya or whole-house angular reference; do not tune by majority vote.",
+      "normalized_values_virupa": {
+        "jyotishganit": 20.159,
+        "local": 95.48,
+        "vp_jain_local": 12.21,
+        "vp_jain_published": 12.22,
+        "xalen": 20.000000000000004
+      },
+      "planet": "Moon",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical directional strength rule",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_dig_bala",
+      "ticket_id": "shadbala.moon.dig",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; cap/floor and interpolation must be explicit."
+    },
+    {
+      "canonical_component": "Digbala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_angular_reference_unresolved",
+      "component": "dig",
+      "dig_model_diagnostic": {
+        "best_abs_diff_rupa": 1.1447,
+        "best_local_candidate_model": "current_linear_house_model",
+        "candidate_models": [
+          "bhava_madhya_angular_model",
+          "current_linear_house_model",
+          "house_midpoint_angular_model"
+        ],
+        "diagnostic_boundary": "Two-case diagnostic only; a best local candidate model is not a selected absolute formula truth."
+      },
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "max_delta_virupa": 7.04,
+      "next_evidence": "Use public worked examples to choose house-cusp, bhava-madhya or whole-house angular reference; do not tune by majority vote.",
+      "normalized_values_virupa": {
+        "jyotishganit": 24.313,
+        "local": 19.63,
+        "vp_jain_local": 26.66,
+        "vp_jain_published": 26.67,
+        "xalen": 20.000000000000004
+      },
+      "planet": "Saturn",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical directional strength rule",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_dig_bala",
+      "ticket_id": "shadbala.saturn.dig",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; cap/floor and interpolation must be explicit."
+    },
+    {
+      "canonical_component": "Digbala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_angular_reference_unresolved",
+      "component": "dig",
+      "dig_model_diagnostic": {
+        "best_abs_diff_rupa": 0.035,
+        "best_local_candidate_model": "house_midpoint_angular_model",
+        "candidate_models": [
+          "bhava_madhya_angular_model",
+          "current_linear_house_model",
+          "house_midpoint_angular_model"
+        ],
+        "diagnostic_boundary": "Two-case diagnostic only; a best local candidate model is not a selected absolute formula truth."
+      },
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "max_delta_virupa": 23.41,
+      "next_evidence": "Use public worked examples to choose house-cusp, bhava-madhya or whole-house angular reference; do not tune by majority vote.",
+      "normalized_values_virupa": {
+        "jyotishganit": 29.175,
+        "local": 24.81,
+        "vp_jain_local": 6.6,
+        "vp_jain_published": 6.59,
+        "xalen": 30.0
+      },
+      "planet": "Sun",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical directional strength rule",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_dig_bala",
+      "ticket_id": "shadbala.sun.dig",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; cap/floor and interpolation must be explicit."
+    },
+    {
+      "canonical_component": "Digbala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_angular_reference_unresolved",
+      "component": "dig",
+      "dig_model_diagnostic": {
+        "best_abs_diff_rupa": 0.0061,
+        "best_local_candidate_model": "house_midpoint_angular_model",
+        "candidate_models": [
+          "bhava_madhya_angular_model",
+          "current_linear_house_model",
+          "house_midpoint_angular_model"
+        ],
+        "diagnostic_boundary": "Two-case diagnostic only; a best local candidate model is not a selected absolute formula truth."
+      },
+      "known_variants": [
+        "house-cusp vs whole-house angular distance",
+        "rounding precision"
+      ],
+      "max_delta_virupa": 24.266,
+      "next_evidence": "Use public worked examples to choose house-cusp, bhava-madhya or whole-house angular reference; do not tune by majority vote.",
+      "normalized_values_virupa": {
+        "jyotishganit": 45.684,
+        "local": 69.95,
+        "vp_jain_local": 53.29,
+        "vp_jain_published": 53.29,
+        "xalen": 50.0
+      },
+      "planet": "Venus",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical directional strength rule",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_dig_bala",
+      "ticket_id": "shadbala.venus.dig",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; cap/floor and interpolation must be explicit."
+    },
+    {
+      "canonical_component": "Drikbala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_aspect_model_unresolved",
+      "component": "drik",
+      "known_variants": [
+        "graha drishti model",
+        "orb/interpolation",
+        "benefic/malefic classification"
+      ],
+      "max_delta_virupa": 10.65,
+      "next_evidence": "Pin graha drishti/aspect strength, orb/interpolation and benefic-malefic sign convention against source-cited numeric examples.",
+      "normalized_values_virupa": {
+        "jyotishganit": 4.072,
+        "local": 6.9,
+        "vp_jain_local": 4.31,
+        "vp_jain_published": 4.32,
+        "xalen": -3.75
+      },
+      "planet": "Jupiter",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical aspectual strength rules",
+        "planet aspect model",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_drik_bala",
+      "ticket_id": "shadbala.jupiter.drik",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; positive/negative sign and aspect-strength scale must be explicit."
+    },
+    {
+      "canonical_component": "Drikbala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_aspect_model_unresolved",
+      "component": "drik",
+      "known_variants": [
+        "graha drishti model",
+        "orb/interpolation",
+        "benefic/malefic classification"
+      ],
+      "max_delta_virupa": 20.1,
+      "next_evidence": "Pin graha drishti/aspect strength, orb/interpolation and benefic-malefic sign convention against source-cited numeric examples.",
+      "normalized_values_virupa": {
+        "jyotishganit": 12.483,
+        "local": 13.49,
+        "vp_jain_local": -5.1,
+        "vp_jain_published": -5.1,
+        "xalen": 15.0
+      },
+      "planet": "Mars",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical aspectual strength rules",
+        "planet aspect model",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_drik_bala",
+      "ticket_id": "shadbala.mars.drik",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; positive/negative sign and aspect-strength scale must be explicit."
+    },
+    {
+      "canonical_component": "Drikbala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_aspect_model_unresolved",
+      "component": "drik",
+      "known_variants": [
+        "graha drishti model",
+        "orb/interpolation",
+        "benefic/malefic classification"
+      ],
+      "max_delta_virupa": 15.275,
+      "next_evidence": "Pin graha drishti/aspect strength, orb/interpolation and benefic-malefic sign convention against source-cited numeric examples.",
+      "normalized_values_virupa": {
+        "jyotishganit": -10.985,
+        "local": -10.62,
+        "vp_jain_local": 4.29,
+        "vp_jain_published": 4.29,
+        "xalen": 0.0
+      },
+      "planet": "Mercury",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical aspectual strength rules",
+        "planet aspect model",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_drik_bala",
+      "ticket_id": "shadbala.mercury.drik",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; positive/negative sign and aspect-strength scale must be explicit."
+    },
+    {
+      "canonical_component": "Drikbala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_aspect_model_unresolved",
+      "component": "drik",
+      "known_variants": [
+        "graha drishti model",
+        "orb/interpolation",
+        "benefic/malefic classification"
+      ],
+      "max_delta_virupa": 20.39,
+      "next_evidence": "Pin graha drishti/aspect strength, orb/interpolation and benefic-malefic sign convention against source-cited numeric examples.",
+      "normalized_values_virupa": {
+        "jyotishganit": 13.946,
+        "local": 20.06,
+        "vp_jain_local": -0.33,
+        "vp_jain_published": -0.32,
+        "xalen": 18.75
+      },
+      "planet": "Moon",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical aspectual strength rules",
+        "planet aspect model",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_drik_bala",
+      "ticket_id": "shadbala.moon.drik",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; positive/negative sign and aspect-strength scale must be explicit."
+    },
+    {
+      "canonical_component": "Drikbala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_aspect_model_unresolved",
+      "component": "drik",
+      "known_variants": [
+        "graha drishti model",
+        "orb/interpolation",
+        "benefic/malefic classification"
+      ],
+      "max_delta_virupa": 5.43,
+      "next_evidence": "Pin graha drishti/aspect strength, orb/interpolation and benefic-malefic sign convention against source-cited numeric examples.",
+      "normalized_values_virupa": {
+        "jyotishganit": 8.06,
+        "local": 9.49,
+        "vp_jain_local": 5.83,
+        "vp_jain_published": 5.82,
+        "xalen": 11.25
+      },
+      "planet": "Saturn",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical aspectual strength rules",
+        "planet aspect model",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_drik_bala",
+      "ticket_id": "shadbala.saturn.drik",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; positive/negative sign and aspect-strength scale must be explicit."
+    },
+    {
+      "canonical_component": "Drikbala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_aspect_model_unresolved",
+      "component": "drik",
+      "known_variants": [
+        "graha drishti model",
+        "orb/interpolation",
+        "benefic/malefic classification"
+      ],
+      "max_delta_virupa": 17.712,
+      "next_evidence": "Pin graha drishti/aspect strength, orb/interpolation and benefic-malefic sign convention against source-cited numeric examples.",
+      "normalized_values_virupa": {
+        "jyotishganit": -6.462,
+        "local": 1.74,
+        "vp_jain_local": 11.25,
+        "vp_jain_published": 11.24,
+        "xalen": 3.75
+      },
+      "planet": "Sun",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical aspectual strength rules",
+        "planet aspect model",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_drik_bala",
+      "ticket_id": "shadbala.sun.drik",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; positive/negative sign and aspect-strength scale must be explicit."
+    },
+    {
+      "canonical_component": "Drikbala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_aspect_model_unresolved",
+      "component": "drik",
+      "known_variants": [
+        "graha drishti model",
+        "orb/interpolation",
+        "benefic/malefic classification"
+      ],
+      "max_delta_virupa": 4.511,
+      "next_evidence": "Pin graha drishti/aspect strength, orb/interpolation and benefic-malefic sign convention against source-cited numeric examples.",
+      "normalized_values_virupa": {
+        "jyotishganit": -4.511,
+        "local": -2.75,
+        "vp_jain_local": -2.85,
+        "vp_jain_published": -2.86,
+        "xalen": 0.0
+      },
+      "planet": "Venus",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical aspectual strength rules",
+        "planet aspect model",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_drik_bala",
+      "ticket_id": "shadbala.venus.drik",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; positive/negative sign and aspect-strength scale must be explicit."
+    },
+    {
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "canonical_component": "Kaalabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_kala_subcomponent_unresolved",
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "known_variants": [
+        "sunrise engine",
+        "local apparent time",
+        "included subcomponents",
+        "hemisphere/ayana convention"
+      ],
+      "max_delta_virupa": 156.567655,
+      "next_evidence": "Split Kala into sunrise/day-night/paksha/tribhaga/lord/ayana subcomponents and compare with raw-backed examples using the same local-time contract.",
+      "normalized_values_virupa": {
+        "jyotishganit": 250.984,
+        "local": 199.32,
+        "vp_jain_local": 143.34,
+        "vp_jain_published": 144.22,
+        "xalen": 94.41634499948964
+      },
+      "planet": "Jupiter",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical temporal strength rules",
+        "sunrise/day-night/hora/month/year lord formulas",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_kala_bala",
+      "subcomponent_queue": [
+        "natonnata/day-night strength",
+        "paksha bala",
+        "tribhaga/day-part strength",
+        "year/month/day/hora lord strength",
+        "ayana bala",
+        "sunrise/sunset and local apparent time contract"
+      ],
+      "ticket_id": "shadbala.jupiter.kala",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules."
+    },
+    {
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "canonical_component": "Kaalabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_kala_subcomponent_unresolved",
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "known_variants": [
+        "sunrise engine",
+        "local apparent time",
+        "included subcomponents",
+        "hemisphere/ayana convention"
+      ],
+      "max_delta_virupa": 72.756345,
+      "next_evidence": "Split Kala into sunrise/day-night/paksha/tribhaga/lord/ayana subcomponents and compare with raw-backed examples using the same local-time contract.",
+      "normalized_values_virupa": {
+        "jyotishganit": 106.407,
+        "local": 127.92,
+        "vp_jain_local": 158.34,
+        "vp_jain_published": 158.08,
+        "xalen": 85.58365500051036
+      },
+      "planet": "Mars",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical temporal strength rules",
+        "sunrise/day-night/hora/month/year lord formulas",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_kala_bala",
+      "subcomponent_queue": [
+        "natonnata/day-night strength",
+        "paksha bala",
+        "tribhaga/day-part strength",
+        "year/month/day/hora lord strength",
+        "ayana bala",
+        "sunrise/sunset and local apparent time contract"
+      ],
+      "ticket_id": "shadbala.mars.kala",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules."
+    },
+    {
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "canonical_component": "Kaalabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_kala_subcomponent_unresolved",
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "known_variants": [
+        "sunrise engine",
+        "local apparent time",
+        "included subcomponents",
+        "hemisphere/ayana convention"
+      ],
+      "max_delta_virupa": 139.391,
+      "next_evidence": "Split Kala into sunrise/day-night/paksha/tribhaga/lord/ayana subcomponents and compare with raw-backed examples using the same local-time contract.",
+      "normalized_values_virupa": {
+        "jyotishganit": 72.089,
+        "local": 121.79,
+        "vp_jain_local": 211.48,
+        "vp_jain_published": 210.68,
+        "xalen": 85.66634499948964
+      },
+      "planet": "Mercury",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical temporal strength rules",
+        "sunrise/day-night/hora/month/year lord formulas",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_kala_bala",
+      "subcomponent_queue": [
+        "natonnata/day-night strength",
+        "paksha bala",
+        "tribhaga/day-part strength",
+        "year/month/day/hora lord strength",
+        "ayana bala",
+        "sunrise/sunset and local apparent time contract"
+      ],
+      "ticket_id": "shadbala.mercury.kala",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules."
+    },
+    {
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "canonical_component": "Kaalabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_kala_subcomponent_unresolved",
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "known_variants": [
+        "sunrise engine",
+        "local apparent time",
+        "included subcomponents",
+        "hemisphere/ayana convention"
+      ],
+      "max_delta_virupa": 99.043655,
+      "next_evidence": "Split Kala into sunrise/day-night/paksha/tribhaga/lord/ayana subcomponents and compare with raw-backed examples using the same local-time contract.",
+      "normalized_values_virupa": {
+        "jyotishganit": 183.112,
+        "local": 149.61,
+        "vp_jain_local": 205.96,
+        "vp_jain_published": 205.85,
+        "xalen": 106.91634499948964
+      },
+      "planet": "Moon",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical temporal strength rules",
+        "sunrise/day-night/hora/month/year lord formulas",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_kala_bala",
+      "subcomponent_queue": [
+        "natonnata/day-night strength",
+        "paksha bala",
+        "tribhaga/day-part strength",
+        "year/month/day/hora lord strength",
+        "ayana bala",
+        "sunrise/sunset and local apparent time contract"
+      ],
+      "ticket_id": "shadbala.moon.kala",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules."
+    },
+    {
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "canonical_component": "Kaalabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_kala_subcomponent_unresolved",
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "known_variants": [
+        "sunrise engine",
+        "local apparent time",
+        "included subcomponents",
+        "hemisphere/ayana convention"
+      ],
+      "max_delta_virupa": 67.701,
+      "next_evidence": "Split Kala into sunrise/day-night/paksha/tribhaga/lord/ayana subcomponents and compare with raw-backed examples using the same local-time contract.",
+      "normalized_values_virupa": {
+        "jyotishganit": 71.929,
+        "local": 136.76,
+        "vp_jain_local": 139.63,
+        "vp_jain_published": 139.56,
+        "xalen": 85.58365500051036
+      },
+      "planet": "Saturn",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical temporal strength rules",
+        "sunrise/day-night/hora/month/year lord formulas",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_kala_bala",
+      "subcomponent_queue": [
+        "natonnata/day-night strength",
+        "paksha bala",
+        "tribhaga/day-part strength",
+        "year/month/day/hora lord strength",
+        "ayana bala",
+        "sunrise/sunset and local apparent time contract"
+      ],
+      "ticket_id": "shadbala.saturn.kala",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules."
+    },
+    {
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "canonical_component": "Kaalabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_kala_subcomponent_unresolved",
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "known_variants": [
+        "sunrise engine",
+        "local apparent time",
+        "included subcomponents",
+        "hemisphere/ayana convention"
+      ],
+      "max_delta_virupa": 67.093,
+      "next_evidence": "Split Kala into sunrise/day-night/paksha/tribhaga/lord/ayana subcomponents and compare with raw-backed examples using the same local-time contract.",
+      "normalized_values_virupa": {
+        "jyotishganit": 148.893,
+        "local": 140.98,
+        "vp_jain_local": 81.8,
+        "vp_jain_published": 81.8,
+        "xalen": 133.08365500051036
+      },
+      "planet": "Sun",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical temporal strength rules",
+        "sunrise/day-night/hora/month/year lord formulas",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_kala_bala",
+      "subcomponent_queue": [
+        "natonnata/day-night strength",
+        "paksha bala",
+        "tribhaga/day-part strength",
+        "year/month/day/hora lord strength",
+        "ayana bala",
+        "sunrise/sunset and local apparent time contract"
+      ],
+      "ticket_id": "shadbala.sun.kala",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules."
+    },
+    {
+      "blocked_reason": "Time-context and subcomponent formula/unit policies differ for all seven planets.",
+      "canonical_component": "Kaalabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_kala_subcomponent_unresolved",
+      "component": "kala",
+      "dominant_issue": "formula_or_unit_mismatch",
+      "known_variants": [
+        "sunrise engine",
+        "local apparent time",
+        "included subcomponents",
+        "hemisphere/ayana convention"
+      ],
+      "max_delta_virupa": 72.704,
+      "next_evidence": "Split Kala into sunrise/day-night/paksha/tribhaga/lord/ayana subcomponents and compare with raw-backed examples using the same local-time contract.",
+      "normalized_values_virupa": {
+        "jyotishganit": 63.186,
+        "local": 113.45,
+        "vp_jain_local": 135.84,
+        "vp_jain_published": 135.89,
+        "xalen": 109.41634499948964
+      },
+      "planet": "Venus",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical temporal strength rules",
+        "sunrise/day-night/hora/month/year lord formulas",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_kala_bala",
+      "subcomponent_queue": [
+        "natonnata/day-night strength",
+        "paksha bala",
+        "tribhaga/day-part strength",
+        "year/month/day/hora lord strength",
+        "ayana bala",
+        "sunrise/sunset and local apparent time contract"
+      ],
+      "ticket_id": "shadbala.venus.kala",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; each subcomponent must name local time, sunrise/sunset, ayana and cap rules."
+    },
+    {
+      "canonical_component": "Naisargikabala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "within_tolerance_observation_closed",
+      "component": "naisargika",
+      "known_variants": [
+        "fixed table rounding",
+        "planet inclusion set"
+      ],
+      "max_delta_virupa": 0.0,
+      "next_evidence": "Replay at least one more public raw-backed case, then freeze the fixed seven-planet Virupa table as observation-ready.",
+      "normalized_values_virupa": {
+        "jyotishganit": 34.29,
+        "local": 34.29,
+        "vp_jain_local": 34.29,
+        "vp_jain_published": 34.29,
+        "xalen": 34.29
+      },
+      "planet": "Jupiter",
+      "production_tuning_allowed": false,
+      "source_bucket": "within_tolerance",
+      "source_evidence": [
+        "classical natural strength ordering",
+        "VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_naisargika_bala",
+      "ticket_id": "shadbala.jupiter.naisargika",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Fixed Virupa table for seven visible planets; table source must be named."
+    },
+    {
+      "canonical_component": "Naisargikabala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "within_tolerance_observation_closed",
+      "component": "naisargika",
+      "known_variants": [
+        "fixed table rounding",
+        "planet inclusion set"
+      ],
+      "max_delta_virupa": 0.0,
+      "next_evidence": "Replay at least one more public raw-backed case, then freeze the fixed seven-planet Virupa table as observation-ready.",
+      "normalized_values_virupa": {
+        "jyotishganit": 17.14,
+        "local": 17.14,
+        "vp_jain_local": 17.14,
+        "vp_jain_published": 17.14,
+        "xalen": 17.14
+      },
+      "planet": "Mars",
+      "production_tuning_allowed": false,
+      "source_bucket": "within_tolerance",
+      "source_evidence": [
+        "classical natural strength ordering",
+        "VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_naisargika_bala",
+      "ticket_id": "shadbala.mars.naisargika",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Fixed Virupa table for seven visible planets; table source must be named."
+    },
+    {
+      "canonical_component": "Naisargikabala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "within_tolerance_observation_closed",
+      "component": "naisargika",
+      "known_variants": [
+        "fixed table rounding",
+        "planet inclusion set"
+      ],
+      "max_delta_virupa": 0.0,
+      "next_evidence": "Replay at least one more public raw-backed case, then freeze the fixed seven-planet Virupa table as observation-ready.",
+      "normalized_values_virupa": {
+        "jyotishganit": 25.71,
+        "local": 25.71,
+        "vp_jain_local": 25.71,
+        "vp_jain_published": 25.71,
+        "xalen": 25.71
+      },
+      "planet": "Mercury",
+      "production_tuning_allowed": false,
+      "source_bucket": "within_tolerance",
+      "source_evidence": [
+        "classical natural strength ordering",
+        "VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_naisargika_bala",
+      "ticket_id": "shadbala.mercury.naisargika",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Fixed Virupa table for seven visible planets; table source must be named."
+    },
+    {
+      "canonical_component": "Naisargikabala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "within_tolerance_observation_closed",
+      "component": "naisargika",
+      "known_variants": [
+        "fixed table rounding",
+        "planet inclusion set"
+      ],
+      "max_delta_virupa": 0.0,
+      "next_evidence": "Replay at least one more public raw-backed case, then freeze the fixed seven-planet Virupa table as observation-ready.",
+      "normalized_values_virupa": {
+        "jyotishganit": 51.43,
+        "local": 51.43,
+        "vp_jain_local": 51.43,
+        "vp_jain_published": 51.43,
+        "xalen": 51.43
+      },
+      "planet": "Moon",
+      "production_tuning_allowed": false,
+      "source_bucket": "within_tolerance",
+      "source_evidence": [
+        "classical natural strength ordering",
+        "VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_naisargika_bala",
+      "ticket_id": "shadbala.moon.naisargika",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Fixed Virupa table for seven visible planets; table source must be named."
+    },
+    {
+      "canonical_component": "Naisargikabala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "within_tolerance_observation_closed",
+      "component": "naisargika",
+      "known_variants": [
+        "fixed table rounding",
+        "planet inclusion set"
+      ],
+      "max_delta_virupa": 0.0,
+      "next_evidence": "Replay at least one more public raw-backed case, then freeze the fixed seven-planet Virupa table as observation-ready.",
+      "normalized_values_virupa": {
+        "jyotishganit": 8.57,
+        "local": 8.57,
+        "vp_jain_local": 8.57,
+        "vp_jain_published": 8.57,
+        "xalen": 8.57
+      },
+      "planet": "Saturn",
+      "production_tuning_allowed": false,
+      "source_bucket": "within_tolerance",
+      "source_evidence": [
+        "classical natural strength ordering",
+        "VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_naisargika_bala",
+      "ticket_id": "shadbala.saturn.naisargika",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Fixed Virupa table for seven visible planets; table source must be named."
+    },
+    {
+      "canonical_component": "Naisargikabala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "within_tolerance_observation_closed",
+      "component": "naisargika",
+      "known_variants": [
+        "fixed table rounding",
+        "planet inclusion set"
+      ],
+      "max_delta_virupa": 0.0,
+      "next_evidence": "Replay at least one more public raw-backed case, then freeze the fixed seven-planet Virupa table as observation-ready.",
+      "normalized_values_virupa": {
+        "jyotishganit": 60.0,
+        "local": 60.0,
+        "vp_jain_local": 60.0,
+        "vp_jain_published": 60.0,
+        "xalen": 60.0
+      },
+      "planet": "Sun",
+      "production_tuning_allowed": false,
+      "source_bucket": "within_tolerance",
+      "source_evidence": [
+        "classical natural strength ordering",
+        "VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_naisargika_bala",
+      "ticket_id": "shadbala.sun.naisargika",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Fixed Virupa table for seven visible planets; table source must be named."
+    },
+    {
+      "canonical_component": "Naisargikabala",
+      "claim_boundary": "Component-level explanatory closure only; no absolute Shadbala truth or production tuning upgrade.",
+      "claim_upgrade": "none",
+      "closure_status": "within_tolerance_observation_closed",
+      "component": "naisargika",
+      "known_variants": [
+        "fixed table rounding",
+        "planet inclusion set"
+      ],
+      "max_delta_virupa": 0.0,
+      "next_evidence": "Replay at least one more public raw-backed case, then freeze the fixed seven-planet Virupa table as observation-ready.",
+      "normalized_values_virupa": {
+        "jyotishganit": 42.86,
+        "local": 42.86,
+        "vp_jain_local": 42.86,
+        "vp_jain_published": 42.86,
+        "xalen": 42.86
+      },
+      "planet": "Venus",
+      "production_tuning_allowed": false,
+      "source_bucket": "within_tolerance",
+      "source_evidence": [
+        "classical natural strength ordering",
+        "VP Jain fixture",
+        "Xalen delta report"
+      ],
+      "source_formula": "shadbala_naisargika_bala",
+      "ticket_id": "shadbala.venus.naisargika",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Fixed Virupa table for seven visible planets; table source must be named."
+    },
+    {
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "canonical_component": "Sthanabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_sthana_subcomponent_unresolved",
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "known_variants": [
+        "moolatrikona_degree_range_vs_whole_sign",
+        "varga dignity table variant",
+        "subcomponent inclusion variant"
+      ],
+      "max_delta_virupa": 73.208,
+      "next_evidence": "Split Sthana into named subcomponents, pin dignity/Moolatrikona/varga tables, then compare public numeric worked examples subcomponent-by-subcomponent.",
+      "normalized_values_virupa": {
+        "jyotishganit": 226.178,
+        "local": 201.81,
+        "vp_jain_local": 152.97,
+        "vp_jain_published": 152.98,
+        "xalen": 211.17574521147395
+      },
+      "planet": "Jupiter",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical Shadbala six-force tradition",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen Shadbala component delta report"
+      ],
+      "source_formula": "shadbala_sthana_bala",
+      "subcomponent_queue": [
+        "moolatrikona_degree_range",
+        "own/exaltation/debilitation dignity table",
+        "saptavargaja/varga dignity inclusion",
+        "ojayugmarasyamsa odd-even sign rule",
+        "kendradi/drekkana subcomponent inclusion"
+      ],
+      "ticket_id": "shadbala.jupiter.sthana",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa."
+    },
+    {
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "canonical_component": "Sthanabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_sthana_subcomponent_unresolved",
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "known_variants": [
+        "moolatrikona_degree_range_vs_whole_sign",
+        "varga dignity table variant",
+        "subcomponent inclusion variant"
+      ],
+      "max_delta_virupa": 47.438,
+      "next_evidence": "Split Sthana into named subcomponents, pin dignity/Moolatrikona/varga tables, then compare public numeric worked examples subcomponent-by-subcomponent.",
+      "normalized_values_virupa": {
+        "jyotishganit": 232.378,
+        "local": 198.63,
+        "vp_jain_local": 184.94,
+        "vp_jain_published": 184.94,
+        "xalen": 213.63005915206912
+      },
+      "planet": "Mars",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical Shadbala six-force tradition",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen Shadbala component delta report"
+      ],
+      "source_formula": "shadbala_sthana_bala",
+      "subcomponent_queue": [
+        "moolatrikona_degree_range",
+        "own/exaltation/debilitation dignity table",
+        "saptavargaja/varga dignity inclusion",
+        "ojayugmarasyamsa odd-even sign rule",
+        "kendradi/drekkana subcomponent inclusion"
+      ],
+      "ticket_id": "shadbala.mars.sthana",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa."
+    },
+    {
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "canonical_component": "Sthanabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "method_variant_dignity_policy_unresolved",
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "known_variants": [
+        "moolatrikona_degree_range_vs_whole_sign",
+        "varga dignity table variant",
+        "subcomponent inclusion variant"
+      ],
+      "max_delta_virupa": 126.456,
+      "next_evidence": "Split Sthana into named subcomponents, pin dignity/Moolatrikona/varga tables, then compare public numeric worked examples subcomponent-by-subcomponent.",
+      "normalized_values_virupa": {
+        "jyotishganit": 111.704,
+        "local": 167.96,
+        "vp_jain_local": 223.16,
+        "vp_jain_published": 238.16,
+        "xalen": 134.20630911404785
+      },
+      "planet": "Mercury",
+      "production_tuning_allowed": false,
+      "source_bucket": "method_variant",
+      "source_evidence": [
+        "classical Shadbala six-force tradition",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen Shadbala component delta report"
+      ],
+      "source_formula": "shadbala_sthana_bala",
+      "subcomponent_queue": [
+        "moolatrikona_degree_range",
+        "own/exaltation/debilitation dignity table",
+        "saptavargaja/varga dignity inclusion",
+        "ojayugmarasyamsa odd-even sign rule",
+        "kendradi/drekkana subcomponent inclusion"
+      ],
+      "ticket_id": "shadbala.mercury.sthana",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa."
+    },
+    {
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "canonical_component": "Sthanabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_sthana_subcomponent_unresolved",
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "known_variants": [
+        "moolatrikona_degree_range_vs_whole_sign",
+        "varga dignity table variant",
+        "subcomponent inclusion variant"
+      ],
+      "max_delta_virupa": 169.17,
+      "next_evidence": "Split Sthana into named subcomponents, pin dignity/Moolatrikona/varga tables, then compare public numeric worked examples subcomponent-by-subcomponent.",
+      "normalized_values_virupa": {
+        "jyotishganit": 141.341,
+        "local": 246.34,
+        "vp_jain_local": 77.17,
+        "vp_jain_published": 77.17,
+        "xalen": 193.83884030327874
+      },
+      "planet": "Moon",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical Shadbala six-force tradition",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen Shadbala component delta report"
+      ],
+      "source_formula": "shadbala_sthana_bala",
+      "subcomponent_queue": [
+        "moolatrikona_degree_range",
+        "own/exaltation/debilitation dignity table",
+        "saptavargaja/varga dignity inclusion",
+        "ojayugmarasyamsa odd-even sign rule",
+        "kendradi/drekkana subcomponent inclusion"
+      ],
+      "ticket_id": "shadbala.moon.sthana",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa."
+    },
+    {
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "canonical_component": "Sthanabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_sthana_subcomponent_unresolved",
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "known_variants": [
+        "moolatrikona_degree_range_vs_whole_sign",
+        "varga dignity table variant",
+        "subcomponent inclusion variant"
+      ],
+      "max_delta_virupa": 67.506,
+      "next_evidence": "Split Sthana into named subcomponents, pin dignity/Moolatrikona/varga tables, then compare public numeric worked examples subcomponent-by-subcomponent.",
+      "normalized_values_virupa": {
+        "jyotishganit": 151.104,
+        "local": 218.61,
+        "vp_jain_local": 206.3,
+        "vp_jain_published": 206.31,
+        "xalen": 199.85598657098197
+      },
+      "planet": "Saturn",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical Shadbala six-force tradition",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen Shadbala component delta report"
+      ],
+      "source_formula": "shadbala_sthana_bala",
+      "subcomponent_queue": [
+        "moolatrikona_degree_range",
+        "own/exaltation/debilitation dignity table",
+        "saptavargaja/varga dignity inclusion",
+        "ojayugmarasyamsa odd-even sign rule",
+        "kendradi/drekkana subcomponent inclusion"
+      ],
+      "ticket_id": "shadbala.saturn.sthana",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa."
+    },
+    {
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "canonical_component": "Sthanabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "method_variant_dignity_policy_unresolved",
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "known_variants": [
+        "moolatrikona_degree_range_vs_whole_sign",
+        "varga dignity table variant",
+        "subcomponent inclusion variant"
+      ],
+      "max_delta_virupa": 82.498162,
+      "next_evidence": "Split Sthana into named subcomponents, pin dignity/Moolatrikona/varga tables, then compare public numeric worked examples subcomponent-by-subcomponent.",
+      "normalized_values_virupa": {
+        "jyotishganit": 153.341,
+        "local": 217.09,
+        "vp_jain_local": 157.05,
+        "vp_jain_published": 172.04,
+        "xalen": 235.83916197045576
+      },
+      "planet": "Sun",
+      "production_tuning_allowed": false,
+      "source_bucket": "method_variant",
+      "source_evidence": [
+        "classical Shadbala six-force tradition",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen Shadbala component delta report"
+      ],
+      "source_formula": "shadbala_sthana_bala",
+      "subcomponent_queue": [
+        "moolatrikona_degree_range",
+        "own/exaltation/debilitation dignity table",
+        "saptavargaja/varga dignity inclusion",
+        "ojayugmarasyamsa odd-even sign rule",
+        "kendradi/drekkana subcomponent inclusion"
+      ],
+      "ticket_id": "shadbala.sun.sthana",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa."
+    },
+    {
+      "blocked_reason": "Moolatrikona degree interval vs whole-sign treatment and dignity/varga subcomponent inclusion differ.",
+      "canonical_component": "Sthanabala",
+      "claim_boundary": "Row-level explanatory partial only; do not select an absolute Sthana/Kala Shadbala formula from this packet.",
+      "claim_upgrade": "none",
+      "closure_status": "formula_mismatch_sthana_subcomponent_unresolved",
+      "component": "sthana",
+      "dominant_issue": "mixed_method_and_formula",
+      "known_variants": [
+        "moolatrikona_degree_range_vs_whole_sign",
+        "varga dignity table variant",
+        "subcomponent inclusion variant"
+      ],
+      "max_delta_virupa": 85.274,
+      "next_evidence": "Split Sthana into named subcomponents, pin dignity/Moolatrikona/varga tables, then compare public numeric worked examples subcomponent-by-subcomponent.",
+      "normalized_values_virupa": {
+        "jyotishganit": 112.816,
+        "local": 154.06,
+        "vp_jain_local": 198.09,
+        "vp_jain_published": 198.08,
+        "xalen": 165.31374287471633
+      },
+      "planet": "Venus",
+      "production_tuning_allowed": false,
+      "source_bucket": "formula_or_unit_mismatch",
+      "source_evidence": [
+        "classical Shadbala six-force tradition",
+        "PyJHora/JHora VP Jain fixture",
+        "Xalen Shadbala component delta report"
+      ],
+      "source_formula": "shadbala_sthana_bala",
+      "subcomponent_queue": [
+        "moolatrikona_degree_range",
+        "own/exaltation/debilitation dignity table",
+        "saptavargaja/varga dignity inclusion",
+        "ojayugmarasyamsa odd-even sign rule",
+        "kendradi/drekkana subcomponent inclusion"
+      ],
+      "ticket_id": "shadbala.venus.sthana",
+      "truth_matrix_allowed": false,
+      "unit_contract": "Virupa component; conversion to Rupa must be explicit, usually 60 Virupa = 1 Rupa."
+    }
+  ],
+  "scope": "shadbala_component_closure_all_rows",
+  "source_packet_hashes": {
+    "batch1_sha256": "9f0e9b0e05fd68072639b12a2de6936b4ad757e70fe39b14b64271e5fb28aa51",
+    "batch2_sha256": "432bc012aa3f0cc3c602656fceaef00e8df1a09d305de654030438275880ee9e",
+    "chesta_variant_sha256": "a4894dd92aab7ea19178e71fb9a5ee12b08c11e98c48dc4e823541df10d4e614"
+  },
+  "source_packets": {
+    "batch1": "references/oracle/shadbala_component_closure_batch1_2026_07_23.json",
+    "batch2": "references/oracle/shadbala_component_closure_batch2_2026_07_23.json",
+    "chesta_variant": "references/oracle/shadbala_chesta_variant_packet_2026_07_20.json"
+  },
+  "summary": {
+    "absolute_truth_upgrade_count": 0,
+    "closed_observation_row_count": 7,
+    "closure_status_counts": {
+      "formula_mismatch_angular_reference_unresolved": 7,
+      "formula_mismatch_aspect_model_unresolved": 7,
+      "formula_mismatch_chesta_exception_unresolved": 1,
+      "formula_mismatch_kala_subcomponent_unresolved": 7,
+      "formula_mismatch_sthana_subcomponent_unresolved": 5,
+      "method_variant_chesta_policy_unresolved": 6,
+      "method_variant_dignity_policy_unresolved": 2,
+      "within_tolerance_observation_closed": 7
+    },
+    "component_counts": {
+      "chesta": 7,
+      "dig": 7,
+      "drik": 7,
+      "kala": 7,
+      "naisargika": 7,
+      "sthana": 7
+    },
+    "row_count": 42,
+    "truth_ready": false
+  },
+  "truth_matrix_allowed": false
+}

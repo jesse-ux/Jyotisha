@@ -1,0 +1,95 @@
+{
+  "scope": "kp_public_worked_example_field_comparison",
+  "status": "public_kp_worked_example_partial_field_match",
+  "claim_status": "observation_only",
+  "consumer_policy": "research_observation_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "public_source": {
+    "url": "https://www.scribd.com/document/462272035/KP-Ezine-159-April-2020",
+    "source_lines": [
+      2775,
+      2782,
+      2800,
+      2807,
+      2816,
+      2859,
+      2869
+    ],
+    "case_boundary": "The public page supplies one 5th-cusp row and case settings; it is not a full independent timing validation."
+  },
+  "public_case": {
+    "birth": "1983-11-04 14:04:00, Brunswick, Georgia, USA",
+    "coordinates": "31N08, 81W30",
+    "timezone": "UTC-05:00, DST 0",
+    "ayanamsa": "KP Ayanamsa / KP New value printed as 23°32'29\"",
+    "house_system": "Placidus",
+    "expected_fifth_cusp": {
+      "HouseNr": 5,
+      "LonDecDeg": 69.12055555555555,
+      "Rasi": "Gemini",
+      "RasiLord": "Mercury",
+      "Nakshatra": "Ardra",
+      "NakshatraLord": "Rahu",
+      "SubLord": "Jupiter",
+      "SubSubLord": "Saturn"
+    }
+  },
+  "comparison": {
+    "longitude_delta_arcseconds": 41.2,
+    "longitude_tolerance_arcseconds": 60.0,
+    "longitude_within_tolerance": true,
+    "public_ayanamsa_degrees": 23.54138888888889,
+    "vedicastro_ayanamsa_degrees": 23.529441857,
+    "ayanamsa_delta_arcseconds": 43.0,
+    "field_comparisons": [
+      {
+        "field": "Rasi",
+        "public_value": "Gemini",
+        "vedicastro_value": "Gemini",
+        "matches": true
+      },
+      {
+        "field": "RasiLord",
+        "public_value": "Mercury",
+        "vedicastro_value": "Mercury",
+        "matches": true
+      },
+      {
+        "field": "Nakshatra",
+        "public_value": "Ardra",
+        "vedicastro_value": "Ardra",
+        "matches": true
+      },
+      {
+        "field": "NakshatraLord",
+        "public_value": "Rahu",
+        "vedicastro_value": "Rahu",
+        "matches": true
+      },
+      {
+        "field": "SubLord",
+        "public_value": "Jupiter",
+        "vedicastro_value": "Jupiter",
+        "matches": true
+      },
+      {
+        "field": "SubSubLord",
+        "public_value": "Saturn",
+        "vedicastro_value": "Saturn",
+        "matches": true
+      }
+    ]
+  },
+  "summary": {
+    "matched_field_count": 6,
+    "mismatched_field_count": 0,
+    "longitude_within_tolerance": true
+  },
+  "claim_boundary": "The source's fifth-cusp sign, star, sub and sub-sub labels agree with this isolated VedicAstro replay, and the cusp longitude differs by less than one arcminute. The printed KP New and replayed Krishnamurti ayanamsa also differ by 43 arcseconds, so they must not be treated as identical. This does not identify hosted VedAstro, validate remaining cusps or sub-sub-sub values, or validate timing/predictions.",
+  "remaining_requirements": [
+    "A source or software identity proving the exact KP New ayanamsa implementation used by the public table.",
+    "Complete multi-cusp and planet rows with independent reproduction before exact KP timing claims.",
+    "Independent outcome holdout; no prediction claim follows from one technical row."
+  ]
+}

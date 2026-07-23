@@ -1,0 +1,17 @@
+{
+  "claim_status": "source_repository_observation_only",
+  "error": "",
+  "git_ls_remote_command": [
+    "git",
+    "ls-remote",
+    "https://github.com/VedAstro/VedAstro.git",
+    "HEAD"
+  ],
+  "hosted_identity_boundary": "A public repository HEAD does not prove api.vedastro.org is deployed from this commit, nor does it bind this commit to a NuGet package or endpoint semantics.",
+  "hosted_identity_status": "blocked",
+  "observed_at_utc": "2026-07-22T17:13:17+00:00",
+  "repository": "https://github.com/VedAstro/VedAstro.git",
+  "repository_head": "1f3a46482ab98eb414ab03fa44496a37d35a3a96",
+  "scope": "vedastro_official_source_identity_observation",
+  "status": "complete"
+}
