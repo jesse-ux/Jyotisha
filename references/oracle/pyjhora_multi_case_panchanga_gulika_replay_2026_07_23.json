@@ -1,0 +1,281 @@
+{
+  "scope": "pyjhora_multi_case_panchanga_gulika_replay",
+  "claim_status": "observation_only",
+  "consumer_policy": "research_observation_only",
+  "production_tuning_allowed": false,
+  "truth_matrix_allowed": false,
+  "license_boundary": "agpl_observation_only_do_not_vendor",
+  "cases": [
+    {
+      "case_id": "synthetic_beijing_1990",
+      "input": {
+        "date": "1990-01-01",
+        "time": "12:00:00",
+        "place": "Beijing",
+        "latitude": 39.9042,
+        "longitude": 116.4074,
+        "timezone": "+8.0",
+        "ayanamsa": "Lahiri"
+      },
+      "pyjhora_raw": {
+        "gulika": [
+          0,
+          21.86746645438376
+        ],
+        "maandi": [
+          1,
+          3.2201065576970933
+        ],
+        "tithi": [
+          5,
+          11.401823527467947,
+          34.6584870278223
+        ],
+        "nakshatra": [
+          23,
+          4,
+          -14.853022746851815,
+          14.859636315765911,
+          24,
+          4,
+          38.51772116304289
+        ],
+        "yogam": [
+          16,
+          8.958840534945733,
+          31.144813742828212,
+          0.862924225295027
+        ],
+        "karana": [
+          9,
+          11.401823527467947,
+          23.03015527764512
+        ],
+        "raahu_kaalam": [
+          "08:50:12",
+          "09:59:24"
+        ],
+        "yamaganda_kaalam": [
+          "11:08:36",
+          "12:17:49"
+        ],
+        "durmuhurtam": [
+          "12:36:16",
+          "13:13:10",
+          "14:26:59",
+          "15:03:54"
+        ],
+        "abhijit_muhurta": [
+          "11:59:21",
+          "12:36:16"
+        ]
+      },
+      "field_comparison": {
+        "tithi": {
+          "local": 5,
+          "pyjhora": 5,
+          "status": "match"
+        },
+        "nakshatra": {
+          "local": 23,
+          "pyjhora": 23,
+          "status": "match"
+        },
+        "yogam": {
+          "local": 16,
+          "pyjhora": 16,
+          "status": "match"
+        },
+        "gulika": {
+          "local_degrees": 22.154273,
+          "pyjhora_degrees": 21.86746645438376,
+          "delta_degrees": 0.28680654561622987,
+          "status": "observed_formula_comparison"
+        }
+      },
+      "raw_sha256": "5fc5a16707ec2c534ac1362ef41abfafc3bad884dcc9f1ad19918a06cd596082"
+    },
+    {
+      "case_id": "public_smoke_chennai_1996",
+      "input": {
+        "date": "1996-12-07",
+        "time": "10:34:00",
+        "place": "Chennai",
+        "latitude": 13.0878,
+        "longitude": 80.2785,
+        "timezone": "+5.5",
+        "ayanamsa": "Lahiri"
+      },
+      "pyjhora_raw": {
+        "gulika": [
+          7,
+          21.383659705803353
+        ],
+        "maandi": [
+          8,
+          0.9728038266439683
+        ],
+        "tithi": [
+          27,
+          3.794324939203282,
+          27.737153187822777
+        ],
+        "nakshatra": [
+          15,
+          1,
+          10.027826442502807,
+          34.17010921765149,
+          16,
+          1,
+          57.534226468779096
+        ],
+        "yogam": [
+          5,
+          1.708026918006322,
+          24.459678359544334,
+          0.6106375061410549
+        ],
+        "karana": [
+          53,
+          3.794324939203282,
+          15.76573906351303
+        ],
+        "raahu_kaalam": [
+          "09:11:27",
+          "10:35:55"
+        ],
+        "yamaganda_kaalam": [
+          "13:24:50",
+          "14:49:18"
+        ],
+        "durmuhurtam": [
+          "07:52:37",
+          "08:37:40"
+        ],
+        "abhijit_muhurta": [
+          "11:37:51",
+          "12:22:54"
+        ]
+      },
+      "field_comparison": {
+        "tithi": {
+          "local": 27,
+          "pyjhora": 27,
+          "status": "match"
+        },
+        "nakshatra": {
+          "local": 15,
+          "pyjhora": 15,
+          "status": "match"
+        },
+        "yogam": {
+          "local": 5,
+          "pyjhora": 5,
+          "status": "match"
+        },
+        "gulika": {
+          "local_degrees": 230.491313,
+          "pyjhora_degrees": 231.38365970580335,
+          "delta_degrees": 0.8923467058033623,
+          "status": "observed_formula_comparison"
+        }
+      },
+      "raw_sha256": "71f27a8506bd316782f1f67422bc2f439fe10c2f146ce61818ea5bf7a519a1a2"
+    },
+    {
+      "case_id": "synthetic_london_2000",
+      "input": {
+        "date": "2000-06-21",
+        "time": "06:30:00",
+        "place": "London",
+        "latitude": 51.5074,
+        "longitude": -0.1278,
+        "timezone": "+1.0",
+        "ayanamsa": "Lahiri"
+      },
+      "pyjhora_raw": {
+        "gulika": [
+          4,
+          14.741959946166133
+        ],
+        "maandi": [
+          4,
+          25.579883181279968
+        ],
+        "tithi": [
+          19,
+          -16.859470689461304,
+          9.414198800364817,
+          20,
+          9.414198800364817,
+          35.56876152480244
+        ],
+        "nakshatra": [
+          22,
+          4,
+          7.246692047412758,
+          7.246706958152929,
+          23,
+          4,
+          33.904123331811256
+        ],
+        "yogam": [
+          27,
+          -16.974349258973135,
+          7.887321996036926,
+          0.055801638517445434,
+          9,
+          7.887321996036926,
+          46.13306196606291,
+          1.0
+        ],
+        "karana": [
+          38,
+          -3.7226359445482435,
+          9.414198800364817
+        ],
+        "raahu_kaalam": [
+          "13:02:19",
+          "15:05:22"
+        ],
+        "yamaganda_kaalam": [
+          "06:53:10",
+          "08:56:13"
+        ],
+        "durmuhurtam": [
+          "12:29:30",
+          "13:35:08"
+        ],
+        "abhijit_muhurta": [
+          "12:29:30",
+          "13:35:08"
+        ]
+      },
+      "field_comparison": {
+        "tithi": {
+          "local": 19,
+          "pyjhora": 19,
+          "status": "match"
+        },
+        "nakshatra": {
+          "local": 22,
+          "pyjhora": 22,
+          "status": "match"
+        },
+        "yogam": {
+          "local": 27,
+          "pyjhora": 27,
+          "status": "match"
+        },
+        "gulika": {
+          "local_degrees": 134.404229,
+          "pyjhora_degrees": 134.74195994616613,
+          "delta_degrees": 0.33773094616614685,
+          "status": "observed_formula_comparison"
+        }
+      },
+      "raw_sha256": "ffd49a9e39b67dcf35dc056a6e053653606c2776f7b2d4bdead1d60a9a8f7df0"
+    }
+  ],
+  "boundary": "Three fixed public/synthetic cases compare field observations only. Maandi and Muhurta windows remain raw observations; no automatic election, prediction, or truth upgrade is allowed."
+}
