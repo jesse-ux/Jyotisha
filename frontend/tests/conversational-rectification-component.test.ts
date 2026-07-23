@@ -91,10 +91,11 @@ test("rectification is a language-first exchange with one free-text answer path"
     { controller: controller() },
   ));
 
-  assert.match(markup, /已记录：2021 年 7 月 · 开始第一份长期工作/);
-  assert.match(markup, /目前已经形成一个待确认候选/);
-  assert.ok(markup.indexOf("待确认候选") < markup.indexOf("当前候选 05:18"));
-  assert.doesNotMatch(markup, /D9 与 D10|当前判断/);
+  assert.match(markup, /当前判断/);
+  assert.match(markup, /D9 与 D10/);
+  assert.match(markup, /2021 年 7 月 · 开始第一份长期工作/);
+  assert.ok(markup.indexOf("当前判断") < markup.indexOf("当前候选 05:18"));
+  assert.doesNotMatch(markup, /目前已经形成一个待确认候选/);
   assert.match(markup, /<textarea[^>]+id="conversational-rectification-answer"/);
   assert.match(markup, /像聊天一样回答即可/);
   assert.match(markup, /2018 年 6 月去了上海工作/);
@@ -103,7 +104,7 @@ test("rectification is a language-first exchange with one free-text answer path"
   assert.doesNotMatch(markup, /2006[^<]*2011|BirthTimeChoiceQuestion|birth-time-choice-question/);
 });
 
-test("a resumed legacy turn replaces repeated technical prose with actionable guidance", () => {
+test("a resumed legacy turn preserves its Agent narrative and keeps evidence in progress details", () => {
   const legacyTurn = {
     ...turn,
     status: "active",
@@ -116,10 +117,10 @@ test("a resumed legacy turn replaces repeated technical prose with actionable gu
     { controller: controller({ turn: legacyTurn }) },
   ));
 
-  assert.match(markup, /已记录：2021 年 7 月 · 开始第一份长期工作/);
-  assert.match(markup, /范围暂未变化不代表提交失败/);
-  assert.match(markup, /接下来请说一件重要关系或搬迁与居住地方面已经发生的事/);
-  assert.doesNotMatch(markup, /D1 保持稳定/);
+  assert.match(markup, /05:30 是范围内的待验证候选/);
+  assert.match(markup, /D1 保持稳定/);
+  assert.match(markup, /2021 年 7 月 · 开始第一份长期工作/);
+  assert.doesNotMatch(markup, /范围暂未变化不代表提交失败/);
 });
 
 test("an incomplete concrete event gets a targeted clarification instead of the generic question", () => {
@@ -133,6 +134,7 @@ test("an incomplete concrete event gets a targeted clarification instead of the 
       dateLabel: "日期待补充",
       domain: "relocation",
     }],
+    narrative: "你提到离开家去北京开始工作，这件事很有区分度。大致是什么年月？",
     actions: ["answer", "pause", "abandon"],
   } satisfies ConversationalRectificationTurn;
   const markup = renderToStaticMarkup(React.createElement(
@@ -140,7 +142,7 @@ test("an incomplete concrete event gets a targeted clarification instead of the 
     { controller: controller({ turn: incompleteTurn }) },
   ));
 
-  assert.match(markup, /你提到“离开家去北京开始工作”/);
+  assert.match(markup, /你提到离开家去北京开始工作/);
   assert.match(markup, /大致是什么年月/);
   assert.doesNotMatch(markup, /接下来请说一件/);
 });
@@ -261,7 +263,7 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
   assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
   assert.match(css, /@media\s*\(max-width:\s*430px\)[\s\S]*\.rectification-message-details/);
   assert.doesNotMatch(component, /确认放弃且不应用候选|本轮技术回执/);
-  assert.match(component, /controller\.answer\(undefined, controller\.draft\.trim\(\)\)/);
+  assert.match(component, /controller\.answer\(undefined, text\)/);
   assert.match(component, /event\.key === "Enter" && !event\.shiftKey/);
   assert.match(component, /onPendingChange/);
   assert.match(component, /onPendingChange:\s*props\.onPendingChange/);
@@ -749,7 +751,7 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
     await cdp.evaluate("globalThis.__rectificationHarness.setTurn('activeA1')");
     await waitFor(
       () => cdp?.evaluate<boolean>(`document.body.textContent.includes('当前候选 05:18')
-        && document.body.textContent.includes('已记录：2021-07')`) ?? Promise.resolve(false),
+        && document.body.textContent.includes('2021-07 · 开始第一份长期工作')`) ?? Promise.resolve(false),
       "streamlined async initial turn",
     );
 
