@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, Final, Literal, TypedDict, assert_never
+from typing import Any, Final, Literal, NotRequired, TypedDict, assert_never
 from uuid import NAMESPACE_URL, uuid5
 
 EventPrecision = Literal["year", "month", "day"]
@@ -44,6 +44,7 @@ class LifeEvent(TypedDict):
     domain: EventDomain
     date: str
     precision: EventPrecision
+    summary: NotRequired[str]
 
 
 class RectificationEventRequest(TypedDict):

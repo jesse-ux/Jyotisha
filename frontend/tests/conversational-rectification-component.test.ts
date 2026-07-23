@@ -122,6 +122,29 @@ test("a resumed legacy turn replaces repeated technical prose with actionable gu
   assert.doesNotMatch(markup, /D1 保持稳定/);
 });
 
+test("an incomplete concrete event gets a targeted clarification instead of the generic question", () => {
+  const incompleteTurn = {
+    ...turn,
+    status: "active",
+    candidate: { ...turn.candidate, status: "pending_validation" },
+    evidenceRecap: [{
+      ...turn.evidenceRecap[0]!,
+      summary: "离开家去北京开始工作",
+      dateLabel: "日期待补充",
+      domain: "relocation",
+    }],
+    actions: ["answer", "pause", "abandon"],
+  } satisfies ConversationalRectificationTurn;
+  const markup = renderToStaticMarkup(React.createElement(
+    ConversationalRectificationSurface,
+    { controller: controller({ turn: incompleteTurn }) },
+  ));
+
+  assert.match(markup, /你提到“离开家去北京开始工作”/);
+  assert.match(markup, /大致是什么年月/);
+  assert.doesNotMatch(markup, /接下来请说一件/);
+});
+
 test("an uninitialized surface shows progress without a second start card", () => {
   const emptyController = controller({
     turn: null,
@@ -772,6 +795,26 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
       () => cdp?.evaluate<boolean>("!document.body.textContent.includes('正在更正') && document.getElementById('conversational-rectification-answer').value === ''") ?? Promise.resolve(false),
       "correction cancellation",
     );
+
+    const mistakenAnswer = "2020年9月离职写错了";
+    await cdp.evaluate(`(() => {
+      const textarea = document.getElementById('conversational-rectification-answer');
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set;
+      setter.call(textarea, ${JSON.stringify(mistakenAnswer)});
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('[aria-label="发送"]').click();
+    })()`);
+    await waitFor(
+      () => cdp?.evaluate<boolean>(`document.querySelector('[aria-label="撤回发送，本次不计入校正"]') !== null`) ?? Promise.resolve(false),
+      "rectification undo window",
+    );
+    await cdp.evaluate("document.querySelector('[aria-label=\"撤回发送，本次不计入校正\"]').click()");
+    await waitFor(
+      () => cdp?.evaluate<boolean>(`document.getElementById('conversational-rectification-answer').value === ${JSON.stringify(mistakenAnswer)}`) ?? Promise.resolve(false),
+      "mistaken answer restored to draft",
+    );
+    await new Promise((resolve) => setTimeout(resolve, 2_700));
+    assert.equal(await cdp.evaluate<boolean>("globalThis.__rectificationHarness.events.some((event) => event.endsWith(':answer'))"), false);
 
     await cdp.evaluate("globalThis.__rectificationHarness.setTurn('activeA3')");
     await waitFor(

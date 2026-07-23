@@ -99,6 +99,7 @@ function validGenerator(
   events: string[],
   varyNarrative = false,
   invalidNarrativeFromGeneration?: number,
+  prompts: string[] = [],
 ) {
   let generation = 0;
   return {
@@ -106,12 +107,17 @@ function validGenerator(
     async generate(prompt: string) {
       generation += 1;
       events.push("narrative");
+      prompts.push(prompt);
       if (invalidNarrativeFromGeneration !== undefined
         && generation >= invalidNarrativeFromGeneration) {
         return { text: "not a grounded narrative result" };
       }
       const request = JSON.parse(prompt) as {
         phase: "first" | "intermediate" | "final";
+        conversationContext?: {
+          latestEvidence?: Array<{ dateLabel: string; summary: string; domain: string }>;
+          eventLedger?: Array<{ domain: string; active: boolean }>;
+        };
         packet: Omit<ReturnType<typeof packet>, "candidate"> & {
           candidate: ReturnType<typeof packet>["candidate"] & {
             rangeStart: string;
@@ -120,10 +126,18 @@ function validGenerator(
         };
       };
       const value = request.packet;
-      const domains = value.suggestedDomains.slice(0, 1).map((item) => item.domain);
+      const answeredDomains = new Set(request.conversationContext?.eventLedger
+        ?.filter((item) => item.active)
+        .map((item) => item.domain) ?? []);
+      const nextSuggested = value.suggestedDomains.find((item) => !answeredDomains.has(item.domain))
+        ?? value.suggestedDomains[0];
+      const domains = nextSuggested ? [nextSuggested.domain] : [];
       const nextDomain = domains[0] === "relationship" ? "重要关系" : "事业";
+      const latest = request.conversationContext?.latestEvidence?.at(-1);
       const narrative = [
-        `当前仍在核对 ${value.candidate.rangeStart}–${value.candidate.rangeEnd} 的候选范围，不能视为已经确认的出生分钟。`,
+        request.phase === "intermediate" && latest
+          ? `记下了：${latest.dateLabel} · ${latest.summary}。`
+          : `当前仍在核对 ${value.candidate.rangeStart}–${value.candidate.rangeEnd} 的候选范围，不能视为已经确认的出生分钟。`,
         varyNarrative ? `这是第 ${generation} 次合成措辞。` : "",
         request.phase === "final" ? "当前证据已形成候选总结。" : `先说一件已经发生的${nextDomain}经历好吗？请写明哪一年、哪一月以及发生了什么。`,
       ].join("");
@@ -161,6 +175,7 @@ function harness(options: {
   readonly invalidNarrativeFromGeneration?: number;
 } = {}) {
   const events: string[] = [];
+  const narrativePrompts: string[] = [];
   const mutations: string[] = [];
   const cases = new Map<string, MutableCase>();
   const receipts = new Map<string, {
@@ -388,12 +403,14 @@ function harness(options: {
       events,
       options.varyNarrative,
       options.invalidNarrativeFromGeneration,
+      narrativePrompts,
     ),
     asOfDate: () => "2026-07-21",
   };
 
   return {
     events,
+    narrativePrompts,
     mutations,
     packetEvidenceCounts,
     packetEvidenceIds,
@@ -817,6 +834,60 @@ test("generic date uncertainty does not suppress clear historical evidence", asy
     .some((item) => item.eventSummary.includes("毕业") && item.scoreable === true));
 });
 
+test("a concrete event without a date is acknowledged and a date-only follow-up completes it", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99 });
+  await start(value, null);
+
+  const clarification = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "我离开家去北京开始工作",
+  });
+
+  assert.match(clarification.narrative, /离开家去北京开始工作/);
+  assert.match(clarification.narrative, /什么年月/);
+  assert.equal(clarification.evidenceRecap.at(-1)?.dateLabel, "日期待补充");
+
+  const completed = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "2023年3月",
+  });
+
+  const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+  assert.equal(stored.length, 2, "the incomplete fact and its completion remain auditable");
+  assert.deepEqual(stored[1]?.correctsEvidenceIds, [stored[0]?.id]);
+  assert.equal(stored[1]?.eventSummary, "我离开家去北京开始工作");
+  assert.equal(stored[1]?.dateValue, "2023-03");
+  assert.equal(stored[1]?.scoreable, true);
+  assert.deepEqual(completed.evidenceRecap.map((item) => ({
+    summary: item.summary,
+    dateLabel: item.dateLabel,
+  })), [{ summary: "我离开家去北京开始工作", dateLabel: "2023-03" }]);
+  assert.match(completed.narrative, /记下了：2023-03 · 我离开家去北京开始工作/);
+});
+
+test("the next evidence request moves past a domain the user already answered", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99 });
+  await start(value, null);
+
+  const turn = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2020年5月结婚",
+  });
+
+  assert.deepEqual(turn.evidenceRequest?.domains, ["career"]);
+  assert.match(turn.narrative, /事业/);
+  assert.doesNotMatch(turn.narrative, /下一步[^\n]*重要关系/);
+});
+
 test("a rejected professional narrative falls back safely while the first scoreable answer still narrows", async () => {
   const value = harness({ invalidNarrativeFromGeneration: 2 });
   await start(value, null);
@@ -859,21 +930,46 @@ test("one and two supported events save and narrate before the third accumulated
     assert.equal(stored?.eventEvidence.length, index + 1);
     assert.equal(turn.evidenceRecap.length, index + 1);
     assert.equal(turn.status, index < 2 ? "active" : "confirming");
-    assert.match(turn.narrative, new RegExp(`当前累计 ${index + 1} 条可评分经历|候选范围已从|本轮已纳入 ${index + 1} 条可评分经历`));
-    assert.match(turn.narrative, /已记录：/);
+    assert.ok(turn.narrative.length > 0);
+    assert.doesNotMatch(turn.narrative, /当前累计|本轮已纳入|本轮区分重点|下一步：/);
   }
 
   assert.equal(value.counts().packetBuilds, 4);
   assert.equal(value.events.filter((event) => event === "narrative").length, 4);
 });
 
-test("a non-confirmable conversational case completes with its saved range instead of asking forever", async () => {
+test("intermediate narrative receives the complete active event ledger", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99 });
+  await start(value, null);
+  await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2020年9月底主动离开研究单位",
+  });
+  await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "2023年4月进入下一家公司",
+  });
+
+  const prompt = value.narrativePrompts.at(-1) ?? "";
+  assert.match(prompt, /2020年9月底主动离开研究单位/);
+  assert.match(prompt, /2023年4月进入下一家公司/);
+  assert.match(prompt, /eventLedger/);
+});
+
+test("a non-confirmable conversational case asks each discriminating domain before completing its saved range", async () => {
   const value = harness({ readyAfterEvidenceCount: 99 });
   await start(value, "请继续回答原来的事业问题");
   const answers = [
     [answerActionId, "2019年7月毕业"],
     [secondAnswerActionId, "2020年8月搬家"],
     [thirdAnswerActionId, "2021年9月换工作"],
+    [fourthAnswerActionId, "2022年10月结婚"],
   ] as const;
   let latest = value.cases.get(startActionId)?.row.latestTurn;
 
@@ -885,6 +981,10 @@ test("a non-confirmable conversational case completes with its saved range inste
       turnVersion: index,
       answer,
     });
+    if (index === 2) {
+      assert.equal(latest.status, "active");
+      assert.deepEqual(latest.evidenceRequest?.domains, ["relationship"]);
+    }
   }
 
   assert.equal(latest?.status, "completed");

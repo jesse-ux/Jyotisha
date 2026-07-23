@@ -372,7 +372,7 @@ export class ConversationalRectificationStore {
   async abandon(
     input: ConversationalRectificationTransitionInput,
   ): Promise<StoredConversationalRectificationCase> {
-    return this.requireTransition("abandon_conversational_rectification_case", input);
+    return this.requireTransition("abandon_conversational_rectification_without_result", input);
   }
 
   private async requireTransition(

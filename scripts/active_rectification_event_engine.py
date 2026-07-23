@@ -43,7 +43,7 @@ import varga  # noqa: E402
 
 AYANAMSA: Final = "lahiri"
 NODE_MODE: Final = "mean"
-INPUT_CONTRACT_VERSION: Final = "rectification-candidate-input-v1"
+INPUT_CONTRACT_VERSION: Final = "rectification-candidate-input-v2"
 
 DomainConfig = tuple[tuple[str, ...], tuple[int, ...]]
 DOMAIN_CONFIG: Final[dict[EventDomain, DomainConfig]] = {
@@ -426,6 +426,13 @@ def _canonical_input_contract(request: RectificationEventRequest) -> tuple[dict,
             "timezone_offset": float(request["tz"]),
             "timezone_source": "explicit_offset",
         },
+        "events": [{
+            "id": event["id"],
+            "domain": event["domain"],
+            "date": event["date"],
+            "precision": event["precision"],
+            "summary": event.get("summary", ""),
+        } for event in request["events"]],
         "calculation": {
             "ayanamsa": AYANAMSA,
             "node_mode": NODE_MODE,

@@ -830,8 +830,6 @@ export default function Home() {
   const activeOnboardingRequestIdentity = useRef("");
   const accountRefreshGuard = useRef(createLatestAccountRequestGuard());
   const rectificationQuestionHandoff = useRef(createRectificationQuestionHandoffCoordinator<Theme>());
-  const continueRectificationQuestion = useRef<(question: string) => void>(() => undefined);
-  const automaticRectificationContinuation = useRef("");
   const durableRectificationQuestionHandoff = useRef(
     createDurableRectificationQuestionHandoffClient(),
   );
@@ -2632,6 +2630,19 @@ export default function Home() {
       && !sessions.some((session) => session.id === rectificationQuestionHandoff.current.peek()?.sessionId)) {
       rectificationQuestionHandoff.current.clear();
     }
+    const localHandoff = rectificationQuestionHandoff.current.peek();
+    const returnSession = (localHandoff
+      ? sessions.find((session) => session.id === localHandoff.sessionId)
+      : null)
+      ?? (rectificationReturnSessionId
+        ? sessions.find((session) => session.id === rectificationReturnSessionId)
+        : null)
+      ?? sessions.find((session) => session.sessionType === "consultation")
+      ?? null;
+    if (!returnSession) {
+      setComposerNotice("没有找到原问题所在的会话，请从会话列表打开原问题后重试。");
+      return;
+    }
 
     rectificationContinuationInFlight.current = true;
     setRectificationContinuationPending(true);
@@ -2647,12 +2658,8 @@ export default function Home() {
         return;
       }
       if (durableClaim.status === "consumed") {
-        const returnSessionId = rectificationQuestionHandoff.current.peek()?.sessionId
-          ?? rectificationReturnSessionId;
-        if (returnSessionId && sessions.some((session) => session.id === returnSessionId)) {
-          activeSessionIdRef.current = returnSessionId;
-          setActiveSessionId(returnSessionId);
-        }
+        activeSessionIdRef.current = returnSession.id;
+        setActiveSessionId(returnSession.id);
         setRectificationPendingQuestion(null);
         setComposerNotice("原问题已经继续回答，不会再次发送或扣点。");
         return;
@@ -2663,7 +2670,7 @@ export default function Home() {
       }
       const completed = await rectificationQuestionHandoff.current.continueOriginalQuestion(
         question,
-        { sessionId: activeSession.id, theme: activeSession.theme },
+        { sessionId: returnSession.id, theme: returnSession.theme },
         async (context) => {
           activeSessionIdRef.current = context.sessionId;
           setActiveSessionId(context.sessionId);
@@ -2701,22 +2708,6 @@ export default function Home() {
       setRectificationContinuationPending(false);
     }
   }
-
-  continueRectificationQuestion.current = (question) => {
-    void continueRectificationOriginalQuestion(question);
-  };
-
-  useEffect(() => {
-    const turn = rectificationInitialTurn;
-    const question = turn?.pendingConsultationQuestion;
-    if (!turn || turn.status !== "completed" || !question
-      || !turn.actions.includes("continue_original_question")
-      || rectificationLoading || rectificationMutationPending) return;
-    const continuationIdentity = `${turn.caseId}:${turn.turnVersion}:${question}`;
-    if (automaticRectificationContinuation.current === continuationIdentity) return;
-    automaticRectificationContinuation.current = continuationIdentity;
-    continueRectificationQuestion.current(question);
-  }, [rectificationInitialTurn, rectificationLoading, rectificationMutationPending]);
 
   useGSAP(() => {
     if (!starterHomeVisible || !starterWorkbench.current) return;

@@ -114,6 +114,27 @@ test("controller admits only one in-flight mutation and clears text only after s
   assert.deepEqual(pendingChanges, [true, false]);
 });
 
+test("controller retains alternating user and Agent messages after each answer", async () => {
+  const initial = activeTurn();
+  const controller = createConversationalRectificationController({
+    initialTurn: initial,
+    createActionId: idFactory(),
+    send: async () => ({
+      ...activeTurn(3),
+      narrative: "你提到 2021 年 7 月开始第一份工作，这次职业起点已经记下。接下来想核对一次搬迁。",
+    }),
+  });
+
+  controller.setDraft("2021 年 7 月开始第一份工作");
+  await controller.answer("career");
+
+  assert.deepEqual(controller.getSnapshot().messages?.map(({ role, text }) => ({ role, text })), [
+    { role: "assistant", text: initial.narrative },
+    { role: "user", text: "2021 年 7 月开始第一份工作" },
+    { role: "assistant", text: "你提到 2021 年 7 月开始第一份工作，这次职业起点已经记下。接下来想核对一次搬迁。" },
+  ]);
+});
+
 test("controller preserves the exact draft and stable action id across failures", async () => {
   const commands: ConversationalRectificationCommand[] = [];
   const controller = createConversationalRectificationController({
@@ -393,6 +414,11 @@ test("a case switch detaches the old mutation so the new case can mutate indepen
   controller.synchronizeInitialTurn(caseBTurn);
   assert.deepEqual(controller.getSnapshot(), {
     turn: caseBTurn,
+    messages: [{
+      role: "assistant",
+      text: caseBTurn.narrative,
+      renderKey: "assistant-1",
+    }],
     draft: "",
     selectedDomain: null,
     correctionTarget: null,
@@ -437,6 +463,7 @@ test("synchronizing to no case detaches an ordinary failure without publishing i
   controller.synchronizeInitialTurn(null);
   assert.deepEqual(controller.getSnapshot(), {
     turn: null,
+    messages: [],
     draft: "",
     selectedDomain: null,
     correctionTarget: null,
@@ -448,6 +475,7 @@ test("synchronizing to no case detaches an ordinary failure without publishing i
   await rejected;
   assert.deepEqual(controller.getSnapshot(), {
     turn: null,
+    messages: [],
     draft: "",
     selectedDomain: null,
     correctionTarget: null,

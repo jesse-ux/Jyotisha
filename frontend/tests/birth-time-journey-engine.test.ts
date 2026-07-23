@@ -20,7 +20,7 @@ test("journey engine serializes only stored event-scoring inputs", () => {
     lon: 121.4737,
     tz: 8,
     events: [
-      { id: "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5", domain: "career", date: "2019-07", precision: "month" },
+      { id: "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5", domain: "career", date: "2019-07", precision: "month", summary: "晋升为团队负责人" },
       { id: "0790866c-ad5e-4a45-b2b4-a5c73f6be6ea", domain: "education", date: "2011", precision: "year" },
       { id: "0ef52e51-ab5f-453b-81e5-adb44a929224", domain: "relationship", date: "2021-05-01", precision: "day" },
     ],
@@ -34,7 +34,7 @@ test("journey engine serializes only stored event-scoring inputs", () => {
     lon: 121.4737,
     tz: 8,
     events: [
-      { id: "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5", domain: "career", date: "2019-07", precision: "month" },
+      { id: "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5", domain: "career", date: "2019-07", precision: "month", summary: "晋升为团队负责人" },
       { id: "0790866c-ad5e-4a45-b2b4-a5c73f6be6ea", domain: "education", date: "2011", precision: "year" },
       { id: "0ef52e51-ab5f-453b-81e5-adb44a929224", domain: "relationship", date: "2021-05-01", precision: "day" },
     ],

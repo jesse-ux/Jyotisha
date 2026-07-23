@@ -41,6 +41,29 @@ export type SuggestedEvidenceDomain = {
   readonly reason: string;
 };
 
+export type RectificationTechniqueAuditRow = {
+  readonly technique: string;
+  readonly status: "used" | "partial" | "blocked" | "not_evaluated";
+  readonly evidence: readonly string[];
+  readonly boundary: string;
+};
+
+export type RectificationExpertWorkflow = {
+  readonly boundary: "not_auto_rectified";
+  readonly candidateWindows: readonly {
+    readonly startTime: string;
+    readonly endTime: string;
+    readonly status: "pending_validation" | "ready_for_confirmation";
+  }[];
+  readonly techniqueAuditTable: readonly RectificationTechniqueAuditRow[];
+  readonly confirmationAllowed: boolean;
+  readonly hardBlockers: readonly string[];
+  readonly gates: Readonly<Record<string, {
+    readonly status: "pass" | "fail" | "blocked" | "not_evaluated";
+    readonly reason: string;
+  }>>;
+};
+
 export type RectificationTechnicalPacket = {
   readonly calculationVersion: string;
   readonly candidate: {
@@ -79,6 +102,7 @@ export type RectificationTechnicalPacket = {
     readonly endDate: string;
     readonly scoreable: false;
   }[];
+  readonly expertWorkflow?: RectificationExpertWorkflow;
 };
 
 type PacketInput = {
@@ -140,6 +164,90 @@ const domainLabels = {
 
 function unique(values: readonly string[]): string[] {
   return [...new Set(values.filter((value) => value.trim().length > 0))];
+}
+
+function buildExpertWorkflow(
+  eventScore: CandidateResult | null,
+  range: RectificationTechnicalPacket["candidate"]["range"],
+  status: RectificationTechnicalPacket["candidate"]["status"],
+): RectificationExpertWorkflow {
+  const receipt = eventScore?.techniqueReceipt;
+  const row = (
+    technique: string,
+    used: boolean,
+    evidence: readonly string[],
+    boundary: string,
+    unavailableStatus: RectificationTechniqueAuditRow["status"] = "not_evaluated",
+  ): RectificationTechniqueAuditRow => ({
+    technique,
+    status: used ? "used" : unavailableStatus,
+    evidence,
+    boundary,
+  });
+  const missingLayers = receipt?.missingLayers ?? [];
+  const shadbalaPartial = missingLayers.some((layer) => layer.toLowerCase().includes("shadbala"));
+  const strengthLayers = receipt?.auxiliaryLayers.filter((layer) => /shadbala|ashtakavarga/i.test(layer)) ?? [];
+  return {
+    boundary: "not_auto_rectified",
+    candidateWindows: [{ ...range, status }],
+    techniqueAuditTable: [
+      row(
+        "Vimshottari Dasha",
+        receipt?.dashaTracks.some((track) => track.includes("vimshottari")) === true,
+        receipt?.dashaTracks.filter((track) => track.includes("vimshottari")) ?? [],
+        "用于已发生事件的时间匹配，不单独确认出生分钟。",
+      ),
+      row(
+        "Narayana Dasha",
+        receipt?.dashaTracks.some((track) => track.includes("narayana")) === true,
+        receipt?.dashaTracks.filter((track) => track.includes("narayana")) ?? [],
+        "作为第二条时序轨交叉检查，不替代分钟稳定性门禁。",
+      ),
+      row(
+        "UL / A7 / A10",
+        (receipt?.usedArudha.length ?? 0) > 0,
+        receipt?.usedArudha ?? [],
+        "只在对应关系或事业事件中参与候选比较。",
+      ),
+      row(
+        "Divisional charts",
+        (receipt?.usedDivisionalCharts.length ?? 0) > 0,
+        receipt?.usedDivisionalCharts ?? [],
+        "分盘只用于区分候选范围，不能把范围中点当作准确分钟。",
+      ),
+      {
+        technique: "Shadbala / Ashtakavarga",
+        status: shadbalaPartial ? "partial" : strengthLayers.length > 0 ? "used" : "not_evaluated",
+        evidence: unique([...strengthLayers, ...missingLayers.filter((layer) => /shadbala|ashtakavarga/i.test(layer))]),
+        boundary: shadbalaPartial
+          ? "仅使用已验证组件；缺失组件不得补算或包装成完整闭环。"
+          : "仅作为辅助权重，不单独确认出生分钟。",
+      },
+      row(
+        "Functional Benefic / Malefic",
+        receipt?.auxiliaryLayers.includes("functional_benefic_malefic") === true,
+        receipt?.auxiliaryLayers.filter((layer) => layer === "functional_benefic_malefic") ?? [],
+        "仅用于解释事件与候选的相容性。",
+      ),
+      {
+        technique: "KP cusp / sub-lord",
+        status: "blocked",
+        evidence: [],
+        boundary: "当前服务端生时校正评分合同未提供可审计的 KP cusp 结果，禁止声称已使用。",
+      },
+      {
+        technique: "Minute confirmation",
+        status: receipt?.confirmationAllowed === true ? "used" : "blocked",
+        evidence: receipt?.hardBlockers ?? ["minute_holdout_not_ready"],
+        boundary: receipt?.confirmationAllowed === true
+          ? "仍须用户明确确认后才能替换当前排盘时间。"
+          : "公开 AA 分钟 holdout 与盲测门禁未通过前，不得自动确认分钟。",
+      },
+    ],
+    confirmationAllowed: receipt?.confirmationAllowed === true,
+    hardBlockers: receipt?.hardBlockers ?? ["minute_holdout_not_ready"],
+    gates: receipt?.gates ?? {},
+  };
 }
 
 function timeToMinute(value: string): number {
@@ -320,10 +428,11 @@ export function buildRectificationTechnicalPacket(input: PacketInput): Rectifica
   const partitionIds = unique(Object.values(input.candidateDifferences.scoringPartitions)
     .flatMap((partitions) => partitions.map((partition) => partition.partitionId)));
 
+  const candidateStatus = input.eventScore?.canApply ? "ready_for_confirmation" : "pending_validation";
   return {
     calculationVersion: input.consultation.calculationVersion,
     candidate: {
-      status: input.eventScore?.canApply ? "ready_for_confirmation" : "pending_validation",
+      status: candidateStatus,
       representativeTime,
       range,
     },
@@ -349,6 +458,7 @@ export function buildRectificationTechnicalPacket(input: PacketInput): Rectifica
     suggestedDomains: domains.slice(0, 4),
     referenceIds: unique([...opportunityRefs, ...ruleRefs, ...layerRefs]),
     futureWindows: input.consultation.futureWindows.map((window) => ({ ...window, scoreable: false })),
+    expertWorkflow: buildExpertWorkflow(input.eventScore, range, candidateStatus),
   };
 }
 
