@@ -1,5 +1,6 @@
 import { z } from "zod";
 import {
+  type ConversationalRectificationMessageHistoryEntry,
   conversationalRectificationTurnSchema,
   type ConversationalRectificationTurn,
 } from "./contracts.ts";
@@ -57,6 +58,7 @@ export type StoredConversationalRectificationCase = Readonly<{
   pendingConsultationQuestion: string | null;
   billingState: "reserved" | "charged" | "released" | "migration_waived" | null;
   latestTurn: ConversationalRectificationTurn;
+  messageHistory?: ReadonlyArray<ConversationalRectificationMessageHistoryEntry>;
   declaredBirthInput?: DeepReadonly<DeclaredBirthInput>;
   privateCandidate?: DeepReadonly<PrivateCandidate>;
   eventEvidence?: ReadonlyArray<LifeEventEvidenceInput>;
@@ -104,6 +106,7 @@ export type CreateConversationalRectificationCaseInput = MutationIdentity & Read
 export type LifeEventEvidenceInput = DeepReadonly<LifeEventEvidence>;
 
 export type SaveConversationalRectificationTurnInput = CommandMutationIdentity & Readonly<{
+  userMessage: string;
   turn: ConversationalRectificationTurnInput;
   evidence: ReadonlyArray<LifeEventEvidenceInput>;
   validationReceipt: ValidationReceiptInput;
@@ -190,6 +193,8 @@ function parseStoredCase(data: unknown, allowNull = false): StoredConversational
     pendingConsultationQuestion: value.pending_consultation_question,
     billingState: value.billing_state,
     latestTurn: value.latest_turn,
+    ...(value.message_history === undefined
+      ? {} : { messageHistory: value.message_history }),
     ...(value.declared_birth_input === undefined
       ? {} : { declaredBirthInput: value.declared_birth_input }),
     ...(value.private_candidate === undefined
@@ -319,7 +324,7 @@ export class ConversationalRectificationStore {
     userId: string;
     caseId?: string;
   }>): Promise<LoadedConversationalRectificationCase | null> {
-    const loaded = await this.callCaseRpc("load_conversational_rectification_case", {
+    const loaded = await this.callCaseRpc("load_conversational_rectification_case_with_history", {
       p_user_id: input.userId,
       p_case_id: input.caseId ?? null,
     }, true);
@@ -349,11 +354,12 @@ export class ConversationalRectificationStore {
     input: SaveConversationalRectificationTurnInput,
   ): Promise<StoredConversationalRectificationCase> {
     const functionName = input.turn.status === "completed"
-      ? "complete_conversational_rectification_with_range"
-      : "save_conversational_rectification_turn";
+      ? "complete_conversational_rectification_with_range_and_history"
+      : "save_conversational_rectification_turn_with_history";
     const result = await this.callCaseRpc(functionName, {
       ...mutationArgs(input),
       p_command_fingerprint: commandFingerprint(input),
+      p_user_message: input.userMessage,
       p_turn: requirePublicTurn(input.turn),
       p_evidence: requireEvidence(input.evidence),
       p_validation_receipt: requireValidationReceipt(input.validationReceipt),
@@ -372,7 +378,7 @@ export class ConversationalRectificationStore {
   async abandon(
     input: ConversationalRectificationTransitionInput,
   ): Promise<StoredConversationalRectificationCase> {
-    return this.requireTransition("abandon_conversational_rectification_case", input);
+    return this.requireTransition("abandon_conversational_rectification_without_result", input);
   }
 
   private async requireTransition(

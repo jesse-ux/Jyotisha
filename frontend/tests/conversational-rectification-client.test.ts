@@ -204,3 +204,33 @@ test("502 and non-JSON failures retry only once before one stable Chinese messag
   assert.equal(bodies.length, 2);
   assert.equal(bodies[0], bodies[1]);
 });
+
+test("client emits validated rectification narrative chunks before accepting the durable turn", async (context) => {
+  const chunks = ["已记录这段经历。", "接下来核对关系事件。"];
+  context.mock.method(globalThis, "fetch", async (_input: string | URL | Request, init?: RequestInit) => {
+    assert.match(String((init?.headers as Record<string, string>)?.Accept), /application\/x-ndjson/);
+    return new Response([
+      ...chunks.map((text) => JSON.stringify({ type: "delta", text })),
+      JSON.stringify({ type: "turn", turn }),
+      "",
+    ].join("\n"), {
+      status: 200,
+      headers: { "content-type": "application/x-ndjson; charset=utf-8" },
+    });
+  });
+  const seen: string[] = [];
+
+  const result = await sendConversationalRectificationCommand({
+    type: "pause",
+    caseId,
+    actionId: firstActionId,
+    turnVersion: 4,
+  }, {
+    onNarrativeDelta(text) {
+      seen.push(text);
+    },
+  });
+
+  assert.deepEqual(seen, chunks);
+  assert.deepEqual(result, turn);
+});

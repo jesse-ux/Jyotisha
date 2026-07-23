@@ -49,7 +49,10 @@ import {
 } from "@/lib/birth-time-consultation-consent";
 import type { ConsultationBirthTimeMode } from "@/lib/consultation-birth-time-mode";
 import { sendConversationalRectificationCommand } from "@/lib/conversational-rectification/client";
-import type { ConversationalRectificationTurn } from "@/lib/conversational-rectification/contracts";
+import type {
+  ConversationalRectificationResponse,
+  ConversationalRectificationTurn,
+} from "@/lib/conversational-rectification/contracts";
 import {
   createDurableRectificationQuestionHandoffClient,
   createRectificationQuestionHandoffCoordinator,
@@ -818,7 +821,8 @@ export default function Home() {
   );
   const [rectificationSessionId, setRectificationSessionId] = useState<string | null>(null);
   const [rectificationReturnSessionId, setRectificationReturnSessionId] = useState<string | null>(null);
-  const [rectificationInitialTurn, setRectificationInitialTurn] = useState<ConversationalRectificationTurn | null>(null);
+  const [rectificationInitialTurn, setRectificationInitialTurn] = useState<ConversationalRectificationResponse | null>(null);
+  const [rectificationOpeningAssistantText, setRectificationOpeningAssistantText] = useState("");
   const [rectificationPendingQuestion, setRectificationPendingQuestion] = useState<string | null>(null);
   const [rectificationLoading, setRectificationLoading] = useState(false);
   const [rectificationMutationPending, setRectificationMutationPending] = useState(false);
@@ -859,8 +863,6 @@ export default function Home() {
   const activeOnboardingRequestIdentity = useRef("");
   const accountRefreshGuard = useRef(createLatestAccountRequestGuard());
   const rectificationQuestionHandoff = useRef(createRectificationQuestionHandoffCoordinator<Theme>());
-  const continueRectificationQuestion = useRef<(question: string) => void>(() => undefined);
-  const automaticRectificationContinuation = useRef("");
   const durableRectificationQuestionHandoff = useRef(
     createDurableRectificationQuestionHandoffClient(),
   );
@@ -1950,6 +1952,7 @@ export default function Home() {
     setDraftEntrypoint(null);
     setRectificationPendingQuestion(requestedQuestion);
     setRectificationInitialTurn(null);
+    setRectificationOpeningAssistantText("");
     setRectificationError("");
     setRectificationLoading(true);
     if (!reusingRectificationSession) {
@@ -1965,7 +1968,7 @@ export default function Home() {
     activeSessionIdRef.current = rectificationSession.id;
     setActiveSessionId(rectificationSession.id);
     try {
-      let turn: ConversationalRectificationTurn;
+      let turn: ConversationalRectificationResponse;
       if (!resumeTarget) {
         const durable = await durableRectificationQuestionHandoff.current.load();
         turn = durable && durable.status !== "consumed"
@@ -1974,6 +1977,10 @@ export default function Home() {
               type: "start",
               actionId: globalThis.crypto.randomUUID(),
               pendingConsultationQuestion: requestedQuestion,
+            }, {
+              onNarrativeDelta(text) {
+                setRectificationOpeningAssistantText((current) => current + text);
+              },
             });
       } else {
         let current = resumeTarget;
@@ -2006,6 +2013,10 @@ export default function Home() {
             caseId: current.caseId,
             actionId: globalThis.crypto.randomUUID(),
             turnVersion: current.turnVersion,
+          }, {
+            onNarrativeDelta(text) {
+              setRectificationOpeningAssistantText((value) => value + text);
+            },
           });
         }
       }
@@ -2030,6 +2041,7 @@ export default function Home() {
         }
       }
       setRectificationInitialTurn(turn);
+      setRectificationOpeningAssistantText("");
       synchronizeRectificationQuestion(turn, sourceSession);
       setComposerNotice(sessionSyncFailed ? "校正已经开始，但会话关联暂时未同步到云端。" : "");
     } catch (caught) {
@@ -2037,6 +2049,7 @@ export default function Home() {
         ? caught.message
         : "生时校正暂时无法继续，请稍后重试。";
       setRectificationError(message);
+      setRectificationOpeningAssistantText("");
       setComposerNotice(message);
       if (!reusingRectificationSession) {
         setSessions((current) => current.filter((session) => session.id !== rectificationSession.id));
@@ -2054,7 +2067,7 @@ export default function Home() {
     void openBirthTimeRectification(null, session);
   };
 
-  function handleConversationalRectificationTurn(turn: ConversationalRectificationTurn) {
+  function handleConversationalRectificationTurn(turn: ConversationalRectificationResponse) {
     const requestIdentity = accountRefreshGuard.current.begin();
     setRectificationInitialTurn(turn);
     synchronizeRectificationQuestion(turn);
@@ -2646,6 +2659,19 @@ export default function Home() {
       && !sessions.some((session) => session.id === rectificationQuestionHandoff.current.peek()?.sessionId)) {
       rectificationQuestionHandoff.current.clear();
     }
+    const localHandoff = rectificationQuestionHandoff.current.peek();
+    const returnSession = (localHandoff
+      ? sessions.find((session) => session.id === localHandoff.sessionId)
+      : null)
+      ?? (rectificationReturnSessionId
+        ? sessions.find((session) => session.id === rectificationReturnSessionId)
+        : null)
+      ?? sessions.find((session) => session.sessionType === "consultation")
+      ?? null;
+    if (!returnSession) {
+      setComposerNotice("没有找到原问题所在的会话，请从会话列表打开原问题后重试。");
+      return;
+    }
 
     rectificationContinuationInFlight.current = true;
     setRectificationContinuationPending(true);
@@ -2661,12 +2687,8 @@ export default function Home() {
         return;
       }
       if (durableClaim.status === "consumed") {
-        const returnSessionId = rectificationQuestionHandoff.current.peek()?.sessionId
-          ?? rectificationReturnSessionId;
-        if (returnSessionId && sessions.some((session) => session.id === returnSessionId)) {
-          activeSessionIdRef.current = returnSessionId;
-          setActiveSessionId(returnSessionId);
-        }
+        activeSessionIdRef.current = returnSession.id;
+        setActiveSessionId(returnSession.id);
         setRectificationPendingQuestion(null);
         setComposerNotice("原问题已经继续回答，不会再次发送或扣点。");
         return;
@@ -2677,7 +2699,7 @@ export default function Home() {
       }
       const completed = await rectificationQuestionHandoff.current.continueOriginalQuestion(
         question,
-        { sessionId: activeSession.id, theme: activeSession.theme },
+        { sessionId: returnSession.id, theme: returnSession.theme },
         async (context) => {
           activeSessionIdRef.current = context.sessionId;
           setActiveSessionId(context.sessionId);
@@ -2715,22 +2737,6 @@ export default function Home() {
       setRectificationContinuationPending(false);
     }
   }
-
-  continueRectificationQuestion.current = (question) => {
-    void continueRectificationOriginalQuestion(question);
-  };
-
-  useEffect(() => {
-    const turn = rectificationInitialTurn;
-    const question = turn?.pendingConsultationQuestion;
-    if (!turn || turn.status !== "completed" || !question
-      || !turn.actions.includes("continue_original_question")
-      || rectificationLoading || rectificationMutationPending) return;
-    const continuationIdentity = `${turn.caseId}:${turn.turnVersion}:${question}`;
-    if (automaticRectificationContinuation.current === continuationIdentity) return;
-    automaticRectificationContinuation.current = continuationIdentity;
-    continueRectificationQuestion.current(question);
-  }, [rectificationInitialTurn, rectificationLoading, rectificationMutationPending]);
 
   useGSAP(() => {
     if (!starterHomeVisible || !starterWorkbench.current) return;
@@ -3090,6 +3096,7 @@ export default function Home() {
           ) : (
             <ConversationalBirthTimeRectification
               initialTurn={visibleRectificationTurn}
+              openingAssistantText={rectificationOpeningAssistantText}
               pendingConsultationQuestion={rectificationPendingQuestion}
               continuationPending={rectificationContinuationPending}
               onPendingChange={setRectificationMutationPending}

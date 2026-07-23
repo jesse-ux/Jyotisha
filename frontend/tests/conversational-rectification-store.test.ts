@@ -201,7 +201,7 @@ test("loads the latest unfinished case by account without a chat identifier", as
 
   const loaded = await store.loadCase({ userId });
   assert.equal(loaded?.caseId, caseId);
-  assert.deepEqual(calls, [["load_conversational_rectification_case", {
+  assert.deepEqual(calls, [["load_conversational_rectification_case_with_history", {
     p_user_id: userId,
     p_case_id: null,
   }]]);
@@ -294,6 +294,7 @@ test("save, pause, abandon, confirm, and import carry owner/version/action guard
 
   await store.saveTurn({
     ...common,
+    userMessage: "2019 年 7 月换工作",
     turn: { ...firstTurn, turnVersion: 1 },
     evidence,
     validationReceipt,
@@ -340,9 +341,9 @@ test("save, pause, abandon, confirm, and import carry owner/version/action guard
   });
 
   assert.deepEqual(calls.map(([name]) => name), [
-    "save_conversational_rectification_turn",
+    "save_conversational_rectification_turn_with_history",
     "pause_conversational_rectification_case",
-    "abandon_conversational_rectification_case",
+    "abandon_conversational_rectification_without_result",
     "confirm_conversational_rectification_candidate",
     "import_legacy_conversational_rectification_case",
   ]);
@@ -382,13 +383,14 @@ test("a completed unverified range uses the non-confirming completion RPC", asyn
     actionId,
     expectedVersion: 0,
     commandFingerprint,
+    userMessage: "这些经历已经补充完了",
     turn: completedTurn,
     evidence: [],
     validationReceipt,
     privateCandidate: { resultId, calculationVersion: "rectification-v3.1" },
   });
 
-  assert.equal(called, "complete_conversational_rectification_with_range");
+  assert.equal(called, "complete_conversational_rectification_with_range_and_history");
   assert.equal(result.status, "completed");
   assert.equal(result.latestTurn.candidate.status, "pending_validation");
 });

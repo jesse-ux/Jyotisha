@@ -7,6 +7,7 @@ SCHEMA = MIGRATIONS / "20260720010000_conversational_rectification_schema.sql"
 BILLING = MIGRATIONS / "20260720020000_conversational_rectification_billing.sql"
 TRANSITIONS = MIGRATIONS / "20260720030000_conversational_rectification_transitions.sql"
 LEGACY_IMPORT = MIGRATIONS / "20260721010000_conversational_legacy_import_projection.sql"
+UNCONFIRMED_REFUND = MIGRATIONS / "20260722190000_refund_unconfirmed_rectification.sql"
 
 
 def _normalized(path: Path) -> str:
@@ -115,6 +116,28 @@ def test_complete_never_debits_and_release_refunds_at_most_once() -> None:
     assert "set state = 'released'" in release
     assert "if v_billing.state = 'charged'" in release
     assert "'already_charged'" in release
+
+
+def test_range_only_completion_and_abandonment_refund_in_the_terminal_transaction() -> None:
+    sql = _normalized(UNCONFIRMED_REFUND)
+    refund = _function(sql, "conversational_rectification_refund_unconfirmed_case")
+    completion = _function(sql, "complete_conversational_rectification_with_range")
+    abandonment = _function(sql, "abandon_conversational_rectification_without_result")
+
+    for invariant in (
+        "v_case.status not in ('completed', 'abandoned')",
+        "v_case.turn_state #>> '{candidate,status}' = 'confirmed'",
+        "v_billing.state = 'charged'",
+        "set credits = profile.credits + v_billing.price",
+        "'refund', v_billing.price",
+        "set state = 'released'",
+    ):
+        assert invariant in refund
+    assert "save_conversational_rectification_turn" in completion
+    assert "conversational_rectification_refund_unconfirmed_case" in completion
+    assert "abandon_conversational_rectification_case" in abandonment
+    assert "conversational_rectification_refund_unconfirmed_case" in abandonment
+    assert "active_birth_time" not in sql
 
 
 def test_release_terminalizes_a_created_reserved_case() -> None:

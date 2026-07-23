@@ -7,9 +7,11 @@ import {
   createConversationalRectificationActionRegistry,
   sendConversationalRectificationCommand,
   type ConversationalRectificationActionIdentity,
+  type ConversationalRectificationStreamOptions,
 } from "../lib/conversational-rectification/client.ts";
 import type {
   ConversationalRectificationCommand,
+  ConversationalRectificationResponse,
   ConversationalRectificationTurn,
 } from "../lib/conversational-rectification/contracts.ts";
 
@@ -18,21 +20,52 @@ type EvidenceDomain = NonNullable<
 >["domains"][number];
 type EvidenceRecapEntry = ConversationalRectificationTurn["evidenceRecap"][number];
 
+export type ConversationalRectificationMessage = Readonly<{
+  role: "assistant" | "user";
+  text: string;
+  renderKey: string;
+}>;
+
+function assistantText(turn: ConversationalRectificationTurn): string {
+  return turn.narrative.trim();
+}
+
+function initialMessages(turn: ConversationalRectificationResponse | null): ConversationalRectificationMessage[] {
+  if (!turn) return [];
+  if (turn.messageHistory?.length) {
+    return turn.messageHistory.flatMap((entry) => [
+      ...(entry.userMessage ? [{
+        role: "user" as const,
+        text: entry.userMessage,
+        renderKey: `user-turn-${entry.turnVersion}`,
+      }] : []),
+      {
+        role: "assistant" as const,
+        text: entry.narrative.trim(),
+        renderKey: `assistant-turn-${entry.turnVersion}`,
+      },
+    ]);
+  }
+  return [{ role: "assistant", text: assistantText(turn), renderKey: `assistant-${turn.turnVersion}` }];
+}
+
 export type ConversationalRectificationControllerSnapshot = Readonly<{
-  turn: ConversationalRectificationTurn | null;
+  turn: ConversationalRectificationResponse | null;
+  messages?: readonly ConversationalRectificationMessage[];
   draft: string;
   selectedDomain: EvidenceDomain | null;
   correctionTarget: EvidenceRecapEntry | null;
   pending: boolean;
+  streamingAssistantText?: string;
   error: string;
 }>;
 
-type MutationResult = Promise<ConversationalRectificationTurn | null>;
+type MutationResult = Promise<ConversationalRectificationResponse | null>;
 
 export type ConversationalRectificationController = ConversationalRectificationControllerSnapshot & Readonly<{
   getSnapshot(): ConversationalRectificationControllerSnapshot;
   subscribe(listener: () => void): () => void;
-  synchronizeInitialTurn(turn: ConversationalRectificationTurn | null): void;
+  synchronizeInitialTurn(turn: ConversationalRectificationResponse | null): void;
   setDraft(value: string): void;
   selectDomain(domain: EvidenceDomain | null): void;
   beginEvidenceCorrection(evidenceId: string): void;
@@ -46,10 +79,13 @@ export type ConversationalRectificationController = ConversationalRectificationC
 }>;
 
 type ControllerInput = Readonly<{
-  initialTurn?: ConversationalRectificationTurn | null;
-  send?: (command: ConversationalRectificationCommand) => Promise<ConversationalRectificationTurn>;
+  initialTurn?: ConversationalRectificationResponse | null;
+  send?: (
+    command: ConversationalRectificationCommand,
+    options?: ConversationalRectificationStreamOptions,
+  ) => Promise<ConversationalRectificationResponse>;
   createActionId?: () => string;
-  onTurn?: (turn: ConversationalRectificationTurn) => void;
+  onTurn?: (turn: ConversationalRectificationResponse) => void;
   onPendingChange?: (pending: boolean) => void;
 }>;
 
@@ -57,6 +93,7 @@ type Mutation = Readonly<{
   identity: ConversationalRectificationActionIdentity;
   command(actionId: string): ConversationalRectificationCommand;
   clearDraftOnSuccess?: boolean;
+  userMessage?: string;
 }>;
 
 type ActiveMutation = Readonly<{
@@ -71,10 +108,10 @@ function createLatestControllerInput(initial: ControllerInput) {
     update(next: ControllerInput) {
       current = next;
     },
-    send(command: ConversationalRectificationCommand) {
-      return (current.send ?? sendConversationalRectificationCommand)(command);
+    send(command: ConversationalRectificationCommand, options?: ConversationalRectificationStreamOptions) {
+      return (current.send ?? sendConversationalRectificationCommand)(command, options);
     },
-    onTurn(turn: ConversationalRectificationTurn) {
+    onTurn(turn: ConversationalRectificationResponse) {
       current.onTurn?.(turn);
     },
     onPendingChange(pending: boolean) {
@@ -103,10 +140,12 @@ export function createConversationalRectificationController(
   const listeners = new Set<() => void>();
   let snapshot: ConversationalRectificationControllerSnapshot = {
     turn: input.initialTurn ?? null,
+    messages: initialMessages(input.initialTurn ?? null),
     draft: "",
     selectedDomain: null,
     correctionTarget: null,
     pending: false,
+    streamingAssistantText: "",
     error: "",
   };
   let activeMutation: ActiveMutation | null = null;
@@ -129,9 +168,10 @@ export function createConversationalRectificationController(
     }
   };
   const acceptTurn = (
-    turn: ConversationalRectificationTurn,
+    turn: ConversationalRectificationResponse,
     clearDraft: boolean,
     expectedCaseContext: number,
+    userMessage?: string,
   ) => {
     const current = snapshot.turn;
     if (caseContext !== expectedCaseContext) return turn;
@@ -148,7 +188,15 @@ export function createConversationalRectificationController(
         : null;
     patch({
       turn,
+      messages: userMessage
+        ? [
+            ...(snapshot.messages ?? []),
+            { role: "user", text: userMessage, renderKey: `user-${turn.turnVersion}` },
+            { role: "assistant", text: assistantText(turn), renderKey: `assistant-${turn.turnVersion}` },
+          ]
+        : snapshot.messages,
       error: "",
+      streamingAssistantText: "",
       selectedDomain,
       correctionTarget,
       ...(clearDraft ? { draft: "" } : {}),
@@ -160,7 +208,7 @@ export function createConversationalRectificationController(
     }
     return turn;
   };
-  const recoverLatest = async (turn: ConversationalRectificationTurn) => registry.run({
+  const recoverLatest = async (turn: ConversationalRectificationResponse) => registry.run({
     caseId: turn.caseId,
     turnVersion: turn.turnVersion,
     operation: "resume",
@@ -173,7 +221,7 @@ export function createConversationalRectificationController(
   }));
   const run = (mutation: Mutation): MutationResult => {
     if (activeMutation?.caseContext === caseContext) return activeMutation.promise;
-    patch({ error: "" });
+    patch({ error: "", streamingAssistantText: "" });
     setPending(true);
     const turnAtStart = snapshot.turn;
     const caseContextAtStart = caseContext;
@@ -182,11 +230,17 @@ export function createConversationalRectificationController(
       && activeMutation?.token === mutationToken;
     const operation = registry.run(
       mutation.identity,
-      (actionId) => send(mutation.command(actionId)),
+      (actionId) => send(mutation.command(actionId), {
+        onNarrativeDelta(text) {
+          if (!ownsCurrentContext()) return;
+          patch({ streamingAssistantText: (snapshot.streamingAssistantText ?? "") + text });
+        },
+      }),
     ).then((turn) => acceptTurn(
       turn,
       mutation.clearDraftOnSuccess === true,
       caseContextAtStart,
+      mutation.userMessage,
     ))
       .catch(async (error: unknown) => {
         if (turnAtStart && staleTurn(error) && caseContext === caseContextAtStart) {
@@ -194,17 +248,20 @@ export function createConversationalRectificationController(
             const recovered = await recoverLatest(turnAtStart);
             return acceptTurn(recovered, false, caseContextAtStart);
           } catch (recoveryError) {
-            if (ownsCurrentContext()) patch({ error: displayError(recoveryError) });
+            if (ownsCurrentContext()) patch({ error: displayError(recoveryError), streamingAssistantText: "" });
             throw recoveryError;
           }
         }
-        if (ownsCurrentContext()) patch({ error: displayError(error) });
+        if (ownsCurrentContext()) patch({ error: displayError(error), streamingAssistantText: "" });
         throw error;
       })
       .finally(() => {
         if (activeMutation?.token !== mutationToken) return;
         activeMutation = null;
-        if (caseContext === caseContextAtStart) setPending(false);
+        if (caseContext === caseContextAtStart) {
+          patch({ streamingAssistantText: "" });
+          setPending(false);
+        }
       });
     activeMutation = {
       caseContext: caseContextAtStart,
@@ -220,8 +277,9 @@ export function createConversationalRectificationController(
   const currentMutation = (
     operation: Exclude<ConversationalRectificationCommand["type"], "start">,
     payload: unknown,
-    command: (turn: ConversationalRectificationTurn, actionId: string) => ConversationalRectificationCommand,
+    command: (turn: ConversationalRectificationResponse, actionId: string) => ConversationalRectificationCommand,
     clearDraftOnSuccess = false,
+    userMessage?: string,
   ): MutationResult => {
     const turn = currentTurn();
     if (!turn) return Promise.resolve(null);
@@ -234,22 +292,25 @@ export function createConversationalRectificationController(
       },
       command: (actionId) => command(turn, actionId),
       clearDraftOnSuccess,
+      userMessage,
     });
   };
 
   const controller = {
     get turn() { return snapshot.turn; },
+    get messages() { return snapshot.messages; },
     get draft() { return snapshot.draft; },
     get selectedDomain() { return snapshot.selectedDomain; },
     get correctionTarget() { return snapshot.correctionTarget; },
     get pending() { return snapshot.pending; },
+    get streamingAssistantText() { return snapshot.streamingAssistantText; },
     get error() { return snapshot.error; },
     getSnapshot: () => snapshot,
     subscribe(listener: () => void) {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
-    synchronizeInitialTurn(turn: ConversationalRectificationTurn | null) {
+    synchronizeInitialTurn(turn: ConversationalRectificationResponse | null) {
       const current = snapshot.turn;
       if (turn === null) {
         if (current === null) return;
@@ -262,10 +323,12 @@ export function createConversationalRectificationController(
         }
         patch({
           turn: null,
+          messages: [],
           draft: "",
           selectedDomain: null,
           correctionTarget: null,
           pending: false,
+          streamingAssistantText: "",
           error: "",
         });
         return;
@@ -280,10 +343,12 @@ export function createConversationalRectificationController(
         }
         patch({
           turn,
+          messages: initialMessages(turn),
           draft: "",
           selectedDomain: null,
           correctionTarget: null,
           pending: false,
+          streamingAssistantText: "",
           error: "",
         });
         return;
@@ -291,7 +356,14 @@ export function createConversationalRectificationController(
       if (turn.turnVersion <= current.turnVersion) return;
       patch({
         turn,
+        messages: turn.messageHistory?.length
+          ? initialMessages(turn)
+          : [
+            ...(snapshot.messages ?? []),
+            { role: "assistant", text: assistantText(turn), renderKey: `assistant-${turn.turnVersion}` },
+          ],
         error: "",
+        streamingAssistantText: "",
         selectedDomain: snapshot.selectedDomain
           && turn.evidenceRequest?.domains.includes(snapshot.selectedDomain)
           ? snapshot.selectedDomain
@@ -360,7 +432,7 @@ export function createConversationalRectificationController(
         answer,
         ...(domain ? { domain } : {}),
         ...(correctsEvidenceId ? { correctsEvidenceId } : {}),
-      }), true);
+      }), true, answer);
     },
     pause() {
       const turn = currentTurn();

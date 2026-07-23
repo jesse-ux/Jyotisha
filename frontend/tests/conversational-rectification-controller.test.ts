@@ -9,6 +9,7 @@ import {
 } from "../src/lib/conversational-rectification/client.ts";
 import type {
   ConversationalRectificationCommand,
+  ConversationalRectificationResponse,
   ConversationalRectificationTurn,
 } from "../src/lib/conversational-rectification/contracts.ts";
 
@@ -64,6 +65,30 @@ function correctableTurn(turnVersion = 2): ConversationalRectificationTurn {
   };
 }
 
+function turnWithMessageHistory(turnVersion = 3): ConversationalRectificationResponse {
+  return {
+    ...activeTurn(turnVersion),
+    narrative: "你提到第一份工作从数据分析开始。下一步想核对一次明确的职业转折。",
+    messageHistory: [
+      {
+        turnVersion: 1,
+        userMessage: null,
+        narrative: "我们先从一件时间明确的经历开始。",
+      },
+      {
+        turnVersion: 2,
+        userMessage: "2017 年 7 月入职第一家公司，从事数据分析。",
+        narrative: "这段职业起点已经记下。你当时为什么选择数据分析？",
+      },
+      {
+        turnVersion: 3,
+        userMessage: "专业相关，也觉得数据工作更适合我。",
+        narrative: "你提到第一份工作从数据分析开始。下一步想核对一次明确的职业转折。",
+      },
+    ],
+  };
+}
+
 function idFactory() {
   const ids = [...actionIds];
   return () => ids.shift() ?? assert.fail("unexpected action id allocation");
@@ -112,6 +137,86 @@ test("controller admits only one in-flight mutation and clears text only after s
   assert.equal(controller.getSnapshot().draft, "");
   assert.equal(controller.getSnapshot().turn?.turnVersion, 3);
   assert.deepEqual(pendingChanges, [true, false]);
+});
+
+test("controller publishes streamed Agent text while the durable rectification turn is pending", async () => {
+  const request = deferred<ConversationalRectificationResponse>();
+  let emit: ((text: string) => void) | undefined;
+  const controller = createConversationalRectificationController({
+    initialTurn: activeTurn(),
+    createActionId: idFactory(),
+    send: async (_command, options) => {
+      emit = options?.onNarrativeDelta;
+      return request.promise;
+    },
+  });
+  controller.setDraft("2024 年 8 月结束一段重要感情");
+
+  const answer = controller.answer("relationship");
+  emit?.("已记录关系事件，");
+  emit?.("接下来核对开始时间。");
+
+  assert.equal(controller.getSnapshot().pending, true);
+  assert.equal(controller.getSnapshot().streamingAssistantText, "已记录关系事件，接下来核对开始时间。");
+
+  request.resolve({
+    ...activeTurn(3),
+    narrative: "已记录关系事件，接下来核对开始时间。",
+  });
+  await answer;
+
+  assert.equal(controller.getSnapshot().pending, false);
+  assert.equal(controller.getSnapshot().streamingAssistantText, "");
+  assert.equal(controller.getSnapshot().messages?.at(-1)?.text, "已记录关系事件，接下来核对开始时间。");
+});
+
+test("controller retains alternating user and Agent messages after each answer", async () => {
+  const initial = activeTurn();
+  const controller = createConversationalRectificationController({
+    initialTurn: initial,
+    createActionId: idFactory(),
+    send: async () => ({
+      ...activeTurn(3),
+      narrative: "你提到 2021 年 7 月开始第一份工作，这次职业起点已经记下。接下来想核对一次搬迁。",
+    }),
+  });
+
+  controller.setDraft("2021 年 7 月开始第一份工作");
+  await controller.answer("career");
+
+  assert.deepEqual(controller.getSnapshot().messages?.map(({ role, text }) => ({ role, text })), [
+    { role: "assistant", text: initial.narrative },
+    { role: "user", text: "2021 年 7 月开始第一份工作" },
+    { role: "assistant", text: "你提到 2021 年 7 月开始第一份工作，这次职业起点已经记下。接下来想核对一次搬迁。" },
+  ]);
+});
+
+test("controller restores the real user and Agent history without synthesizing recap templates", () => {
+  const controller = createConversationalRectificationController({
+    initialTurn: turnWithMessageHistory(),
+  });
+
+  const messages = controller.getSnapshot().messages?.map(({ role, text }) => ({ role, text }));
+  assert.deepEqual(messages, [
+    { role: "assistant", text: "我们先从一件时间明确的经历开始。" },
+    { role: "user", text: "2017 年 7 月入职第一家公司，从事数据分析。" },
+    { role: "assistant", text: "这段职业起点已经记下。你当时为什么选择数据分析？" },
+    { role: "user", text: "专业相关，也觉得数据工作更适合我。" },
+    { role: "assistant", text: "你提到第一份工作从数据分析开始。下一步想核对一次明确的职业转折。" },
+  ]);
+  assert.doesNotMatch(messages?.map(({ text }) => text).join("\n") ?? "", /已记录这段经历/);
+});
+
+test("legacy responses without message history show only the real latest Agent narrative", () => {
+  const legacy = {
+    ...correctableTurn(3),
+    narrative: "你刚才补充的职业经历还缺离职原因，我先继续问这一件事。",
+  };
+  const controller = createConversationalRectificationController({ initialTurn: legacy });
+
+  assert.deepEqual(controller.getSnapshot().messages?.map(({ role, text }) => ({ role, text })), [
+    { role: "assistant", text: legacy.narrative },
+  ]);
 });
 
 test("controller preserves the exact draft and stable action id across failures", async () => {
@@ -393,10 +498,16 @@ test("a case switch detaches the old mutation so the new case can mutate indepen
   controller.synchronizeInitialTurn(caseBTurn);
   assert.deepEqual(controller.getSnapshot(), {
     turn: caseBTurn,
+    messages: [{
+      role: "assistant",
+      text: caseBTurn.narrative,
+      renderKey: "assistant-1",
+    }],
     draft: "",
     selectedDomain: null,
     correctionTarget: null,
     pending: false,
+    streamingAssistantText: "",
     error: "",
   });
 
@@ -437,10 +548,12 @@ test("synchronizing to no case detaches an ordinary failure without publishing i
   controller.synchronizeInitialTurn(null);
   assert.deepEqual(controller.getSnapshot(), {
     turn: null,
+    messages: [],
     draft: "",
     selectedDomain: null,
     correctionTarget: null,
     pending: false,
+    streamingAssistantText: "",
     error: "",
   });
 
@@ -448,10 +561,12 @@ test("synchronizing to no case detaches an ordinary failure without publishing i
   await rejected;
   assert.deepEqual(controller.getSnapshot(), {
     turn: null,
+    messages: [],
     draft: "",
     selectedDomain: null,
     correctionTarget: null,
     pending: false,
+    streamingAssistantText: "",
     error: "",
   });
 });
@@ -528,6 +643,22 @@ test("a newer external same-case turn wins over an older in-flight response", as
   await pending;
 
   assert.equal(controller.getSnapshot().turn?.turnVersion, 5);
+});
+
+test("a newer synchronized response replaces local bubbles with its durable message history", () => {
+  const controller = createConversationalRectificationController({
+    initialTurn: activeTurn(1),
+  });
+
+  controller.synchronizeInitialTurn(turnWithMessageHistory(3));
+
+  assert.deepEqual(controller.getSnapshot().messages?.map(({ role, text }) => ({ role, text })), [
+    { role: "assistant", text: "我们先从一件时间明确的经历开始。" },
+    { role: "user", text: "2017 年 7 月入职第一家公司，从事数据分析。" },
+    { role: "assistant", text: "这段职业起点已经记下。你当时为什么选择数据分析？" },
+    { role: "user", text: "专业相关，也觉得数据工作更适合我。" },
+    { role: "assistant", text: "你提到第一份工作从数据分析开始。下一步想核对一次明确的职业转折。" },
+  ]);
 });
 
 test("an external same-version turn is not replaced by a late response", async () => {

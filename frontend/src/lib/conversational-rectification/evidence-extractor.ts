@@ -87,7 +87,7 @@ function classifyDomain(summary: string): RectificationEvidenceDomain {
   if (/结婚|恋爱|分手|离婚|订婚|伴侣|关系/.test(summary)) return "relationship";
   if (/生育|孩子|父亲|母亲|父母|家人|家庭|亲人/.test(summary)) return "family";
   if (/收入|工资|薪资|奖金|财富|财务|投资|亏损|盈利|负债|债务|资产/.test(summary)) return "finance";
-  if (/工作|入职|离职|辞职|升职|创业|职业|公司|项目/.test(summary)) return "career";
+  if (/工作|入职|离职|辞职|升职|创业|职业|职位|任职|管理职责|公司|项目/.test(summary)) return "career";
   return "other";
 }
 
@@ -137,6 +137,36 @@ function splitSentences(value: string): string[][] {
   return sentences.length > 0 ? sentences : [[value.trim()]];
 }
 
+function coalesceSameEventDetails(
+  input: ExtractLifeEventEvidenceInput,
+  events: readonly ExtractedLifeEventEvidence[],
+): readonly ExtractedLifeEventEvidence[] {
+  const merged: ExtractedLifeEventEvidence[] = [];
+  for (const event of events) {
+    const previous = merged.at(-1);
+    const canMerge = previous
+      && previous.dateValue !== null
+      && previous.dateValue === event.dateValue
+      && previous.datePrecision === event.datePrecision
+      && previous.domain === event.domain
+      && previous.extractionStatus === event.extractionStatus
+      && previous.scoreable === event.scoreable
+      && previous.correctsEvidenceIds.join("\0") === event.correctsEvidenceIds.join("\0");
+    if (!canMerge) {
+      merged.push(event);
+      continue;
+    }
+    const summaries = [...new Set([previous.eventSummary, event.eventSummary])];
+    const eventSummary = summaries.join("；");
+    merged[merged.length - 1] = {
+      ...previous,
+      id: evidenceId(input, merged.length - 1, eventSummary),
+      eventSummary,
+    };
+  }
+  return merged;
+}
+
 export function extractLifeEventEvidence(
   input: ExtractLifeEventEvidenceInput,
 ): readonly ExtractedLifeEventEvidence[] {
@@ -173,5 +203,5 @@ export function extractLifeEventEvidence(
       });
     }
   }
-  return events;
+  return coalesceSameEventDetails(input, events);
 }

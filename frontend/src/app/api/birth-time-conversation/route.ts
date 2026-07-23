@@ -3,6 +3,7 @@ import path from "node:path";
 import {
   conversationalRectificationCommandSchema,
   type ConversationalRectificationCommand,
+  type ConversationalRectificationResponse,
   type ConversationalRectificationTurn,
 } from "../../../lib/conversational-rectification/contracts.ts";
 import {
@@ -21,7 +22,10 @@ import {
   type DeclaredBirthInput,
   type LifeEventEvidence,
 } from "../../../lib/conversational-rectification/persistence-contracts.ts";
-import type { RectificationNarrativeGenerator } from "../../../lib/conversational-rectification/narrative-agent.ts";
+import {
+  rectificationNarrativeOutputSchema,
+  type RectificationNarrativeGenerator,
+} from "../../../lib/conversational-rectification/narrative-agent.ts";
 import type { BirthTimeJourneyEngine, RectificationQuestionnaire } from "../../../lib/birth-time-journey-service.ts";
 import type { CandidateResult, LifeEvent } from "../../../lib/birth-time-evidence.ts";
 import type { CandidateDifferenceBuild } from "../../../lib/birth-time-dynamic-choice-internal.ts";
@@ -38,6 +42,53 @@ import {
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+const RECTIFICATION_STREAM_CONTENT_TYPE = "application/x-ndjson; charset=utf-8";
+const RECTIFICATION_STREAM_CHUNK_SIZE = 10;
+const RECTIFICATION_STREAM_CHUNK_DELAY_MS = 18;
+
+function rectificationNarrativeChunks(narrative: string): string[] {
+  const characters = Array.from(narrative);
+  const chunks: string[] = [];
+  for (let index = 0; index < characters.length; index += RECTIFICATION_STREAM_CHUNK_SIZE) {
+    chunks.push(characters.slice(index, index + RECTIFICATION_STREAM_CHUNK_SIZE).join(""));
+  }
+  return chunks;
+}
+
+export function streamConversationalRectificationResponse(
+  turn: ConversationalRectificationResponse,
+  chunkDelayMs = RECTIFICATION_STREAM_CHUNK_DELAY_MS,
+): Response {
+  const encoder = new TextEncoder();
+  let cancelled = false;
+  const body = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      try {
+        for (const text of rectificationNarrativeChunks(turn.narrative)) {
+          if (cancelled) return;
+          controller.enqueue(encoder.encode(`${JSON.stringify({ type: "delta", text })}\n`));
+          if (chunkDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, chunkDelayMs));
+        }
+        if (cancelled) return;
+        controller.enqueue(encoder.encode(`${JSON.stringify({ type: "turn", turn })}\n`));
+        controller.close();
+      } catch (error) {
+        if (!cancelled) controller.error(error);
+      }
+    },
+    cancel() {
+      cancelled = true;
+    },
+  });
+  return new Response(body, {
+    headers: {
+      "Cache-Control": "no-cache, no-transform",
+      "Content-Type": RECTIFICATION_STREAM_CONTENT_TYPE,
+      "X-Accel-Buffering": "no",
+    },
+  });
+}
 
 const jyotishSkillPath = process.env.JYOTISH_SKILL_PATH?.trim()
   || path.resolve(process.cwd(), "..", "skills", "jyotish-vedic-astrology");
@@ -353,6 +404,7 @@ function scoreableLifeEvents(
       domain: item.domain,
       precision: item.datePrecision as "day" | "month" | "year",
       date: item.dateValue,
+      summary: item.eventSummary,
     } as LifeEvent];
   }).slice(-MAXIMUM_SCOREABLE_EVENTS);
 }
@@ -671,13 +723,21 @@ async function productionNarrativeGenerator(): Promise<RectificationNarrativeGen
     name: "Conversational Rectification Narrator",
     model: model.model,
     skills: [jyotishSkillPath],
-    instructions: "Return only the exact JSON object requested by the user prompt. Use the Jyotish Skill only to choose a natural, one-question-at-a-time evidence strategy and wording. Treat supplied packet facts as the exclusive source of candidate times, status, dates, layers, scores, references, and confirmation permissions. Never invent, recalculate, or confirm candidate data.",
+    instructions: "Return only the exact JSON object requested by the user prompt. Load the Jyotish Skill to choose a natural, one-question-at-a-time evidence strategy and to explain the supplied expert workflow. Treat supplied packet facts as the exclusive source of candidate times, status, dates, layers, scores, technique states, references, and confirmation permissions. Never invent, recalculate, or confirm candidate data. A blocked or not_evaluated technique must never be described as used. On final turns, include a concise user-readable Technique Audit Table from packet.expertWorkflow; on collecting turns, keep the reply conversational and ask exactly one next question.",
   });
   return {
     modelId: model.id,
     async generate(prompt) {
-      const result = await agent.generate([{ role: "user", content: prompt }]);
-      return { text: result.text };
+      const result = await agent.generate(
+        [{ role: "user", content: prompt }],
+        {
+          structuredOutput: {
+            schema: rectificationNarrativeOutputSchema,
+            jsonPromptInjection: "inline",
+          },
+        },
+      );
+      return { text: JSON.stringify(rectificationNarrativeOutputSchema.parse(result.object)) };
     },
   };
 }
@@ -880,7 +940,9 @@ export function createBirthTimeConversationPostHandler(
         errorCategory: "none",
         deploymentSha,
       });
-      return Response.json(turn);
+      return request.headers.get("accept")?.includes("application/x-ndjson")
+        ? streamConversationalRectificationResponse(turn)
+        : Response.json(turn);
     } catch (error) {
       const publicError = toConversationalRectificationPublicError(error);
       const outcome = service ? conversationalRectificationTelemetryOutcome(service) : null;

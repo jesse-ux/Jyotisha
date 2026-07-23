@@ -50,12 +50,17 @@ export function ChatMessageRow({ message }: { readonly message: ChatMessageView 
       <div className="message-content">
         <div className="message-bubble">
           {message.role === "assistant" ? (
-            message.state === "thinking"
-              ? <AgentActivityStatus state="working" label="正在核对星盘信息…" />
-              : <>
-                {message.state === "streaming" && <AgentActivityStatus state="composing" />}
-                <ChatMessageContent text={message.text} />
-              </>
+            <>
+              <AgentActivityStatus
+                state={message.state === "thinking"
+                  ? "working"
+                  : message.state === "streaming"
+                    ? "composing"
+                    : "completed"}
+                label={message.state === "thinking" ? "正在核对星盘信息…" : undefined}
+              />
+              {message.text && <ChatMessageContent text={message.text} />}
+            </>
           ) : <p>{message.text}</p>}
         </div>
       </div>

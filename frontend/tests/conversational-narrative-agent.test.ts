@@ -119,6 +119,201 @@ test("validates a rich first-turn narrative against the technical packet", async
   assert.doesNotMatch(result.narrative, /^哪一个时间段[\s\S]*\d{4}[–—-]\d{4}/);
 });
 
+test("repairs missing safety wording without replacing the model-authored narrative", async () => {
+  const packet = syntheticTechnicalPacket();
+  const output = {
+    ...richOutput(),
+    narrative: "我们先从你印象最深的一次关系变化聊起，好吗？",
+    evidenceRequest: {
+      domains: ["relationship" as const],
+      datePrecision: "month_preferred" as const,
+      prompt: "那段关系大约是什么时候发生的？",
+    },
+  };
+
+  const result = await generateRectificationNarrative({
+    phase: "first",
+    packet,
+    generator: generator([output]),
+  });
+
+  assert.equal(result.attempts, 1);
+  assert.equal(result.fallbackUsed, false);
+  assert.match(result.narrative, /印象最深的一次关系变化/);
+  assert.match(result.narrative, /05:16–05:24/);
+  assert.match(result.narrative, /不能直接当作已经确认/);
+  assert.match(result.narrative, /关系变化[\s\S]*什么时候发生/);
+  assert.doesNotMatch(result.narrative, /请只提供已经发生/);
+  assert.match(result.output.evidenceRequest?.prompt ?? "", /关系大约是什么时候/);
+  assert.doesNotMatch(result.output.evidenceRequest?.prompt ?? "", /请以已经发生的真实事件为准/);
+});
+
+test("repairs a natural intermediate follow-up prompt without discarding the specific reply", async () => {
+  const packet = syntheticTechnicalPacket();
+  const output = {
+    ...richOutput(),
+    narrative: "你把毕业和读研的衔接说清楚了，这两段会分别记录。下一步想确认毕业后的第一份工作是什么时候开始的？",
+    evidenceRequest: {
+      domains: ["career" as const],
+      datePrecision: "month_preferred" as const,
+      prompt: "第一份工作是什么时候开始的？",
+    },
+  };
+
+  const result = await generateRectificationNarrative({
+    phase: "intermediate",
+    packet,
+    generator: generator([output]),
+  });
+
+  assert.equal(result.attempts, 1);
+  assert.equal(result.fallbackUsed, false);
+  assert.match(result.narrative, /毕业和读研的衔接/);
+  assert.doesNotMatch(result.narrative, /当前累计/);
+  assert.equal(result.output.evidenceRequest?.prompt, "第一份工作是什么时候开始的？");
+});
+
+test("makes an internal evidence prompt visible when the acknowledgement contains no question", async () => {
+  const output = {
+    ...richOutput(),
+    narrative: "已记录本科毕业后衔接读研，这是一段连续教育转折，暂时不重复计数。",
+    evidenceRequest: {
+      domains: ["career" as const],
+      datePrecision: "month_preferred" as const,
+      prompt: "毕业后的第一份工作是什么时候开始的？",
+    },
+  };
+
+  const result = await generateRectificationNarrative({
+    phase: "intermediate",
+    packet: syntheticTechnicalPacket(),
+    generator: generator([output]),
+  });
+
+  assert.equal(result.fallbackUsed, false);
+  assert.match(result.narrative, /连续教育转折/);
+  assert.match(result.narrative, /第一份工作是什么时候开始的/);
+  assert.doesNotMatch(result.narrative, /请只提供已经发生/);
+});
+
+test("adds the concrete question when the acknowledgement only says whether more detail is needed", async () => {
+  const output = {
+    ...richOutput(),
+    narrative: "这次入职会作为一条事业事件记录，但还需要知道后续是否发生过离职、转岗或升职。",
+    evidenceRequest: {
+      domains: ["career" as const],
+      datePrecision: "month_preferred" as const,
+      prompt: "这份工作后来第一次发生明确变化是在什么时候？",
+    },
+  };
+
+  const result = await generateRectificationNarrative({
+    phase: "intermediate",
+    packet: syntheticTechnicalPacket(),
+    generator: generator([output]),
+  });
+
+  assert.equal(result.fallbackUsed, false);
+  assert.match(result.narrative, /还需要知道后续是否发生过/);
+  assert.match(result.narrative, /第一次发生明确变化是在什么时候/);
+});
+
+test("passes the bounded expert workflow to the skill-guided narrator", async () => {
+  const prompts: string[] = [];
+  const packet = {
+    ...syntheticTechnicalPacket(),
+    expertWorkflow: {
+      boundary: "not_auto_rectified" as const,
+      candidateWindows: [{
+        startTime: "05:16",
+        endTime: "05:24",
+        status: "pending_validation" as const,
+      }],
+      techniqueAuditTable: [{
+        technique: "KP cusp / sub-lord",
+        status: "blocked" as const,
+        evidence: [],
+        boundary: "当前评分合同没有可审计结果。",
+      }],
+      confirmationAllowed: false,
+      hardBlockers: ["minute_holdout_not_ready"],
+      gates: {},
+    },
+  };
+
+  await generateRectificationNarrative({
+    phase: "first",
+    packet,
+    generator: generator([richOutput()], prompts),
+  });
+
+  assert.match(prompts[0] ?? "", /expertWorkflow/);
+  assert.match(prompts[0] ?? "", /KP cusp \/ sub-lord/);
+  assert.match(prompts[0] ?? "", /blockedOrNotEvaluatedTechniquesMustNeverBeClaimedAsUsed/);
+});
+
+test("passes the user's latest concrete event to an intermediate skill-guided reply", async () => {
+  const prompts: string[] = [];
+  await generateRectificationNarrative({
+    phase: "intermediate",
+    packet: syntheticTechnicalPacket(),
+    context: {
+      latestEvidence: [{
+        dateLabel: "2023-09",
+        summary: "离开家乡去上海开始第一份长期工作",
+        domain: "career",
+      }],
+    },
+    generator: generator([richOutput()], prompts),
+  });
+
+  assert.match(prompts[0] ?? "", /离开家乡去上海开始第一份长期工作/);
+  assert.match(prompts[0] ?? "", /acknowledgeLatestEvidenceSpecificallyBeforeAsking/);
+  assert.match(prompts[0] ?? "", /doNotRepeatCandidateBoundaryUnlessItChangedOrTheUserAsked/);
+});
+
+test("passes the active event ledger and unresolved facts to the intermediate agent", async () => {
+  const prompts: string[] = [];
+  await generateRectificationNarrative({
+    phase: "intermediate",
+    packet: syntheticTechnicalPacket(),
+    context: {
+      latestUserText: "23年关系结束后发生过一次交通事故",
+      latestEvidence: [{
+        dateLabel: "2023",
+        summary: "关系结束后发生过一次交通事故",
+        domain: "health_pressure",
+      }],
+      eventLedger: [{
+        id: "relationship-ending",
+        rawText: "2024年8月8日一段重要关系结束",
+        dateLabel: "2024-08-08",
+        summary: "一段重要关系结束",
+        domain: "relationship",
+        extractionStatus: "clear",
+        active: true,
+        correctsEvidenceIds: [],
+      }],
+      unresolvedEvidence: [{
+        id: "accident-year-conflict",
+        rawText: "23年关系结束后发生过一次交通事故",
+        summary: "关系结束后发生过一次交通事故",
+        domain: "health_pressure",
+        dateLabel: "2023",
+      }],
+    },
+    generator: generator([richOutput()], prompts),
+  });
+
+  const prompt = prompts[0] ?? "";
+  assert.match(prompt, /23年关系结束后发生过一次交通事故/);
+  assert.match(prompt, /2024-08-08/);
+  assert.match(prompt, /一段重要关系结束/);
+  assert.match(prompt, /finishCurrentEventBeforeSwitchingDomains/);
+  assert.match(prompt, /resolveDateContradictionsBeforeScoring/);
+  assert.match(prompt, /mergeSameEventDetailsWithoutDoubleCounting/);
+});
+
 test("rejects invented representative times, layers, and references", () => {
   const packet = syntheticTechnicalPacket();
   const invalid = {
@@ -240,6 +435,24 @@ test("accepts a request for one real past event's year and month without propose
 
   assert.deepEqual(
     validateNarrativeAgainstPacket(legitimate, syntheticTechnicalPacket(), "first"),
+    { valid: true, issues: [] },
+  );
+});
+
+test("accepts a natural reply that mentions several known dates before asking a non-year alternative", () => {
+  const output = richOutput();
+  const legitimate = {
+    ...output,
+    narrative: "你在2014年开始读研，并在2017年正常毕业，这条教育线已经完整。毕业后的第一份工作是直接入职，还是先休息了一段时间？",
+    evidenceRequest: {
+      domains: ["career" as const],
+      datePrecision: "month_preferred" as const,
+      prompt: "毕业后的第一份工作是什么时候开始的？",
+    },
+  } satisfies RectificationNarrativeModelOutput;
+
+  assert.deepEqual(
+    validateNarrativeAgainstPacket(legitimate, syntheticTechnicalPacket(), "intermediate"),
     { valid: true, issues: [] },
   );
 });

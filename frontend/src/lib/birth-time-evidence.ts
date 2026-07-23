@@ -16,6 +16,7 @@ export const lifeEventPrecisionSchema = z.enum(["year", "month", "day"]);
 const lifeEventBase = {
   id: z.string().uuid(),
   domain: lifeEventDomainSchema,
+  summary: z.string().trim().min(1).max(1_000).optional(),
 } as const;
 
 const supportedYearSchema = z.string().regex(/^(19|20)\d{2}$/).refine(

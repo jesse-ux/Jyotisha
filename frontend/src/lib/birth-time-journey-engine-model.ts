@@ -92,6 +92,7 @@ export function eventScorePayload(input: JourneyEventScoreInput) {
       domain: event.domain,
       date: event.date,
       precision: event.precision,
+      ...(event.summary ? { summary: event.summary } : {}),
     })),
   } as const;
 }

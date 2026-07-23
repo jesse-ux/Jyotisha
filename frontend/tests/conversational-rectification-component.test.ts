@@ -91,10 +91,11 @@ test("rectification is a language-first exchange with one free-text answer path"
     { controller: controller() },
   ));
 
-  assert.match(markup, /已记录：2021 年 7 月 · 开始第一份长期工作/);
-  assert.match(markup, /目前已经形成一个待确认候选/);
-  assert.ok(markup.indexOf("待确认候选") < markup.indexOf("当前候选 05:18"));
-  assert.doesNotMatch(markup, /D9 与 D10|当前判断/);
+  assert.match(markup, /当前判断/);
+  assert.match(markup, /D9 与 D10/);
+  assert.doesNotMatch(markup, /已记录的经历|已记录的真实经历|更正这条经历/);
+  assert.doesNotMatch(markup, /当前候选 05:18/);
+  assert.doesNotMatch(markup, /目前已经形成一个待确认候选/);
   assert.match(markup, /<textarea[^>]+id="conversational-rectification-answer"/);
   assert.match(markup, /像聊天一样回答即可/);
   assert.match(markup, /2018 年 6 月去了上海工作/);
@@ -103,7 +104,7 @@ test("rectification is a language-first exchange with one free-text answer path"
   assert.doesNotMatch(markup, /2006[^<]*2011|BirthTimeChoiceQuestion|birth-time-choice-question/);
 });
 
-test("a resumed legacy turn replaces repeated technical prose with actionable guidance", () => {
+test("a resumed legacy turn preserves its Agent narrative without a separate evidence panel", () => {
   const legacyTurn = {
     ...turn,
     status: "active",
@@ -116,10 +117,34 @@ test("a resumed legacy turn replaces repeated technical prose with actionable gu
     { controller: controller({ turn: legacyTurn }) },
   ));
 
-  assert.match(markup, /已记录：2021 年 7 月 · 开始第一份长期工作/);
-  assert.match(markup, /范围暂未变化不代表提交失败/);
-  assert.match(markup, /接下来请说一件重要关系或搬迁与居住地方面已经发生的事/);
-  assert.doesNotMatch(markup, /D1 保持稳定/);
+  assert.match(markup, /05:30 是范围内的待验证候选/);
+  assert.match(markup, /D1 保持稳定/);
+  assert.doesNotMatch(markup, /2021 年 7 月 · 开始第一份长期工作|已记录的经历/);
+  assert.doesNotMatch(markup, /范围暂未变化不代表提交失败/);
+});
+
+test("an incomplete concrete event gets a targeted clarification instead of the generic question", () => {
+  const incompleteTurn = {
+    ...turn,
+    status: "active",
+    candidate: { ...turn.candidate, status: "pending_validation" },
+    evidenceRecap: [{
+      ...turn.evidenceRecap[0]!,
+      summary: "离开家去北京开始工作",
+      dateLabel: "日期待补充",
+      domain: "relocation",
+    }],
+    narrative: "你提到离开家去北京开始工作，这件事很有区分度。大致是什么年月？",
+    actions: ["answer", "pause", "abandon"],
+  } satisfies ConversationalRectificationTurn;
+  const markup = renderToStaticMarkup(React.createElement(
+    ConversationalRectificationSurface,
+    { controller: controller({ turn: incompleteTurn }) },
+  ));
+
+  assert.match(markup, /你提到离开家去北京开始工作/);
+  assert.match(markup, /大致是什么年月/);
+  assert.doesNotMatch(markup, /接下来请说一件/);
 });
 
 test("an uninitialized surface shows progress without a second start card", () => {
@@ -144,28 +169,48 @@ test("an uninitialized surface shows progress without a second start card", () =
   assert.doesNotMatch(markup, /系统会先说明候选边界|开始生时校正<\/button>/);
 });
 
-test("evidence is correctable, secondary controls stay hidden, and confirmation is explicit", () => {
+test("the first Agent guidance streams into the empty rectification surface", () => {
+  const emptyController = controller({
+    turn: null,
+    pending: true,
+    getSnapshot: () => ({
+      turn: null,
+      draft: "",
+      selectedDomain: null,
+      correctionTarget: null,
+      pending: true,
+      error: "",
+    }),
+  });
+  const markup = renderToStaticMarkup(React.createElement(
+    ConversationalRectificationSurface,
+    {
+      controller: emptyController,
+      openingAssistantText: "先说一件已经发生、并且记得年月的重要经历。",
+    },
+  ));
+
+  assert.match(markup, /先说一件已经发生、并且记得年月的重要经历/);
+  assert.doesNotMatch(markup, /正在建立校正记录/);
+});
+
+test("history management stays hidden while final confirmation remains explicit", () => {
   const markup = renderToStaticMarkup(React.createElement(
     ConversationalRectificationSurface,
     { controller: controller() },
   ));
 
-  assert.match(markup, /已记录的真实经历/);
-  assert.match(markup, /2021 年 7 月/);
-  assert.match(markup, /更正这条经历：开始第一份长期工作/);
+  assert.doesNotMatch(markup, /已记录的真实经历|2021 年 7 月|更正这条经历/);
   assert.doesNotMatch(markup, /本轮分析|等待经历验证/);
   assert.doesNotMatch(markup, /本轮技术回执|rectification-technical-v1|consult-d9/);
-  assert.match(markup, /当前候选 05:18/);
-  assert.match(markup, /待确认，尚未验证/);
+  assert.doesNotMatch(markup, /当前候选 05:18/);
   assert.match(markup, /确认采用 05:18（尚未验证）/);
   assert.match(markup, /aria-label="确认将 05:18 设为当前排盘时间；当前分钟尚未验证"/);
-  assert.match(markup, /已记录 1 条经历/);
-  assert.match(markup, /候选只用于继续验证/);
-  assert.match(markup, /这一步不会自动采用候选/);
+  assert.doesNotMatch(markup, /已记录 1 条经历|候选只用于继续验证|这一步不会自动采用候选/);
   assert.doesNotMatch(markup, /暂停，稍后继续|继续校正|放弃本次校正/);
 });
 
-test("correction mode identifies its durable target, can be cancelled, and marks revised recaps", () => {
+test("an existing correction target can still be cancelled without rendering history management", () => {
   const revisedTurn = {
     ...turn,
     evidenceRecap: [{ ...turn.evidenceRecap[0]!, isCorrection: true }],
@@ -191,7 +236,7 @@ test("correction mode identifies its durable target, can be cancelled, and marks
   assert.match(markup, /正在更正/);
   assert.match(markup, /开始第一份长期工作/);
   assert.match(markup, /取消更正/);
-  assert.match(markup, /（已修订）/);
+  assert.doesNotMatch(markup, /（已修订）|已记录的经历|更正这条经历/);
 });
 
 test("pending markup and responsive CSS expose accessibility contracts", () => {
@@ -211,6 +256,13 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
     ConversationalRectificationSurface,
     { controller: pendingController },
   ));
+  const streamingMarkup = renderToStaticMarkup(React.createElement(
+    ConversationalRectificationSurface,
+    { controller: controller({
+      pending: true,
+      streamingAssistantText: "已记录关系事件，接下来核对开始时间。",
+    }) },
+  ));
   const css = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
   const component = readFileSync(
     new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url),
@@ -222,13 +274,20 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
   assert.match(markup, /Jyotisha 正在核对经历/);
   assert.match(markup, /正在核对这段经历/);
   assert.match(markup, /Jyotisha 正在分析/);
+  assert.match(streamingMarkup, /已记录关系事件，接下来核对开始时间/);
+  assert.doesNotMatch(streamingMarkup, /Jyotisha 正在分析/);
   assert.match(markup, /<textarea[^>]+disabled=""[^>]*>保留中的文字<\/textarea>/);
   assert.match(markup, /aria-label="生时校正对话"/);
   assert.match(markup, /role="alert"|aria-live="polite"/);
   assert.match(css, /\.conversation\.is-rectification[^}]*padding-bottom:\s*0/);
   assert.match(css, /\.rectification-chat[^}]*height:\s*100%[^}]*display:\s*flex/);
   assert.match(css, /\.rectification-message-list[^}]*flex:\s*1[^}]*overflow-y:\s*auto/);
-  assert.match(css, /\.rectification-message-details button[^}]*min-height:\s*44px/);
+  assert.match(css, /\.rectification-message-list[^}]*scrollbar-color:\s*transparent transparent/);
+  assert.match(css, /\.rectification-message-list[^}]*scrollbar-width:\s*thin/);
+  assert.match(css, /\.rectification-message-list::\-webkit-scrollbar-thumb[^}]*background:\s*transparent[^}]*background-clip:\s*padding-box/);
+  assert.match(css, /\.rectification-message-list\.is-scrollbar-visible::\-webkit-scrollbar-thumb[^}]*color-mix/);
+  assert.match(css, /\.rectification-message-list::\-webkit-scrollbar-thumb:hover[^}]*color-mix/);
+  assert.match(css, /\.rectification-correction-target button[^}]*min-height:\s*44px/);
   assert.match(css, /\.composer:focus-within[^}]*border-color:/);
   assert.match(css, /\.composer textarea[^}]*border:\s*0/);
   assert.match(css, /\.rectification-composer-wrap[^}]*position:\s*static/);
@@ -236,9 +295,12 @@ test("pending markup and responsive CSS expose accessibility contracts", () => {
   assert.doesNotMatch(css, /\.conversational-domain-picker|\.conversational-event-date/);
   assert.doesNotMatch(css, /button\[aria-label\$="下一步建议"\]/);
   assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
-  assert.match(css, /@media\s*\(max-width:\s*430px\)[\s\S]*\.rectification-message-details/);
+  assert.doesNotMatch(css, /\.rectification-message-details/);
   assert.doesNotMatch(component, /确认放弃且不应用候选|本轮技术回执/);
-  assert.match(component, /controller\.answer\(undefined, controller\.draft\.trim\(\)\)/);
+  assert.match(component, /onPointerMove=\{revealScrollbar\}/);
+  assert.match(component, /onScroll=\{revealScrollbar\}/);
+  assert.match(component, /classList\.remove\("is-scrollbar-visible"\)/);
+  assert.match(component, /controller\.answer\(undefined, text\)/);
   assert.match(component, /event\.key === "Enter" && !event\.shiftKey/);
   assert.match(component, /onPendingChange/);
   assert.match(component, /onPendingChange:\s*props\.onPendingChange/);
@@ -653,7 +715,14 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
     });
     const turns = {
       activeA1: makeTurn(caseA, 1),
-      activeA3: makeTurn(caseA, 3),
+      activeA3: {
+        ...makeTurn(caseA, 13),
+        messageHistory: Array.from({ length: 12 }, (_, index) => ({
+          turnVersion: index + 1,
+          userMessage: "第 " + (index + 1) + " 条已发生经历，用于制造可滚动的真实对话历史。",
+          narrative: "已记录第 " + (index + 1) + " 条经历，并继续核对其他领域的候选差异。",
+        })),
+      },
       activeB1: makeTurn(caseB, 1),
       abandonedB2: makeTurn(caseB, 2, "abandoned"),
     };
@@ -663,8 +732,16 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
       const [initialTurn, setInitialTurn] = useState(null);
       const [transportLabel, setTransportLabel] = useState("first");
       const [callbackLabel, setCallbackLabel] = useState("first");
-      const send = async (command) => {
+      const send = async (command, options) => {
         events.push("send:" + transportLabel + ":" + command.type);
+        if (command.type === "answer") {
+          await new Promise((resolveSend) => setTimeout(resolveSend, 20));
+          options?.onNarrativeDelta?.("正在结合这段经历核对候选。 ");
+          events.push("delta:first");
+          await new Promise((resolveSend) => setTimeout(resolveSend, 20));
+          options?.onNarrativeDelta?.("下一步会继续验证其他领域。");
+          events.push("delta:second");
+        }
         await new Promise((resolveSend) => setTimeout(resolveSend, 20));
         if (command.type === "pause") {
           return makeTurn(command.caseId, command.turnVersion + 1, "paused");
@@ -708,7 +785,7 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
       outfile: bundlePath,
       platform: "browser",
     }), 10_000, "browser fixture bundle");
-    writeFileSync(htmlPath, `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}\nhtml,body{height:auto;overflow:auto}body{padding:12px}#root{width:100%;min-width:0}</style></head><body><main id="root"></main><script src="${pathToFileURL(bundlePath).href}"></script></body></html>`);
+    writeFileSync(htmlPath, `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}\nhtml,body{height:100%;overflow:hidden}body{box-sizing:border-box;padding:12px}#root{width:100%;height:100%;min-width:0}</style></head><body><main id="root"></main><script src="${pathToFileURL(bundlePath).href}"></script></body></html>`);
 
     ({ browser, cdp } = await launchFixture(htmlPath, userDataDirectory));
     await cdp.send("Runtime.enable");
@@ -725,8 +802,9 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
     );
     await cdp.evaluate("globalThis.__rectificationHarness.setTurn('activeA1')");
     await waitFor(
-      () => cdp?.evaluate<boolean>(`document.body.textContent.includes('当前候选 05:18')
-        && document.body.textContent.includes('已记录：2021-07')`) ?? Promise.resolve(false),
+      () => cdp?.evaluate<boolean>(`document.body.textContent.includes('当前判断')
+        && !document.body.textContent.includes('当前候选 05:18')
+        && !document.body.textContent.includes('已记录的经历')`) ?? Promise.resolve(false),
       "streamlined async initial turn",
     );
 
@@ -756,35 +834,75 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
     assert.equal(layout.selectCount, 0, "language-first flow should not render date selects");
     assert.equal(layout.domainChoiceCount, 0, "language-first flow should not render domain buttons");
 
-    await cdp.evaluate("document.querySelector('.rectification-message-details').open = true");
-    await cdp.evaluate("document.querySelector('[aria-label^=\"更正这条经历\"]').click()");
+    const mistakenAnswer = "2020年9月离职写错了";
+    await cdp.evaluate(`(() => {
+      const textarea = document.getElementById('conversational-rectification-answer');
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set;
+      setter.call(textarea, ${JSON.stringify(mistakenAnswer)});
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('[aria-label="发送"]').click();
+    })()`);
     await waitFor(
-      () => cdp?.evaluate<boolean>(`(() => {
-        const textarea = document.getElementById('conversational-rectification-answer');
-        return document.body.textContent.includes('正在更正')
-          && document.body.textContent.includes('开始第一份长期工作')
-          && textarea?.value === '';
-      })()`) ?? Promise.resolve(false),
-      "durable correction target selection without polluting the new answer",
+      () => cdp?.evaluate<boolean>(`document.querySelector('[aria-label="撤回发送，本次不计入校正"]') !== null`) ?? Promise.resolve(false),
+      "rectification undo window",
     );
-    await cdp.evaluate("[...document.querySelectorAll('button')].find((button) => button.textContent.includes('取消更正')).click()");
+    await cdp.evaluate("document.querySelector('[aria-label=\"撤回发送，本次不计入校正\"]').click()");
     await waitFor(
-      () => cdp?.evaluate<boolean>("!document.body.textContent.includes('正在更正') && document.getElementById('conversational-rectification-answer').value === ''") ?? Promise.resolve(false),
-      "correction cancellation",
+      () => cdp?.evaluate<boolean>(`document.getElementById('conversational-rectification-answer').value === ${JSON.stringify(mistakenAnswer)}`) ?? Promise.resolve(false),
+      "mistaken answer restored to draft",
     );
+    await new Promise((resolve) => setTimeout(resolve, 2_700));
+    assert.equal(await cdp.evaluate<boolean>("globalThis.__rectificationHarness.events.some((event) => event.endsWith(':answer'))"), false);
 
     await cdp.evaluate("globalThis.__rectificationHarness.setTurn('activeA3')");
     await waitFor(
       () => cdp?.evaluate<boolean>(`(() => {
         const text = document.body.textContent;
-        return text.includes('当前候选')
-          && !text.includes('候选时间')
+        return text.includes('当前判断')
+          && !text.includes('当前候选 05:18')
+          && !text.includes('已记录的经历')
           && !text.includes('本轮技术回执')
           && !text.includes('暂停，稍后继续')
           && !text.includes('放弃本次校正')
           && !document.querySelector('[role=alertdialog]');
       })()`) ?? Promise.resolve(false),
       "streamlined rectification controls",
+    );
+
+    const followsBottom = `(() => {
+      const list = document.querySelector('.rectification-message-list');
+      return list.scrollHeight > list.clientHeight
+        && Math.abs(list.scrollHeight - list.clientHeight - list.scrollTop) <= 2;
+    })()`;
+    await waitFor(
+      () => cdp?.evaluate<boolean>(followsBottom) ?? Promise.resolve(false),
+      "initial rectification history at the bottom",
+    );
+    await cdp.evaluate("document.querySelector('.rectification-message-list').scrollTop = 0");
+    const correctedAnswer = "2020年9月底主动离职，原因是组织内耗严重。";
+    await cdp.evaluate(`(() => {
+      const textarea = document.getElementById('conversational-rectification-answer');
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set;
+      setter.call(textarea, ${JSON.stringify(correctedAnswer)});
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('[aria-label="发送"]').click();
+    })()`);
+    await waitFor(
+      () => cdp?.evaluate<boolean>(followsBottom) ?? Promise.resolve(false),
+      "optimistic user message follows the bottom",
+    );
+    await waitFor(
+      () => cdp?.evaluate<boolean>(`globalThis.__rectificationHarness.events.includes('delta:first')
+        && document.body.textContent.includes('正在结合这段经历核对候选。')
+        && ${followsBottom}`) ?? Promise.resolve(false),
+      "streaming assistant delta follows the bottom",
+    );
+    await waitFor(
+      () => cdp?.evaluate<boolean>(`globalThis.__rectificationHarness.events.includes('delta:second')
+        && document.body.textContent.includes('回答已完成')
+        && document.body.textContent.includes(${JSON.stringify(correctedAnswer)})
+        && ${followsBottom}`) ?? Promise.resolve(false),
+      "settled assistant answer follows the bottom",
     );
 
   } finally {

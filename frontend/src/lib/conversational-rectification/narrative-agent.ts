@@ -7,14 +7,40 @@ import {
 
 export type RectificationNarrativePhase = "first" | "intermediate" | "final";
 
+export type RectificationNarrativeContext = Readonly<{
+  latestUserText?: string;
+  latestEvidence?: ReadonlyArray<{
+    dateLabel: string;
+    summary: string;
+    domain: RectificationEvidenceDomain;
+  }>;
+  eventLedger?: ReadonlyArray<{
+    id: string;
+    rawText: string;
+    dateLabel: string;
+    summary: string;
+    domain: RectificationEvidenceDomain;
+    extractionStatus: "clear" | "needs_clarification" | "corrected";
+    active: boolean;
+    correctsEvidenceIds: readonly string[];
+  }>;
+  unresolvedEvidence?: ReadonlyArray<{
+    id: string;
+    rawText: string;
+    summary: string;
+    domain: RectificationEvidenceDomain;
+    dateLabel: string;
+  }>;
+}>;
+
 const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const modelIdSchema = z.string().trim().min(1).max(120);
 const validatorVersion = "rectification-narrative-grounding-v2";
 const domainSchema = z.enum(["career", "education", "finance", "health_pressure", "relocation", "relationship", "family", "other"]);
 const broadYearRangePattern = /(?:19|20)\d{2}\s*年?\s*(?:[-–—~～至到\/]|\.\.)\s*(?:19|20)\d{2}\s*年?/i;
-const explicitYearPattern = /(?:19|20)\d{2}\s*年?/g;
 const proposedYearAlternativesPattern = /(?:19|20)\d{2}\s*年?\s*(?:还是|或者|或是|或|、|,|，)\s*(?:19|20)\d{2}\s*年?/i;
 const choiceQuestionPattern = /(?:哪(?:一|个)?(?:年|年份|年代|时间段|区间|时期)|哪个时间段|还是|选择|选项|更符合|更匹配|A\s*[.、:：)]|B\s*[.、:：)]|which\s+(?:year|period|range)|options?)/i;
+const labeledYearChoicesPattern = /A\s*[.、:：)]?[\s\S]{0,80}(?:19|20)\d{2}\s*年?[\s\S]{0,120}B\s*[.、:：)]?[\s\S]{0,80}(?:19|20)\d{2}\s*年?/i;
 const domainLabels = {
   career: "事业",
   education: "学业",
@@ -25,7 +51,7 @@ const domainLabels = {
   family: "家庭",
   other: "其他",
 } as const satisfies Readonly<Record<RectificationEvidenceDomain, string>>;
-const narrativeOutputSchema = z.object({
+export const rectificationNarrativeOutputSchema = z.object({
   narrative: z.string().trim().min(1).max(12_000),
   candidateStatus: z.enum(["pending_validation", "ready_for_confirmation"]),
   representativeTime: timeSchema,
@@ -47,7 +73,7 @@ const narrativeOutputSchema = z.object({
   }).strict().nullable(),
 }).strict();
 
-export type RectificationNarrativeModelOutput = z.infer<typeof narrativeOutputSchema>;
+export type RectificationNarrativeModelOutput = z.infer<typeof rectificationNarrativeOutputSchema>;
 
 export type NarrativeValidation = {
   readonly valid: boolean;
@@ -84,7 +110,7 @@ function parseModelOutput(text: string): RectificationNarrativeModelOutput {
   const start = normalized.indexOf("{");
   const end = normalized.lastIndexOf("}");
   if (start < 0 || end <= start) throw new TypeError("narrative output is not JSON");
-  return narrativeOutputSchema.parse(JSON.parse(normalized.slice(start, end + 1)));
+  return rectificationNarrativeOutputSchema.parse(JSON.parse(normalized.slice(start, end + 1)));
 }
 
 function narrativeTimes(value: string): string[] {
@@ -104,11 +130,9 @@ function narrativeReferences(value: string): string[] {
 }
 
 function isGenericBroadYearChoiceQuestionnaire(value: string): boolean {
-  const distinctYears = unique((value.match(explicitYearPattern) ?? [])
-    .map((year) => year.replace(/\s*年$/, "")));
   return proposedYearAlternativesPattern.test(value)
-    || (choiceQuestionPattern.test(value)
-      && (broadYearRangePattern.test(value) || distinctYears.length >= 2));
+    || labeledYearChoicesPattern.test(value)
+    || (choiceQuestionPattern.test(value) && broadYearRangePattern.test(value));
 }
 
 function proseFields(output: RectificationNarrativeModelOutput): readonly {
@@ -175,9 +199,7 @@ export function validateNarrativeAgainstPacket(
     for (const domain of output.evidenceRequest.domains) {
       if (!allowedDomains.has(domain)) issues.push(`evidence domain ${domain} is not packet-grounded`);
     }
-    if (!/(?:已经发生|已发生|过去)/.test(output.evidenceRequest.prompt)
-      || !/年/.test(output.evidenceRequest.prompt)
-      || !/月/.test(output.evidenceRequest.prompt)) {
+    if (!requestsPastDatedEvent(output.evidenceRequest.prompt)) {
       issues.push("evidence request must ask for a real past event by year and month");
     }
   } else if (phase !== "final") {
@@ -203,7 +225,7 @@ export function validateNarrativeAgainstPacket(
       issues.push(`${field.path} is a forbidden generic broad-year choice questionnaire`);
     }
   }
-  if (phase !== "final") {
+  if (phase === "first") {
     if (!output.narrative.includes(candidate.range.startTime)
       || !output.narrative.includes(candidate.range.endTime)
       || !/(?:待验证|候选|核对)/.test(output.narrative)) {
@@ -212,9 +234,7 @@ export function validateNarrativeAgainstPacket(
     if (narrativeLayers(output.narrative).length > 0) {
       issues.push("visible evidence narrative must not expose technical layer tokens");
     }
-    if (!/(?:已经发生|已发生|过去)/.test(output.narrative)
-      || !/年/.test(output.narrative)
-      || !/月/.test(output.narrative)) {
+    if (!requestsPastDatedEvent(output.narrative)) {
       issues.push("first narrative must request real past events by year and month");
     }
     if (!/(?:不是[\s\S]*确认|不能[\s\S]*(?:确定|确认)|仅[\s\S]*候选|必须[\s\S]*确认)/.test(output.narrative)) {
@@ -238,6 +258,7 @@ function grounding(packet: RectificationTechnicalPacket) {
     suggestedDomains: packet.suggestedDomains,
     referenceIds: packet.referenceIds,
     futureWindows: projected.futureWindows,
+    expertWorkflow: packet.expertWorkflow,
   };
 }
 
@@ -247,14 +268,89 @@ function boundedReceiptIssues(issues: readonly string[]): string[] {
     .map((issue) => issue.trim().slice(0, 240) || "narrative_mismatch");
 }
 
+function ensureSentence(value: string, sentence: string): string {
+  const trimmed = value.trim();
+  return trimmed ? `${trimmed}\n${sentence}` : sentence;
+}
+
+function hasVisibleEvidenceQuestion(value: string): boolean {
+  const withoutRhetoricalPrompts = value.replace(/(?:好吗|可以吗|行吗)[？?]/g, "");
+  return /[？?]/.test(withoutRhetoricalPrompts)
+    || /请(?:先|再|补充|告诉|提供|确认|回忆)/.test(value)
+    || /(?:先说一件|说说|告诉我)/.test(value);
+}
+
+function requestsPastDatedEvent(value: string): boolean {
+  const asksForDate = /(?:年|月|日期|时间|什么时候)/.test(value);
+  const refersToPastEvent = /(?:已经发生|已发生|过去|当时|后来|经历|发生|开始|毕业|入职|离职|结束|分手|事故|手术)/.test(value);
+  const asksOnlyAboutFuture = /(?:未来|预计|计划|打算)/.test(value) && !refersToPastEvent;
+  return asksForDate && refersToPastEvent && !asksOnlyAboutFuture;
+}
+
+function repairRequiredSafetyLanguage(
+  output: RectificationNarrativeModelOutput,
+  packet: RectificationTechnicalPacket,
+  phase: RectificationNarrativePhase,
+): RectificationNarrativeModelOutput {
+  let narrative = output.narrative;
+  let evidenceRequest = output.evidenceRequest;
+  const modelEvidencePrompt = output.evidenceRequest?.prompt.trim() ?? "";
+
+  if (phase !== "final" && evidenceRequest) {
+    if (!requestsPastDatedEvent(evidenceRequest.prompt)) {
+      evidenceRequest = {
+        ...evidenceRequest,
+        prompt: `请以已经发生的真实事件为准，并尽量说明年份和月份。${evidenceRequest.prompt}`,
+      };
+    }
+  }
+
+  if (phase === "first") {
+    const candidate = packet.candidate;
+    const statesCandidateRange = narrative.includes(candidate.range.startTime)
+      && narrative.includes(candidate.range.endTime)
+      && /(?:待验证|候选|核对)/.test(narrative);
+    const statesUseBoundary = /(?:不是[\s\S]*确认|不能[\s\S]*(?:确定|确认)|仅[\s\S]*候选|必须[\s\S]*确认)/.test(narrative);
+
+    if (!statesCandidateRange || !statesUseBoundary) {
+      narrative = [
+        `我们先在 ${candidate.range.startTime}–${candidate.range.endTime} 内核对候选；这个范围不能直接当作已经确认的出生时间。`,
+        narrative.trim(),
+      ].filter(Boolean).join("\n");
+    }
+  }
+
+  // evidenceRequest.prompt is an internal planning field and is intentionally not
+  // projected to the public turn. Keep the model-authored acknowledgement, but make
+  // sure the one concrete follow-up question is also visible in the chat bubble.
+  if (phase !== "final" && evidenceRequest && !hasVisibleEvidenceQuestion(narrative)) {
+    narrative = ensureSentence(narrative, modelEvidencePrompt || evidenceRequest.prompt);
+  }
+
+  if (phase === "first" && !requestsPastDatedEvent(narrative)) {
+    narrative = ensureSentence(
+      narrative,
+      "请从已经发生的真实经历开始，尽量写明哪一年、哪一月。",
+    );
+  }
+
+  return {
+    ...output,
+    narrative,
+    evidenceRequest,
+  };
+}
+
 function promptFor(
   phase: RectificationNarrativePhase,
   packet: RectificationTechnicalPacket,
+  context: RectificationNarrativeContext,
   retryIssues: readonly string[] = [],
 ): string {
   return JSON.stringify({
     task: "write_grounded_rectification_narrative",
     phase,
+    conversationContext: context,
     packet: grounding(packet),
     outputContract: {
       candidateFactsMustMatch: true,
@@ -262,10 +358,21 @@ function promptFor(
       everyAuthoredStringMustBeGrounded: true,
       keepTechnicalLayerValuesOutOfVisibleNarrative: phase !== "final",
       askExactlyOneHighInformationQuestion: phase !== "final",
+      acknowledgeLatestEvidenceSpecificallyBeforeAsking: phase === "intermediate",
+      doNotRepeatCandidateBoundaryUnlessItChangedOrTheUserAsked: phase === "intermediate",
+      finishCurrentEventBeforeSwitchingDomains: phase === "intermediate",
+      resolveDateContradictionsBeforeScoring: phase === "intermediate",
+      mergeSameEventDetailsWithoutDoubleCounting: phase === "intermediate",
+      askForTheSingleMostInformativeMissingDetail: phase === "intermediate",
+      treatCauseResultAgencyAndNextTransitionAsPartsOfTheCurrentEvent: phase === "intermediate",
+      useEventLedgerToAvoidRepeatingAnsweredQuestions: phase === "intermediate",
       usePacketDomainReasonTextExactly: true,
       requestRealPastEventsByYearAndMonth: phase !== "final",
       futureWindowsAreContextOnly: true,
       genericBroadYearRangeQuestionnaireForbidden: true,
+      useExpertWorkflowAsTechniqueTruth: true,
+      blockedOrNotEvaluatedTechniquesMustNeverBeClaimedAsUsed: true,
+      finalNarrativeIncludesAConciseTechniqueAuditTable: phase === "final",
     },
     retryIssues: boundedReceiptIssues(retryIssues),
   });
@@ -311,13 +418,23 @@ export async function generateRectificationNarrative(input: {
   readonly phase: RectificationNarrativePhase;
   readonly packet: RectificationTechnicalPacket;
   readonly generator: RectificationNarrativeGenerator;
+  readonly context?: RectificationNarrativeContext;
 }): Promise<RectificationNarrativeResult> {
   const modelId = modelIdSchema.parse(input.generator.modelId);
   let issues: readonly string[] = [];
   for (const attempt of [1, 2] as const) {
     try {
-      const generated = await input.generator.generate(promptFor(input.phase, input.packet, issues));
-      const output = parseModelOutput(generated.text);
+      const generated = await input.generator.generate(promptFor(
+        input.phase,
+        input.packet,
+        input.context ?? {},
+        issues,
+      ));
+      const output = repairRequiredSafetyLanguage(
+        parseModelOutput(generated.text),
+        input.packet,
+        input.phase,
+      );
       const validation = validateNarrativeAgainstPacket(output, input.packet, input.phase);
       if (validation.valid) {
         return {
@@ -338,10 +455,18 @@ export async function generateRectificationNarrative(input: {
       }
       issues = validation.issues;
     } catch (error) {
-      issues = [error instanceof Error ? error.name : "NarrativeOutputError"];
+      issues = error instanceof z.ZodError
+        ? error.issues.map((issue) => `${issue.path.join(".") || "root"}:${issue.code}`)
+        : [error instanceof Error ? error.name : "NarrativeOutputError"];
     }
   }
   const output = fallbackOutput(input.packet, input.phase);
+  console.warn("[rectification-narrative-fallback]", JSON.stringify({
+    phase: input.phase,
+    modelId,
+    attempts: 2,
+    issues: boundedReceiptIssues(issues),
+  }));
   return {
     narrative: output.narrative,
     output,

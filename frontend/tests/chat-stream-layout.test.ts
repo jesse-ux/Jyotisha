@@ -45,10 +45,14 @@ test("does not duplicate a completed assistant answer while loading state settle
 });
 
 test("shows honest agent activity states before and during streamed text", () => {
-  assert.match(messageRowSource, /state="working" label="正在核对星盘信息…"/);
-  assert.match(messageRowSource, /message\.state === "streaming" && <AgentActivityStatus state="composing"/);
+  assert.match(messageRowSource, /message\.state === "thinking"[\s\S]*?\? "working"/);
+  assert.match(messageRowSource, /message\.state === "thinking" \? "正在核对星盘信息…"/);
+  assert.match(messageRowSource, /message\.state === "streaming"[\s\S]*?"composing"/);
+  assert.match(messageRowSource, /: "completed"/);
+  assert.match(messageRowSource, /message\.text && <ChatMessageContent text=\{message\.text\}/);
   assert.match(activitySource, /<ThinkingOrb aria-hidden="true" state=\{state\} size=\{20\}/);
-  assert.match(activitySource, /satisfies Record<OrbState, string>/);
+  assert.match(activitySource, /<CircleCheck aria-hidden="true" size=\{20\}/);
+  assert.match(activitySource, /satisfies Record<OrbState \| "completed", string>/);
   assert.doesNotMatch(globalStyles, /\.thinking\b/);
 });
 
