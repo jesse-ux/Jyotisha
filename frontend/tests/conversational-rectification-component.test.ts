@@ -712,7 +712,14 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
     });
     const turns = {
       activeA1: makeTurn(caseA, 1),
-      activeA3: makeTurn(caseA, 3),
+      activeA3: {
+        ...makeTurn(caseA, 13),
+        messageHistory: Array.from({ length: 12 }, (_, index) => ({
+          turnVersion: index + 1,
+          userMessage: "第 " + (index + 1) + " 条已发生经历，用于制造可滚动的真实对话历史。",
+          narrative: "已记录第 " + (index + 1) + " 条经历，并继续核对其他领域的候选差异。",
+        })),
+      },
       activeB1: makeTurn(caseB, 1),
       abandonedB2: makeTurn(caseB, 2, "abandoned"),
     };
@@ -722,8 +729,16 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
       const [initialTurn, setInitialTurn] = useState(null);
       const [transportLabel, setTransportLabel] = useState("first");
       const [callbackLabel, setCallbackLabel] = useState("first");
-      const send = async (command) => {
+      const send = async (command, options) => {
         events.push("send:" + transportLabel + ":" + command.type);
+        if (command.type === "answer") {
+          await new Promise((resolveSend) => setTimeout(resolveSend, 20));
+          options?.onNarrativeDelta?.("正在结合这段经历核对候选。 ");
+          events.push("delta:first");
+          await new Promise((resolveSend) => setTimeout(resolveSend, 20));
+          options?.onNarrativeDelta?.("下一步会继续验证其他领域。");
+          events.push("delta:second");
+        }
         await new Promise((resolveSend) => setTimeout(resolveSend, 20));
         if (command.type === "pause") {
           return makeTurn(command.caseId, command.turnVersion + 1, "paused");
@@ -767,7 +782,7 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
       outfile: bundlePath,
       platform: "browser",
     }), 10_000, "browser fixture bundle");
-    writeFileSync(htmlPath, `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}\nhtml,body{height:auto;overflow:auto}body{padding:12px}#root{width:100%;min-width:0}</style></head><body><main id="root"></main><script src="${pathToFileURL(bundlePath).href}"></script></body></html>`);
+    writeFileSync(htmlPath, `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>${css}\nhtml,body{height:100%;overflow:hidden}body{box-sizing:border-box;padding:12px}#root{width:100%;height:100%;min-width:0}</style></head><body><main id="root"></main><script src="${pathToFileURL(bundlePath).href}"></script></body></html>`);
 
     ({ browser, cdp } = await launchFixture(htmlPath, userDataDirectory));
     await cdp.send("Runtime.enable");
@@ -864,6 +879,42 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
           && !document.querySelector('[role=alertdialog]');
       })()`) ?? Promise.resolve(false),
       "streamlined rectification controls",
+    );
+
+    const followsBottom = `(() => {
+      const list = document.querySelector('.rectification-message-list');
+      return list.scrollHeight > list.clientHeight
+        && Math.abs(list.scrollHeight - list.clientHeight - list.scrollTop) <= 2;
+    })()`;
+    await waitFor(
+      () => cdp?.evaluate<boolean>(followsBottom) ?? Promise.resolve(false),
+      "initial rectification history at the bottom",
+    );
+    await cdp.evaluate("document.querySelector('.rectification-message-list').scrollTop = 0");
+    const correctedAnswer = "2020年9月底主动离职，原因是组织内耗严重。";
+    await cdp.evaluate(`(() => {
+      const textarea = document.getElementById('conversational-rectification-answer');
+      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set;
+      setter.call(textarea, ${JSON.stringify(correctedAnswer)});
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      document.querySelector('[aria-label="发送"]').click();
+    })()`);
+    await waitFor(
+      () => cdp?.evaluate<boolean>(followsBottom) ?? Promise.resolve(false),
+      "optimistic user message follows the bottom",
+    );
+    await waitFor(
+      () => cdp?.evaluate<boolean>(`globalThis.__rectificationHarness.events.includes('delta:first')
+        && document.body.textContent.includes('正在结合这段经历核对候选。')
+        && ${followsBottom}`) ?? Promise.resolve(false),
+      "streaming assistant delta follows the bottom",
+    );
+    await waitFor(
+      () => cdp?.evaluate<boolean>(`globalThis.__rectificationHarness.events.includes('delta:second')
+        && document.body.textContent.includes('回答已完成')
+        && document.body.textContent.includes(${JSON.stringify(correctedAnswer)})
+        && ${followsBottom}`) ?? Promise.resolve(false),
+      "settled assistant answer follows the bottom",
     );
 
   } finally {

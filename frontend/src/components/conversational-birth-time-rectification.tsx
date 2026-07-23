@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUp, Square } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChatMessageRow } from "./chat-message-row.tsx";
 import { Button } from "./ui/button.tsx";
 import { Textarea } from "./ui/textarea.tsx";
@@ -43,6 +43,7 @@ export function ConversationalRectificationSurface({
   onContinueOriginalQuestion,
 }: SurfaceProps) {
   const composer = useRef<HTMLTextAreaElement>(null);
+  const messageList = useRef<HTMLDivElement>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [submission, setSubmission] = useState<Readonly<{
     text: string;
@@ -50,6 +51,30 @@ export function ConversationalRectificationSurface({
     turnVersion: number;
   }> | null>(null);
   const turn = controller.turn;
+  useLayoutEffect(() => {
+    const list = messageList.current;
+    if (!list) return;
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const followImmediately = controller.pending || submission !== null || prefersReducedMotion;
+    const frame = requestAnimationFrame(() => {
+      if (followImmediately) {
+        list.scrollTop = list.scrollHeight;
+        return;
+      }
+      list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [
+    controller.error,
+    controller.messages?.length,
+    controller.pending,
+    controller.streamingAssistantText,
+    submission,
+    turn?.status,
+    turn?.turnVersion,
+  ]);
   useEffect(() => () => {
     if (undoTimer.current) clearTimeout(undoTimer.current);
   }, []);
@@ -110,7 +135,7 @@ export function ConversationalRectificationSurface({
 
   return (
     <section className="rectification-chat" aria-busy={busy} aria-label="生时校正对话">
-      <div className="message-list rectification-message-list">
+      <div ref={messageList} className="message-list rectification-message-list">
         <span className="sr-only" aria-live="polite">{submission?.phase === "undo" ? "消息已发送，可以撤回修改" : controller.pending ? "Jyotisha 正在核对经历" : ""}</span>
         {(controller.messages ?? [{
           role: "assistant" as const,
