@@ -29,6 +29,7 @@ test("local PostgreSQL applies the reviewed business schema and serves authentic
     assert.match(migration.stdout, /applied 20260715000000_account_credits\.sql/);
     assert.match(migration.stdout, /applied 20260721150000_align_conversational_finance_domain\.sql/);
     assert.match(migration.stdout, /applied 20260723010000_restore_conversational_message_history\.sql/);
+    assert.match(migration.stdout, /applied 20260723020000_mark_captured_conversational_messages\.sql/);
 
     assert.equal(
       fixture.psql(`
@@ -39,6 +40,16 @@ test("local PostgreSQL applies the reviewed business schema and serves authentic
           and column_name = 'user_message'
       `),
       "YES:text",
+    );
+    assert.equal(
+      fixture.psql(`
+        select is_nullable || ':' || data_type || ':' || column_default
+        from information_schema.columns
+        where table_schema = 'public'
+          and table_name = 'birth_time_rectification_turns'
+          and column_name = 'user_message_captured'
+      `),
+      "NO:boolean:f",
     );
     assert.equal(
       fixture.psql(`

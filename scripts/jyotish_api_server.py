@@ -6938,8 +6938,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         lon = self._get_float(body, 'lon', 0, -180, 180)
         tz = self._get_float(body, 'tz', 0, -14, 14)
         events = body.get('events')
-        if not isinstance(events, list) or not 3 <= len(events) <= 6:
-            raise BadRequest('events must contain between 3 and 6 items')
+        if not isinstance(events, list) or not 3 <= len(events) <= 8:
+            raise BadRequest('events must contain between 3 and 8 items')
         normalized_events = []
         allowed_domains = {'education', 'relocation', 'relationship', 'career', 'finance', 'health_pressure'}
         formats = {'year': '%Y', 'month': '%Y-%m', 'day': '%Y-%m-%d'}

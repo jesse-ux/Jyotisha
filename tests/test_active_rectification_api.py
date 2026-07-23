@@ -454,3 +454,31 @@ def test_high_rigor_event_rectification_queues_vedastro_packet(monkeypatch) -> N
     assert contract["canonical_input_hash"]
     assert contract["gates"]["public_holdout_release"]["status"] == "blocked"
     assert result["calculation_contract"]["events"][0]["summary"] == "2011 年 9 月离开家乡开始大学生活"
+
+
+def test_active_rectification_events_accepts_product_limit_of_eight() -> None:
+    events = [
+        {
+            "id": f"00000000-0000-4000-a000-{index:012d}",
+            "domain": "education" if index % 2 == 0 else "career",
+            "date": f"{2011 + index}",
+            "precision": "year",
+            "summary": f"event {index}",
+        }
+        for index in range(8)
+    ]
+
+    result = _handler()._compute_active_rectification_events(
+        {
+            "birth_date": "1993-04-17",
+            "start_time": "14:29",
+            "end_time": "14:31",
+            "lat": 36.683333,
+            "lon": 114.35,
+            "tz": 8,
+            "events": events,
+        }
+    )
+
+    assert result["success"] is True
+    assert result["event_count"] == 8
