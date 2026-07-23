@@ -1,0 +1,36 @@
+{
+  "primary_source": "vedastro_python_bridge",
+  "results": {
+    "GulikaLongitude": {
+      "available": false,
+      "status": "unsupported_signature"
+    },
+    "PlanetTajikaConstellation": {
+      "available": false,
+      "status": "unsupported_signature"
+    },
+    "PlanetTajikaLongitude": {
+      "available": false,
+      "status": "unsupported_signature"
+    },
+    "PlanetTajikaZodiacSign": {
+      "available": false,
+      "status": "unsupported_signature"
+    },
+    "TajikaDateForYear": {
+      "available": false,
+      "status": "unsupported_signature"
+    },
+    "TajikaDateForYear2": {
+      "available": false,
+      "status": "unsupported_signature"
+    }
+  },
+  "runner": "vedastro_official_capability_runner",
+  "summary": {
+    "executed_method_count": 6,
+    "ok_count": 0,
+    "requested_method_count": 6,
+    "skipped_count": 6
+  }
+}

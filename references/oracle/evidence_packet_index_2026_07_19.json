@@ -5,8 +5,8 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 181,
-    "blocked_or_partial_count": 165,
+    "packet_count": 182,
+    "blocked_or_partial_count": 166,
     "human_review_required_count": 4
   },
   "packets": [
@@ -1457,6 +1457,14 @@
       "claim_status": "observation_boundary_matrix",
       "consumer_policy": "sync_matrix_only_do_not_vendor_agpl_implementation",
       "claim_boundary": "Tajika, KP exact cusp and advanced AV fields are mapped for local calculation, PyJHora observation, jyotishganit/VedicAstro reference, public worked-example status and commercial output allowance; no PyJHora implementation is synced."
+    },
+    {
+      "packet_id": "vedastro_keyed_capture_closure_2026_07_23",
+      "path": "references/oracle/vedastro_keyed_capture_closure_2026_07_23.json",
+      "domain": "vedastro_identity_and_numeric_oracles",
+      "claim_status": "keyed_observation_partial",
+      "consumer_policy": "research_observation_only_no_secret_material",
+      "claim_boundary": "Keyed VedAstro raw and method catalog capture are available without persisting the secret; hosted build identity, KP 12-cusp oracle, Prashna/Saham/Sphuta endpoints, selected Gulika/Tajika payload contracts and timing labels remain blocked."
     }
   ]
 }
