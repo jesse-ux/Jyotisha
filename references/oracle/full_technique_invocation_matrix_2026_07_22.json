@@ -350,7 +350,7 @@
         "api": 42,
         "ui": 0,
         "scripts": 42,
-        "references": 173,
+        "references": 174,
         "tests": 15
       },
       "sample_files": {
@@ -438,10 +438,10 @@
       },
       "hit_counts": {
         "skill": 0,
-        "api": 72,
+        "api": 73,
         "ui": 0,
-        "scripts": 72,
-        "references": 157,
+        "scripts": 73,
+        "references": 158,
         "tests": 8
       },
       "sample_files": {
@@ -524,10 +524,10 @@
       },
       "hit_counts": {
         "skill": 2,
-        "api": 86,
+        "api": 87,
         "ui": 0,
-        "scripts": 82,
-        "references": 250,
+        "scripts": 83,
+        "references": 251,
         "tests": 27
       },
       "sample_files": {
@@ -693,7 +693,7 @@
         "api": 1002,
         "ui": 0,
         "scripts": 941,
-        "references": 3029,
+        "references": 3077,
         "tests": 637
       },
       "sample_files": {
@@ -792,7 +792,7 @@
         "api": 135,
         "ui": 0,
         "scripts": 133,
-        "references": 826,
+        "references": 857,
         "tests": 102
       },
       "sample_files": {
@@ -887,7 +887,7 @@
         "api": 286,
         "ui": 0,
         "scripts": 283,
-        "references": 1249,
+        "references": 1349,
         "tests": 146
       },
       "sample_files": {
@@ -1080,7 +1080,7 @@
         "api": 41,
         "ui": 0,
         "scripts": 39,
-        "references": 98,
+        "references": 268,
         "tests": 15
       },
       "sample_files": {
@@ -1174,7 +1174,7 @@
         "api": 38,
         "ui": 0,
         "scripts": 36,
-        "references": 88,
+        "references": 103,
         "tests": 14
       },
       "sample_files": {
@@ -1340,7 +1340,7 @@
         "api": 43,
         "ui": 0,
         "scripts": 43,
-        "references": 169,
+        "references": 171,
         "tests": 20
       },
       "sample_files": {
@@ -1419,11 +1419,11 @@
       },
       "hit_counts": {
         "skill": 20,
-        "api": 403,
+        "api": 407,
         "ui": 0,
-        "scripts": 364,
-        "references": 668,
-        "tests": 259
+        "scripts": 368,
+        "references": 673,
+        "tests": 261
       },
       "sample_files": {
         "skill": [
@@ -1516,11 +1516,11 @@
       },
       "hit_counts": {
         "skill": 6,
-        "api": 281,
+        "api": 285,
         "ui": 0,
-        "scripts": 281,
-        "references": 377,
-        "tests": 152
+        "scripts": 285,
+        "references": 382,
+        "tests": 154
       },
       "sample_files": {
         "skill": [
@@ -1611,11 +1611,11 @@
       },
       "hit_counts": {
         "skill": 0,
-        "api": 182,
+        "api": 187,
         "ui": 0,
-        "scripts": 175,
-        "references": 606,
-        "tests": 49
+        "scripts": 180,
+        "references": 616,
+        "tests": 51
       },
       "sample_files": {
         "skill": [],
@@ -1660,7 +1660,7 @@
           "references/open_source_sources/vedic-astro-skills/antigravity/skills/vedic-reader/resources/chart_reading_rules.md",
           "references/open_source_sources/vedic-astro-skills/claude-code/skills/vedic-reader/resources/chart_reading_rules.md",
           "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/chart_reading_rules.md",
-          "references/oracle/blocked_domain_resolution_queue_2026_07_20.json"
+          "references/oracle/artifacts/vedastro_keyed_gulika_tajika_methods_2026_07_23.json"
         ],
         "tests": [
           "tests/test_adhana.py",
@@ -1704,11 +1704,11 @@
       },
       "hit_counts": {
         "skill": 44,
-        "api": 713,
+        "api": 718,
         "ui": 0,
-        "scripts": 688,
-        "references": 589,
-        "tests": 271
+        "scripts": 693,
+        "references": 595,
+        "tests": 273
       },
       "sample_files": {
         "skill": [
@@ -1801,11 +1801,11 @@
       },
       "hit_counts": {
         "skill": 38,
-        "api": 432,
+        "api": 439,
         "ui": 0,
-        "scripts": 423,
-        "references": 895,
-        "tests": 266
+        "scripts": 430,
+        "references": 930,
+        "tests": 270
       },
       "sample_files": {
         "skill": [
@@ -2186,7 +2186,7 @@
           "api": 42,
           "ui": 0,
           "scripts": 42,
-          "references": 173,
+          "references": 174,
           "tests": 15
         },
         "sample_files": {
@@ -2274,10 +2274,10 @@
         },
         "hit_counts": {
           "skill": 0,
-          "api": 72,
+          "api": 73,
           "ui": 0,
-          "scripts": 72,
-          "references": 157,
+          "scripts": 73,
+          "references": 158,
           "tests": 8
         },
         "sample_files": {
@@ -2363,7 +2363,7 @@
           "api": 135,
           "ui": 0,
           "scripts": 133,
-          "references": 826,
+          "references": 857,
           "tests": 102
         },
         "sample_files": {
@@ -2458,7 +2458,7 @@
           "api": 286,
           "ui": 0,
           "scripts": 283,
-          "references": 1249,
+          "references": 1349,
           "tests": 146
         },
         "sample_files": {
@@ -2651,7 +2651,7 @@
           "api": 41,
           "ui": 0,
           "scripts": 39,
-          "references": 98,
+          "references": 268,
           "tests": 15
         },
         "sample_files": {
@@ -2745,7 +2745,7 @@
           "api": 38,
           "ui": 0,
           "scripts": 36,
-          "references": 88,
+          "references": 103,
           "tests": 14
         },
         "sample_files": {
@@ -2911,7 +2911,7 @@
           "api": 43,
           "ui": 0,
           "scripts": 43,
-          "references": 169,
+          "references": 171,
           "tests": 20
         },
         "sample_files": {
@@ -2990,11 +2990,11 @@
         },
         "hit_counts": {
           "skill": 20,
-          "api": 403,
+          "api": 407,
           "ui": 0,
-          "scripts": 364,
-          "references": 668,
-          "tests": 259
+          "scripts": 368,
+          "references": 673,
+          "tests": 261
         },
         "sample_files": {
           "skill": [
@@ -3087,11 +3087,11 @@
         },
         "hit_counts": {
           "skill": 6,
-          "api": 281,
+          "api": 285,
           "ui": 0,
-          "scripts": 281,
-          "references": 377,
-          "tests": 152
+          "scripts": 285,
+          "references": 382,
+          "tests": 154
         },
         "sample_files": {
           "skill": [
@@ -3182,11 +3182,11 @@
         },
         "hit_counts": {
           "skill": 0,
-          "api": 182,
+          "api": 187,
           "ui": 0,
-          "scripts": 175,
-          "references": 606,
-          "tests": 49
+          "scripts": 180,
+          "references": 616,
+          "tests": 51
         },
         "sample_files": {
           "skill": [],
@@ -3231,7 +3231,7 @@
             "references/open_source_sources/vedic-astro-skills/antigravity/skills/vedic-reader/resources/chart_reading_rules.md",
             "references/open_source_sources/vedic-astro-skills/claude-code/skills/vedic-reader/resources/chart_reading_rules.md",
             "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/chart_reading_rules.md",
-            "references/oracle/blocked_domain_resolution_queue_2026_07_20.json"
+            "references/oracle/artifacts/vedastro_keyed_gulika_tajika_methods_2026_07_23.json"
           ],
           "tests": [
             "tests/test_adhana.py",
@@ -3275,11 +3275,11 @@
         },
         "hit_counts": {
           "skill": 44,
-          "api": 713,
+          "api": 718,
           "ui": 0,
-          "scripts": 688,
-          "references": 589,
-          "tests": 271
+          "scripts": 693,
+          "references": 595,
+          "tests": 273
         },
         "sample_files": {
           "skill": [
@@ -3372,11 +3372,11 @@
         },
         "hit_counts": {
           "skill": 38,
-          "api": 432,
+          "api": 439,
           "ui": 0,
-          "scripts": 423,
-          "references": 895,
-          "tests": 266
+          "scripts": 430,
+          "references": 930,
+          "tests": 270
         },
         "sample_files": {
           "skill": [
@@ -3471,10 +3471,10 @@
         },
         "hit_counts": {
           "skill": 2,
-          "api": 86,
+          "api": 87,
           "ui": 0,
-          "scripts": 82,
-          "references": 250,
+          "scripts": 83,
+          "references": 251,
           "tests": 27
         },
         "sample_files": {
@@ -3727,7 +3727,7 @@
           "api": 146,
           "ui": 0,
           "scripts": 144,
-          "references": 190,
+          "references": 229,
           "tests": 15
         },
         "sample_files": {
@@ -3818,7 +3818,7 @@
           "api": 74,
           "ui": 0,
           "scripts": 72,
-          "references": 147,
+          "references": 171,
           "tests": 17
         },
         "sample_files": {
@@ -4002,7 +4002,7 @@
           "api": 21,
           "ui": 0,
           "scripts": 21,
-          "references": 82,
+          "references": 100,
           "tests": 15
         },
         "sample_files": {
@@ -4029,8 +4029,8 @@
             "references/oracle/screenshot_technique_gap_audit_2026_07_19.json",
             "references/oracle/skill_truth_overlay_2026_07_19.json",
             "references/oracle/technique_fragment_inventory_2026_07_19.json",
-            "references/relationship_gender_role_technique_registry_2026_07_19.json",
-            "references/shodasavarga-complete-guide.md"
+            "references/oracle/vedastro_method_catalog_keyed_2026_07_23.json",
+            "references/relationship_gender_role_technique_registry_2026_07_19.json"
           ],
           "tests": [
             "tests/test_adhana.py",
@@ -4336,7 +4336,7 @@
         "api": 43,
         "ui": 0,
         "scripts": 43,
-        "references": 169,
+        "references": 171,
         "tests": 20
       },
       "sample_files": {
@@ -4418,7 +4418,7 @@
         "api": 38,
         "ui": 0,
         "scripts": 36,
-        "references": 88,
+        "references": 103,
         "tests": 14
       },
       "sample_files": {
@@ -4507,11 +4507,11 @@
       },
       "hit_counts": {
         "skill": 0,
-        "api": 182,
+        "api": 187,
         "ui": 0,
-        "scripts": 175,
-        "references": 606,
-        "tests": 49
+        "scripts": 180,
+        "references": 616,
+        "tests": 51
       },
       "sample_files": {
         "skill": [],
@@ -4556,7 +4556,7 @@
           "references/open_source_sources/vedic-astro-skills/antigravity/skills/vedic-reader/resources/chart_reading_rules.md",
           "references/open_source_sources/vedic-astro-skills/claude-code/skills/vedic-reader/resources/chart_reading_rules.md",
           "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/chart_reading_rules.md",
-          "references/oracle/blocked_domain_resolution_queue_2026_07_20.json"
+          "references/oracle/artifacts/vedastro_keyed_gulika_tajika_methods_2026_07_23.json"
         ],
         "tests": [
           "tests/test_adhana.py",
@@ -4603,7 +4603,7 @@
         "api": 42,
         "ui": 0,
         "scripts": 42,
-        "references": 173,
+        "references": 174,
         "tests": 15
       },
       "sample_files": {
@@ -4691,10 +4691,10 @@
       },
       "hit_counts": {
         "skill": 0,
-        "api": 72,
+        "api": 73,
         "ui": 0,
-        "scripts": 72,
-        "references": 157,
+        "scripts": 73,
+        "references": 158,
         "tests": 8
       },
       "sample_files": {
@@ -4872,11 +4872,11 @@
       },
       "hit_counts": {
         "skill": 20,
-        "api": 403,
+        "api": 407,
         "ui": 0,
-        "scripts": 364,
-        "references": 668,
-        "tests": 259
+        "scripts": 368,
+        "references": 673,
+        "tests": 261
       },
       "sample_files": {
         "skill": [
@@ -5043,11 +5043,11 @@
       },
       "hit_counts": {
         "skill": 44,
-        "api": 713,
+        "api": 718,
         "ui": 0,
-        "scripts": 688,
-        "references": 589,
-        "tests": 271
+        "scripts": 693,
+        "references": 595,
+        "tests": 273
       },
       "sample_files": {
         "skill": [
@@ -5143,7 +5143,7 @@
         "api": 1002,
         "ui": 0,
         "scripts": 941,
-        "references": 3029,
+        "references": 3077,
         "tests": 637
       },
       "sample_files": {
@@ -5242,7 +5242,7 @@
         "api": 135,
         "ui": 0,
         "scripts": 133,
-        "references": 826,
+        "references": 857,
         "tests": 102
       },
       "sample_files": {
@@ -5337,7 +5337,7 @@
         "api": 286,
         "ui": 0,
         "scripts": 283,
-        "references": 1249,
+        "references": 1349,
         "tests": 146
       },
       "sample_files": {
@@ -5432,11 +5432,11 @@
       },
       "hit_counts": {
         "skill": 6,
-        "api": 281,
+        "api": 285,
         "ui": 0,
-        "scripts": 281,
-        "references": 377,
-        "tests": 152
+        "scripts": 285,
+        "references": 382,
+        "tests": 154
       },
       "sample_files": {
         "skill": [
@@ -5527,11 +5527,11 @@
       },
       "hit_counts": {
         "skill": 38,
-        "api": 432,
+        "api": 439,
         "ui": 0,
-        "scripts": 423,
-        "references": 895,
-        "tests": 266
+        "scripts": 430,
+        "references": 930,
+        "tests": 270
       },
       "sample_files": {
         "skill": [
@@ -5627,7 +5627,7 @@
         "api": 41,
         "ui": 0,
         "scripts": 39,
-        "references": 98,
+        "references": 268,
         "tests": 15
       },
       "sample_files": {
@@ -5815,10 +5815,10 @@
       },
       "hit_counts": {
         "skill": 6,
-        "api": 346,
+        "api": 347,
         "ui": 0,
-        "scripts": 342,
-        "references": 692,
+        "scripts": 343,
+        "references": 693,
         "tests": 730
       },
       "sample_files": {
@@ -6087,10 +6087,10 @@
       },
       "hit_counts": {
         "skill": 0,
-        "api": 147,
+        "api": 149,
         "ui": 0,
-        "scripts": 147,
-        "references": 310,
+        "scripts": 149,
+        "references": 312,
         "tests": 140
       },
       "sample_files": {
@@ -6254,10 +6254,10 @@
       },
       "hit_counts": {
         "skill": 2,
-        "api": 86,
+        "api": 87,
         "ui": 0,
-        "scripts": 82,
-        "references": 250,
+        "scripts": 83,
+        "references": 251,
         "tests": 27
       },
       "sample_files": {
@@ -6346,10 +6346,10 @@
       },
       "hit_counts": {
         "skill": 4,
-        "api": 203,
+        "api": 204,
         "ui": 0,
-        "scripts": 203,
-        "references": 628,
+        "scripts": 204,
+        "references": 642,
         "tests": 41
       },
       "sample_files": {
@@ -6369,7 +6369,7 @@
           "scripts/jyotishganit_vs_local_field_comparison.py",
           "scripts/kakshya.py",
           "scripts/public_real_case_benchmark.py",
-          "scripts/report_builder.py"
+          "scripts/pyjhora_traditional_branch_oracle_boundary.py"
         ],
         "ui": [],
         "scripts": [
@@ -6384,7 +6384,7 @@
           "scripts/jyotishganit_vs_local_field_comparison.py",
           "scripts/kakshya.py",
           "scripts/public_real_case_benchmark.py",
-          "scripts/report_builder.py"
+          "scripts/pyjhora_traditional_branch_oracle_boundary.py"
         ],
         "references": [
           "references/ashtakavarga-complete-system.md",
@@ -6441,10 +6441,10 @@
       },
       "hit_counts": {
         "skill": 0,
-        "api": 171,
+        "api": 172,
         "ui": 0,
-        "scripts": 127,
-        "references": 32,
+        "scripts": 128,
+        "references": 66,
         "tests": 42
       },
       "sample_files": {
@@ -6455,6 +6455,7 @@
           "scripts/full_technique_invocation_matrix.py",
           "scripts/jyotish_api_server.py",
           "scripts/kakshya.py",
+          "scripts/pyjhora_traditional_branch_oracle_boundary.py",
           "scripts/vedastro_parity_matrix.py"
         ],
         "ui": [],
@@ -6463,6 +6464,7 @@
           "scripts/full_technique_invocation_matrix.py",
           "scripts/jyotish_api_server.py",
           "scripts/kakshya.py",
+          "scripts/pyjhora_traditional_branch_oracle_boundary.py",
           "scripts/vedastro_parity_matrix.py"
         ],
         "references": [
@@ -6473,6 +6475,8 @@
           "references/oracle/evidence_packet_index_2026_07_19.json",
           "references/oracle/full_technique_invocation_matrix_2026_07_22.json",
           "references/oracle/high_rigor_closure_gate_snapshot_2026_07_20.json",
+          "references/oracle/pyjhora_traditional_branch_oracle_boundary_2026_07_23.json",
+          "references/oracle/vedastro_method_catalog_keyed_2026_07_23.json",
           "references/technique_registry.json"
         ],
         "tests": [
@@ -6510,10 +6514,10 @@
       },
       "hit_counts": {
         "skill": 18,
-        "api": 258,
+        "api": 259,
         "ui": 0,
-        "scripts": 250,
-        "references": 1089,
+        "scripts": 251,
+        "references": 1133,
         "tests": 78
       },
       "sample_files": {
@@ -6681,7 +6685,7 @@
         "api": 261,
         "ui": 0,
         "scripts": 234,
-        "references": 860,
+        "references": 862,
         "tests": 115
       },
       "sample_files": {
@@ -6778,7 +6782,7 @@
         "api": 720,
         "ui": 0,
         "scripts": 718,
-        "references": 1630,
+        "references": 1691,
         "tests": 125
       },
       "sample_files": {
@@ -6873,10 +6877,10 @@
       },
       "hit_counts": {
         "skill": 99,
-        "api": 395,
+        "api": 396,
         "ui": 0,
-        "scripts": 368,
-        "references": 764,
+        "scripts": 369,
+        "references": 771,
         "tests": 169
       },
       "sample_files": {
@@ -6980,7 +6984,7 @@
         "api": 198,
         "ui": 0,
         "scripts": 196,
-        "references": 347,
+        "references": 401,
         "tests": 81
       },
       "sample_files": {
@@ -7074,7 +7078,7 @@
         "api": 106,
         "ui": 0,
         "scripts": 105,
-        "references": 445,
+        "references": 469,
         "tests": 34
       },
       "sample_files": {
@@ -7267,7 +7271,7 @@
         "api": 58,
         "ui": 0,
         "scripts": 57,
-        "references": 211,
+        "references": 246,
         "tests": 35
       },
       "sample_files": {
@@ -7356,7 +7360,7 @@
         "api": 1359,
         "ui": 0,
         "scripts": 1326,
-        "references": 2933,
+        "references": 4066,
         "tests": 293
       },
       "sample_files": {
@@ -7454,7 +7458,7 @@
         "api": 287,
         "ui": 0,
         "scripts": 247,
-        "references": 1061,
+        "references": 1069,
         "tests": 212
       },
       "sample_files": {
@@ -7766,10 +7770,10 @@
       },
       "hit_counts": {
         "skill": 2,
-        "api": 281,
+        "api": 282,
         "ui": 0,
-        "scripts": 279,
-        "references": 135,
+        "scripts": 280,
+        "references": 136,
         "tests": 41
       },
       "sample_files": {
@@ -7787,9 +7791,9 @@
           "scripts/muntha.py",
           "scripts/numeric_oracle_gap_queue_v3.py",
           "scripts/public_real_case_benchmark.py",
+          "scripts/pyjhora_traditional_branch_oracle_boundary.py",
           "scripts/reference_only_line_audit_v2.py",
-          "scripts/solar_return.py",
-          "scripts/tajika.py"
+          "scripts/solar_return.py"
         ],
         "ui": [],
         "scripts": [
@@ -7801,10 +7805,10 @@
           "scripts/muntha.py",
           "scripts/numeric_oracle_gap_queue_v3.py",
           "scripts/public_real_case_benchmark.py",
+          "scripts/pyjhora_traditional_branch_oracle_boundary.py",
           "scripts/reference_only_line_audit_v2.py",
           "scripts/solar_return.py",
-          "scripts/tajika.py",
-          "scripts/tajika_annual_benchmark_dashboard.py"
+          "scripts/tajika.py"
         ],
         "references": [
           "references/audit-deep-data-audit-2026-05-04.md",
@@ -7862,7 +7866,7 @@
         "api": 81,
         "ui": 0,
         "scripts": 79,
-        "references": 655,
+        "references": 671,
         "tests": 78
       },
       "sample_files": {
@@ -8050,7 +8054,7 @@
         "api": 11,
         "ui": 0,
         "scripts": 11,
-        "references": 26,
+        "references": 35,
         "tests": 6
       },
       "sample_files": {
@@ -8079,7 +8083,8 @@
           "references/oracle/muhurta_full_scoring_closure_queue_v2_2026_07_22.json",
           "references/oracle/muhurta_full_scoring_matrix_queue_2026_07_22.json",
           "references/oracle/muhurta_full_system_gap_registry_2026_07_19.json",
-          "references/oracle/muhurta_oss_worked_example_readiness_2026_07_23.json"
+          "references/oracle/muhurta_oss_worked_example_readiness_2026_07_23.json",
+          "references/oracle/vedastro_method_catalog_keyed_2026_07_23.json"
         ],
         "tests": [
           "tests/test_muhurta_factor_only_scoring_packet.py",
@@ -8256,7 +8261,7 @@
         "api": 18,
         "ui": 0,
         "scripts": 17,
-        "references": 276,
+        "references": 293,
         "tests": 12
       },
       "sample_files": {
@@ -8411,10 +8416,10 @@
       },
       "hit_counts": {
         "skill": 68,
-        "api": 495,
+        "api": 496,
         "ui": 0,
-        "scripts": 483,
-        "references": 1207,
+        "scripts": 484,
+        "references": 1245,
         "tests": 95
       },
       "sample_files": {
@@ -8897,7 +8902,7 @@
         "api": 42,
         "ui": 0,
         "scripts": 42,
-        "references": 173,
+        "references": 174,
         "tests": 15
       },
       "sample_files": {
@@ -8985,10 +8990,10 @@
       },
       "hit_counts": {
         "skill": 0,
-        "api": 72,
+        "api": 73,
         "ui": 0,
-        "scripts": 72,
-        "references": 157,
+        "scripts": 73,
+        "references": 158,
         "tests": 8
       },
       "sample_files": {
@@ -9071,10 +9076,10 @@
       },
       "hit_counts": {
         "skill": 2,
-        "api": 86,
+        "api": 87,
         "ui": 0,
-        "scripts": 82,
-        "references": 250,
+        "scripts": 83,
+        "references": 251,
         "tests": 27
       },
       "sample_files": {
@@ -9240,7 +9245,7 @@
         "api": 1002,
         "ui": 0,
         "scripts": 941,
-        "references": 3029,
+        "references": 3077,
         "tests": 637
       },
       "sample_files": {
@@ -9339,7 +9344,7 @@
         "api": 135,
         "ui": 0,
         "scripts": 133,
-        "references": 826,
+        "references": 857,
         "tests": 102
       },
       "sample_files": {
@@ -9434,7 +9439,7 @@
         "api": 286,
         "ui": 0,
         "scripts": 283,
-        "references": 1249,
+        "references": 1349,
         "tests": 146
       },
       "sample_files": {
@@ -9532,7 +9537,7 @@
         "api": 18,
         "ui": 0,
         "scripts": 17,
-        "references": 276,
+        "references": 293,
         "tests": 12
       },
       "sample_files": {
@@ -9687,10 +9692,10 @@
       },
       "hit_counts": {
         "skill": 68,
-        "api": 495,
+        "api": 496,
         "ui": 0,
-        "scripts": 483,
-        "references": 1207,
+        "scripts": 484,
+        "references": 1245,
         "tests": 95
       },
       "sample_files": {
@@ -9794,7 +9799,7 @@
         "api": 81,
         "ui": 0,
         "scripts": 79,
-        "references": 655,
+        "references": 671,
         "tests": 78
       },
       "sample_files": {
@@ -9884,10 +9889,10 @@
       },
       "hit_counts": {
         "skill": 4,
-        "api": 203,
+        "api": 204,
         "ui": 0,
-        "scripts": 203,
-        "references": 628,
+        "scripts": 204,
+        "references": 642,
         "tests": 41
       },
       "sample_files": {
@@ -9907,7 +9912,7 @@
           "scripts/jyotishganit_vs_local_field_comparison.py",
           "scripts/kakshya.py",
           "scripts/public_real_case_benchmark.py",
-          "scripts/report_builder.py"
+          "scripts/pyjhora_traditional_branch_oracle_boundary.py"
         ],
         "ui": [],
         "scripts": [
@@ -9922,7 +9927,7 @@
           "scripts/jyotishganit_vs_local_field_comparison.py",
           "scripts/kakshya.py",
           "scripts/public_real_case_benchmark.py",
-          "scripts/report_builder.py"
+          "scripts/pyjhora_traditional_branch_oracle_boundary.py"
         ],
         "references": [
           "references/ashtakavarga-complete-system.md",
@@ -9979,10 +9984,10 @@
       },
       "hit_counts": {
         "skill": 18,
-        "api": 258,
+        "api": 259,
         "ui": 0,
-        "scripts": 250,
-        "references": 1089,
+        "scripts": 251,
+        "references": 1133,
         "tests": 78
       },
       "sample_files": {
@@ -10074,10 +10079,10 @@
       },
       "hit_counts": {
         "skill": 0,
-        "api": 171,
+        "api": 172,
         "ui": 0,
-        "scripts": 127,
-        "references": 32,
+        "scripts": 128,
+        "references": 66,
         "tests": 42
       },
       "sample_files": {
@@ -10088,6 +10093,7 @@
           "scripts/full_technique_invocation_matrix.py",
           "scripts/jyotish_api_server.py",
           "scripts/kakshya.py",
+          "scripts/pyjhora_traditional_branch_oracle_boundary.py",
           "scripts/vedastro_parity_matrix.py"
         ],
         "ui": [],
@@ -10096,6 +10102,7 @@
           "scripts/full_technique_invocation_matrix.py",
           "scripts/jyotish_api_server.py",
           "scripts/kakshya.py",
+          "scripts/pyjhora_traditional_branch_oracle_boundary.py",
           "scripts/vedastro_parity_matrix.py"
         ],
         "references": [
@@ -10106,6 +10113,8 @@
           "references/oracle/evidence_packet_index_2026_07_19.json",
           "references/oracle/full_technique_invocation_matrix_2026_07_22.json",
           "references/oracle/high_rigor_closure_gate_snapshot_2026_07_20.json",
+          "references/oracle/pyjhora_traditional_branch_oracle_boundary_2026_07_23.json",
+          "references/oracle/vedastro_method_catalog_keyed_2026_07_23.json",
           "references/technique_registry.json"
         ],
         "tests": [
@@ -10241,7 +10250,7 @@
         "api": 41,
         "ui": 0,
         "scripts": 39,
-        "references": 98,
+        "references": 268,
         "tests": 15
       },
       "sample_files": {
@@ -10335,7 +10344,7 @@
         "api": 38,
         "ui": 0,
         "scripts": 36,
-        "references": 88,
+        "references": 103,
         "tests": 14
       },
       "sample_files": {
@@ -10628,7 +10637,7 @@
         "api": 43,
         "ui": 0,
         "scripts": 43,
-        "references": 169,
+        "references": 171,
         "tests": 20
       },
       "sample_files": {
@@ -10710,7 +10719,7 @@
         "api": 11,
         "ui": 0,
         "scripts": 11,
-        "references": 26,
+        "references": 35,
         "tests": 6
       },
       "sample_files": {
@@ -10739,7 +10748,8 @@
           "references/oracle/muhurta_full_scoring_closure_queue_v2_2026_07_22.json",
           "references/oracle/muhurta_full_scoring_matrix_queue_2026_07_22.json",
           "references/oracle/muhurta_full_system_gap_registry_2026_07_19.json",
-          "references/oracle/muhurta_oss_worked_example_readiness_2026_07_23.json"
+          "references/oracle/muhurta_oss_worked_example_readiness_2026_07_23.json",
+          "references/oracle/vedastro_method_catalog_keyed_2026_07_23.json"
         ],
         "tests": [
           "tests/test_muhurta_factor_only_scoring_packet.py",
@@ -10778,7 +10788,7 @@
         "api": 18,
         "ui": 0,
         "scripts": 18,
-        "references": 40,
+        "references": 42,
         "tests": 6
       },
       "sample_files": {
@@ -10911,11 +10921,11 @@
       },
       "hit_counts": {
         "skill": 20,
-        "api": 403,
+        "api": 407,
         "ui": 0,
-        "scripts": 364,
-        "references": 668,
-        "tests": 259
+        "scripts": 368,
+        "references": 673,
+        "tests": 261
       },
       "sample_files": {
         "skill": [
@@ -11008,11 +11018,11 @@
       },
       "hit_counts": {
         "skill": 6,
-        "api": 281,
+        "api": 285,
         "ui": 0,
-        "scripts": 281,
-        "references": 377,
-        "tests": 152
+        "scripts": 285,
+        "references": 382,
+        "tests": 154
       },
       "sample_files": {
         "skill": [
@@ -11103,11 +11113,11 @@
       },
       "hit_counts": {
         "skill": 0,
-        "api": 182,
+        "api": 187,
         "ui": 0,
-        "scripts": 175,
-        "references": 606,
-        "tests": 49
+        "scripts": 180,
+        "references": 616,
+        "tests": 51
       },
       "sample_files": {
         "skill": [],
@@ -11152,7 +11162,7 @@
           "references/open_source_sources/vedic-astro-skills/antigravity/skills/vedic-reader/resources/chart_reading_rules.md",
           "references/open_source_sources/vedic-astro-skills/claude-code/skills/vedic-reader/resources/chart_reading_rules.md",
           "references/open_source_sources/vedic-astro-skills/codex/skills/vedic-reader/resources/chart_reading_rules.md",
-          "references/oracle/blocked_domain_resolution_queue_2026_07_20.json"
+          "references/oracle/artifacts/vedastro_keyed_gulika_tajika_methods_2026_07_23.json"
         ],
         "tests": [
           "tests/test_adhana.py",
@@ -11196,11 +11206,11 @@
       },
       "hit_counts": {
         "skill": 44,
-        "api": 713,
+        "api": 718,
         "ui": 0,
-        "scripts": 688,
-        "references": 589,
-        "tests": 271
+        "scripts": 693,
+        "references": 595,
+        "tests": 273
       },
       "sample_files": {
         "skill": [
@@ -11293,11 +11303,11 @@
       },
       "hit_counts": {
         "skill": 38,
-        "api": 432,
+        "api": 439,
         "ui": 0,
-        "scripts": 423,
-        "references": 895,
-        "tests": 266
+        "scripts": 430,
+        "references": 930,
+        "tests": 270
       },
       "sample_files": {
         "skill": [
@@ -11390,10 +11400,10 @@
       },
       "hit_counts": {
         "skill": 2,
-        "api": 281,
+        "api": 282,
         "ui": 0,
-        "scripts": 279,
-        "references": 135,
+        "scripts": 280,
+        "references": 136,
         "tests": 41
       },
       "sample_files": {
@@ -11411,9 +11421,9 @@
           "scripts/muntha.py",
           "scripts/numeric_oracle_gap_queue_v3.py",
           "scripts/public_real_case_benchmark.py",
+          "scripts/pyjhora_traditional_branch_oracle_boundary.py",
           "scripts/reference_only_line_audit_v2.py",
-          "scripts/solar_return.py",
-          "scripts/tajika.py"
+          "scripts/solar_return.py"
         ],
         "ui": [],
         "scripts": [
@@ -11425,10 +11435,10 @@
           "scripts/muntha.py",
           "scripts/numeric_oracle_gap_queue_v3.py",
           "scripts/public_real_case_benchmark.py",
+          "scripts/pyjhora_traditional_branch_oracle_boundary.py",
           "scripts/reference_only_line_audit_v2.py",
           "scripts/solar_return.py",
-          "scripts/tajika.py",
-          "scripts/tajika_annual_benchmark_dashboard.py"
+          "scripts/tajika.py"
         ],
         "references": [
           "references/audit-deep-data-audit-2026-05-04.md",
@@ -12018,10 +12028,10 @@
       },
       "hit_counts": {
         "skill": 6,
-        "api": 346,
+        "api": 347,
         "ui": 0,
-        "scripts": 342,
-        "references": 692,
+        "scripts": 343,
+        "references": 693,
         "tests": 730
       },
       "sample_files": {
@@ -12113,10 +12123,10 @@
       },
       "hit_counts": {
         "skill": 0,
-        "api": 147,
+        "api": 149,
         "ui": 0,
-        "scripts": 147,
-        "references": 310,
+        "scripts": 149,
+        "references": 312,
         "tests": 140
       },
       "sample_files": {
@@ -12209,7 +12219,7 @@
         "api": 720,
         "ui": 0,
         "scripts": 718,
-        "references": 1630,
+        "references": 1691,
         "tests": 125
       },
       "sample_files": {
@@ -12304,10 +12314,10 @@
       },
       "hit_counts": {
         "skill": 99,
-        "api": 395,
+        "api": 396,
         "ui": 0,
-        "scripts": 368,
-        "references": 764,
+        "scripts": 369,
+        "references": 771,
         "tests": 169
       },
       "sample_files": {
@@ -12411,7 +12421,7 @@
         "api": 198,
         "ui": 0,
         "scripts": 196,
-        "references": 347,
+        "references": 401,
         "tests": 81
       },
       "sample_files": {
@@ -12505,7 +12515,7 @@
         "api": 106,
         "ui": 0,
         "scripts": 105,
-        "references": 445,
+        "references": 469,
         "tests": 34
       },
       "sample_files": {
@@ -12600,7 +12610,7 @@
         "api": 58,
         "ui": 0,
         "scripts": 57,
-        "references": 211,
+        "references": 246,
         "tests": 35
       },
       "sample_files": {
@@ -12689,7 +12699,7 @@
         "api": 1359,
         "ui": 0,
         "scripts": 1326,
-        "references": 2933,
+        "references": 4066,
         "tests": 293
       },
       "sample_files": {
@@ -12787,7 +12797,7 @@
         "api": 261,
         "ui": 0,
         "scripts": 234,
-        "references": 860,
+        "references": 862,
         "tests": 115
       },
       "sample_files": {
@@ -12884,7 +12894,7 @@
         "api": 146,
         "ui": 0,
         "scripts": 144,
-        "references": 190,
+        "references": 229,
         "tests": 15
       },
       "sample_files": {
@@ -12975,7 +12985,7 @@
         "api": 74,
         "ui": 0,
         "scripts": 72,
-        "references": 147,
+        "references": 171,
         "tests": 17
       },
       "sample_files": {
@@ -13257,7 +13267,7 @@
         "api": 287,
         "ui": 0,
         "scripts": 247,
-        "references": 1061,
+        "references": 1069,
         "tests": 212
       },
       "sample_files": {
@@ -13578,7 +13588,7 @@
         "api": 21,
         "ui": 0,
         "scripts": 21,
-        "references": 82,
+        "references": 100,
         "tests": 15
       },
       "sample_files": {
@@ -13605,8 +13615,8 @@
           "references/oracle/screenshot_technique_gap_audit_2026_07_19.json",
           "references/oracle/skill_truth_overlay_2026_07_19.json",
           "references/oracle/technique_fragment_inventory_2026_07_19.json",
-          "references/relationship_gender_role_technique_registry_2026_07_19.json",
-          "references/shodasavarga-complete-guide.md"
+          "references/oracle/vedastro_method_catalog_keyed_2026_07_23.json",
+          "references/relationship_gender_role_technique_registry_2026_07_19.json"
         ],
         "tests": [
           "tests/test_adhana.py",
@@ -13721,10 +13731,10 @@
       },
       "hit_counts": {
         "skill": 65,
-        "api": 2215,
+        "api": 2216,
         "ui": 0,
-        "scripts": 2188,
-        "references": 8590,
+        "scripts": 2189,
+        "references": 8598,
         "tests": 320
       },
       "sample_files": {
@@ -13803,5 +13813,5 @@
       "priority_score": 295
     }
   ],
-  "content_hash": "6d1b0c5655f4cbe6ab12efc37607a9e0d8bea4cc165c87c4bac9015a7f37a7db"
+  "content_hash": "ae8cdd5e8cc7c7539850d6da6470e6be4149be24d9c84e34e192d3b0d45399d8"
 }
