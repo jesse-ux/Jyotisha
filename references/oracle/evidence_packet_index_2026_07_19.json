@@ -5,8 +5,8 @@
   "production_tuning_allowed": false,
   "boundary": "Index of current governance packets only. Raw oracle artifacts remain in references/oracle/artifacts and are not all duplicated here.",
   "summary": {
-    "packet_count": 183,
-    "blocked_or_partial_count": 167,
+    "packet_count": 185,
+    "blocked_or_partial_count": 169,
     "human_review_required_count": 4
   },
   "packets": [
@@ -1473,6 +1473,22 @@
       "claim_status": "one_reviewer_confirmed_second_required",
       "consumer_policy": "human_review_required",
       "claim_boundary": "One reviewer confirmation advances candidate governance but reviewer 2 is still missing, so the two-reviewer freeze requirement and timing claim upgrade remain unsatisfied."
+    },
+    {
+      "claim_boundary": "Three fixed public/synthetic PyJHora cases show Panchanga field observations and Gulika formula deltas. Maandi and Muhurta windows remain raw observations; no automatic election, prediction, or truth upgrade is permitted.",
+      "claim_status": "observation_only",
+      "consumer_policy": "research_observation_only",
+      "domain": "panchanga_gulika_muhurta",
+      "packet_id": "pyjhora_multi_case_panchanga_gulika_replay_2026_07_23",
+      "path": "references/oracle/pyjhora_multi_case_panchanga_gulika_replay_2026_07_23.json"
+    },
+    {
+      "claim_boundary": "KP house cusp star/sub/sub-sub raw from VedicAstro runtime. Observation-only until matched against complete public numeric KP worked examples.",
+      "claim_status": "observation_only",
+      "consumer_policy": "observation_only",
+      "domain": "vedastro_kp_house_cusp_runtime",
+      "packet_id": "vedicastro_kp_house_cusp_probe_steve_jobs_sf_runtime_2026_07_23",
+      "path": "references/oracle/vedicastro_kp_house_cusp_probe_steve_jobs_sf_runtime_2026_07_23.json"
     }
   ]
 }
