@@ -165,7 +165,7 @@ button:disabled { cursor: default; opacity: .45; }
 .message-markdown ul, .message-markdown ol { margin: 10px 0 16px; padding-left: 24px; }
 .message-markdown li { margin: 6px 0; }
 .agent-activity-status { min-height: 24px; display: flex; align-items: center; gap: var(--space-2); color: var(--color-ink-secondary); font-size: var(--type-body-sm); line-height: 1.5; }
-.agent-activity-status canvas { flex: 0 0 auto; }
+.agent-activity-status canvas, .agent-activity-status svg { flex: 0 0 auto; }
 .agent-activity-status + .message-markdown { margin-top: var(--space-2); }
 .composer-suggestions::-webkit-scrollbar { display: none; }
 .composer textarea::placeholder { color: var(--color-ink-tertiary); }

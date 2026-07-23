@@ -665,3 +665,19 @@
 - 相关记录：BUG-034、BUG-037、BUG-038
 - 复发自：无
 - 修复版本：本次流式修复提交
+
+## BUG-040 | Agent 活动状态与回答被错误渲染为互斥状态
+
+- 状态：resolved
+- 首次发现：2026-07-23
+- 最近更新：2026-07-23
+- 影响面：普通 session 与生时校正共用的 Agent 消息行、流式回答反馈、完成态识别
+- 用户现象：Agent 尚未产出正文时只显示 orb 活动状态；开始出现正文后状态与答案的关系不连续，完成后活动状态直接消失，用户无法从同一消息位置判断回答仍在生成还是已经结束。
+- 触发条件：任意 assistant 消息在 `thinking`、`streaming`、`settled` 三种视图状态之间切换。
+- 根因：共享 `ChatMessageRow` 使用条件分支把 `thinking` 渲染为仅有 `AgentActivityStatus`，又只在 `streaming` 时显示 composing 状态；`settled` 分支只保留正文，因此活动状态和正文被实现成了互斥内容，而不是同一消息的连续生命周期。
+- 修复：assistant 消息始终在同一气泡内先渲染活动状态，再渲染当前已有正文；thinking/streaming 继续使用 working/composing orb，settled 只把状态文案切换为“回答已完成”，并把 orb 替换为 Lucide 完成图标。普通 session 与生时校正共享该行为，React 消息 identity 与正文内容保持不变。
+- 验证：消息视图回归覆盖 working、composing、completed 三态、正文与状态同时存在、完成态 Lucide 图标；相关普通 session 与生时校正契约测试通过，并执行真实浏览器检查。
+- 防复发：Agent 活动状态只能描述消息生命周期，不得控制正文是否渲染；完成态必须保留稳定的视觉反馈，不能以卸载整个状态区域代替状态转换。
+- 相关记录：BUG-039
+- 复发自：无
+- 修复版本：待提交
