@@ -1,0 +1,171 @@
+name: Apply production rectification migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Check pending migrations or apply them
+        required: true
+        default: check
+        type: choice
+        options:
+          - check
+          - apply
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-database-migrations
+  cancel-in-progress: false
+
+env:
+  DEPLOY_HOST: 103.117.123.53
+  DEPLOY_PORT: "22000"
+  DEPLOY_USER: root
+  DEPLOY_PATH: /opt/jyotisha-app
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout current main revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Reject stale revision
+        run: |
+          tested_sha="$(git rev-parse HEAD)"
+          main_sha="$(git ls-remote origin refs/heads/main | awk '{print $1}')"
+          test "$tested_sha" = "$main_sha" || {
+            echo "Refusing stale migration revision $tested_sha; current main is $main_sha" >&2
+            exit 1
+          }
+          echo "Using current main revision $tested_sha"
+
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.PRODUCTION_SSH_PRIVATE_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/jyotisha-production
+          chmod 600 ~/.ssh/jyotisha-production
+          printf '%s\n' '[103.117.123.53]:22000 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHQJvN2Mo3Yq8e6ZIK4P2blJ5Vjj0HbknEuk7TyjhMbO' > ~/.ssh/known_hosts
+
+      - name: Upload reviewed migration files
+        run: |
+          set -euo pipefail
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-production -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes"
+          SCP_OPTIONS="-i $HOME/.ssh/jyotisha-production -P $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes"
+          REMOTE_DIR="$DEPLOY_PATH/tmp/production-migrations/$GITHUB_RUN_ID"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" "install -m 700 -d '$REMOTE_DIR'"
+          scp $SCP_OPTIONS \
+            frontend/supabase/migrations/20260723030000_align_conversational_follow_up_request.sql \
+            frontend/supabase/migrations/20260724010000_global_birth_locations.sql \
+            frontend/supabase/migrations/20260724020000_align_global_birthplace_rectification_contract.sql \
+            frontend/supabase/migrations/20260724030000_allow_assistant_only_rectification_regenerate.sql \
+            "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_DIR/"
+
+      - name: Check or apply reviewed migrations
+        env:
+          OPERATION: ${{ inputs.operation }}
+        run: |
+          set -euo pipefail
+          set +x
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-production -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          REMOTE_DIR="$DEPLOY_PATH/tmp/production-migrations/$GITHUB_RUN_ID"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && OPERATION='$OPERATION' REMOTE_DIR='$REMOTE_DIR' bash -s" <<'REMOTE'
+          set -euo pipefail
+          set +x
+          trap 'rm -rf "$REMOTE_DIR"' EXIT
+          case "$OPERATION" in
+            check|apply) ;;
+            *) echo "invalid migration operation" >&2; exit 1 ;;
+          esac
+
+          ENV_FILE="$PWD/.env.production"
+          if [ ! -f "$ENV_FILE" ]; then
+            echo ".env.production missing" >&2
+            exit 1
+          fi
+          set -a
+          . "$ENV_FILE"
+          set +a
+          DB_URL="${SUPABASE_DB_URL:-${DATABASE_URL:-}}"
+          if [ -z "$DB_URL" ]; then
+            echo "production database URL is missing" >&2
+            exit 1
+          fi
+
+          psql_query() {
+            docker run --rm postgres:16-alpine \
+              psql "$DB_URL" --set ON_ERROR_STOP=1 --tuples-only --no-align --quiet --command "$1"
+          }
+
+          ledger="$(psql_query "select to_regclass('migration.schema_migrations')")"
+          if [ "$ledger" != "migration.schema_migrations" ]; then
+            echo "production migration ledger is missing" >&2
+            exit 1
+          fi
+
+          pending=0
+          for sql_file in \
+            "$REMOTE_DIR/20260723030000_align_conversational_follow_up_request.sql" \
+            "$REMOTE_DIR/20260724010000_global_birth_locations.sql" \
+            "$REMOTE_DIR/20260724020000_align_global_birthplace_rectification_contract.sql" \
+            "$REMOTE_DIR/20260724030000_allow_assistant_only_rectification_regenerate.sql"
+          do
+            filename="$(basename "$sql_file")"
+            checksum="$(sha256sum "$sql_file" | awk '{print $1}')"
+            recorded="$(psql_query "select checksum from migration.schema_migrations where filename = '$filename'")"
+            if [ -n "$recorded" ]; then
+              test "$recorded" = "$checksum" || {
+                echo "migration checksum mismatch: $filename" >&2
+                exit 1
+              }
+              echo "already applied $filename"
+              continue
+            fi
+
+            pending=$((pending + 1))
+            if [ "$OPERATION" = "check" ]; then
+              echo "pending $filename"
+              continue
+            fi
+
+            wrapped="$REMOTE_DIR/.wrapped-$filename"
+            python3 - "$sql_file" "$wrapped" "$filename" "$checksum" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          source_path, target_path, filename, checksum = sys.argv[1:]
+          source = Path(source_path).read_text(encoding="utf-8")
+          source = re.sub(r"\A\s*begin\s*;\s*", "", source, count=1, flags=re.I)
+          source = re.sub(r"\s*commit\s*;\s*\Z", "\n", source, count=1, flags=re.I)
+          ledger = (
+              "\ninsert into migration.schema_migrations (filename, checksum) "
+              f"values ('{filename}', '{checksum}');\n"
+          )
+          Path(target_path).write_text(source + ledger, encoding="utf-8")
+          PY
+            docker run --rm -i postgres:16-alpine \
+              psql "$DB_URL" --set ON_ERROR_STOP=1 --single-transaction --quiet < "$wrapped"
+            verified="$(psql_query "select checksum from migration.schema_migrations where filename = '$filename'")"
+            test "$verified" = "$checksum" || {
+              echo "migration ledger verification failed: $filename" >&2
+              exit 1
+            }
+            echo "applied $filename"
+          done
+
+          if [ "$OPERATION" = "check" ] && [ "$pending" -gt 0 ]; then
+            echo "$pending reviewed production migrations are pending"
+          else
+            echo "production migration state is current"
+          fi
+          REMOTE
+
