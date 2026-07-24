@@ -1,29 +1,37 @@
 import { z } from "zod";
+import { postJson } from "../birth-time-client-transport.ts";
 import {
   conversationalRectificationCommandSchema,
-  conversationalRectificationResponseSchema,
+  conversationalRectificationTurnSchema,
   type ConversationalRectificationCommand,
-  type ConversationalRectificationResponse,
+  type ConversationalRectificationTurn,
 } from "./contracts.ts";
 
 export const CONVERSATIONAL_RECTIFICATION_UNAVAILABLE = "生时校正暂时无法继续，请稍后重试。";
+
+export type ConversationalRectificationHistoryMessage = Readonly<{
+  role: "assistant" | "user";
+  text: string;
+}>;
+
+const conversationHistoryMessageSchema = z.object({
+  role: z.enum(["assistant", "user"]),
+  text: z.string().trim().min(1).max(12_000),
+}).strict();
+
+const conversationHistorySchema = z.array(conversationHistoryMessageSchema).max(500);
+const conversationHistoryByTurn = new WeakMap<object, readonly ConversationalRectificationHistoryMessage[]>();
+
+export function conversationalRectificationHistoryForTurn(
+  turn: ConversationalRectificationTurn,
+): readonly ConversationalRectificationHistoryMessage[] {
+  return conversationHistoryByTurn.get(turn) ?? [];
+}
 
 const publicErrorSchema = z.object({
   code: z.string(),
   message: z.string(),
 }).passthrough();
-
-const streamEventSchema = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("delta"), text: z.string() }).strict(),
-  z.object({
-    type: z.literal("turn"),
-    turn: conversationalRectificationResponseSchema,
-  }).strict(),
-]);
-
-export type ConversationalRectificationStreamOptions = Readonly<{
-  onNarrativeDelta?: (text: string) => void;
-}>;
 
 export class ConversationalRectificationRequestError extends Error {
   readonly name = "ConversationalRectificationRequestError";
@@ -106,75 +114,21 @@ function isRetryableTransportError(error: unknown): boolean {
   );
 }
 
-async function readJsonPayload(response: Response): Promise<unknown> {
-  return response.json().catch(() => null);
-}
-
-async function readStreamedTurn(
-  response: Response,
-  options: ConversationalRectificationStreamOptions,
-): Promise<ConversationalRectificationResponse> {
-  if (!response.body) throw new SyntaxError("missing rectification response stream");
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffered = "";
-  let turn: ConversationalRectificationResponse | null = null;
-  const consumeLine = (line: string) => {
-    if (!line.trim()) return;
-    const event = streamEventSchema.parse(JSON.parse(line));
-    if (event.type === "delta") options.onNarrativeDelta?.(event.text);
-    else turn = event.turn;
-  };
-  while (true) {
-    const { done, value } = await reader.read();
-    buffered += decoder.decode(value, { stream: !done });
-    let newline = buffered.indexOf("\n");
-    while (newline >= 0) {
-      consumeLine(buffered.slice(0, newline));
-      buffered = buffered.slice(newline + 1);
-      newline = buffered.indexOf("\n");
-    }
-    if (done) break;
-  }
-  consumeLine(buffered);
-  if (!turn) throw new SyntaxError("missing rectification turn event");
-  return turn;
-}
-
-async function postCommandWithOneReplay(
-  body: string,
-  options: ConversationalRectificationStreamOptions,
-) {
+async function postCommandWithOneReplay(body: string) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    let emittedNarrative = false;
     try {
-      const response = await fetch("/api/birth-time-conversation", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: {
-          Accept: "application/x-ndjson, application/json",
-          "Content-Type": "application/json",
-        },
+      const result = await postJson({
+        url: "/api/birth-time-conversation",
         body,
+        retryLostResponse: false,
       });
-      if (!response.ok) {
-        const payload = await readJsonPayload(response);
-        const nonJsonFailure = payload === null;
-        if (attempt === 0 && (response.status === 502 || nonJsonFailure)) continue;
-        return { response, payload, turn: null };
-      }
-      if (response.headers.get("content-type")?.includes("application/x-ndjson")) {
-        const turn = await readStreamedTurn(response, {
-          onNarrativeDelta(text) {
-            emittedNarrative = true;
-            options.onNarrativeDelta?.(text);
-          },
-        });
-        return { response, payload: null, turn };
-      }
-      return { response, payload: await readJsonPayload(response), turn: null };
+      // postJson deliberately projects an unparseable non-ok body to null. Treating all null
+      // error payloads as replayable also covers proxies that mislabel HTML as application/json.
+      const nonJsonFailure = !result.response.ok && result.payload === null;
+      if (attempt === 0 && (result.response.status === 502 || nonJsonFailure)) continue;
+      return result;
     } catch (error) {
-      if (attempt === 0 && !emittedNarrative && isRetryableTransportError(error)) continue;
+      if (attempt === 0 && isRetryableTransportError(error)) continue;
       throw error;
     }
   }
@@ -183,12 +137,11 @@ async function postCommandWithOneReplay(
 
 export async function sendConversationalRectificationCommand(
   command: ConversationalRectificationCommand,
-  options: ConversationalRectificationStreamOptions = {},
-): Promise<ConversationalRectificationResponse> {
+): Promise<ConversationalRectificationTurn> {
   const request = conversationalRectificationCommandSchema.parse(command);
   const body = JSON.stringify(request);
   try {
-    const { response, payload, turn } = await postCommandWithOneReplay(body, options);
+    const { response, payload } = await postCommandWithOneReplay(body);
     if (!response.ok) {
       const parsed = publicErrorSchema.safeParse(payload);
       const safeServerMessage = response.status < 500 && parsed.success
@@ -200,7 +153,20 @@ export async function sendConversationalRectificationCommand(
         safeServerMessage,
       );
     }
-    return turn ?? conversationalRectificationResponseSchema.parse(payload);
+    const payloadRecord = payload !== null && typeof payload === "object" && !Array.isArray(payload)
+      ? payload as Readonly<Record<string, unknown>>
+      : null;
+    const history = conversationHistorySchema.safeParse(payloadRecord?.conversationMessages);
+    const turnPayload = payloadRecord && "conversationMessages" in payloadRecord
+      ? Object.fromEntries(
+          Object.entries(payloadRecord).filter(([key]) => key !== "conversationMessages"),
+        )
+      : payload;
+    const turn = conversationalRectificationTurnSchema.parse(turnPayload);
+    if (history.success && history.data.length > 0) {
+      conversationHistoryByTurn.set(turn, history.data);
+    }
+    return turn;
   } catch (error) {
     if (error instanceof ConversationalRectificationRequestError) throw error;
     throw new ConversationalRectificationRequestError(

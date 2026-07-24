@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import { chinaLocations } from "@/data/china-locations";
+import { finiteBirthNumber, resolveMissingBirthTimezoneOffset } from "@/lib/birth-profile-timezone";
 
 type Profile = {
   name?: string;
   date?: string;
   time?: string;
-  countryCode?: "CN";
+  countryCode?: string;
   provinceCode?: string;
   cityCode?: string;
   districtCode?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  timezoneId?: string;
+  timezoneOffset?: number | null;
 };
 
 type RelationshipType = "romance" | "business" | "family" | "general";
@@ -16,22 +21,27 @@ type RelationshipType = "romance" | "business" | "family" | "general";
 const apiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200";
 const china = chinaLocations.country;
 
-function birthPayload(profile: Profile) {
+export async function birthPayload(profile: Profile) {
+  const resolved = await resolveMissingBirthTimezoneOffset(profile, { preferredTime: profile.time }) as Profile;
   const [year, month, day] = String(profile.date || "").split("-").map(Number);
   const [hour, minute] = String(profile.time || "").split(":").map(Number);
   const province = china.provinces.find((item) => item.code === profile.provinceCode);
   const city = province?.cities.find((item) => item.code === profile.cityCode);
   const district = city?.districts.find((item) => item.code === profile.districtCode);
   const location = district ?? city;
-  if (![year, month, day, hour, minute].every(Number.isFinite) || !location) {
+  const lat = finiteBirthNumber(resolved.latitude) ?? location?.center[1] ?? null;
+  const lon = finiteBirthNumber(resolved.longitude) ?? location?.center[0] ?? null;
+  const tz = finiteBirthNumber(resolved.timezoneOffset) ?? (location ? china.timezone : null);
+  if (![year, month, day, hour, minute].every(Number.isFinite)
+    || lat === null || lon === null || tz === null) {
     throw new Error("birth_profile_incomplete");
   }
   return {
     year, month, day, hour, minute,
     second: 0,
-    lat: location.center[1],
-    lon: location.center[0],
-    tz: china.timezone,
+    lat,
+    lon,
+    tz,
   };
 }
 
@@ -148,15 +158,19 @@ export async function POST(request: Request) {
     if (!body?.selfProfile || !body.partnerProfile) {
       return NextResponse.json({ error: "请提供双方星盘资料" }, { status: 400 });
     }
-    const selfChart = await postPython("/api/chart", birthPayload(body.selfProfile));
-    const partnerChart = await postPython("/api/chart", birthPayload(body.partnerProfile));
+    const [selfPayload, partnerPayload] = await Promise.all([
+      birthPayload(body.selfProfile),
+      birthPayload(body.partnerProfile),
+    ]);
+    const selfChart = await postPython("/api/chart", selfPayload);
+    const partnerChart = await postPython("/api/chart", partnerPayload);
     const relationshipType = body.relationshipType === "business" || body.relationshipType === "family" || body.relationshipType === "general"
       ? body.relationshipType
       : "romance";
     if (relationshipType === "business") {
       const [selfVargas, partnerVargas] = await Promise.all([
-        postPython("/api/varga_full", { ...birthPayload(body.selfProfile), planets: selfChart.planets, ascendant: selfChart.ascendant, divisions: ["D2", "D10", "D11"] }),
-        postPython("/api/varga_full", { ...birthPayload(body.partnerProfile), planets: partnerChart.planets, ascendant: partnerChart.ascendant, divisions: ["D2", "D10", "D11"] }),
+        postPython("/api/varga_full", { ...selfPayload, planets: selfChart.planets, ascendant: selfChart.ascendant, divisions: ["D2", "D10", "D11"] }),
+        postPython("/api/varga_full", { ...partnerPayload, planets: partnerChart.planets, ascendant: partnerChart.ascendant, divisions: ["D2", "D10", "D11"] }),
       ]);
       return NextResponse.json({
         status: "ok",
@@ -176,13 +190,13 @@ export async function POST(request: Request) {
       });
     }
     const selfD9 = await postPython("/api/varga_full", {
-      ...birthPayload(body.selfProfile),
+      ...selfPayload,
       planets: selfChart.planets,
       ascendant: selfChart.ascendant,
       divisions: ["D9"],
     });
     const partnerD9 = await postPython("/api/varga_full", {
-      ...birthPayload(body.partnerProfile),
+      ...partnerPayload,
       planets: partnerChart.planets,
       ascendant: partnerChart.ascendant,
       divisions: ["D9"],

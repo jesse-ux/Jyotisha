@@ -8,6 +8,13 @@ timezonefinder>=6.5
 # VedAstro 官方 Python SDK（官方快照与交叉验证）
 vedastro==1.23.25
 
+# Vendored jyotishganit 0.1.3 (MIT) runtime dependencies.
+# The source remains under references/open_source_sources/jyotishganit so its
+# provenance and license stay auditable.
+skyfield>=1.45,<2
+pandas>=1.3,<3
+numpy>=1.20,<3
+
 # 严格证据收集器通过 mcp_server 复用（API 运行时必需）
 mcp>=1.0
 

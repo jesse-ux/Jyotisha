@@ -5,7 +5,7 @@ import {
 import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getOnboardingAgent } from "@/mastra";
-import { defaultLanguageModel } from "@/mastra/model";
+import { defaultLanguageModel, resolveLanguageModel } from "@/mastra/model";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -17,7 +17,7 @@ function createProfileRepository(
     async loadProfile(userId) {
       return admin
         .from("profiles")
-        .select("id,name,birth_date,birth_time,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_time_status,country_code,province_code,city_code,onboarding_payload,onboarding_version,onboarding_generated_at")
+        .select("id,name,birth_date,birth_time,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_time_status,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset,birth_place_label,birth_place_type,birth_place_provider,birth_place_provider_id,timezone_id,timezone_source,onboarding_payload,onboarding_version,onboarding_generated_at")
         .eq("id", userId)
         .maybeSingle();
     },
@@ -65,7 +65,8 @@ export const POST = createOnboardingPost({
     };
   },
   generateText: async (name, signal) => {
-    const model = defaultLanguageModel();
+    const preferredModelId = process.env.ONBOARDING_MODEL_ID?.trim() || "deepseek-v4-flash";
+    const model = resolveLanguageModel(preferredModelId) ?? defaultLanguageModel();
     if (!model) return null;
     const result = await getOnboardingAgent(model).generate([
       {

@@ -4,6 +4,7 @@ import {
   CONVERSATIONAL_RECTIFICATION_UNAVAILABLE,
   ConversationalRectificationRequestError,
   createConversationalRectificationActionRegistry,
+  conversationalRectificationHistoryForTurn,
   sendConversationalRectificationCommand,
 } from "../src/lib/conversational-rectification/client.ts";
 import type { ConversationalRectificationTurn } from "../src/lib/conversational-rectification/contracts.ts";
@@ -122,6 +123,7 @@ test("client replays the exact action body after a lost response without adding 
     caseId,
     actionId: firstActionId,
     turnVersion: 3,
+    modelId: "gpt-5-5",
     domain: "career",
     answer: "2021 年 7 月开始第一份工作",
   });
@@ -129,7 +131,53 @@ test("client replays the exact action body after a lost response without adding 
   assert.deepEqual(result, turn);
   assert.equal(attempts, 2);
   assert.equal(bodies[0], bodies[1]);
+  assert.equal((JSON.parse(bodies[0]) as { modelId?: string }).modelId, "gpt-5-5");
   assert.equal(Object.hasOwn(JSON.parse(bodies[0]) as object, "price"), false);
+});
+
+test("client keeps recovered one-question-at-a-time history outside the strict turn contract", async (context) => {
+  const conversationMessages = [
+    { role: "assistant" as const, text: "请先告诉我一件时间明确的重要经历。" },
+    { role: "user" as const, text: "2014 年 6 月大学毕业。" },
+    { role: "assistant" as const, text: turn.narrative },
+  ];
+  context.mock.method(globalThis, "fetch", async () => Response.json({
+    ...turn,
+    conversationMessages,
+  }));
+
+  const result = await sendConversationalRectificationCommand({
+    type: "resume",
+    caseId,
+    actionId: firstActionId,
+    turnVersion: 4,
+  });
+
+  assert.deepEqual(result, turn);
+  assert.deepEqual(conversationalRectificationHistoryForTurn(result), conversationMessages);
+});
+
+test("client sends regenerate as a payload-free replay command", async (context) => {
+  let body: unknown;
+  context.mock.method(globalThis, "fetch", async (_input: string | URL | Request, init?: RequestInit) => {
+    body = JSON.parse(String(init?.body));
+    return Response.json({ ...turn, turnVersion: 5, narrative: "重新生成后的回答。" });
+  });
+
+  const result = await sendConversationalRectificationCommand({
+    type: "regenerate",
+    caseId,
+    actionId: firstActionId,
+    turnVersion: 4,
+  });
+
+  assert.deepEqual(body, {
+    type: "regenerate",
+    caseId,
+    actionId: firstActionId,
+    turnVersion: 4,
+  });
+  assert.equal(result.narrative, "重新生成后的回答。");
 });
 
 test("a JSON 502 is retried once with the exact action body before succeeding", async (context) => {

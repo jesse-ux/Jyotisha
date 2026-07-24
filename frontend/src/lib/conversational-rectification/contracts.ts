@@ -3,6 +3,7 @@ import { boundedJson } from "./json-bounds.ts";
 
 const actionIdSchema = z.string().uuid();
 const caseIdSchema = z.string().uuid();
+const modelIdSchema = z.string().trim().min(1).max(64);
 const turnVersionSchema = z.number().int().nonnegative();
 const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
 const evidenceDomainSchema = z.enum([
@@ -35,6 +36,7 @@ export const conversationalRectificationCommandSchema = z.discriminatedUnion("ty
   z.object({
     type: z.literal("start"),
     actionId: actionIdSchema,
+    modelId: modelIdSchema.optional(),
     pendingConsultationQuestion: z.string().trim().min(1).max(500).nullable().optional(),
   }).strict(),
   actionCommandSchema.extend({
@@ -42,9 +44,14 @@ export const conversationalRectificationCommandSchema = z.discriminatedUnion("ty
   }).strict(),
   actionCommandSchema.extend({
     type: z.literal("answer"),
+    modelId: modelIdSchema.optional(),
     domain: evidenceDomainSchema.optional(),
     answer: z.string().trim().min(1).max(4_000),
     correctsEvidenceId: z.string().uuid().optional(),
+  }).strict(),
+  actionCommandSchema.extend({
+    type: z.literal("regenerate"),
+    modelId: modelIdSchema.optional(),
   }).strict(),
   actionCommandSchema.extend({
     type: z.literal("pause"),
@@ -78,6 +85,11 @@ const evidenceRequestSchema = boundedJson(z.object({
   domains: z.array(evidenceDomainSchema).min(1).max(4),
   datePrecision: z.enum(["month_preferred", "year_accepted"]),
   freeTextAllowed: z.literal(true),
+  // Optional for turns written before follow-up state was persisted.
+  followUp: z.object({
+    kind: z.enum(["new_event", "event_date", "event_detail"]),
+    evidenceId: z.string().uuid().nullable(),
+  }).strict().optional(),
 }).strict(), 2_048);
 
 const evidenceRecapEntrySchema = boundedJson(z.object({

@@ -44,6 +44,12 @@ export const accountProfilePatchSchema = z.object({
   latitude: z.number().finite().min(-90).max(90).nullable().optional(),
   longitude: z.number().finite().min(-180).max(180).nullable().optional(),
   timezone_offset: z.number().finite().min(-12).max(14).nullable().optional(),
+  birth_place_label: nullableTrimmedString(240).optional(),
+  birth_place_type: nullableTrimmedString(40).optional(),
+  birth_place_provider: z.enum(["geoapify", "china_locations", "mapbox", "geonames"]).nullable().optional(),
+  birth_place_provider_id: nullableTrimmedString(160).optional(),
+  timezone_id: nullableTrimmedString(80).optional(),
+  timezone_source: z.literal("iana_historical").nullable().optional(),
 }).strict().superRefine((value, context) => {
   const source = value.birth_time_source;
   const time = value.reported_birth_time;
@@ -65,10 +71,21 @@ export const accountProfilePatchSchema = z.object({
     "uncertainty_after_minutes",
   ] as const;
   const mutatesDeclaration = declarationKeys.some((key) => value[key] !== undefined);
-  const coordinates = [value.latitude, value.longitude, value.timezone_offset];
-  const concreteCoordinateCount = coordinates.filter((coordinate) => coordinate != null).length;
-  if (concreteCoordinateCount > 0 && concreteCoordinateCount < coordinates.length) {
-    addIssue("latitude", "出生地点坐标与时区必须完整提交");
+  const coordinateCount = [value.latitude, value.longitude].filter((coordinate) => coordinate != null).length;
+  if (coordinateCount === 1) {
+    addIssue("latitude", "出生地点经纬度必须完整提交");
+  }
+  const globalLocationFields = [
+    value.birth_place_label,
+    value.birth_place_type,
+    value.birth_place_provider,
+    value.birth_place_provider_id,
+    value.timezone_id,
+    value.timezone_source,
+  ];
+  const hasGlobalLocation = globalLocationFields.some((field) => field != null);
+  if (hasGlobalLocation && (coordinateCount !== 2 || !value.timezone_id)) {
+    addIssue("timezone_id", "全球出生地点必须包含完整坐标与 IANA 时区");
   }
   if (source === undefined) {
     if (mutatesDeclaration) addIssue("birth_time_source", "修改出生资料时必须同时说明时间来源");
@@ -151,6 +168,12 @@ type AccountBirthTimeState = Readonly<{
   latitude?: number | null;
   longitude?: number | null;
   timezone_offset?: number | null;
+  birth_place_label?: string | null;
+  birth_place_type?: string | null;
+  birth_place_provider?: string | null;
+  birth_place_provider_id?: string | null;
+  timezone_id?: string | null;
+  timezone_source?: string | null;
 }>;
 
 const declarationFields = [
@@ -168,6 +191,12 @@ const declarationFields = [
   "latitude",
   "longitude",
   "timezone_offset",
+  "birth_place_label",
+  "birth_place_type",
+  "birth_place_provider",
+  "birth_place_provider_id",
+  "timezone_id",
+  "timezone_source",
 ] as const;
 
 const concurrencyFields = [

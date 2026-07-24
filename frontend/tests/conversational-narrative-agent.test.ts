@@ -119,7 +119,7 @@ test("validates a rich first-turn narrative against the technical packet", async
   assert.doesNotMatch(result.narrative, /^哪一个时间段[\s\S]*\d{4}[–—-]\d{4}/);
 });
 
-test("repairs missing safety wording without replacing the model-authored narrative", async () => {
+test("preserves a complete model-authored first-turn narrative verbatim", async () => {
   const packet = syntheticTechnicalPacket();
   const output = {
     ...richOutput(),
@@ -139,13 +139,28 @@ test("repairs missing safety wording without replacing the model-authored narrat
 
   assert.equal(result.attempts, 1);
   assert.equal(result.fallbackUsed, false);
-  assert.match(result.narrative, /印象最深的一次关系变化/);
-  assert.match(result.narrative, /05:16–05:24/);
-  assert.match(result.narrative, /不能直接当作已经确认/);
-  assert.match(result.narrative, /关系变化[\s\S]*什么时候发生/);
-  assert.doesNotMatch(result.narrative, /请只提供已经发生/);
-  assert.match(result.output.evidenceRequest?.prompt ?? "", /关系大约是什么时候/);
-  assert.doesNotMatch(result.output.evidenceRequest?.prompt ?? "", /请以已经发生的真实事件为准/);
+  assert.equal(result.narrative, output.narrative);
+  assert.doesNotMatch(result.narrative, /05:16–05:24|不能直接当作已经确认/);
+  assert.equal(result.output.evidenceRequest?.prompt, "那段关系大约是什么时候发生的？");
+});
+
+test("completes a first-turn introduction with the model-authored question", async () => {
+  const result = await generateRectificationNarrative({
+    phase: "first",
+    packet: syntheticTechnicalPacket(),
+    generator: generator([{
+      narrative: "我们先把你记得的出生范围当作起点，再用真实经历逐步核对。",
+      evidenceRequest: {
+        domains: ["relationship"],
+        datePrecision: "month_preferred",
+        prompt: "先说一件时间比较明确的关系转折，好吗？",
+      },
+    }]),
+  });
+
+  assert.equal(result.fallbackUsed, false);
+  assert.match(result.narrative, /真实经历逐步核对。[\s\S]*关系转折，好吗？/);
+  assert.equal((result.narrative.match(/[？?]/g) ?? []).length, 1);
 });
 
 test("repairs a natural intermediate follow-up prompt without discarding the specific reply", async () => {
@@ -173,7 +188,45 @@ test("repairs a natural intermediate follow-up prompt without discarding the spe
   assert.equal(result.output.evidenceRequest?.prompt, "第一份工作是什么时候开始的？");
 });
 
-test("makes an internal evidence prompt visible when the acknowledgement contains no question", async () => {
+test("preserves the target event in an intermediate detail follow-up", async () => {
+  const evidenceId = "00000000-0000-4000-8000-000000000321";
+  const output = {
+    ...richOutput(),
+    narrative: "记下了你在 2017 年 5 月参加工作。那是第一份正式工作，还是实习或兼职？",
+    evidenceRequest: {
+      domains: ["career" as const],
+      datePrecision: "month_preferred" as const,
+      prompt: "那是第一份正式工作，还是实习或兼职？",
+      followUp: { kind: "event_detail" as const, evidenceId },
+    },
+  };
+
+  const result = await generateRectificationNarrative({
+    phase: "intermediate",
+    packet: syntheticTechnicalPacket(),
+    generator: generator([output]),
+    context: {
+      eventLedger: [{
+        id: evidenceId,
+        rawText: "2017年5月参加工作",
+        dateLabel: "2017-05",
+        summary: "参加工作",
+        domain: "career",
+        extractionStatus: "clear",
+        active: true,
+        correctsEvidenceIds: [],
+      }],
+    },
+  });
+
+  assert.equal(result.fallbackUsed, false);
+  assert.deepEqual(result.output.evidenceRequest?.followUp, {
+    kind: "event_detail",
+    evidenceId,
+  });
+});
+
+test("appends the model-authored question when an intermediate reply only acknowledges the event", async () => {
   const output = {
     ...richOutput(),
     narrative: "已记录本科毕业后衔接读研，这是一段连续教育转折，暂时不重复计数。",
@@ -191,12 +244,36 @@ test("makes an internal evidence prompt visible when the acknowledgement contain
   });
 
   assert.equal(result.fallbackUsed, false);
-  assert.match(result.narrative, /连续教育转折/);
-  assert.match(result.narrative, /第一份工作是什么时候开始的/);
-  assert.doesNotMatch(result.narrative, /请只提供已经发生/);
+  assert.match(result.narrative, /连续教育转折[\s\S]*第一份工作是什么时候开始的？/);
+  assert.equal((result.narrative.match(/[？?]/g) ?? []).length, 1);
 });
 
-test("adds the concrete question when the acknowledgement only says whether more detail is needed", async () => {
+test("repairs a narrative that stops at a dangling question introduction", async () => {
+  const output = {
+    ...richOutput(),
+    narrative: [
+      "谢谢你补充了当时的压力感受，这让这段经历更完整。",
+      "为了判断这段经历的具体节奏，我需要确认一个关键信息——",
+    ].join("\n\n"),
+    evidenceRequest: {
+      domains: ["career" as const],
+      datePrecision: "month_preferred" as const,
+      prompt: "你感到压力最强的时候，大约是哪一年、哪一个月？",
+    },
+  };
+
+  const result = await generateRectificationNarrative({
+    phase: "intermediate",
+    packet: syntheticTechnicalPacket(),
+    generator: generator([output]),
+  });
+
+  assert.equal(result.fallbackUsed, false);
+  assert.match(result.narrative, /关键信息——[\s\S]*压力最强的时候[\s\S]*哪一年、哪一个月/);
+  assert.equal((result.narrative.match(/[？?]/g) ?? []).length, 1);
+});
+
+test("turns a complete intermediate acknowledgement into a visible one-question turn", async () => {
   const output = {
     ...richOutput(),
     narrative: "这次入职会作为一条事业事件记录，但还需要知道后续是否发生过离职、转岗或升职。",
@@ -214,11 +291,11 @@ test("adds the concrete question when the acknowledgement only says whether more
   });
 
   assert.equal(result.fallbackUsed, false);
-  assert.match(result.narrative, /还需要知道后续是否发生过/);
-  assert.match(result.narrative, /第一次发生明确变化是在什么时候/);
+  assert.match(result.narrative, /离职、转岗或升职。[\s\S]*第一次发生明确变化是在什么时候？/);
+  assert.equal((result.narrative.match(/[？?]/g) ?? []).length, 1);
 });
 
-test("passes the bounded expert workflow to the skill-guided narrator", async () => {
+test("hides an uninvoked technique inventory during evidence collection", async () => {
   const prompts: string[] = [];
   const packet = {
     ...syntheticTechnicalPacket(),
@@ -242,14 +319,140 @@ test("passes the bounded expert workflow to the skill-guided narrator", async ()
   };
 
   await generateRectificationNarrative({
-    phase: "first",
+    phase: "intermediate",
     packet,
     generator: generator([richOutput()], prompts),
   });
 
   assert.match(prompts[0] ?? "", /expertWorkflow/);
-  assert.match(prompts[0] ?? "", /KP cusp \/ sub-lord/);
+  assert.doesNotMatch(prompts[0] ?? "", /KP cusp \/ sub-lord/);
+  assert.doesNotMatch(prompts[0] ?? "", /minute_holdout_not_ready/);
   assert.match(prompts[0] ?? "", /blockedOrNotEvaluatedTechniquesMustNeverBeClaimedAsUsed/);
+});
+
+test("appends the three auditable tables to every final Agent answer", async () => {
+  const packet: RectificationTechnicalPacket = {
+    ...syntheticTechnicalPacket(),
+    scoredHistoricalEvidence: [{
+      evidenceId: "00000000-0000-4000-8000-000000000602",
+      domain: "career",
+      candidateTime: "05:20",
+      score: 3.5,
+      ruleRefs: ["vim-md-career"],
+    }],
+    expertWorkflow: {
+      boundary: "not_auto_rectified",
+      candidateWindows: [{
+        startTime: "05:16",
+        endTime: "05:24",
+        status: "ready_for_confirmation",
+      }],
+      techniqueAuditTable: [{
+        technique: "VedAstro official validation",
+        status: "used",
+        evidence: ["official_verified", "event_discrimination_pass"],
+        boundary: "胜出分钟必须在已发生事件扫描中严格领先次优分钟。",
+      }],
+      confirmationAllowed: true,
+      hardBlockers: [],
+      gates: {},
+    },
+  };
+  const output: RectificationNarrativeModelOutput = {
+    ...richOutput(),
+    narrative: "当前证据支持 05:20 作为建议确认的分钟；写回前仍需你明确确认。",
+    evidenceRequest: null,
+  };
+  const prompts: string[] = [];
+  const result = await generateRectificationNarrative({
+    phase: "final",
+    packet,
+    context: {
+      eventLedger: [{
+        id: "00000000-0000-4000-8000-000000000602",
+        rawText: "2019年7月入职第一家公司",
+        dateLabel: "2019-07",
+        summary: "入职第一家公司",
+        domain: "career",
+        extractionStatus: "clear",
+        active: true,
+        correctsEvidenceIds: [],
+      }],
+    },
+    generator: generator([output], prompts),
+  });
+
+  assert.match(result.narrative, /### Technique Audit Table/);
+  assert.match(result.narrative, /VedAstro official validation/);
+  assert.match(result.narrative, /### 事件验证表/);
+  assert.match(result.narrative, /2019-07[\s\S]*入职第一家公司[\s\S]*已纳入验证[\s\S]*已纳入当前候选比较/);
+  assert.doesNotMatch(result.narrative, /3\.5|得分 \/ 状态|内部(?:分数|权重)/);
+  assert.doesNotMatch(prompts[0] ?? "", /"score"\s*:\s*3\.5/);
+  assert.match(result.narrative, /### 候选时间差异表/);
+  assert.match(result.narrative, /05:16–05:24[\s\S]*D9[\s\S]*minute_sensitive/);
+});
+
+test("appends canonical final tables when the model only emits empty or incomplete headings", async () => {
+  const output: RectificationNarrativeModelOutput = {
+    ...richOutput(),
+    narrative: [
+      "当前证据已经形成建议结论，写回前仍需确认。",
+      "### Technique Audit Table",
+      "### 事件验证表",
+      "| 时间 | 事件 |",
+      "|---|---|",
+      "### 候选时间差异表",
+    ].join("\n\n"),
+    evidenceRequest: null,
+  };
+
+  const result = await generateRectificationNarrative({
+    phase: "final",
+    packet: syntheticTechnicalPacket(),
+    generator: generator([output]),
+  });
+
+  assert.equal(result.fallbackUsed, false);
+  assert.match(result.narrative, /\| 技法 \| 状态 \| 证据 \| 使用边界 \|/);
+  assert.match(result.narrative, /\| 时间 \| 事件 \| 领域 \| 验证状态 \| 结论 \|/);
+  assert.match(result.narrative, /\| 候选范围 \| 层 \| 状态 \| 差异 \/ 证据 \|/);
+  assert.equal((result.narrative.match(/### Technique Audit Table/g) ?? []).length, 2);
+  assert.equal((result.narrative.match(/### 事件验证表/g) ?? []).length, 2);
+  assert.equal((result.narrative.match(/### 候选时间差异表/g) ?? []).length, 2);
+});
+
+test("rejects a model-authored event table that exposes private numeric scoring", async () => {
+  const packet: RectificationTechnicalPacket = {
+    ...syntheticTechnicalPacket(),
+    scoredHistoricalEvidence: [{
+      evidenceId: "00000000-0000-4000-8000-000000000602",
+      domain: "career",
+      candidateTime: "05:20",
+      score: 3.5,
+      ruleRefs: ["vim-md-career"],
+    }],
+  };
+  const unsafe: RectificationNarrativeModelOutput = {
+    ...richOutput(),
+    narrative: [
+      "当前证据形成了候选结论。",
+      "### 事件验证表",
+      "| 时间 | 事件 | 得分 / 状态 |",
+      "|---|---|---|",
+      "| 2019-07 | 入职第一家公司 | 3.5 |",
+    ].join("\n"),
+    evidenceRequest: null,
+  };
+
+  const result = await generateRectificationNarrative({
+    phase: "final",
+    packet,
+    generator: generator([unsafe, unsafe]),
+  });
+
+  assert.equal(result.fallbackUsed, true);
+  assert.doesNotMatch(result.narrative, /3\.5|得分 \/ 状态/);
+  assert.match(result.narrative, /\| 时间 \| 事件 \| 领域 \| 验证状态 \| 结论 \|/);
 });
 
 test("passes the user's latest concrete event to an intermediate skill-guided reply", async () => {
@@ -268,8 +471,46 @@ test("passes the user's latest concrete event to an intermediate skill-guided re
   });
 
   assert.match(prompts[0] ?? "", /离开家乡去上海开始第一份长期工作/);
-  assert.match(prompts[0] ?? "", /acknowledgeLatestEvidenceSpecificallyBeforeAsking/);
+  assert.match(prompts[0] ?? "", /respondToLatestEvidenceBeforeAsking/);
   assert.match(prompts[0] ?? "", /doNotRepeatCandidateBoundaryUnlessItChangedOrTheUserAsked/);
+});
+
+test("keeps internal event domains and suggested-domain routing out of the narrator context", async () => {
+  const prompts: string[] = [];
+  await generateRectificationNarrative({
+    phase: "intermediate",
+    packet: syntheticTechnicalPacket(),
+    context: {
+      latestEvidence: [{
+        id: "00000000-0000-4000-8000-000000000111",
+        dateLabel: "2020-04",
+        summary: "去石油化工研究院实习做研究员",
+        domain: "other",
+      }],
+      eventLedger: [{
+        id: "00000000-0000-4000-8000-000000000111",
+        rawText: "2020年4月去石油化工研究院实习做研究员",
+        dateLabel: "2020-04",
+        summary: "去石油化工研究院实习做研究员",
+        domain: "career",
+        extractionStatus: "clear",
+        active: true,
+        correctsEvidenceIds: [],
+      }],
+    },
+    generator: generator([richOutput()], prompts),
+  });
+
+  const prompt = JSON.parse(prompts[0] ?? "{}") as {
+    conversationContext?: {
+      latestEvidence?: Array<Record<string, unknown>>;
+      eventLedger?: Array<Record<string, unknown>>;
+    };
+    packet?: Record<string, unknown>;
+  };
+  assert.equal(prompt.conversationContext?.latestEvidence?.[0]?.domain, undefined);
+  assert.equal(prompt.conversationContext?.eventLedger?.[0]?.domain, undefined);
+  assert.equal(prompt.packet?.suggestedDomains, undefined);
 });
 
 test("passes the active event ledger and unresolved facts to the intermediate agent", async () => {
@@ -309,7 +550,7 @@ test("passes the active event ledger and unresolved facts to the intermediate ag
   assert.match(prompt, /23年关系结束后发生过一次交通事故/);
   assert.match(prompt, /2024-08-08/);
   assert.match(prompt, /一段重要关系结束/);
-  assert.match(prompt, /finishCurrentEventBeforeSwitchingDomains/);
+  assert.match(prompt, /continueCurrentEventWhenItRemainsInformative/);
   assert.match(prompt, /resolveDateContradictionsBeforeScoring/);
   assert.match(prompt, /mergeSameEventDetailsWithoutDoubleCounting/);
 });
@@ -330,35 +571,57 @@ test("rejects invented representative times, layers, and references", () => {
   assert.ok(result.issues.some((issue) => issue.includes("invented-reference")));
 });
 
-test("accepts a concise first turn without exposing technical layer values", () => {
+test("accepts a natural first turn without a forced range, boundary, or date request", () => {
   const packet = syntheticTechnicalPacket();
   const invalid = {
     ...richOutput(),
-    narrative: "当前仍在核对 05:16–05:24 的候选范围，不能视为已经确认的出生分钟。先说一件过去的重要关系经历好吗？请写明哪一年、哪一月。",
+    narrative: "我们先从你印象最深、最愿意讲的一段人生变化开始。发生了什么？",
   } satisfies RectificationNarrativeModelOutput;
   const result = validateNarrativeAgainstPacket(invalid, packet, "first");
 
   assert.deepEqual(result, { valid: true, issues: [] });
 });
 
-test("rejects duplicated generic domain reasons that are not packet-grounded", () => {
+test("accepts natural domain explanations while still rejecting unknown domain-layer pairs", () => {
   const packet = syntheticTechnicalPacket();
   const relationshipReason = richOutput().domainReasons[0];
   assert.ok(relationshipReason);
-  const invalid = {
+  const paraphrased = {
     ...richOutput(),
     domainReasons: [
       { ...relationshipReason, reason: "D9 may matter for this question" },
       { ...relationshipReason, reason: "D9 may matter for another question" },
     ],
   } satisfies RectificationNarrativeModelOutput;
-  const result = validateNarrativeAgainstPacket(invalid, packet, "first");
+  assert.deepEqual(validateNarrativeAgainstPacket(paraphrased, packet, "first"), { valid: true, issues: [] });
 
+  const ungrounded = {
+    ...richOutput(),
+    domainReasons: [{ domain: "finance" as const, layer: "D60", reason: "This invented layer should be rejected." }],
+  } satisfies RectificationNarrativeModelOutput;
+  const result = validateNarrativeAgainstPacket(ungrounded, packet, "first");
   assert.equal(result.valid, false);
-  assert.ok(result.issues.some((issue) => issue.includes("packet discrimination explanation")));
+  assert.ok(result.issues.some((issue) => issue.includes("domain reason finance/D60")));
 });
 
-test("rejects a generic broad-year choice questionnaire and uses a safe scoring-compatible fallback", async () => {
+test("allows packet-grounded technical tables during an intermediate turn", () => {
+  const packet = syntheticTechnicalPacket();
+  const output = {
+    ...richOutput(),
+    narrative: [
+      "你补充的关系变化已经记入当前事件线。",
+      "### 候选时间差异表",
+      "| 层级 | 当前观察 |",
+      "| --- | --- |",
+      "| D9 | 在候选范围内呈分钟敏感差异 |",
+      "下一步我想继续了解这段关系结束后的直接变化。",
+    ].join("\n"),
+  } satisfies RectificationNarrativeModelOutput;
+
+  assert.deepEqual(validateNarrativeAgainstPacket(output, packet, "intermediate"), { valid: true, issues: [] });
+});
+
+test("rejects a generic broad-year choice questionnaire without replacing the first Agent answer with a template", async () => {
   const invalid = {
     ...richOutput(),
     narrative: [
@@ -377,14 +640,14 @@ test("rejects a generic broad-year choice questionnaire and uses a safe scoring-
   assert.equal(direct.valid, false);
   assert.ok(direct.issues.some((issue) => issue.includes("broad-year choice questionnaire")));
 
-  const result = await generateRectificationNarrative({
-    phase: "first",
-    packet: syntheticTechnicalPacket(),
-    generator: generator([invalid, invalid]),
-  });
-  assert.equal(result.attempts, 2);
-  assert.equal(result.fallbackUsed, true);
-  assert.equal(result.allowEvidenceScoringAdvance, true);
+  await assert.rejects(
+    generateRectificationNarrative({
+      phase: "first",
+      packet: syntheticTechnicalPacket(),
+      generator: generator([invalid, invalid]),
+    }),
+    /RectificationNarrativeUnavailable/,
+  );
 });
 
 test("rejects generic individual-year options even without a written range", () => {
@@ -464,7 +727,7 @@ test("rejects ungrounded layers and references nested in a domain reason", () =>
   const invalid = {
     ...output,
     domainReasons: [
-      { ...firstReason, reason: `${firstReason.reason} D60 另见 invented-reference。` },
+      { ...firstReason, reason: `${firstReason.reason} D60 另见【invented-reference】。` },
       ...output.domainReasons.slice(1),
     ],
   } satisfies RectificationNarrativeModelOutput;
@@ -482,7 +745,7 @@ test("rejects ungrounded times and references nested in the evidence request pro
     ...output,
     evidenceRequest: {
       ...output.evidenceRequest,
-      prompt: `${output.evidenceRequest.prompt} 请以 06:45 和 invented-reference 为准。`,
+      prompt: `${output.evidenceRequest.prompt} 请以 06:45 和【invented-reference】为准。`,
     },
   } satisfies RectificationNarrativeModelOutput;
   const result = validateNarrativeAgainstPacket(invalid, syntheticTechnicalPacket(), "first");
@@ -492,11 +755,11 @@ test("rejects ungrounded times and references nested in the evidence request pro
   assert.ok(result.issues.some((issue) => issue.includes("evidenceRequest.prompt") && issue.includes("invented-reference")));
 });
 
-test("rejects an invented plain-text technical reference omitted from the reference list", () => {
+test("rejects an invented citation-marked technical reference omitted from the reference list", () => {
   const packet = syntheticTechnicalPacket();
   const invalid = {
     ...richOutput(),
-    narrative: `${richOutput().narrative}\n另见 invented-reference。`,
+    narrative: `${richOutput().narrative}\n另见【invented-reference】。`,
   };
   const result = validateNarrativeAgainstPacket(invalid, packet, "first");
 
@@ -504,7 +767,19 @@ test("rejects an invented plain-text technical reference omitted from the refere
   assert.ok(result.issues.some((issue) => issue.includes("invented-reference")));
 });
 
-test("retries expression exactly once with the same grounded packet", async () => {
+test("does not mistake ordinary machine-readable status words for technical citations", () => {
+  const output = {
+    ...richOutput(),
+    narrative: `${richOutput().narrative}\n当前仍是 pending_validation，并遵守 not_auto_rectified 边界。`,
+  } satisfies RectificationNarrativeModelOutput;
+
+  assert.deepEqual(
+    validateNarrativeAgainstPacket(output, syntheticTechnicalPacket(), "first"),
+    { valid: true, issues: [] },
+  );
+});
+
+test("retries a grounded validation failure once with a compact packet", async () => {
   const packet = syntheticTechnicalPacket();
   const prompts: string[] = [];
   const result = await generateRectificationNarrative({
@@ -519,51 +794,163 @@ test("retries expression exactly once with the same grounded packet", async () =
   assert.equal(prompts.length, 2);
   assert.match(prompts[0] ?? "", /rectification-technical-v1/);
   assert.match(prompts[1] ?? "", /rectification-technical-v1/);
-  assert.match(prompts[0] ?? "", /time_linked_candidate_scan_samples/);
+  assert.ok((prompts[0]?.length ?? Number.POSITIVE_INFINITY) < 5_000);
+  assert.equal(prompts.some((prompt) => prompt.includes("scoredHistoricalEvidence")), false);
+  assert.equal(prompts.some((prompt) => prompt.includes("referenceIds")), false);
   assert.equal(prompts.some((prompt) => prompt.includes("candidateWeights")), false);
   assert.equal(prompts.some((prompt) => prompt.includes("private-partition")), false);
 });
 
-test("uses a deterministic one-question conversational fallback after the second mismatch", async () => {
-  const packet = syntheticTechnicalPacket();
-  const invalid = { ...richOutput(), sensitiveLayers: ["D60"] };
-  const first = await generateRectificationNarrative({
-    phase: "first",
-    packet,
-    generator: generator([invalid, invalid]),
-  });
-  const second = await generateRectificationNarrative({
-    phase: "first",
-    packet,
-    generator: generator([invalid, invalid]),
-  });
-
-  assert.equal(first.attempts, 2);
-  assert.equal(first.fallbackUsed, true);
-  assert.equal(first.allowEvidenceScoringAdvance, true);
-  assert.equal(first.narrative, second.narrative);
-  assert.match(first.narrative, /05:16–05:24[\s\S]*不能/);
-  assert.doesNotMatch(first.narrative, /\bD\d+\b/);
-  assert.match(first.narrative, /已经发生[\s\S]*年[\s\S]*月/);
-  assert.equal((first.narrative.match(/[？?]/g) ?? []).length, 1);
-  assert.deepEqual(first.output.evidenceRequest?.domains, ["relationship"]);
-});
-
-test("bounds fallback validation issues for the durable receipt", async () => {
-  const inventedReference = `invented-${"x".repeat(500)}`;
-  const invalid = {
-    ...richOutput(),
-    narrative: `${richOutput().narrative}\n另见 ${inventedReference}。`,
-  };
+test("gives each validation attempt a fresh bounded deadline", async () => {
+  const signals: Array<AbortSignal | undefined> = [];
+  const attempts: Array<1 | 2 | undefined> = [];
+  const invalid = { ...richOutput(), representativeTime: "06:45" };
   const result = await generateRectificationNarrative({
     phase: "first",
     packet: syntheticTechnicalPacket(),
-    generator: generator([invalid, invalid]),
+    generator: {
+      modelId: "test-model",
+      async generate(_prompt, options) {
+        signals.push(options?.signal);
+        attempts.push(options?.attempt);
+        return { text: JSON.stringify(signals.length === 1 ? invalid : richOutput()) };
+      },
+    },
   });
 
-  assert.equal(result.fallbackUsed, true);
-  assert.ok(result.validationReceipt.issues.length <= 20);
-  assert.ok(result.validationReceipt.issues.every((issue) => issue.length <= 240));
+  assert.equal(result.fallbackUsed, false);
+  assert.equal(signals.length, 2);
+  assert.ok(signals[0] instanceof AbortSignal);
+  assert.ok(signals[1] instanceof AbortSignal);
+  assert.notEqual(signals[0], signals[1]);
+  assert.deepEqual(attempts, [1, 2]);
+});
+
+test("accepts lightweight model-authored output and injects packet facts on the server", async () => {
+  const packet = syntheticTechnicalPacket();
+  const result = await generateRectificationNarrative({
+    phase: "first",
+    packet,
+    generator: generator([{
+      narrative: "先从一件你印象最深、时间也比较明确的人生转折说起吧。",
+      evidenceRequest: {
+        datePrecision: "year_accepted",
+        prompt: "那件事大约发生在哪一年？",
+      },
+    }]),
+  });
+
+  assert.equal(result.attempts, 1);
+  assert.equal(result.output.candidateStatus, packet.candidate.status);
+  assert.equal(result.output.representativeTime, packet.candidate.representativeTime);
+  assert.deepEqual(result.output.stableLayers, ["D1"]);
+  assert.deepEqual(result.output.sensitiveLayers, ["D9", "D10"]);
+  assert.deepEqual(result.output.referenceIds, []);
+  assert.deepEqual(result.output.domainReasons, packet.suggestedDomains);
+  assert.deepEqual(result.output.evidenceRequest?.domains, ["relationship", "career"]);
+});
+
+test("replaces legacy model-selected evidence domains instead of rejecting the answer", async () => {
+  const packet = syntheticTechnicalPacket();
+  const output = richOutput();
+  const result = await generateRectificationNarrative({
+    phase: "intermediate",
+    packet,
+    generator: generator([{
+      ...output,
+      evidenceRequest: {
+        ...output.evidenceRequest,
+        domains: ["finance"],
+      },
+    }]),
+  });
+
+  assert.equal(result.attempts, 1);
+  assert.deepEqual(result.output.evidenceRequest?.domains, ["relationship", "career"]);
+});
+
+test("uses a fresh second provider request after the first attempt times out", async () => {
+  let calls = 0;
+  const signals: Array<AbortSignal | undefined> = [];
+  const result = await generateRectificationNarrative({
+    phase: "first",
+    packet: syntheticTechnicalPacket(),
+    generator: {
+      modelId: "pro-model",
+      async generate(_prompt, options) {
+        calls += 1;
+        signals.push(options?.signal);
+        if (options?.attempt === 1) {
+          throw new DOMException("timed out", "TimeoutError");
+        }
+        return {
+          text: JSON.stringify(richOutput()),
+          modelId: "flash-model",
+        };
+      },
+    },
+  });
+
+  assert.equal(calls, 2);
+  assert.equal(result.attempts, 2);
+  assert.equal(result.fallbackUsed, false);
+  assert.equal(result.validationReceipt.modelId, "flash-model");
+  assert.equal(result.validationReceipt.retryCount, 1);
+  assert.ok(signals[0] instanceof AbortSignal);
+  assert.ok(signals[1] instanceof AbortSignal);
+  assert.notEqual(signals[0], signals[1]);
+});
+
+test("records first-turn generation timeouts separately from schema failures", async () => {
+  const warnings: string[] = [];
+  const originalWarn = console.warn;
+  console.warn = (...values: unknown[]) => warnings.push(values.map(String).join(" "));
+  try {
+    await assert.rejects(
+      generateRectificationNarrative({
+        phase: "first",
+        packet: syntheticTechnicalPacket(),
+        generator: {
+          modelId: "test-model",
+          async generate() { throw new DOMException("timed out", "TimeoutError"); },
+        },
+      }),
+      /RectificationNarrativeUnavailable/,
+    );
+  } finally {
+    console.warn = originalWarn;
+  }
+
+  assert.match(warnings.at(-1) ?? "", /"issueCodes":\["timeout"\]/);
+});
+
+test("rejects the first turn instead of presenting a deterministic template as an agent answer", async () => {
+  const packet = syntheticTechnicalPacket();
+  const invalid = { ...richOutput(), sensitiveLayers: ["D60"] };
+  await assert.rejects(
+    generateRectificationNarrative({
+      phase: "first",
+      packet,
+      generator: generator([invalid, invalid]),
+    }),
+    /RectificationNarrativeUnavailable/,
+  );
+});
+
+test("rejects an invalid intermediate narrative instead of showing a deterministic template", async () => {
+  const inventedReference = `invented-${"x".repeat(500)}`;
+  const invalid = {
+    ...richOutput(),
+    narrative: `${richOutput().narrative}\n另见【${inventedReference}】。`,
+  };
+  await assert.rejects(
+    generateRectificationNarrative({
+      phase: "intermediate",
+      packet: syntheticTechnicalPacket(),
+      generator: generator([invalid, invalid]),
+    }),
+    /RectificationNarrativeUnavailable/,
+  );
 });
 
 test("builds distinct first, intermediate, and final grounded prompts", async () => {

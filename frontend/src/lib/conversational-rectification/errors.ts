@@ -47,6 +47,12 @@ const errorDefinitions = {
     message: "请先补全出生日期、时间和地点。",
     retryable: false,
   },
+  model_unavailable: {
+    status: 409,
+    error: "模型暂不可用",
+    message: "请选择其他模型后重新发送，本次不会扣除点数。",
+    retryable: false,
+  },
   insufficient_credits: {
     status: 409,
     error: "校正点数不足",

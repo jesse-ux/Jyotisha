@@ -76,11 +76,61 @@ test("verified route uses only server active time", async () => {
   assert.equal(prepared.serverChart?.truth.selectedTimeKind, "active");
 });
 
+test("global normalized places use their exact coordinates and historical offset", async () => {
+  const prepared = await prepareConsultationRoute({
+    userId: "user-global",
+    mode: "unverified_birth_time",
+    loadProfile: async () => ({
+      ...profile,
+      country_code: "TW",
+      province_code: null,
+      city_code: null,
+      district_code: null,
+      birth_place_label: "台湾 · 台北市",
+      birth_place_type: "locality",
+      birth_place_provider: "geonames",
+      birth_place_provider_id: "1668341",
+      timezone_id: "Asia/Taipei",
+      timezone_source: "iana_historical",
+      latitude: 25.033,
+      longitude: 121.5654,
+      timezone_offset: 9,
+    }),
+    reserve: async () => "reserved",
+  });
+
+  assert.deepEqual(prepared.serverChart?.toolInput, {
+    year: 1997,
+    month: 8,
+    day: 8,
+    hour: 5,
+    minute: 30,
+    city: "台湾 · 台北市",
+    lat: 25.033,
+    lon: 121.5654,
+    tz: 9,
+  });
+  assert.equal(prepared.serverChart?.truth.placeId, "1668341");
+  assert.equal(prepared.serverChart?.truth.timezoneId, "Asia/Taipei");
+});
+
+test("legacy China place codes no longer pin exact coordinates to an administrative center", async () => {
+  const prepared = await prepareConsultationRoute({
+    userId: "user-precise-cn",
+    mode: "unverified_birth_time",
+    loadProfile: async () => ({ ...profile, latitude: 36.5, timezone_offset: 9 }),
+    reserve: async () => "reserved",
+  });
+
+  assert.equal(prepared.serverChart?.toolInput.lat, 36.5);
+  assert.equal(prepared.serverChart?.toolInput.tz, 9);
+});
+
 test("incomplete, inconsistent, or mode-mismatched profile fails before billing", async () => {
   for (const [expectedCode, invalid] of [
     ["profile_incomplete", { ...profile, birth_date: null }],
-    ["profile_inconsistent", { ...profile, latitude: 36.5 }],
-    ["profile_inconsistent", { ...profile, timezone_offset: 9 }],
+    ["profile_inconsistent", { ...profile, latitude: 91 }],
+    ["profile_inconsistent", { ...profile, timezone_offset: 15 }],
     ["mode_changed", { ...profile, birth_time_status: "confirmed" }],
   ] as const) {
     let reserveCalls = 0;
@@ -117,6 +167,62 @@ test("profile storage failure is stable and never reaches billing", async () => 
       && error.code === "profile_unavailable"
       && !error.message.includes("raw database detail"),
   );
+  assert.equal(reserveCalls, 0);
+});
+
+test("verified global chart resolves a missing historical offset using the final active time before billing", async () => {
+  const order: string[] = [];
+  const prepared = await prepareConsultationRoute({
+    userId: "user-global",
+    mode: "verified_chart",
+    loadProfile: async () => ({
+      ...profile,
+      birth_time_status: "confirmed",
+      birth_place_label: "San Francisco, California, United States",
+      country_code: "US",
+      province_code: null,
+      city_code: null,
+      district_code: null,
+      latitude: 37.7879363,
+      longitude: -122.4075201,
+      timezone_id: "America/Los_Angeles",
+      timezone_offset: null,
+    }),
+    async resolveTimezoneOffset(value, selectedTime) {
+      order.push("timezone");
+      assert.equal(selectedTime, "05:18");
+      return { ...(value as Record<string, unknown>), timezone_offset: -8 };
+    },
+    async reserve() {
+      order.push("reserve");
+      return "reserved";
+    },
+  });
+
+  assert.deepEqual(order, ["timezone", "reserve"]);
+  assert.equal(prepared.serverChart?.toolInput.tz, -8);
+  assert.equal(prepared.serverChart?.toolInput.hour, 5);
+  assert.equal(prepared.serverChart?.toolInput.minute, 18);
+});
+
+test("historical timezone failure remains pre-billing", async () => {
+  let reserveCalls = 0;
+  await assert.rejects(prepareConsultationRoute({
+    userId: "user-global",
+    mode: "verified_chart",
+    loadProfile: async () => ({
+      ...profile,
+      birth_time_status: "confirmed",
+      timezone_id: "America/Los_Angeles",
+      timezone_offset: null,
+    }),
+    resolveTimezoneOffset: async () => { throw new Error("timezone unavailable"); },
+    reserve: async () => {
+      reserveCalls += 1;
+      return "reserved";
+    },
+  }), (error: unknown) => error instanceof ConsultationProfileTruthError
+    && error.code === "profile_unavailable");
   assert.equal(reserveCalls, 0);
 });
 

@@ -278,7 +278,7 @@ export async function POST(request: Request) {
       async loadProfile(profileUserId) {
         const { data, error } = await supabase
           .from("profiles")
-          .select("name,birth_date,reported_birth_time,active_birth_time,birth_time_source,birth_time_status,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset")
+          .select("name,birth_date,reported_birth_time,active_birth_time,birth_time_source,birth_time_status,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset,birth_place_label,birth_place_type,birth_place_provider,birth_place_provider_id,timezone_id,timezone_source")
           .eq("id", profileUserId)
           .single();
         if (error || !data) throw new ConsultationProfileTruthError("profile_unavailable");

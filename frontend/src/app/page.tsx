@@ -4,7 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ArrowUp, ArrowUpRight, Sparkles, Square, X } from "lucide-react";
 import { useGSAP } from "@gsap/react";
-import gsap from "gsap";
+import { gsap } from "gsap";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -13,10 +13,15 @@ import {
   type BirthTimeAssessmentPhase,
 } from "@/components/birth-time-assessment-overlay";
 import { BirthTimeIntakeFields } from "@/components/birth-time-intake";
+import { AppLoadingIndicator } from "@/components/app-loading-indicator";
 import { ConversationalBirthTimeRectification } from "@/components/conversational-birth-time-rectification";
 import { ChatMessageContent } from "@/components/chat-message-content";
 import { AgentAvatar, ChatMessageRow } from "@/components/chat-message-row";
 import { ModelSelector } from "@/components/model-selector";
+import {
+  LocationSearchCombobox,
+  type ResolvedBirthLocation,
+} from "@/components/location-search-combobox";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,17 +53,19 @@ import {
   type RectificationCardAction,
 } from "@/lib/birth-time-consultation-consent";
 import type { ConsultationBirthTimeMode } from "@/lib/consultation-birth-time-mode";
-import { sendConversationalRectificationCommand } from "@/lib/conversational-rectification/client";
-import type {
-  ConversationalRectificationResponse,
-  ConversationalRectificationTurn,
-} from "@/lib/conversational-rectification/contracts";
+import {
+  ConversationalRectificationRequestError,
+  conversationalRectificationHistoryForTurn,
+  sendConversationalRectificationCommand,
+} from "@/lib/conversational-rectification/client";
+import type { ConversationalRectificationTurn } from "@/lib/conversational-rectification/contracts";
 import {
   createDurableRectificationQuestionHandoffClient,
   createRectificationQuestionHandoffCoordinator,
   DurableRectificationHandoffError,
 } from "@/lib/rectification-question-handoff";
 import { useBirthTimeGuidedJourney } from "@/hooks/use-birth-time-guided-journey";
+import type { ConversationalRectificationMessage } from "@/hooks/use-conversational-rectification";
 import {
   requestBirthTimeAssessment,
   type JourneyClientResponse,
@@ -92,7 +99,6 @@ import {
   resolveSessionModelId,
   type PublicLanguageModelCatalog,
 } from "@/lib/public-models";
-import { selfHostedOtpActions } from "@/modules/identity/client";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
 gsap.registerPlugin(useGSAP);
@@ -109,10 +115,19 @@ type Theme = ReplyTheme;
 type Message = ChatMessage;
 type Profile = BirthTimeDraft & {
   name: string;
-  countryCode: "CN";
+  countryCode: string;
   provinceCode: string;
   cityCode: string;
   districtCode: string;
+  birthPlaceLabel: string;
+  birthPlaceType: string;
+  birthPlaceProvider: string;
+  birthPlaceProviderId: string;
+  timezoneId: string;
+  timezoneSource: string;
+  latitude: number | null;
+  longitude: number | null;
+  timezoneOffset: number | null;
   rectificationCaseId: string;
 };
 type ChartLibraryRecord = {
@@ -158,14 +173,26 @@ type ChatSession = {
   sessionType: ChatSessionType;
   rectificationCaseId: string | null;
 };
+
+function durableRectificationMessages(
+  messages: readonly ConversationalRectificationMessage[],
+): Message[] {
+  const durable = messages.map(({ role, text }) => ({ role, text }));
+  if (durable.length <= 500) return durable;
+  return [durable[0]!, ...durable.slice(-(500 - 1))];
+}
 type RequestError = { sessionId: string; message: string };
 type StreamingReply = { sessionId: string; text: string };
-type BirthPlace = { label: string; lat: number; lon: number; tz: number };
+type BirthPlace = {
+  label: string;
+  lat: number;
+  lon: number;
+  tz: number | null;
+  timezoneId: string;
+};
 type Account = {
   user: { id: string; email: string | null };
   credits: number;
-  profile: unknown;
-  authProvider: "supabase" | "self-hosted";
   isAdmin: boolean;
   rectificationPriceCredits: number;
   hasConfirmedBirthTime: boolean;
@@ -266,6 +293,15 @@ const emptyProfile: Profile = {
   provinceCode: "",
   cityCode: "",
   districtCode: "",
+  birthPlaceLabel: "",
+  birthPlaceType: "",
+  birthPlaceProvider: "",
+  birthPlaceProviderId: "",
+  timezoneId: "",
+  timezoneSource: "",
+  latitude: null,
+  longitude: null,
+  timezoneOffset: null,
 };
 
 function timestamp() {
@@ -297,6 +333,20 @@ function findCity(province: ProvinceNode | undefined, code: string) {
 }
 
 function selectedBirthPlace(profile: Profile): BirthPlace | null {
+  if (profile.birthPlaceLabel
+    && Number.isFinite(profile.latitude)
+    && Number.isFinite(profile.longitude)
+    && profile.timezoneId.trim()
+    && (profile.timezoneOffset === null || Number.isFinite(profile.timezoneOffset))) {
+    return {
+      label: profile.birthPlaceLabel,
+      lat: profile.latitude as number,
+      lon: profile.longitude as number,
+      tz: profile.timezoneOffset,
+      timezoneId: profile.timezoneId,
+    };
+  }
+
   const province = findProvince(profile.provinceCode);
   const city = findCity(province, profile.cityCode);
   if (!province || !city) return null;
@@ -309,7 +359,35 @@ function selectedBirthPlace(profile: Profile): BirthPlace | null {
     .filter((name, index, names) => Boolean(name) && names.indexOf(name) === index)
     .join(" · ");
 
-  return { label, lat: location.center[1], lon: location.center[0], tz: china.timezone };
+  return {
+    label,
+    lat: location.center[1],
+    lon: location.center[0],
+    tz: china.timezone,
+    timezoneId: "Asia/Shanghai",
+  };
+}
+
+function selectedLocationValue(profile: Profile): ResolvedBirthLocation | null {
+  const birthPlace = selectedBirthPlace(profile);
+  if (!birthPlace) return null;
+  return {
+    id: profile.birthPlaceProviderId || `legacy-cn:${profile.provinceCode}:${profile.cityCode}:${profile.districtCode}`,
+    label: birthPlace.label,
+    placeType: profile.birthPlaceType || "legacy_china_admin",
+    provider: profile.birthPlaceProvider || "legacy_china_locations",
+    providerPlaceId: profile.birthPlaceProviderId,
+    countryCode: profile.countryCode || "CN",
+    countryName: profile.countryCode === "CN" ? "中国" : "",
+    admin1: "",
+    admin2: "",
+    locality: "",
+    latitude: birthPlace.lat,
+    longitude: birthPlace.lon,
+    timezoneId: birthPlace.timezoneId,
+    timezoneOffset: birthPlace.tz,
+    timezoneSource: profile.timezoneSource || "legacy_fixed_offset",
+  };
 }
 
 function chartLibraryStorageKey(accountId: string) {
@@ -527,6 +605,15 @@ function readProfile(value: unknown): Profile {
     province_code?: unknown;
     city_code?: unknown;
     district_code?: unknown;
+    birth_place_label?: unknown;
+    birth_place_type?: unknown;
+    birth_place_provider?: unknown;
+    birth_place_provider_id?: unknown;
+    timezone_id?: unknown;
+    timezone_source?: unknown;
+    latitude?: unknown;
+    longitude?: unknown;
+    timezone_offset?: unknown;
   };
   const date = typeof profile.birth_date === "string" ? profile.birth_date : profile.date;
   const legacyTime = typeof profile.birth_time === "string" ? profile.birth_time.slice(0, 5) : profile.time;
@@ -550,6 +637,20 @@ function readProfile(value: unknown): Profile {
   const provinceCode = typeof profile.province_code === "string" ? profile.province_code : profile.provinceCode;
   const cityCode = typeof profile.city_code === "string" ? profile.city_code : profile.cityCode;
   const districtCode = typeof profile.district_code === "string" ? profile.district_code : profile.districtCode;
+  const countryCode = typeof profile.country_code === "string" ? profile.country_code : profile.countryCode;
+  const birthPlaceLabel = typeof profile.birth_place_label === "string" ? profile.birth_place_label : profile.birthPlaceLabel;
+  const birthPlaceType = typeof profile.birth_place_type === "string" ? profile.birth_place_type : profile.birthPlaceType;
+  const birthPlaceProvider = typeof profile.birth_place_provider === "string" ? profile.birth_place_provider : profile.birthPlaceProvider;
+  const birthPlaceProviderId = typeof profile.birth_place_provider_id === "string" ? profile.birth_place_provider_id : profile.birthPlaceProviderId;
+  const timezoneId = typeof profile.timezone_id === "string" ? profile.timezone_id : profile.timezoneId;
+  const timezoneSource = typeof profile.timezone_source === "string" ? profile.timezone_source : profile.timezoneSource;
+  const latitude = typeof profile.latitude === "number" && Number.isFinite(profile.latitude) ? profile.latitude : null;
+  const longitude = typeof profile.longitude === "number" && Number.isFinite(profile.longitude) ? profile.longitude : null;
+  const timezoneOffset = typeof profile.timezone_offset === "number" && Number.isFinite(profile.timezone_offset)
+    ? profile.timezone_offset
+    : typeof profile.timezoneOffset === "number" && Number.isFinite(profile.timezoneOffset)
+      ? profile.timezoneOffset
+      : null;
 
   return {
     name: typeof profile.name === "string" ? profile.name.slice(0, 80) : "",
@@ -563,10 +664,19 @@ function readProfile(value: unknown): Profile {
     uncertaintyAfterMinutes: typeof profile.uncertainty_after_minutes === "number" ? profile.uncertainty_after_minutes : null,
     birthTimeStatus: status,
     rectificationCaseId: typeof profile.rectification_case_id === "string" ? profile.rectification_case_id : "",
-    countryCode: "CN",
+    countryCode: typeof countryCode === "string" && countryCode ? countryCode : "CN",
     provinceCode: typeof provinceCode === "string" ? provinceCode : "",
     cityCode: typeof cityCode === "string" ? cityCode : "",
     districtCode: typeof districtCode === "string" ? districtCode : "",
+    birthPlaceLabel: typeof birthPlaceLabel === "string" ? birthPlaceLabel : "",
+    birthPlaceType: typeof birthPlaceType === "string" ? birthPlaceType : "",
+    birthPlaceProvider: typeof birthPlaceProvider === "string" ? birthPlaceProvider : "",
+    birthPlaceProviderId: typeof birthPlaceProviderId === "string" ? birthPlaceProviderId : "",
+    timezoneId: typeof timezoneId === "string" ? timezoneId : "",
+    timezoneSource: typeof timezoneSource === "string" ? timezoneSource : "",
+    latitude,
+    longitude,
+    timezoneOffset,
   };
 }
 
@@ -624,25 +734,46 @@ function readSessions(value: unknown, catalog: PublicLanguageModelCatalog | null
 }
 
 function BirthLocationFields({ value, onChange }: { value: Profile; onChange: (profile: Profile) => void }) {
-  const province = findProvince(value.provinceCode);
-  const cities = province?.cities ?? [];
-  const city = findCity(province, value.cityCode);
-  const districts = city?.districts ?? [];
-
   return (
     <fieldset className="location-fieldset">
       <legend>出生地点</legend>
-      <div className="location-grid">
-        <label><span>国家 / 地区</span><select value={value.countryCode} onChange={() => onChange({ ...value, countryCode: "CN", provinceCode: "", cityCode: "", districtCode: "" })}><option value="CN">中国</option></select></label>
-        <label><span>省 / 自治区</span><select required value={value.provinceCode} onChange={(event) => onChange({ ...value, provinceCode: event.target.value, cityCode: "", districtCode: "" })}><option value="" disabled>请选择省 / 自治区</option>{china.provinces.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</select></label>
-        <label><span>市 / 州</span><select required disabled={!province} value={value.cityCode} onChange={(event) => onChange({ ...value, cityCode: event.target.value, districtCode: "" })}><option value="" disabled>{province ? "请选择市 / 州" : "请先选择省 / 自治区"}</option>{cities.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</select></label>
-        <label><span>县 / 区</span><select required={districts.length > 0} disabled={!city || districts.length === 0} value={value.districtCode} onChange={(event) => onChange({ ...value, districtCode: event.target.value })}><option value="" disabled>{districts.length > 0 ? "请选择县 / 区" : "该地区无需继续选择"}</option>{districts.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</select></label>
-      </div>
+      <LocationSearchCombobox
+        value={selectedLocationValue(value)}
+        birthDate={value.date}
+        birthTime={value.reportedTime || value.time}
+        onChange={(location) => onChange({
+          ...value,
+          countryCode: location?.countryCode || "CN",
+          provinceCode: "",
+          cityCode: "",
+          districtCode: "",
+          birthPlaceLabel: location?.label || "",
+          birthPlaceType: location?.placeType || "",
+          birthPlaceProvider: location?.provider || "",
+          birthPlaceProviderId: location?.providerPlaceId || "",
+          timezoneId: location?.timezoneId || "",
+          timezoneSource: location?.timezoneSource || "",
+          latitude: location?.latitude ?? null,
+          longitude: location?.longitude ?? null,
+          timezoneOffset: location?.timezoneOffset ?? null,
+        })}
+      />
     </fieldset>
   );
 }
 
-const birthLocationKeys = ["countryCode", "provinceCode", "cityCode", "districtCode"] as const;
+const birthLocationKeys = [
+  "countryCode",
+  "provinceCode",
+  "cityCode",
+  "districtCode",
+  "birthPlaceLabel",
+  "birthPlaceProviderId",
+  "timezoneId",
+  "latitude",
+  "longitude",
+  "timezoneOffset",
+] as const;
 
 function birthProfileDeclarationChanged(current: Profile, next: Profile) {
   return declaredBirthInputChanged(current, next)
@@ -752,32 +883,6 @@ async function fetchModelCatalog(signal?: AbortSignal) {
   return parsePublicModelCatalog(payload);
 }
 
-async function fetchSessions(signal?: AbortSignal) {
-  const response = await fetch("/api/sessions", { signal, cache: "no-store" });
-  if (response.status === 401) {
-    window.location.assign("/login");
-    throw new Error("请先登录");
-  }
-  const payload = await response.json().catch(() => null) as { sessions?: unknown; error?: string } | null;
-  if (!response.ok) throw new Error(payloadMessage(payload, "暂时无法读取聊天记录"));
-  return payload?.sessions ?? [];
-}
-
-async function patchSessionModel(sessionId: string, modelId: string, signal?: AbortSignal) {
-  const response = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}`, {
-    method: "PATCH",
-    headers: { "content-type": "application/json" },
-    credentials: "same-origin",
-    signal,
-    body: JSON.stringify({ model_id: modelId }),
-  });
-  const payload = await response.json().catch(() => null);
-  return {
-    found: response.ok,
-    error: response.ok ? null : payloadMessage(payload, "模型选择暂时无法同步"),
-  };
-}
-
 export default function Home() {
   const [profile, setProfile] = useState<Profile>(emptyProfile);
   const [profileDraft, setProfileDraft] = useState<Profile>(emptyProfile);
@@ -821,8 +926,7 @@ export default function Home() {
   );
   const [rectificationSessionId, setRectificationSessionId] = useState<string | null>(null);
   const [rectificationReturnSessionId, setRectificationReturnSessionId] = useState<string | null>(null);
-  const [rectificationInitialTurn, setRectificationInitialTurn] = useState<ConversationalRectificationResponse | null>(null);
-  const [rectificationOpeningAssistantText, setRectificationOpeningAssistantText] = useState("");
+  const [rectificationInitialTurn, setRectificationInitialTurn] = useState<ConversationalRectificationTurn | null>(null);
   const [rectificationPendingQuestion, setRectificationPendingQuestion] = useState<string | null>(null);
   const [rectificationLoading, setRectificationLoading] = useState(false);
   const [rectificationMutationPending, setRectificationMutationPending] = useState(false);
@@ -856,6 +960,7 @@ export default function Home() {
   const stoppedRequestAwaitingSettlement = useRef<string | null>(null);
   const stoppedSessionPersistence = useRef(new Map<string, Promise<void>>());
   const modelPersistence = useRef(new SessionModelPersistenceQueue());
+  const rectificationPersistence = useRef(new SessionModelPersistenceQueue());
   const modelSyncFailures = useRef(new Set<string>());
   const modelSelectionVersions = useRef(new Map<string, number>());
   const activeSessionIdRef = useRef("");
@@ -1071,6 +1176,7 @@ export default function Home() {
           const previewProfile: Profile = previewMode === "onboarding"
             ? emptyProfile
             : {
+              ...emptyProfile,
               name: "林遥",
               date: "1990-06-15",
               time: isCompletedCandidatePreview ? "04:53" : isRectificationPreview || isAssessmentLoadingPreview ? "" : "12:30",
@@ -1114,8 +1220,6 @@ export default function Home() {
           setAccount({
             user: { id: "preview-user", email: "preview@local.test" },
             credits: 8,
-            profile: previewProfile,
-            authProvider: "self-hosted",
             isAdmin: false,
             rectificationPriceCredits: 1,
             hasConfirmedBirthTime: previewProfile.birthTimeStatus === "confirmed",
@@ -1142,7 +1246,16 @@ export default function Home() {
           return;
         }
 
-        const [nextAccount, modelCatalogResult, sessionsPayload] = await Promise.all([
+        const supabase = createBrowserSupabaseClient();
+        const { data: authData, error: authError } = await supabase.auth.getSession();
+        if (authError) throw authError;
+        if (controller.signal.aborted) return;
+        if (!authData.session) {
+          window.location.assign("/login");
+          return;
+        }
+
+        const [nextAccount, modelCatalogResult] = await Promise.all([
           fetchAccount(controller.signal),
           fetchModelCatalog(controller.signal)
             .then((catalog) => ({ catalog, unavailable: false }))
@@ -1150,30 +1263,50 @@ export default function Home() {
               if (caught instanceof Error && caught.name === "AbortError") throw caught;
               return { catalog: null, unavailable: true };
             }),
-          fetchSessions(controller.signal),
         ]);
         const nextModelCatalog = modelCatalogResult.catalog;
-        const parsedSessions = readSessions(sessionsPayload, nextModelCatalog);
+        const [profileResult, sessionsResult] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("name,birth_date,birth_time,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_time_status,rectification_case_id,country_code,province_code,city_code,district_code,birth_place_label,birth_place_type,birth_place_provider,birth_place_provider_id,latitude,longitude,timezone_id,timezone_offset,timezone_source")
+            .eq("id", nextAccount.user.id)
+            .abortSignal(controller.signal)
+            .maybeSingle(),
+          supabase
+            .from("chat_sessions")
+            .select("id,title,theme,model_id,messages,session_type,rectification_case_id,updated_at")
+            .abortSignal(controller.signal)
+            .order("updated_at", { ascending: false }),
+        ]);
+
+        if (profileResult.error) throw profileResult.error;
+        if (sessionsResult.error) throw sessionsResult.error;
+
+        const parsedSessions = readSessions(sessionsResult.data, nextModelCatalog);
         let nextSessions = parsedSessions.sessions;
         if (nextSessions.length === 0) {
           if (controller.signal.aborted) return;
           const initialSession = createSession(nextModelCatalog?.defaultModelId ?? "");
-          if (initialSession.modelId) {
-            await writeChatSession(initialSession.id, {
+          const { error } = await supabase
+            .from("chat_sessions")
+            .insert({
+              id: initialSession.id,
+              user_id: nextAccount.user.id,
               title: initialSession.title,
               theme: initialSession.theme,
-              model_id: initialSession.modelId,
+              model_id: initialSession.modelId || null,
               messages: initialSession.messages,
               session_type: initialSession.sessionType,
               rectification_case_id: initialSession.rectificationCaseId,
               updated_at: new Date(initialSession.updatedAt).toISOString(),
-            }, "create");
-          }
+            })
+            .abortSignal(controller.signal);
+          if (error) throw error;
           nextSessions = [initialSession];
         }
 
         if (controller.signal.aborted) return;
-        const nextProfile = readProfile(nextAccount.profile);
+        const nextProfile = readProfile(profileResult.data);
         setAccount(nextAccount);
         setModelCatalog(nextModelCatalog);
         setProfile(nextProfile);
@@ -1190,9 +1323,13 @@ export default function Home() {
         setAccountError("");
 
         if (nextModelCatalog && parsedSessions.fallbackSessionIds.length > 0) {
-          const results = await Promise.all(parsedSessions.fallbackSessionIds.map((sessionId) =>
-            patchSessionModel(sessionId, nextModelCatalog.defaultModelId, controller.signal)));
-          if (results.some((result) => result.error) && !controller.signal.aborted) {
+          const { error } = await supabase
+            .from("chat_sessions")
+            .update({ model_id: nextModelCatalog.defaultModelId })
+            .eq("user_id", nextAccount.user.id)
+            .in("id", parsedSessions.fallbackSessionIds)
+            .abortSignal(controller.signal);
+          if (error && !controller.signal.aborted) {
             setComposerNotice("已在当前页面切换为默认模型，但云端同步失败；刷新后可能需要重新选择。");
           }
         }
@@ -1499,8 +1636,14 @@ export default function Home() {
           if (process.env.NODE_ENV === "development" && uiPreview.current) {
             return { found: true, error: null };
           }
-          void ownerId;
-          return patchSessionModel(sessionId, values.model_id);
+          const { data, error } = await createBrowserSupabaseClient()
+            .from("chat_sessions")
+            .update(values)
+            .eq("id", sessionId)
+            .eq("user_id", ownerId)
+            .select("id")
+            .maybeSingle();
+          return { found: Boolean(data), error: error?.message ?? null };
         },
         userId,
         nextSession.id,
@@ -1569,9 +1712,15 @@ export default function Home() {
         province_code: nextProfile.provinceCode || null,
         city_code: nextProfile.cityCode || null,
         district_code: nextProfile.districtCode || null,
+        birth_place_label: nextProfile.birthPlaceLabel || null,
+        birth_place_type: nextProfile.birthPlaceType || null,
+        birth_place_provider: nextProfile.birthPlaceProvider || null,
+        birth_place_provider_id: nextProfile.birthPlaceProviderId || null,
         latitude: birthPlace?.lat ?? null,
         longitude: birthPlace?.lon ?? null,
+        timezone_id: nextProfile.timezoneId || null,
         timezone_offset: birthPlace?.tz ?? null,
+        timezone_source: nextProfile.timezoneSource || null,
       }),
     });
     if (!response.ok) {
@@ -1836,12 +1985,8 @@ export default function Home() {
     setSigningOut(true);
     setAccountError("");
     try {
-      if (account?.authProvider === "self-hosted") {
-        await selfHostedOtpActions.signOut();
-      } else {
-        const { error } = await createBrowserSupabaseClient().auth.signOut();
-        if (error) throw error;
-      }
+      const { error } = await createBrowserSupabaseClient().auth.signOut();
+      if (error) throw error;
       window.location.assign("/login");
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "退出失败";
@@ -1910,32 +2055,22 @@ export default function Home() {
       || rectificationMutationPending
       || rectificationContinuationInFlight.current) return;
     const sourceSession = sourceSessionOverride ?? activeSession;
-    if (!sourceSession) return;
     const action = resolveRectificationCardAction({
       rectificationCase: account.rectificationCase,
       hasConfirmedBirthTime: account.hasConfirmedBirthTime,
     });
-    const sourceBoundCaseId = sourceSession.sessionType === "birth_time_rectification"
-      ? sourceSession.rectificationCaseId
-      : null;
-    const accountResumeCase = action === "resume" ? account.rectificationCase : null;
-    const resumeTarget = sourceBoundCaseId
-      ? {
-          caseId: sourceBoundCaseId,
-          turnVersion: accountResumeCase?.caseId === sourceBoundCaseId
-            ? accountResumeCase.turnVersion
-            : 0,
-        }
-      : accountResumeCase;
-    const resumableSession = !sourceBoundCaseId && accountResumeCase
+    const resumableSession = action === "resume" && account.rectificationCase
       ? sessions.find((session) => session.sessionType === "birth_time_rectification"
-        && session.rectificationCaseId === accountResumeCase.caseId)
+        && session.rectificationCaseId === account.rectificationCase?.caseId)
         ?? sessions.find((session) => session.sessionType === "birth_time_rectification"
           && session.rectificationCaseId === null)
         ?? null
       : null;
-    const canReuseSourceRectificationSession = sourceSession.sessionType === "birth_time_rectification"
-      && (sourceBoundCaseId !== null || accountResumeCase !== null);
+    const canReuseSourceRectificationSession = action === "resume"
+      && sourceSession.sessionType === "birth_time_rectification"
+      && account.rectificationCase !== null
+      && (sourceSession.rectificationCaseId === account.rectificationCase.caseId
+        || sourceSession.rectificationCaseId === null);
     const rectificationSession = canReuseSourceRectificationSession
       ? sourceSession
       : resumableSession ?? createSession(modelCatalog.defaultModelId, "birth_time_rectification");
@@ -1952,7 +2087,6 @@ export default function Home() {
     setDraftEntrypoint(null);
     setRectificationPendingQuestion(requestedQuestion);
     setRectificationInitialTurn(null);
-    setRectificationOpeningAssistantText("");
     setRectificationError("");
     setRectificationLoading(true);
     if (!reusingRectificationSession) {
@@ -1961,32 +2095,46 @@ export default function Home() {
         ...current.filter((session) => session.id !== rectificationSession.id),
       ]);
     }
-    if (sourceSession.id !== rectificationSession.id) {
+    if (sourceSession && sourceSession.id !== rectificationSession.id) {
       setRectificationReturnSessionId(sourceSession.id);
     }
     setRectificationSessionId(rectificationSession.id);
     activeSessionIdRef.current = rectificationSession.id;
     setActiveSessionId(rectificationSession.id);
     try {
-      let turn: ConversationalRectificationResponse;
-      if (!resumeTarget) {
+      let turn: ConversationalRectificationTurn;
+      if (action !== "resume" || !account.rectificationCase) {
         const durable = await durableRectificationQuestionHandoff.current.load();
-        turn = durable && durable.status !== "consumed"
-          ? durable.turn
-          : await sendConversationalRectificationCommand({
+        if (durable && durable.status !== "consumed") {
+          turn = durable.turn;
+        } else {
+          try {
+            turn = await sendConversationalRectificationCommand({
               type: "start",
               actionId: globalThis.crypto.randomUUID(),
+              modelId: rectificationSession.modelId,
               pendingConsultationQuestion: requestedQuestion,
-            }, {
-              onNarrativeDelta(text) {
-                setRectificationOpeningAssistantText((current) => current + text);
-              },
             });
+          } catch (error) {
+            // A stale account snapshot can make an existing unfinished case look
+            // like a fresh start. The database rejects that second case with a
+            // 409 to protect billing; refresh and resume the durable case instead.
+            if (!(error instanceof ConversationalRectificationRequestError)
+              || error.status !== 409) throw error;
+            const latest = await fetchAccount();
+            if (!latest.rectificationCase) throw error;
+            setAccount(latest);
+            turn = await sendConversationalRectificationCommand({
+              type: "resume",
+              caseId: latest.rectificationCase.caseId,
+              actionId: globalThis.crypto.randomUUID(),
+              turnVersion: latest.rectificationCase.turnVersion,
+            });
+          }
+        }
       } else {
-        let current = resumeTarget;
-        const canAttachQuestion = pendingConsultationQuestion
-          && accountResumeCase?.caseId === current.caseId;
-        if (canAttachQuestion) {
+        let current = account.rectificationCase;
+        if (pendingConsultationQuestion) {
           try {
             turn = await durableRectificationQuestionHandoff.current.attach({
               caseId: current.caseId,
@@ -2008,22 +2156,46 @@ export default function Home() {
             });
           }
         } else {
-          turn = await sendConversationalRectificationCommand({
-            type: "resume",
-            caseId: current.caseId,
-            actionId: globalThis.crypto.randomUUID(),
-            turnVersion: current.turnVersion,
-          }, {
-            onNarrativeDelta(text) {
-              setRectificationOpeningAssistantText((value) => value + text);
-            },
-          });
+          try {
+            turn = await sendConversationalRectificationCommand({
+              type: "resume",
+              caseId: current.caseId,
+              actionId: globalThis.crypto.randomUUID(),
+              turnVersion: current.turnVersion,
+            });
+          } catch (error) {
+            if (!(error instanceof ConversationalRectificationRequestError)
+              || error.status !== 409) throw error;
+            const latest = await fetchAccount();
+            if (!latest.rectificationCase
+              || latest.rectificationCase.caseId !== current.caseId) throw error;
+            current = latest.rectificationCase;
+            setAccount(latest);
+            turn = await sendConversationalRectificationCommand({
+              type: "resume",
+              caseId: current.caseId,
+              actionId: globalThis.crypto.randomUUID(),
+              turnVersion: current.turnVersion,
+            });
+          }
         }
       }
 
-      const boundSession = rectificationSession.rectificationCaseId === turn.caseId
-        ? rectificationSession
-        : { ...rectificationSession, rectificationCaseId: turn.caseId, updatedAt: timestamp() };
+      const recoveredConversation = conversationalRectificationHistoryForTurn(turn);
+      const firstSessionMessages = recoveredConversation.length > 0
+        ? recoveredConversation.map(({ role, text }) => ({ role, text }))
+        : !reusingRectificationSession && rectificationSession.messages.length === 0
+          ? [{ role: "assistant" as const, text: turn.narrative.trim() }]
+          : rectificationSession.messages;
+      const boundSession = {
+        ...rectificationSession,
+        messages: firstSessionMessages,
+        rectificationCaseId: turn.caseId,
+        updatedAt: rectificationSession.rectificationCaseId === turn.caseId
+          && firstSessionMessages === rectificationSession.messages
+          ? rectificationSession.updatedAt
+          : timestamp(),
+      };
       let sessionSyncFailed = false;
       if (!reusingRectificationSession) {
         try {
@@ -2041,7 +2213,6 @@ export default function Home() {
         }
       }
       setRectificationInitialTurn(turn);
-      setRectificationOpeningAssistantText("");
       synchronizeRectificationQuestion(turn, sourceSession);
       setComposerNotice(sessionSyncFailed ? "校正已经开始，但会话关联暂时未同步到云端。" : "");
     } catch (caught) {
@@ -2049,13 +2220,14 @@ export default function Home() {
         ? caught.message
         : "生时校正暂时无法继续，请稍后重试。";
       setRectificationError(message);
-      setRectificationOpeningAssistantText("");
       setComposerNotice(message);
       if (!reusingRectificationSession) {
         setSessions((current) => current.filter((session) => session.id !== rectificationSession.id));
         setRectificationSessionId(null);
-        activeSessionIdRef.current = sourceSession.id;
-        setActiveSessionId(sourceSession.id);
+        if (sourceSession) {
+          activeSessionIdRef.current = sourceSession.id;
+          setActiveSessionId(sourceSession.id);
+        }
       }
     } finally {
       rectificationOpenInFlight.current = false;
@@ -2067,19 +2239,25 @@ export default function Home() {
     void openBirthTimeRectification(null, session);
   };
 
-  function handleConversationalRectificationTurn(turn: ConversationalRectificationResponse) {
+  function handleConversationalRectificationTurn(
+    turn: ConversationalRectificationTurn,
+    messages: readonly ConversationalRectificationMessage[],
+  ) {
     const requestIdentity = accountRefreshGuard.current.begin();
     setRectificationInitialTurn(turn);
     synchronizeRectificationQuestion(turn);
-    if (activeSession?.sessionType === "birth_time_rectification"
-      && activeSession.rectificationCaseId !== turn.caseId) {
+    if (activeSession?.sessionType === "birth_time_rectification") {
       const boundSession = {
         ...activeSession,
+        messages: durableRectificationMessages(messages),
         rectificationCaseId: turn.caseId,
         updatedAt: timestamp(),
       };
       updateSession(activeSession.id, () => boundSession);
-      void persistSession(boundSession).catch(() => {
+      void rectificationPersistence.current.enqueue(
+        boundSession.id,
+        () => persistSession(boundSession),
+      ).catch(() => {
         setComposerNotice("校正进度已经保留，但会话关联暂时未同步到云端。");
       });
     }
@@ -2087,22 +2265,16 @@ export default function Home() {
       ...current,
       hasConfirmedBirthTime: current.hasConfirmedBirthTime
         || (turn.status === "completed" && turn.candidate.status === "confirmed"),
-      rectificationCase: ["active", "paused", "confirming"].includes(turn.status)
-        ? {
-            caseId: turn.caseId,
-            journeyProtocol: "conversational-evidence-v3",
-            status: turn.status,
-            turnVersion: turn.turnVersion,
-            isRevision: current.rectificationCase?.caseId === turn.caseId
-              ? current.rectificationCase.isRevision
-              : current.hasConfirmedBirthTime,
-            preservesActiveTime: current.rectificationCase?.caseId === turn.caseId
-              ? current.rectificationCase.preservesActiveTime
-              : current.hasConfirmedBirthTime,
-          }
-        : current.rectificationCase?.caseId === turn.caseId
-          ? null
-          : current.rectificationCase,
+      rectificationCase: {
+        caseId: turn.caseId,
+        journeyProtocol: "conversational-evidence-v3",
+        status: turn.status,
+        turnVersion: turn.turnVersion,
+        isRevision: current.rectificationCase?.isRevision
+          ?? current.hasConfirmedBirthTime,
+        preservesActiveTime: current.rectificationCase?.preservesActiveTime
+          ?? current.hasConfirmedBirthTime,
+      },
     } : current);
     if (turn.status === "completed"
       && turn.candidate.status === "confirmed"
@@ -2124,7 +2296,6 @@ export default function Home() {
       .then((latest) => {
         if (!accountRefreshGuard.current.isCurrent(requestIdentity)) return;
         setAccount((current) => {
-          if (turn.status === "completed" || turn.status === "abandoned") return latest;
           if (latest.rectificationCase?.caseId !== turn.caseId
             || latest.rectificationCase.turnVersion < turn.turnVersion) return current;
           return latest;
@@ -2790,14 +2961,7 @@ export default function Home() {
   if (!hydrated || (!account && !accountError)) {
     return (
       <main className="app-loading" aria-busy="true" aria-live="polite">
-        <div className="app-loading-content">
-          <div className="app-loading-symbol" aria-hidden="true">
-            <span className="app-loading-orbit" />
-            <span className="app-loading-mark" />
-          </div>
-          <strong>正在和星星对口供</strong>
-          <span>顺便同步你的账户与对话记录</span>
-        </div>
+        <AppLoadingIndicator title="正在和星星对口供" detail="顺便同步你的账户与对话记录" />
       </main>
     );
   }
@@ -2932,11 +3096,18 @@ export default function Home() {
                 <div className="onboarding-card-reveal">
                   <div className="onboarding-card-reveal-inner">
                     <form className="profile-form onboarding-card onboarding-step-card birth-time-transition-card" onSubmit={saveOnboardingBirth} aria-busy={birthTimeAssessmentPhase !== null}>
-                      <div className="onboarding-card-heading"><b>出生时间</b><small>按你实际知道的程度填写，不需要猜测</small></div>
+                      <div className="onboarding-card-heading">
+                        <div className="onboarding-card-heading-copy">
+                          <span className="onboarding-card-kicker">先完成出生资料</span>
+                          <b>出生日期与时间</b>
+                        </div>
+                      </div>
                       <fieldset className="birth-time-transition-fields" disabled={birthTimeAssessmentPhase !== null}>
                         <BirthTimeIntakeFields value={profileDraft} onPatch={(patch) => setProfileDraft((current) => applyBirthTimeDraftPatch(current, patch))} />
                         {accountError && <p className="form-error" role="alert">{accountError}</p>}
-                        <div className="onboarding-card-actions"><button className="button-primary" type="submit" disabled={profileSaving || !isBirthTimeDraftReady(profileDraft)}>{profileSaving ? "保存中" : "继续"}</button></div>
+                        <div className="onboarding-card-actions">
+                          <button className="button-primary" type="submit" disabled={profileSaving || !isBirthTimeDraftReady(profileDraft)}>{profileSaving ? "保存中" : "继续"}</button>
+                        </div>
                       </fieldset>
                       <BirthTimeAssessmentOverlay phase={birthTimeAssessmentPhase} />
                     </form>
@@ -2948,7 +3119,7 @@ export default function Home() {
                 <div className="onboarding-card-reveal">
                   <div className="onboarding-card-reveal-inner">
                     <form className="profile-form onboarding-card onboarding-step-card birth-time-transition-card" onSubmit={saveOnboardingPlace} aria-busy={birthTimeAssessmentPhase !== null}>
-                      <div className="onboarding-card-heading"><b>出生地点</b><small>目前先支持中国大陆地区</small></div>
+                      <div className="onboarding-card-heading"><b>出生地点</b><small>搜索全球城市或区县，系统会匹配出生当日的时区。</small></div>
                       <fieldset className="birth-time-transition-fields" disabled={birthTimeAssessmentPhase !== null}>
                         <BirthLocationFields value={profileDraft} onChange={setProfileDraft} />
                         {accountError && <p className="form-error" role="alert">{accountError}</p>}
@@ -2983,7 +3154,9 @@ export default function Home() {
               {!profileComplete && onboardingStep === "name" && accountError && <p className="form-error onboarding-inline-error" role="alert">{accountError}</p>}
 
               {profileComplete && presetMessageFinished && !rectificationSurfaceOpen && (onboardingPending ? (
-                <div className="starter-loading" role="status">正在准备三个入门问题…</div>
+                <div className="starter-loading" role="status">
+                  <AppLoadingIndicator title="正在准备三个入门问题…" detail="我会根据你的资料，整理适合开始的方向。" />
+                </div>
               ) : (
                 <div className="starter-list starter-workbench" ref={starterWorkbench} aria-label="Jyotisha 推荐的初始问题">
                   <section className="starter-hero" aria-labelledby="starter-heading">
@@ -3096,7 +3269,10 @@ export default function Home() {
           ) : (
             <ConversationalBirthTimeRectification
               initialTurn={visibleRectificationTurn}
-              openingAssistantText={rectificationOpeningAssistantText}
+              initialMessages={activeSession?.messages ?? []}
+              models={modelCatalog?.models ?? []}
+              selectedModelId={activeSession?.modelId ?? ""}
+              onSelectModel={(modelId) => void selectSessionModel(modelId)}
               pendingConsultationQuestion={rectificationPendingQuestion}
               continuationPending={rectificationContinuationPending}
               onPendingChange={setRectificationMutationPending}
@@ -3163,11 +3339,11 @@ export default function Home() {
               disabled={!activeSession || isLoading || cancellationPending || creatingSession}
               onSelect={(modelId) => void selectSessionModel(modelId)}
             />
-            <p className={composerNotice || consultationPhase === "undo" ? "composer-notice" : undefined} role={composerNotice || consultationPhase === "undo" ? "status" : undefined}>{composerNotice || (consultationPhase === "undo"
-              ? "已加入发送队列，2.5 秒内可免费撤回。"
-              : !profileComplete
-                ? onboardingStep === "name" ? "Enter 确认称呼" : onboardingStep === "rectification" ? "生时校正为可选增强" : "请先完成上方资料"
-                : "Enter 发送 · Shift + Enter 换行")}</p>
+            {(composerNotice || consultationPhase === "undo" || (!profileComplete && onboardingStep !== "name")) && (
+              <p className={composerNotice || consultationPhase === "undo" ? "composer-notice" : undefined} role={composerNotice || consultationPhase === "undo" ? "status" : undefined}>{composerNotice || (consultationPhase === "undo"
+                ? "已加入发送队列，2.5 秒内可免费撤回。"
+                : onboardingStep === "rectification" ? "生时校正为可选增强" : "请先完成上方资料")}</p>
+            )}
           </div>
         </div>}
         </SidebarInset>

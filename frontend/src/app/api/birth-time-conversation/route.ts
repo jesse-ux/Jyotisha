@@ -3,7 +3,6 @@ import path from "node:path";
 import {
   conversationalRectificationCommandSchema,
   type ConversationalRectificationCommand,
-  type ConversationalRectificationResponse,
   type ConversationalRectificationTurn,
 } from "../../../lib/conversational-rectification/contracts.ts";
 import {
@@ -23,14 +22,20 @@ import {
   type LifeEventEvidence,
 } from "../../../lib/conversational-rectification/persistence-contracts.ts";
 import {
+  rectificationEvidenceDomainOutputSchema,
+  rectificationNarrativeAuthoredOutputSchema,
   rectificationNarrativeOutputSchema,
   type RectificationNarrativeGenerator,
 } from "../../../lib/conversational-rectification/narrative-agent.ts";
 import type { BirthTimeJourneyEngine, RectificationQuestionnaire } from "../../../lib/birth-time-journey-service.ts";
 import type { CandidateResult, LifeEvent } from "../../../lib/birth-time-evidence.ts";
 import type { CandidateDifferenceBuild } from "../../../lib/birth-time-dynamic-choice-internal.ts";
+import {
+  BirthProfileTimezoneError,
+  durableBirthCoordinate,
+  resolveMissingBirthTimezoneOffset,
+} from "../../../lib/birth-profile-timezone.ts";
 import { conversationalRectificationCreationPolicyFromEnvironment } from "../../../lib/conversational-rectification/creation-policy.ts";
-import { MAXIMUM_SCOREABLE_EVENTS } from "../../../lib/conversational-rectification/convergence.ts";
 import {
   conversationalRectificationLatencyBucket,
   createConversationalRectificationTelemetry,
@@ -43,53 +48,6 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
-const RECTIFICATION_STREAM_CONTENT_TYPE = "application/x-ndjson; charset=utf-8";
-const RECTIFICATION_STREAM_CHUNK_SIZE = 10;
-const RECTIFICATION_STREAM_CHUNK_DELAY_MS = 18;
-
-function rectificationNarrativeChunks(narrative: string): string[] {
-  const characters = Array.from(narrative);
-  const chunks: string[] = [];
-  for (let index = 0; index < characters.length; index += RECTIFICATION_STREAM_CHUNK_SIZE) {
-    chunks.push(characters.slice(index, index + RECTIFICATION_STREAM_CHUNK_SIZE).join(""));
-  }
-  return chunks;
-}
-
-export function streamConversationalRectificationResponse(
-  turn: ConversationalRectificationResponse,
-  chunkDelayMs = RECTIFICATION_STREAM_CHUNK_DELAY_MS,
-): Response {
-  const encoder = new TextEncoder();
-  let cancelled = false;
-  const body = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      try {
-        for (const text of rectificationNarrativeChunks(turn.narrative)) {
-          if (cancelled) return;
-          controller.enqueue(encoder.encode(`${JSON.stringify({ type: "delta", text })}\n`));
-          if (chunkDelayMs > 0) await new Promise((resolve) => setTimeout(resolve, chunkDelayMs));
-        }
-        if (cancelled) return;
-        controller.enqueue(encoder.encode(`${JSON.stringify({ type: "turn", turn })}\n`));
-        controller.close();
-      } catch (error) {
-        if (!cancelled) controller.error(error);
-      }
-    },
-    cancel() {
-      cancelled = true;
-    },
-  });
-  return new Response(body, {
-    headers: {
-      "Cache-Control": "no-cache, no-transform",
-      "Content-Type": RECTIFICATION_STREAM_CONTENT_TYPE,
-      "X-Accel-Buffering": "no",
-    },
-  });
-}
-
 const jyotishSkillPath = process.env.JYOTISH_SKILL_PATH?.trim()
   || path.resolve(process.cwd(), "..", "skills", "jyotish-vedic-astrology");
 
@@ -98,7 +56,75 @@ type AuthenticatedRequest = Readonly<{
   context: unknown;
 }>;
 
-export type BirthTimeConversationRouteService = ConversationalRectificationService;
+type ConversationHistoryMessage = Readonly<{
+  role: "assistant" | "user";
+  text: string;
+}>;
+
+type StoredConversationTurnRow = Readonly<{
+  id: string;
+  turn_version: number;
+  narrative: string;
+}>;
+
+type StoredConversationEvidenceRow = Readonly<{
+  source_turn_id: string;
+  raw_text: string;
+}>;
+
+export function conversationMessagesFromStoredTurns(
+  rawTurns: unknown,
+  rawEvidence: unknown,
+): ConversationHistoryMessage[] {
+  if (!Array.isArray(rawTurns) || rawTurns.length === 0) return [];
+  const turns = rawTurns.filter((value): value is StoredConversationTurnRow => {
+    if (value === null || typeof value !== "object") return false;
+    const row = value as Partial<StoredConversationTurnRow>;
+    return typeof row.id === "string"
+      && typeof row.turn_version === "number"
+      && Number.isInteger(row.turn_version)
+      && typeof row.narrative === "string"
+      && row.narrative.trim().length > 0;
+  }).sort((left, right) => left.turn_version - right.turn_version);
+  if (turns.length === 0) return [];
+
+  const answersByTurn = new Map<string, string>();
+  if (Array.isArray(rawEvidence)) {
+    for (const value of rawEvidence) {
+      if (value === null || typeof value !== "object") continue;
+      const row = value as Partial<StoredConversationEvidenceRow>;
+      const answer = typeof row.raw_text === "string" ? row.raw_text.trim() : "";
+      if (typeof row.source_turn_id !== "string" || !answer
+        || answersByTurn.has(row.source_turn_id)) continue;
+      answersByTurn.set(row.source_turn_id, answer);
+    }
+  }
+
+  const messages: ConversationHistoryMessage[] = [];
+  for (const [index, turn] of turns.entries()) {
+    const narrative = turn.narrative.trim();
+    if (index === 0) {
+      messages.push({ role: "assistant", text: narrative });
+      continue;
+    }
+    const answer = answersByTurn.get(turn.id);
+    if (answer) {
+      messages.push({ role: "user", text: answer });
+      messages.push({ role: "assistant", text: narrative });
+      continue;
+    }
+    // Pause/resume or older malformed rows may not have a persisted user answer.
+    // Keep the latest reliable Agent state without inventing a user or template reply.
+    const last = messages.at(-1);
+    if (last?.role === "assistant") messages[messages.length - 1] = { role: "assistant", text: narrative };
+  }
+  if (messages.length <= 500) return messages;
+  return messages.slice(0, 1).concat(messages.slice(-499));
+}
+
+export type BirthTimeConversationRouteService = ConversationalRectificationService & Readonly<{
+  loadConversationMessages?(userId: string, caseId: string): Promise<readonly ConversationHistoryMessage[]>;
+}>;
 
 export type BirthTimeConversationRouteLog = Readonly<{
   code: string;
@@ -106,7 +132,10 @@ export type BirthTimeConversationRouteLog = Readonly<{
 
 export type BirthTimeConversationPostDependencies = Readonly<{
   authenticate(request: Request): Promise<AuthenticatedRequest | null>;
-  createService(authenticated: AuthenticatedRequest): Promise<BirthTimeConversationRouteService>;
+  createService(
+    authenticated: AuthenticatedRequest,
+    command: ConversationalRectificationCommand,
+  ): Promise<BirthTimeConversationRouteService>;
   createRequestId?(request: Request): string;
   log?(entry: BirthTimeConversationRouteLog): void;
   telemetry?: ConversationalRectificationTelemetrySink;
@@ -164,26 +193,48 @@ function integer(value: unknown): number | null {
   return typeof value === "number" && Number.isInteger(value) ? value : null;
 }
 
+export async function resolveMissingProfileTimezoneOffset(
+  value: unknown,
+  fetchImpl: typeof fetch = fetch,
+  apiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200",
+): Promise<unknown> {
+  try {
+    return await resolveMissingBirthTimezoneOffset(value, { fetchImpl, apiBase });
+  } catch (error) {
+    if (!(error instanceof BirthProfileTimezoneError)) throw error;
+    throw new ConversationalRectificationError("service_unavailable");
+  }
+}
+
 function declaredBirthInputFromProfile(value: unknown): DeclaredBirthInput {
   const profile = profileRecord(value);
   if (!profile) throw new ConversationalRectificationError("profile_incomplete");
   const birthDate = text(profile.birth_date);
   const source = text(profile.birth_time_source);
   const cityCode = text(profile.city_code);
-  const latitude = finiteNumber(profile.latitude);
-  const longitude = finiteNumber(profile.longitude);
+  const city = text(profile.birth_place_label);
+  const placeId = text(profile.birth_place_provider_id);
+  const latitude = durableBirthCoordinate(profile.latitude);
+  const longitude = durableBirthCoordinate(profile.longitude);
   const timezoneOffset = finiteNumber(profile.timezone_offset);
-  if (!birthDate || !source || !cityCode || latitude === null || longitude === null
+  if (!birthDate || !source || (!city && !cityCode && !placeId)
+    || latitude === null || longitude === null
     || timezoneOffset === null) {
     throw new ConversationalRectificationError("profile_incomplete");
   }
   const birthplace = {
+    ...(city ? { city } : {}),
+    ...(placeId ? { placeId } : {}),
+    ...(text(profile.birth_place_type) ? { placeType: text(profile.birth_place_type) } : {}),
+    ...(text(profile.birth_place_provider) ? { provider: text(profile.birth_place_provider) } : {}),
     ...(text(profile.country_code) ? { countryCode: text(profile.country_code) } : {}),
     ...(text(profile.province_code) ? { provinceCode: text(profile.province_code) } : {}),
-    cityCode,
+    ...(cityCode ? { cityCode } : {}),
     ...(text(profile.district_code) ? { districtCode: text(profile.district_code) } : {}),
     latitude,
     longitude,
+    ...(text(profile.timezone_id) ? { timezoneId: text(profile.timezone_id) } : {}),
+    ...(text(profile.timezone_source) ? { timezoneSource: text(profile.timezone_source) } : {}),
     timezoneOffset,
   };
   const common = {
@@ -257,6 +308,7 @@ export function declaredBirthInputForLegacyCase(
 export type ProductionConversationalRectificationProfileDependencies = Readonly<{
   loadProfile(userId: string): Promise<unknown>;
   loadRectificationCase(userId: string, caseId: string): Promise<unknown>;
+  resolveTimezoneOffset?(profile: unknown): Promise<unknown>;
 }>;
 
 export async function loadProductionConversationalRectificationProfile(
@@ -267,7 +319,10 @@ export async function loadProductionConversationalRectificationProfile(
   revisionOfCaseId: string | null;
   legacyCaseId: string | null;
 }>> {
-  const profileValue = await dependencies.loadProfile(userId);
+  const loadedProfile = await dependencies.loadProfile(userId);
+  const profileValue = dependencies.resolveTimezoneOffset
+    ? await dependencies.resolveTimezoneOffset(loadedProfile)
+    : loadedProfile;
   const profile = profileRecord(profileValue);
   if (!profile) throw new ConversationalRectificationError("profile_incomplete");
   const declaredBirthInput = declaredBirthInputFromProfile(profile);
@@ -406,7 +461,7 @@ function scoreableLifeEvents(
       date: item.dateValue,
       summary: item.eventSummary,
     } as LifeEvent];
-  }).slice(-MAXIMUM_SCOREABLE_EVENTS);
+  });
 }
 
 function sampleTimes(scan: RectificationQuestionnaire): readonly { readonly sampleIndex: number; readonly time: string }[] {
@@ -706,44 +761,168 @@ export async function buildProductionConversationalRectificationPacket(
   }
 }
 
-async function productionNarrativeGenerator(): Promise<RectificationNarrativeGenerator> {
-  const [{ defaultLanguageModel }, { Agent }] = await Promise.all([
+function requestedNarrativeModelId(command: ConversationalRectificationCommand): string | undefined {
+  return command.type === "start" || command.type === "answer" || command.type === "regenerate"
+    ? command.modelId
+    : undefined;
+}
+
+export function resolveRectificationNarrativeModels<Model extends { readonly id: string }>(input: Readonly<{
+  requestedModelId?: string;
+  configuredPreferredModelId: string;
+  configuredRetryModelId: string;
+  resolveModel(modelId: string): Model | null;
+  defaultModel(): Model | null;
+}>): Readonly<{ preferredModel: Model; retryModel: Model }> | null {
+  const requestedModel = input.requestedModelId
+    ? input.resolveModel(input.requestedModelId)
+    : null;
+  if (input.requestedModelId && !requestedModel) {
+    throw new ConversationalRectificationError("model_unavailable");
+  }
+  const preferredModel = requestedModel
+    ?? input.resolveModel(input.configuredPreferredModelId)
+    ?? input.defaultModel();
+  if (!preferredModel) return null;
+  return {
+    preferredModel,
+    retryModel: input.resolveModel(input.configuredRetryModelId) ?? preferredModel,
+  };
+}
+
+async function productionNarrativeGenerator(
+  requestedModelId?: string,
+): Promise<RectificationNarrativeGenerator> {
+  const [{ defaultLanguageModel, resolveLanguageModel }, { Agent }] = await Promise.all([
     import("../../../mastra/model.ts"),
     import("@mastra/core/agent"),
   ]);
-  const model = defaultLanguageModel();
-  if (!model) {
+  const preferredModelId = process.env.RECTIFICATION_NARRATIVE_MODEL_ID?.trim() || "deepseek-v4-pro";
+  const retryModelId = process.env.RECTIFICATION_NARRATIVE_RETRY_MODEL_ID?.trim() || "deepseek-v4-flash";
+  const selectedModels = resolveRectificationNarrativeModels({
+    requestedModelId,
+    configuredPreferredModelId: preferredModelId,
+    configuredRetryModelId: retryModelId,
+    resolveModel: resolveLanguageModel,
+    defaultModel: defaultLanguageModel,
+  });
+  if (!selectedModels) {
     return {
       modelId: "deterministic-rectification-fallback",
       async generate() { throw new Error("NarrativeModelUnavailable"); },
     };
   }
-  const agent = new Agent({
-    id: `conversational-rectification-${model.id}`,
-    name: "Conversational Rectification Narrator",
-    model: model.model,
-    skills: [jyotishSkillPath],
-    instructions: "Return only the exact JSON object requested by the user prompt. Load the Jyotish Skill to choose a natural, one-question-at-a-time evidence strategy and to explain the supplied expert workflow. Treat supplied packet facts as the exclusive source of candidate times, status, dates, layers, scores, technique states, references, and confirmation permissions. Never invent, recalculate, or confirm candidate data. A blocked or not_evaluated technique must never be described as used. On final turns, include a concise user-readable Technique Audit Table from packet.expertWorkflow; on collecting turns, keep the reply conversational and ask exactly one next question.",
-  });
+  const { preferredModel, retryModel } = selectedModels;
+  const createNarrativeAgent = (model: typeof preferredModel) => new Agent({
+      id: `conversational-rectification-${model.id}`,
+      name: "Conversational Rectification Narrator",
+      model: model.model,
+      skills: [jyotishSkillPath],
+      instructions: "Return only the exact JSON object requested by the user prompt. Load the Jyotish Skill to choose a natural, one-question-at-a-time evidence strategy and to explain the supplied expert workflow. Treat supplied packet facts as the exclusive source of candidate times, status, dates, layers, scores, technique states, references, and confirmation permissions. Never invent, recalculate, or confirm candidate data. Never expose internal event classifications, domain labels, scores, weights, or routing metadata in the user-visible narrative. A blocked or not_evaluated technique must never be described as used. On final turns, include a concise user-readable Technique Audit Table from packet.expertWorkflow; on collecting turns, keep the reply conversational and ask exactly one next question.",
+    });
+  const preferredAgent = createNarrativeAgent(preferredModel);
+  const retryAgent = retryModel.id === preferredModel.id
+    ? preferredAgent
+    : createNarrativeAgent(retryModel);
   return {
-    modelId: model.id,
-    async generate(prompt) {
-      const result = await agent.generate(
-        [{ role: "user", content: prompt }],
-        {
-          structuredOutput: {
-            schema: rectificationNarrativeOutputSchema,
-            jsonPromptInjection: "inline",
+    modelId: preferredModel.id,
+    async classifyEvidenceDomain(input, options) {
+      const prompt = JSON.stringify({
+        task: "Classify the latest user statement by its actual life-event meaning, using recent evidence only as context. Return one domain. Do not classify a cause or detail as a new event when it clearly belongs to the prior event.",
+        allowedDomains: ["career", "education", "finance", "health_pressure", "relocation", "relationship", "family", "other"],
+        latestUserText: input.text,
+        recentEvidence: input.recentEvidence,
+      });
+      const startedAt = Date.now();
+      try {
+        const result = await preferredAgent.generate(
+          [{ role: "user", content: prompt }],
+          {
+            abortSignal: options?.signal,
+            structuredOutput: {
+              schema: rectificationEvidenceDomainOutputSchema,
+              jsonPromptInjection: "inline",
+            },
           },
-        },
-      );
-      return { text: JSON.stringify(rectificationNarrativeOutputSchema.parse(result.object)) };
+        );
+        const parsedObject = rectificationEvidenceDomainOutputSchema.safeParse(result.object);
+        if (parsedObject.success) return parsedObject.data.domain;
+        if (typeof result.text === "string" && result.text.trim()) {
+          const parsedText = rectificationEvidenceDomainOutputSchema.safeParse(JSON.parse(result.text));
+          if (parsedText.success) return parsedText.data.domain;
+        }
+        return null;
+      } catch (error) {
+        console.warn("[rectification-evidence-domain-provider]", JSON.stringify({
+          modelId: preferredModel.id,
+          elapsedMs: Math.max(0, Date.now() - startedAt),
+          outcome: options?.signal?.aborted ? "aborted" : "failed",
+          errorName: error instanceof Error ? error.name : "UnknownError",
+        }));
+        throw error;
+      }
+    },
+    async generate(prompt, options) {
+      const selectedModel = options?.attempt === 2 ? retryModel : preferredModel;
+      const selectedAgent = options?.attempt === 2 ? retryAgent : preferredAgent;
+      const startedAt = Date.now();
+      try {
+        const result = await selectedAgent.generate(
+          [{ role: "user", content: prompt }],
+          {
+            abortSignal: options?.signal,
+            structuredOutput: {
+              schema: rectificationNarrativeAuthoredOutputSchema,
+              jsonPromptInjection: "inline",
+            },
+          },
+        );
+        console.info("[rectification-narrative-provider]", JSON.stringify({
+          modelId: selectedModel.id,
+          promptChars: prompt.length,
+          elapsedMs: Math.max(0, Date.now() - startedAt),
+          outcome: options?.signal?.aborted ? "aborted" : "resolved",
+          hasObject: result.object !== undefined,
+          hasText: typeof result.text === "string" && result.text.trim().length > 0,
+        }));
+        return {
+          text: rectificationNarrativeTextFromMastraResult(result, options?.signal),
+          modelId: selectedModel.id,
+        };
+      } catch (error) {
+        console.warn("[rectification-narrative-provider]", JSON.stringify({
+          modelId: selectedModel.id,
+          promptChars: prompt.length,
+          elapsedMs: Math.max(0, Date.now() - startedAt),
+          outcome: options?.signal?.aborted ? "aborted" : "failed",
+          errorName: error instanceof Error ? error.name : "UnknownError",
+        }));
+        throw error;
+      }
     },
   };
 }
 
+export function rectificationNarrativeTextFromMastraResult(result: Readonly<{
+  object?: unknown;
+  text?: unknown;
+}>, signal?: AbortSignal): string {
+  if (signal?.aborted) {
+    throw signal.reason instanceof Error
+      ? signal.reason
+      : new DOMException("Rectification narrative generation timed out", "TimeoutError");
+  }
+  const authored = rectificationNarrativeAuthoredOutputSchema.safeParse(result.object);
+  if (authored.success) return JSON.stringify(authored.data);
+  const legacy = rectificationNarrativeOutputSchema.safeParse(result.object);
+  if (legacy.success) return JSON.stringify(legacy.data);
+  if (typeof result.text === "string" && result.text.trim()) return result.text;
+  throw authored.error;
+}
+
 async function createProductionService(
   authenticated: AuthenticatedRequest,
+  command: ConversationalRectificationCommand,
 ): Promise<BirthTimeConversationRouteService> {
   const [
     { createAdminSupabaseClient },
@@ -756,13 +935,14 @@ async function createProductionService(
     import("../../../lib/conversational-rectification/store.ts"),
     import("../../../lib/conversational-rectification/billing.ts"),
     import("../../../lib/birth-time-journey-engine.ts"),
-    productionNarrativeGenerator(),
+    productionNarrativeGenerator(requestedNarrativeModelId(command)),
   ]);
   const admin = createAdminSupabaseClient();
   const profileClient = authenticated.context as ProfileClient;
   const engine = createJyotishBirthTimeJourneyEngine();
-  return createConversationalRectificationService({
-    store: createSupabaseConversationalRectificationStore(admin),
+  const store = createSupabaseConversationalRectificationStore(admin);
+  const service = createConversationalRectificationService({
+    store,
     billing: createSupabaseConversationalRectificationBilling(admin),
     get rectificationPriceCredits() { return priceCredits(); },
     allowNewCaseCreation: conversationalRectificationCreationPolicyFromEnvironment(
@@ -773,12 +953,13 @@ async function createProductionService(
         async loadProfile(receivedUserId) {
           const { data, error } = await profileClient
             .from("profiles")
-            .select("birth_date,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset,rectification_case_id")
+            .select("birth_date,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_place_label,birth_place_type,birth_place_provider,birth_place_provider_id,country_code,province_code,city_code,district_code,latitude,longitude,timezone_id,timezone_source,timezone_offset,rectification_case_id")
             .eq("id", receivedUserId)
             .maybeSingle();
           if (error) throw new ConversationalRectificationError("store_unavailable");
           return data;
         },
+        resolveTimezoneOffset: resolveMissingProfileTimezoneOffset,
         async loadRectificationCase(receivedUserId, receivedCaseId) {
           const { data, error } = await admin
             .from("birth_time_rectification_cases")
@@ -806,13 +987,16 @@ async function createProductionService(
           && identity.journey_protocol !== "dynamic-choice-v2")) return null;
       const { data: currentProfile, error: profileError } = await profileClient
         .from("profiles")
-        .select("birth_date,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset,rectification_case_id")
+        .select("birth_date,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_place_label,birth_place_type,birth_place_provider,birth_place_provider_id,country_code,province_code,city_code,district_code,latitude,longitude,timezone_id,timezone_source,timezone_offset,rectification_case_id")
         .eq("id", userId)
         .maybeSingle();
       if (profileError || !currentProfile) {
         throw new ConversationalRectificationError("store_unavailable");
       }
-      const declaredBirthInput = declaredBirthInputForLegacyCase(currentProfile, identity);
+      const declaredBirthInput = declaredBirthInputForLegacyCase(
+        await resolveMissingProfileTimezoneOffset(currentProfile),
+        identity,
+      );
       const loaded = await loadStoredRectificationCase(
         createJourneyLoadClient(admin),
         userId,
@@ -844,6 +1028,33 @@ async function createProductionService(
     narrativeGenerator,
     asOfDate: () => new Date().toISOString().slice(0, 10),
   });
+  return {
+    ...service,
+    async loadConversationMessages(userId, caseId) {
+      const { data: ownedCase, error: caseError } = await admin
+        .from("birth_time_rectification_cases")
+        .select("id")
+        .eq("id", caseId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (caseError || !ownedCase) return [];
+      const [{ data: turns, error: turnsError }, { data: evidence, error: evidenceError }] = await Promise.all([
+        admin
+          .from("birth_time_rectification_turns")
+          .select("id,turn_version,narrative")
+          .eq("case_id", caseId)
+          .order("turn_version", { ascending: true }),
+        admin
+          .from("birth_time_rectification_event_evidence")
+          .select("source_turn_id,raw_text,created_at,id")
+          .eq("case_id", caseId)
+          .order("created_at", { ascending: true })
+          .order("id", { ascending: true }),
+      ]);
+      if (turnsError || evidenceError) return [];
+      return conversationMessagesFromStoredTurns(turns, evidence);
+    },
+  };
 }
 
 function stableRequestId(request: Request): string {
@@ -862,6 +1073,7 @@ async function dispatch(
     case "start": return service.start(userId, command);
     case "resume": return service.resume(userId, command);
     case "answer": return service.answer(userId, command);
+    case "regenerate": return service.regenerate(userId, command);
     case "pause": return service.pause(userId, command);
     case "abandon": return service.abandon(userId, command);
     case "confirm": return service.confirm(userId, command);
@@ -927,7 +1139,7 @@ export function createBirthTimeConversationPostHandler(
       if (!parsed.success) throw new ConversationalRectificationError("invalid_command");
       actionKind = parsed.data.type;
 
-      service = await dependencies.createService(authenticated);
+      service = await dependencies.createService(authenticated, parsed.data);
       const turn = await dispatch(service, authenticated.userId, parsed.data);
       const outcome = conversationalRectificationTelemetryOutcome(service);
       telemetry({
@@ -940,9 +1152,16 @@ export function createBirthTimeConversationPostHandler(
         errorCategory: "none",
         deploymentSha,
       });
-      return request.headers.get("accept")?.includes("application/x-ndjson")
-        ? streamConversationalRectificationResponse(turn)
-        : Response.json(turn);
+      if (parsed.data.type === "resume" && service.loadConversationMessages) {
+        const conversationMessages = await service.loadConversationMessages(
+          authenticated.userId,
+          parsed.data.caseId,
+        );
+        if (conversationMessages.length > 0) {
+          return Response.json({ ...turn, conversationMessages });
+        }
+      }
+      return Response.json(turn);
     } catch (error) {
       const publicError = toConversationalRectificationPublicError(error);
       const outcome = service ? conversationalRectificationTelemetryOutcome(service) : null;

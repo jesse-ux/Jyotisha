@@ -68,7 +68,7 @@ test("visible rectification copy does not replace a tailored Agent answer with a
   assert.match(narrative, /事业转折/);
 });
 
-test("the rectification chat renders alternating messages without a separate evidence panel", () => {
+test("the rectification chat renders the controller's alternating message history", () => {
   const source = readFileSync(
     new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url),
     "utf8",
@@ -76,5 +76,7 @@ test("the rectification chat renders alternating messages without a separate evi
 
   assert.match(source, /controller\.messages/);
   assert.match(source, /controller\.messages[\s\S]*?\.map\(\(message\)/);
-  assert.doesNotMatch(source, /rectification-progress-details|turn\.evidenceRecap\.map|更正这条经历/);
+  const messageHistoryIndex = source.indexOf("controller.messages");
+  assert.doesNotMatch(source, /rectification-progress-details|turn\.evidenceRecap\.map/);
+  assert.ok(messageHistoryIndex >= 0);
 });

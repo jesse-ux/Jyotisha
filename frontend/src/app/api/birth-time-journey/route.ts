@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { parseBirthTimeProfile } from "@/lib/birth-time-journey-adapters";
+import { BirthProfileTimezoneError, resolveMissingBirthTimezoneOffset } from "@/lib/birth-profile-timezone";
 import {
   createJyotishBirthTimeJourneyEngine,
   BirthTimeJourneyEngineError,
@@ -95,7 +96,7 @@ export async function POST(request: Request) {
       case "assess": {
         const { data: profile, error } = await supabase
           .from("profiles")
-          .select("birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,latitude,longitude,timezone_offset")
+          .select("birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,latitude,longitude,timezone_id,timezone_offset")
           .eq("id", user.id)
           .maybeSingle();
         if (error) throw new BirthTimeJourneyStoreError("load_case");
@@ -105,7 +106,7 @@ export async function POST(request: Request) {
             { status: 409 },
           );
         }
-        const assessment = parseBirthTimeProfile(profile);
+        const assessment = parseBirthTimeProfile(await resolveMissingBirthTimezoneOffset(profile));
         return responseWithJourneyMetric(service.assess(user.id, assessment), "turn_advanced");
       }
       case "answer_question":
@@ -252,7 +253,8 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
-    if (error instanceof BirthTimeJourneyStoreError
+    if (error instanceof BirthProfileTimezoneError
+      || error instanceof BirthTimeJourneyStoreError
       || error instanceof BirthTimeJourneyEngineError
       || (error instanceof BirthTimeDynamicActionError && error.reason === "unavailable")) {
       return NextResponse.json(

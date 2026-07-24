@@ -36,6 +36,65 @@ def test_domain_chart_exposes_effective_parameters_and_result_hash() -> None:
     assert result["calculation_contract"]["effective"]["ayanamsa"] == "lahiri"
     assert result["result_hash"]
 
+
+def test_historical_timezone_resolution_distinguishes_new_york_dst() -> None:
+    winter = calculation_service.resolve_timezone_context(
+        lat=40.7128,
+        lon=-74.006,
+        local_datetime=datetime(1990, 1, 15, 12, 0),
+    )
+    summer = calculation_service.resolve_timezone_context(
+        lat=40.7128,
+        lon=-74.006,
+        local_datetime=datetime(1990, 7, 15, 12, 0),
+    )
+
+    assert winter == {
+        "timezone_id": "America/New_York",
+        "timezone_offset": -5.0,
+        "local_time_status": "resolved",
+    }
+    assert summer["timezone_id"] == "America/New_York"
+    assert summer["timezone_offset"] == -4.0
+
+
+def test_timezone_resolution_refuses_dst_fold_and_gap_offsets() -> None:
+    folded = calculation_service.resolve_timezone_context(
+        lat=40.7128,
+        lon=-74.006,
+        local_datetime=datetime(2020, 11, 1, 1, 30),
+    )
+    gap = calculation_service.resolve_timezone_context(
+        lat=40.7128,
+        lon=-74.006,
+        local_datetime=datetime(2020, 3, 8, 2, 30),
+    )
+
+    assert folded["timezone_offset"] is None
+    assert folded["local_time_status"] == "ambiguous"
+    assert gap["timezone_offset"] is None
+    assert gap["local_time_status"] == "nonexistent"
+
+
+def test_domain_chart_exposes_inferred_timezone_id() -> None:
+    payload = {key: value for key, value in BIRTH.items() if key != "tz"}
+    result = calculation_service.compute_chart(payload)
+
+    assert result["calculation_contract"]["effective"]["timezone_id"] == "Asia/Kolkata"
+    assert result["calculation_contract"]["effective"]["timezone_source"] == "iana_inferred"
+
+
+def test_location_timezone_api_contract_preserves_unknown_local_time() -> None:
+    result = jyotish_api_server.resolve_location_timezone_payload({
+        "latitude": 51.5074,
+        "longitude": -0.1278,
+        "birthDate": "1990-01-01",
+    })
+
+    assert result["timezoneId"] == "Europe/London"
+    assert result["timezoneOffset"] is None
+    assert result["localTimeStatus"] == "not_provided"
+
 def test_api_chart_uses_same_domain_contract_and_preserves_shape(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -159,4 +218,3 @@ def test_api_dasha_boundary_comes_from_domain_service(monkeypatch: pytest.Monkey
     )
     assert rest["dasha"]["start_date"] == expected["periods"][0]["start"]
     assert rest["dasha"]["result_hash"] == expected["result_hash"]
-

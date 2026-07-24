@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -24,6 +25,7 @@ except ModuleNotFoundError:  # pragma: no cover - direct script execution
 
 ROOT = Path(__file__).resolve().parents[1]
 JYOTISHGANIT_ROOT = ROOT / "references" / "open_source_sources" / "jyotishganit"
+JYOTISHGANIT_DATA_DIR = ROOT / ".cache" / "jyotishganit"
 PLANETS = ("Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn")
 SIGNS = ("Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces")
 
@@ -54,7 +56,12 @@ def _pyjhora_d1(case: dict[str, Any]) -> dict[str, str]:
     return {index_to_planet[body]: SIGNS[int(position[0])] for body, position in charts.rasi_chart(jd, place) if body in index_to_planet}
 
 
+def _ensure_jyotishganit_data_dir() -> str:
+    return os.environ.setdefault("JYOTISHGANIT_DATA_DIR", str(JYOTISHGANIT_DATA_DIR))
+
+
 def _jyotishganit_d1(case: dict[str, Any]) -> dict[str, str]:
+    _ensure_jyotishganit_data_dir()
     sys.path.insert(0, str(JYOTISHGANIT_ROOT))
     try:
         from jyotishganit import calculate_birth_chart, get_birth_chart_json

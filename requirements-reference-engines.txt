@@ -1,0 +1,9 @@
+# Optional isolated reference-engine environment.
+#
+# PyJHora is AGPL-3.0 and must remain an external benchmark/reference engine.
+# Do not merge this file into the commercial production runtime requirements.
+# PyJHora 4.8.7 omits geocoder from its PyPI dependency metadata even though
+# jhora.utils imports it, so the missing runtime dependency is explicit here.
+PyJHora==4.8.7
+geocoder==1.38.1
+geopy==2.4.1

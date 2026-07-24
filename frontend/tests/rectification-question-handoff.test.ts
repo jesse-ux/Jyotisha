@@ -64,20 +64,33 @@ function controllerFor(turn: ConversationalRectificationTurn): ConversationalRec
     start: async () => turn,
     resume: async () => turn,
     answer: async () => turn,
+    regenerate: async () => turn,
     pause: async () => turn,
     abandon: async () => turn,
     confirm: async () => turn,
   };
 }
 
-test("confirmed surface requires an explicit click before returning to the original question", () => {
+function surfaceProps(
+  controller: ConversationalRectificationController,
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    controller,
+    models: [{ id: "deepseek-chat", label: "DeepSeek", description: "", creditCost: 1, isDefault: true }] as const,
+    selectedModelId: "deepseek-chat",
+    onSelectModel: () => undefined,
+    ...overrides,
+  };
+}
+
+test("confirmed surface requires an explicit click before continuing the original question", () => {
   let continuationCalls = 0;
   const markup = renderToStaticMarkup(React.createElement(
     ConversationalRectificationSurface,
-    {
-      controller: controllerFor(confirmedTurn()),
+    surfaceProps(controllerFor(confirmedTurn()), {
       onContinueOriginalQuestion: () => { continuationCalls += 1; },
-    },
+    }),
   ));
 
   assert.doesNotMatch(markup, /原问题：未来半年是否适合换工作？/);
@@ -88,11 +101,10 @@ test("confirmed surface requires an explicit click before returning to the origi
 test("continuation action is visibly locked while ordinary consultation is pending", () => {
   const markup = renderToStaticMarkup(React.createElement(
     ConversationalRectificationSurface,
-    {
-      controller: controllerFor(confirmedTurn()),
+    surfaceProps(controllerFor(confirmedTurn()), {
       continuationPending: true,
       onContinueOriginalQuestion: () => undefined,
-    },
+    }),
   ));
 
   assert.match(markup, /<button[^>]+disabled=""[^>]*>正在继续回答…<\/button>/);
@@ -417,11 +429,10 @@ test("confirmed surface never revives an old local question after durable consum
   };
   const markup = renderToStaticMarkup(React.createElement(
     ConversationalRectificationSurface,
-    {
-      controller: controllerFor(consumed),
+    surfaceProps(controllerFor(consumed), {
       pendingConsultationQuestion: "浏览器里的旧问题",
       onContinueOriginalQuestion: () => undefined,
-    },
+    }),
   ));
 
   assert.doesNotMatch(markup, /使用新确认时间继续回答原问题/);

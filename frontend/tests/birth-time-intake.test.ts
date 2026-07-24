@@ -136,6 +136,20 @@ test("declared completeness validates the actual calendar date, clock, source fi
     tz: 8,
   }), true);
   assert.equal(isDeclaredBirthProfileComplete(exact, {
+    label: "中国 · 河北省 · 邯郸市 · 峰峰矿区",
+    lat: 36.420487,
+    lon: 114.209936,
+    tz: null,
+    timezoneId: "Asia/Shanghai",
+  }), true);
+  assert.equal(isDeclaredBirthProfileComplete(exact, {
+    label: "缺少时区的地点",
+    lat: 36.420487,
+    lon: 114.209936,
+    tz: null,
+    timezoneId: "",
+  }), false);
+  assert.equal(isDeclaredBirthProfileComplete(exact, {
     label: "越界地点",
     lat: 91,
     lon: 114.49,

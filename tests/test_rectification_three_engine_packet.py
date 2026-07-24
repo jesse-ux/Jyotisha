@@ -1,4 +1,9 @@
-from scripts.rectification_three_engine_packet import build_packet, case_hash
+from scripts.rectification_three_engine_packet import (
+    JYOTISHGANIT_DATA_DIR,
+    _ensure_jyotishganit_data_dir,
+    build_packet,
+    case_hash,
+)
 
 CASE = {"year": 1990, "month": 1, "day": 1, "hour": 12, "minute": 0, "lat": 0.0, "lon": 0.0, "tz": 0.0}
 
@@ -26,6 +31,13 @@ def test_case_hash_uses_only_normalized_calculation_input() -> None:
     }
 
     assert case_hash(equivalent) == case_hash({**CASE, "ayanamsa": "lahiri", "node_mode": "mean"})
+
+
+def test_jyotishganit_uses_project_writable_cache(monkeypatch) -> None:
+    monkeypatch.delenv("JYOTISHGANIT_DATA_DIR", raising=False)
+
+    assert _ensure_jyotishganit_data_dir() == str(JYOTISHGANIT_DATA_DIR)
+    assert __import__("os").environ["JYOTISHGANIT_DATA_DIR"] == str(JYOTISHGANIT_DATA_DIR)
 
 
 def test_high_rigor_packet_queues_safe_vedastro_receipt_without_raw(monkeypatch) -> None:

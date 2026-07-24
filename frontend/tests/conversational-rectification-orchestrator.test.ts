@@ -25,6 +25,7 @@ const laterActionId = "00000000-0000-4000-8000-000000000710";
 const secondAnswerActionId = "00000000-0000-4000-8000-000000000711";
 const thirdAnswerActionId = "00000000-0000-4000-8000-000000000712";
 const fourthAnswerActionId = "00000000-0000-4000-8000-000000000713";
+const secondStartActionId = "00000000-0000-4000-8000-000000000714";
 
 const declaredBirthInput = {
   source: "approximate" as const,
@@ -100,10 +101,19 @@ function validGenerator(
   varyNarrative = false,
   invalidNarrativeFromGeneration?: number,
   prompts: string[] = [],
+  continueLatestEvent = false,
+  detailQuestion = "这份工作是正式工作，还是实习或兼职？",
+  mislabelLatestDetailAsNewEvent = false,
+  classifyEvidenceDomain?: (text: string) => "career" | "education" | "finance" | "health_pressure" | "relocation" | "relationship" | "family" | "other" | null,
 ) {
   let generation = 0;
   return {
     modelId: "synthetic-rectification-model",
+    ...(classifyEvidenceDomain ? {
+      async classifyEvidenceDomain(input: Readonly<{ text: string }>) {
+        return classifyEvidenceDomain(input.text);
+      },
+    } : {}),
     async generate(prompt: string) {
       generation += 1;
       events.push("narrative");
@@ -115,8 +125,17 @@ function validGenerator(
       const request = JSON.parse(prompt) as {
         phase: "first" | "intermediate" | "final";
         conversationContext?: {
-          latestEvidence?: Array<{ dateLabel: string; summary: string; domain: string }>;
-          eventLedger?: Array<{ domain: string; active: boolean }>;
+          latestEvidence?: Array<{ dateLabel: string; summary: string }>;
+          eventLedger?: Array<{
+            id: string;
+            summary: string;
+            active: boolean;
+          }>;
+          unresolvedEvidence?: Array<{
+            id: string;
+            summary: string;
+            dateLabel: string;
+          }>;
         };
         packet: Omit<ReturnType<typeof packet>, "candidate"> & {
           candidate: ReturnType<typeof packet>["candidate"] & {
@@ -126,20 +145,32 @@ function validGenerator(
         };
       };
       const value = request.packet;
-      const answeredDomains = new Set(request.conversationContext?.eventLedger
-        ?.filter((item) => item.active)
-        .map((item) => item.domain) ?? []);
-      const nextSuggested = value.suggestedDomains.find((item) => !answeredDomains.has(item.domain))
-        ?? value.suggestedDomains[0];
-      const domains = nextSuggested ? [nextSuggested.domain] : [];
+      const hasRelationshipEvidence = request.conversationContext?.eventLedger
+        ?.some((item) => item.active && /关系|恋爱|分手|结婚|离婚|伴侣/.test(item.summary)) === true;
+      const domains = hasRelationshipEvidence
+        ? ["career" as const]
+        : ["relationship" as const];
       const nextDomain = domains[0] === "relationship" ? "重要关系" : "事业";
       const latest = request.conversationContext?.latestEvidence?.at(-1);
+      const latestActiveEvent = request.conversationContext?.eventLedger
+        ?.filter((item) => item.active)
+        .at(-1);
+      const unresolved = request.conversationContext?.unresolvedEvidence?.at(-1);
+      const asksForLatestDetail = continueLatestEvent
+        && request.phase === "intermediate"
+        && latestActiveEvent !== undefined;
       const narrative = [
         request.phase === "intermediate" && latest
           ? `记下了：${latest.dateLabel} · ${latest.summary}。`
           : `当前仍在核对 ${value.candidate.rangeStart}–${value.candidate.rangeEnd} 的候选范围，不能视为已经确认的出生分钟。`,
         varyNarrative ? `这是第 ${generation} 次合成措辞。` : "",
-        request.phase === "final" ? "当前证据已形成候选总结。" : `先说一件已经发生的${nextDomain}经历好吗？请写明哪一年、哪一月以及发生了什么。`,
+        request.phase === "final"
+          ? "当前证据已形成候选总结。"
+          : unresolved?.dateLabel === "日期待补充"
+            ? `我先把“${unresolved.summary}”这件事补完整：它大约发生在哪一年、哪一月？`
+          : asksForLatestDetail
+            ? detailQuestion
+            : `先说一件已经发生的${nextDomain}经历好吗？请写明哪一年、哪一月以及发生了什么。`,
       ].join("");
       return { text: JSON.stringify({
         narrative,
@@ -148,14 +179,25 @@ function validGenerator(
         rangeStart: value.candidate.rangeStart,
         rangeEnd: value.candidate.rangeEnd,
         useBoundary: value.useBoundary,
-        stableLayers: value.stableLayers.map((item) => item.layer),
-        sensitiveLayers: value.sensitiveLayers.map((item) => item.layer),
+        stableLayers: value.stableLayers.map((item) => typeof item === "string" ? item : item.layer),
+        sensitiveLayers: value.sensitiveLayers.map((item) => typeof item === "string" ? item : item.layer),
         referenceIds: [],
-        domainReasons: value.suggestedDomains.map((item) => ({ ...item })),
+        domainReasons: [],
         evidenceRequest: request.phase === "final" ? null : {
           domains,
           datePrecision: "month_preferred",
-          prompt: `请说一件已经发生的${nextDomain}经历，并写明哪一年、哪一月以及发生了什么。`,
+          prompt: unresolved?.dateLabel === "日期待补充"
+            ? `“${unresolved.summary}”大约发生在哪一年、哪一月？`
+            : asksForLatestDetail
+            ? detailQuestion
+            : `请说一件已经发生的${nextDomain}经历，并写明哪一年、哪一月以及发生了什么。`,
+          followUp: unresolved?.dateLabel === "日期待补充"
+            ? { kind: "event_date", evidenceId: unresolved.id }
+            : asksForLatestDetail
+            ? mislabelLatestDetailAsNewEvent
+              ? { kind: "new_event", evidenceId: null }
+              : { kind: "event_detail", evidenceId: latestActiveEvent.id }
+            : { kind: "new_event", evidenceId: null },
         },
       }) };
     },
@@ -168,11 +210,16 @@ type MutableCase = {
 
 function harness(options: {
   readonly packetFailure?: Error;
+  readonly packetFailureFromBuild?: number;
   readonly completeFailures?: number;
   readonly releaseFailure?: boolean;
   readonly readyAfterEvidenceCount?: number;
   readonly varyNarrative?: boolean;
   readonly invalidNarrativeFromGeneration?: number;
+  readonly continueLatestEvent?: boolean;
+  readonly detailQuestion?: string;
+  readonly mislabelLatestDetailAsNewEvent?: boolean;
+  readonly classifyEvidenceDomain?: (text: string) => "career" | "education" | "finance" | "health_pressure" | "relocation" | "relationship" | "family" | "other" | null;
 } = {}) {
   const events: string[] = [];
   const narrativePrompts: string[] = [];
@@ -394,7 +441,9 @@ function harness(options: {
           }
         : null);
       events.push(input.evidence.length > 0 ? "score-packet" : "packet");
-      if (options.packetFailure) throw options.packetFailure;
+      if (options.packetFailure
+        && (options.packetFailureFromBuild === undefined
+          || packetBuilds >= options.packetFailureFromBuild)) throw options.packetFailure;
       return input.evidence.length >= (options.readyAfterEvidenceCount ?? 1)
         ? { packet: packet(true), resultId }
         : { packet: packet(false), resultId: null };
@@ -404,6 +453,10 @@ function harness(options: {
       options.varyNarrative,
       options.invalidNarrativeFromGeneration,
       narrativePrompts,
+      options.continueLatestEvent,
+      options.detailQuestion,
+      options.mislabelLatestDetailAsNewEvent,
+      options.classifyEvidenceDomain,
     ),
     asOfDate: () => "2026-07-21",
   };
@@ -493,6 +546,50 @@ test("a start retry settles an existing reservation without reserving or computi
   assert.equal(value.cases.get(startActionId)?.row.billingState, "charged");
   assert.deepEqual(value.counts(), { packetBuilds: 1, reserveCount: 1, releaseCount: 1 });
   assert.deepEqual(value.events.slice(-3), ["profile", "price", "complete"]);
+});
+
+test("a duplicate start with the same declared birth input reuses the unfinished case", async () => {
+  const value = harness();
+  const first = await start(value, null);
+  const countsBeforeRetry = value.counts();
+
+  const replayed = await value.service.start(userId, {
+    type: "start",
+    actionId: secondStartActionId,
+    pendingConsultationQuestion: null,
+  });
+
+  assert.deepEqual(replayed, first);
+  assert.deepEqual(value.counts(), countsBeforeRetry);
+  assert.deepEqual(value.events, [
+    "profile", "price", "reserve:9", "packet", "narrative", "create", "complete",
+    "profile", "price",
+  ]);
+});
+
+test("a duplicate start with changed declared birth input remains a conflict", async () => {
+  const value = harness();
+  await start(value, null);
+
+  const current = value.cases.get(startActionId)?.row;
+  assert.ok(current);
+  value.cases.set(startActionId, {
+    row: {
+      ...current,
+      declaredBirthInput: {
+        ...current.declaredBirthInput,
+        birthDate: "2000-01-02",
+      },
+    },
+  });
+  await assert.rejects(value.service.start(userId, {
+    type: "start",
+    actionId: secondStartActionId,
+    pendingConsultationQuestion: null,
+  }), (error: unknown) => error instanceof ConversationalRectificationError
+    && error.code === "action_conflict");
+  assert.equal(value.counts().reserveCount, 1);
+  assert.equal(value.counts().packetBuilds, 1);
 });
 
 test("a settlement failure releases its created case once and cannot replay as success", async () => {
@@ -585,6 +682,56 @@ test("evidence corrections are append-only while recap and scoring use only the 
   assert.deepEqual(value.packetEvidenceCounts, [0, 1, 1, 1]);
 });
 
+test("uses Agent semantic classification when a single event falls through the deterministic keywords", async () => {
+  const classifiedTexts: string[] = [];
+  const value = harness({
+    readyAfterEvidenceCount: 99,
+    classifyEvidenceDomain(text) {
+      classifiedTexts.push(text);
+      return "career";
+    },
+  });
+  await start(value, null);
+
+  await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2020年4月去石油化工研究院实习做研究员",
+  });
+
+  assert.deepEqual(classifiedTexts, ["2020年4月去石油化工研究院实习做研究员"]);
+  const saved = value.cases.get(startActionId)?.row.eventEvidence.at(-1);
+  assert.equal(saved?.dateValue, "2020-04");
+  assert.equal(saved?.domain, "career");
+  assert.equal(saved?.scoreable, true);
+});
+
+test("repeated evidence remains auditable but identical date-domain-semantics score only once", async () => {
+  const value = harness({ readyAfterEvidenceCount: 2 });
+  await start(value, null);
+  await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: answerActionId,
+    turnVersion: 0, answer: "2019年7月开始第一份工作",
+  });
+  const firstId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
+  assert.ok(firstId);
+
+  const repeated = await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: secondAnswerActionId,
+    turnVersion: 1, answer: "2019年7月开始第一份工作",
+  });
+
+  const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+  assert.equal(stored.length, 2, "both user submissions remain in the audit ledger");
+  assert.equal(repeated.evidenceRecap.length, 2);
+  assert.deepEqual(value.packetEvidenceCounts, [0, 1, 1]);
+  assert.deepEqual(value.packetEvidenceIds.at(-1), [firstId]);
+  assert.equal(repeated.status, "active");
+  assert.equal(repeated.actions.includes("confirm"), false);
+});
+
 test("an unclear correction immediately retires the wrong fact and stays retired after later turns", async () => {
   const value = harness();
   await start(value, null);
@@ -634,22 +781,10 @@ test("every non-confirmable correction rescans the declared range and withdraws 
     { name: "unclear", answer: "更正：具体年月记不清" },
     { name: "future", answer: "更正：2099年3月开始新工作" },
     { name: "direction change", answer: "更正：这些都不符合" },
-    {
-      name: "narrative validation fallback",
-      answer: "更正：其实是2020年11月离职",
-      invalidNarrativeFromGeneration: 3,
-    },
   ] as const;
 
   for (const scenario of scenarios) {
-    const invalidNarrativeFromGeneration = "invalidNarrativeFromGeneration" in scenario
-      ? scenario.invalidNarrativeFromGeneration
-      : undefined;
-    const value = harness({
-      ...(invalidNarrativeFromGeneration === undefined
-        ? {}
-        : { invalidNarrativeFromGeneration }),
-    });
+    const value = harness();
     await start(value, null);
     const prior = await value.service.answer(userId, {
       type: "answer",
@@ -694,6 +829,36 @@ test("every non-confirmable correction rescans the declared range and withdraws 
       .map((item) => item.id);
     assert.deepEqual(value.packetEvidenceIds.at(-1), expectedPacketEvidenceIds);
   }
+});
+
+test("a narrative fallback cannot discard a confirmation candidate produced by a valid correction", async () => {
+  const value = harness({ invalidNarrativeFromGeneration: 3 });
+  await start(value, null);
+  await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: answerActionId,
+    turnVersion: 0, answer: "2018年6月毕业，2019年7月开始第一份工作，2021年3月搬家",
+  });
+  const wrongId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
+  assert.ok(wrongId);
+
+  const corrected = await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: secondAnswerActionId,
+    turnVersion: 1, answer: "更正：其实是2020年11月离职", correctsEvidenceId: wrongId,
+  });
+  const stored = value.cases.get(startActionId)?.row;
+  assert.ok(stored);
+  assert.equal(stored.validationReceipts.at(-1)?.fallbackUsed, true);
+  assert.equal(corrected.status, "confirming");
+  assert.equal(corrected.candidate.status, "ready_for_confirmation");
+  assert.equal(stored.privateCandidate.resultId, resultId);
+  assert.equal(stored.privateCandidate.workingState?.phase, "ready");
+
+  const confirmed = await value.service.confirm(userId, {
+    type: "confirm", caseId: startActionId, actionId: confirmActionId,
+    turnVersion: corrected.turnVersion, time: "05:18",
+  });
+  assert.equal(confirmed.status, "completed");
+  assert.equal(value.mutations.at(-1), "confirm");
 });
 
 test("a clear one-to-one correction can form a new confirmation candidate only after a declared-range rescan", async () => {
@@ -847,7 +1012,11 @@ test("a concrete event without a date is acknowledged and a date-only follow-up 
   });
 
   assert.match(clarification.narrative, /离开家去北京开始工作/);
-  assert.match(clarification.narrative, /什么年月/);
+  assert.match(clarification.narrative, /哪一年、哪一月/);
+  assert.doesNotMatch(
+    clarification.narrative,
+    /你提到.*具体内容我已经记下了|只记得年份也可以/,
+  );
   assert.equal(clarification.evidenceRecap.at(-1)?.dateLabel, "日期待补充");
 
   const completed = await value.service.answer(userId, {
@@ -871,6 +1040,285 @@ test("a concrete event without a date is acknowledged and a date-only follow-up 
   assert.match(completed.narrative, /记下了：2023-03 · 我离开家去北京开始工作/);
 });
 
+test("a descriptive date follow-up completes the targeted event instead of becoming a new event", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99 });
+  await start(value, null);
+
+  await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "我彻底离开了学校",
+  });
+
+  const completed = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "2023年1月我正式办完了手续",
+  });
+
+  const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+  assert.equal(stored.length, 2, "the original answer and its completion remain auditable");
+  assert.deepEqual(stored[1]?.correctsEvidenceIds, [stored[0]?.id]);
+  assert.equal(stored[1]?.dateValue, "2023-01");
+  assert.equal(stored[1]?.eventSummary, "我彻底离开了学校");
+  assert.equal(stored[1]?.rawText, "我彻底离开了学校\n补充：2023年1月我正式办完了手续");
+  assert.equal(completed.evidenceRecap.length, 1);
+  assert.doesNotMatch(completed.narrative, /还差时间定位/);
+});
+
+test("an independent future event does not get swallowed as the date of an unresolved historical event", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99 });
+  await start(value, null);
+
+  await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "后来工作压力很大",
+  });
+
+  const completed = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "2027年计划换工作",
+  });
+
+  const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+  assert.equal(stored.length, 2);
+  assert.equal(stored[0]?.dateValue, null);
+  assert.deepEqual(stored[1]?.correctsEvidenceIds, []);
+  assert.equal(stored[1]?.dateValue, "2027");
+  assert.equal(stored[1]?.scoreable, false);
+  assert.deepEqual(completed.evidenceRecap.map((item) => item.dateLabel), [
+    "日期待补充",
+    "2027（未来，仅作背景）",
+  ]);
+});
+
+test("a next-year month answer resolves from the event being discussed", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99, continueLatestEvent: true });
+  await start(value, null);
+
+  const first = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2022年12月正式退学",
+  });
+  assert.equal(first.evidenceRequest?.followUp?.kind, "event_detail");
+
+  const completed = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "来年 1 月份我彻底离开的学校",
+  });
+
+  const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+  assert.deepEqual(stored.map((item) => item.dateValue), ["2022-12", "2023-01"]);
+  assert.equal(stored[1]?.rawText, "来年 1 月份我彻底离开的学校");
+  assert.equal(stored[1]?.scoreable, true);
+  assert.doesNotMatch(completed.narrative, /还差时间定位|大约是哪一年、哪一月/);
+});
+
+test("a bare month-day answer refines the targeted month without another confirmation", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99, continueLatestEvent: true });
+  await start(value, null);
+
+  await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2026年7月我们三个人决定一起开公司",
+  });
+
+  const current = value.cases.get(startActionId)?.row;
+  const target = current?.eventEvidence.at(-1);
+  assert.ok(current);
+  assert.ok(target);
+  assert.ok(current.latestTurn.evidenceRequest);
+  value.cases.set(startActionId, {
+    row: {
+      ...current,
+      latestTurn: {
+        ...current.latestTurn,
+        evidenceRequest: {
+          ...current.latestTurn.evidenceRequest,
+          followUp: { kind: "event_date", evidenceId: target.id },
+        },
+      },
+    },
+  });
+
+  const completed = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "7 月 10 号",
+  });
+
+  const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+  assert.equal(stored.length, 2, "the month event and day refinement remain auditable");
+  assert.deepEqual(stored[1]?.correctsEvidenceIds, [target.id]);
+  assert.equal(stored[1]?.dateValue, "2026-07-10");
+  assert.equal(stored[1]?.eventSummary, "我们三个人决定一起开公司");
+  assert.equal(stored[1]?.rawText, "2026年7月我们三个人决定一起开公司\n补充：7 月 10 号");
+  assert.equal(completed.evidenceRecap.at(-1)?.dateLabel, "2026-07-10");
+  assert.doesNotMatch(completed.narrative, /是指.*7 月 10|哪一天|哪一年、哪一月/);
+});
+
+test("an authored event-detail follow-up survives progress decoration and keeps the prior date", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99, continueLatestEvent: true });
+  await start(value, null);
+
+  const firstAnswer = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2017年5月参加工作",
+  });
+
+  const current = value.cases.get(startActionId)?.row;
+  const target = current?.eventEvidence.at(-1);
+  assert.ok(current);
+  assert.ok(target);
+  assert.match(firstAnswer.narrative, /正式工作，还是实习或兼职/);
+  assert.deepEqual(
+    value.cases.get(startActionId)?.row.latestTurn.evidenceRequest?.followUp,
+    { kind: "event_detail", evidenceId: target.id },
+  );
+
+  const completed = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "正式工作",
+  });
+
+  const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+  assert.equal(stored.length, 2, "the original event and merged correction remain auditable");
+  assert.deepEqual(stored[1]?.correctsEvidenceIds, [target.id]);
+  assert.equal(stored[1]?.dateValue, "2017-05");
+  assert.equal(stored[1]?.eventSummary, "参加工作；正式工作");
+  assert.equal(stored[1]?.scoreable, true);
+  assert.equal(completed.evidenceRecap.at(-1)?.dateLabel, "2017-05");
+  assert.doesNotMatch(completed.narrative, /大致是什么年月|只记得年份/);
+});
+
+test("a mislabeled new-event follow-up never lets program heuristics rewrite an undated reply as a correction", async () => {
+  const value = harness({
+    readyAfterEvidenceCount: 99,
+    continueLatestEvent: true,
+    detailQuestion: "这几个月里，学业压力具体体现在哪些方面，主要原因是什么？",
+    mislabelLatestDetailAsNewEvent: true,
+  });
+  await start(value, null);
+
+  const firstAnswer = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "1972年12月因为学业压力正式退学",
+  });
+
+  const target = value.cases.get(startActionId)?.row.eventEvidence.at(-1);
+  assert.ok(target);
+  assert.match(firstAnswer.narrative, /压力具体体现在哪些方面/);
+  assert.deepEqual(
+    value.cases.get(startActionId)?.row.latestTurn.evidenceRequest?.followUp,
+    { kind: "new_event", evidenceId: null },
+  );
+
+  const completed = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "经济负担导致无法继续",
+  });
+
+  const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+  assert.equal(stored.length, 2);
+  assert.deepEqual(stored[1]?.correctsEvidenceIds, []);
+  assert.equal(stored[1]?.dateValue, null);
+  assert.match(stored[1]?.eventSummary ?? "", /经济负担导致无法继续/);
+  assert.equal(completed.evidenceRecap.length, 2);
+  assert.equal(completed.evidenceRecap.some((item) => item.id === target.id), true);
+  assert.doesNotMatch(completed.narrative, /这件事很有用|还差时间定位|大约是哪一年、哪一月/);
+});
+
+test("an undated independent event is not swallowed by a broad detail question mislabeled as new_event", async () => {
+  const value = harness({
+    readyAfterEvidenceCount: 99,
+    continueLatestEvent: true,
+    detailQuestion: "这几个月里，学业压力具体体现在哪些方面，主要原因是什么？",
+    mislabelLatestDetailAsNewEvent: true,
+  });
+  await start(value, null);
+  await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: answerActionId,
+    turnVersion: 0, answer: "2017年5月硕士毕业",
+  });
+  const firstId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
+  assert.ok(firstId);
+
+  const next = await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: secondAnswerActionId,
+    turnVersion: 1, answer: "后来我搬去上海开始工作",
+  });
+
+  const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+  assert.equal(stored.length, 2);
+  assert.deepEqual(stored[1]?.correctsEvidenceIds, []);
+  assert.equal(stored[1]?.dateValue, null);
+  assert.match(stored[1]?.eventSummary ?? "", /搬去上海开始工作/);
+  assert.equal(next.evidenceRecap.some((item) => item.id === firstId), true);
+  assert.equal(next.evidenceRecap.at(-1)?.dateLabel, "日期待补充");
+});
+
+test("a dated independent event is not swallowed by a broad detail question mislabeled as new_event", async () => {
+  const value = harness({
+    readyAfterEvidenceCount: 99,
+    continueLatestEvent: true,
+    detailQuestion: "这几个月里，学业压力具体体现在哪些方面，主要原因是什么？",
+    mislabelLatestDetailAsNewEvent: true,
+  });
+  await start(value, null);
+  await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: answerActionId,
+    turnVersion: 0, answer: "2017年5月硕士毕业",
+  });
+  const firstId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
+  assert.ok(firstId);
+
+  const next = await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: secondAnswerActionId,
+    turnVersion: 1, answer: "2017年7月入职第一家公司",
+  });
+
+  const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+  assert.equal(stored.length, 2);
+  assert.deepEqual(stored[1]?.correctsEvidenceIds, []);
+  assert.equal(stored[1]?.dateValue, "2017-07");
+  assert.match(stored[1]?.eventSummary ?? "", /入职第一家公司/);
+  assert.equal(next.evidenceRecap.length, 2);
+  assert.equal(next.evidenceRecap.some((item) => item.id === firstId), true);
+});
+
 test("the next evidence request moves past a domain the user already answered", async () => {
   const value = harness({ readyAfterEvidenceCount: 99 });
   await start(value, null);
@@ -888,25 +1336,22 @@ test("the next evidence request moves past a domain the user already answered", 
   assert.doesNotMatch(turn.narrative, /下一步[^\n]*重要关系/);
 });
 
-test("a rejected professional narrative falls back safely while the first scoreable answer still narrows", async () => {
+test("a rejected intermediate narrative returns a retryable error without saving a template turn", async () => {
   const value = harness({ invalidNarrativeFromGeneration: 2 });
   await start(value, null);
 
-  const turn = await value.service.answer(userId, {
-    type: "answer",
-    caseId: startActionId,
-    actionId: answerActionId,
-    turnVersion: 0,
-    answer: "2021年7月开始第一份长期工作",
-  });
+  await assert.rejects(value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: answerActionId,
+    turnVersion: 0, answer: "2021年7月开始第一份长期工作",
+  }), (error: unknown) => error instanceof ConversationalRectificationError
+    && error.code === "service_unavailable");
 
   const stored = value.cases.get(startActionId)?.row;
-  assert.equal(turn.status, "active");
-  assert.equal(turn.candidate.status, "pending_validation");
+  assert.equal(stored?.turnVersion, 0);
   assert.equal(stored?.privateCandidate.resultId, null);
-  assert.equal(stored?.validationReceipts.at(-1)?.fallbackUsed, true);
-  assert.match(turn.narrative, /已记录：|本轮区分重点/);
-  assert.doesNotMatch(turn.narrative, /候选没有推进|请稍后重试/);
+  assert.equal(stored?.eventEvidence.length, 0);
+  assert.equal(stored?.validationReceipts.length, 1);
+  assert.equal(value.mutations.filter((mutation) => mutation === "saveTurn").length, 0);
 });
 
 test("one and two supported events save and narrate before the third accumulated event ranks", async () => {
@@ -962,7 +1407,7 @@ test("intermediate narrative receives the complete active event ledger", async (
   assert.match(prompt, /eventLedger/);
 });
 
-test("a non-confirmable conversational case asks each discriminating domain before completing its saved range", async () => {
+test("a non-confirmable conversational case remains open after the current discriminating domains are covered", async () => {
   const value = harness({ readyAfterEvidenceCount: 99 });
   await start(value, "请继续回答原来的事业问题");
   const answers = [
@@ -987,12 +1432,11 @@ test("a non-confirmable conversational case asks each discriminating domain befo
     }
   }
 
-  assert.equal(latest?.status, "completed");
+  assert.equal(latest?.status, "active");
   assert.equal(latest?.candidate.status, "pending_validation");
-  assert.deepEqual(latest?.actions, ["continue_original_question"]);
-  assert.equal(latest?.evidenceRequest, null);
-  assert.match(latest?.narrative ?? "", /候选范围.*不会替换当前排盘时间/);
-  assert.equal(value.cases.get(startActionId)?.row.status, "completed");
+  assert.deepEqual(latest?.actions, ["answer", "pause", "abandon"]);
+  assert.ok(latest?.evidenceRequest);
+  assert.equal(value.cases.get(startActionId)?.row.status, "active");
   assert.equal(value.cases.get(startActionId)?.row.privateCandidate.representativeTime, "05:20");
 });
 
@@ -1049,7 +1493,7 @@ test("two valid events plus pre-birth evidence wait until a later valid third ev
   assert.equal(preBirth?.extractionStatus, "needs_clarification");
   assert.equal(stored?.eventEvidence.length, 4);
   assert.equal(latest?.evidenceRecap.length, 4);
-  assert.deepEqual(value.packetEvidenceCounts, [0, 1, 2, 3]);
+  assert.deepEqual(value.packetEvidenceCounts, [0, 1, 2, 2, 3]);
 });
 
 test("vague, future, and unmatched answers stay conversational and never score", async () => {
@@ -1068,21 +1512,42 @@ test("vague, future, and unmatched answers stay conversational and never score",
       answer,
       ...(domain ? { domain } : {}),
     });
-    assert.equal(value.counts().packetBuilds, 1);
+    assert.equal(value.counts().packetBuilds, 2);
     assert.equal(turn.status, "active");
-    assert.match(turn.narrative, /年月|已发生|已经发生|换个方向|未来/);
+    assert.match(turn.narrative, /哪一年|哪一月|年月|已发生|已经发生|换个方向|未来/);
+    assert.doesNotMatch(turn.narrative, /好的，我们不沿用不符合你的方向|已保存这段描述|我已保存你的原话|这条更正已保存/);
     assert.doesNotMatch(turn.narrative, /A[.、:]|B[.、:]|2006.?2011/);
     assert.equal(value.cases.get(startActionId)?.row.eventEvidence.at(-1)?.scoreable, false);
   }
 });
 
+test("a non-scoring packet failure responds to the current turn instead of replaying the prior agent message", async () => {
+  const value = harness({
+    packetFailure: new Error("synthetic packet outage"),
+    packetFailureFromBuild: 2,
+  });
+  const initial = await start(value, null);
+
+  const turn = await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: answerActionId,
+    turnVersion: 0, answer: "化学专业",
+  });
+
+  assert.notEqual(turn.narrative, initial.narrative);
+  assert.match(turn.narrative, /化学专业|这轮|这次分析/);
+  assert.match(turn.narrative, /暂时没有完成/);
+  assert.equal(value.cases.get(startActionId)?.row.validationReceipts.at(-1)?.fallbackUsed, true);
+  assert.equal(value.cases.get(startActionId)?.row.eventEvidence.at(-1)?.rawText, "化学专业");
+});
+
 test("resume returns the latest owned turn on a stale new-device version without mutation or charge", async () => {
   const value = harness();
-  await start(value, null);
+  const initial = await start(value, null);
   const paused = await value.service.pause(userId, {
     type: "pause", caseId: startActionId, actionId: pauseActionId, turnVersion: 0,
   });
   assert.equal(paused.status, "paused");
+  assert.equal(paused.narrative, initial.narrative);
   const latest = await value.service.answer(userId, {
     type: "answer", caseId: startActionId, actionId: answerActionId,
     turnVersion: 1, answer: "2021年7月毕业，并在2022年3月去外地工作",
@@ -1117,6 +1582,78 @@ test("a lost-response retry replays the saved answer without rescoring or regene
   assert.deepEqual(replayed, first);
   assert.equal(value.counts().packetBuilds, 2);
   assert.deepEqual(value.events, before);
+});
+
+test("regenerate rewrites only the current narrative and preserves evidence, scoring, candidate, and billing", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99, varyNarrative: true });
+  await start(value, null);
+  const answered = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2012年12月正式退学，2013年1月彻底离开学校",
+  });
+  const storedBefore = value.cases.get(startActionId)?.row;
+  assert.ok(storedBefore);
+  const evidenceBefore = structuredClone(storedBefore.eventEvidence);
+  const candidateBefore = structuredClone(storedBefore.privateCandidate);
+  const countsBefore = value.counts();
+
+  const regenerated = await value.service.regenerate(userId, {
+    type: "regenerate",
+    caseId: startActionId,
+    actionId: laterActionId,
+    turnVersion: answered.turnVersion,
+  });
+
+  const storedAfter = value.cases.get(startActionId)?.row;
+  assert.ok(storedAfter);
+  assert.equal(regenerated.turnVersion, answered.turnVersion + 1);
+  assert.notEqual(regenerated.narrative, answered.narrative);
+  assert.deepEqual(storedAfter.eventEvidence, evidenceBefore);
+  assert.deepEqual(storedAfter.privateCandidate, candidateBefore);
+  assert.equal(value.counts().reserveCount, countsBefore.reserveCount);
+  assert.equal(value.packetEvidenceCounts.at(-1), evidenceBefore.length);
+  assert.equal(value.mutations.filter((mutation) => mutation === "saveTurn").length, 2);
+  assert.match(value.narrativePrompts.at(-1) ?? "", /2012年12月正式退学/);
+});
+
+test("a failed regenerate preserves the prior turn, evidence, candidate, and billing", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99, invalidNarrativeFromGeneration: 3 });
+  await start(value, null);
+  const answered = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2012年12月正式退学，2013年1月彻底离开学校",
+  });
+  const storedBefore = value.cases.get(startActionId)?.row;
+  assert.ok(storedBefore);
+  const snapshotBefore = structuredClone(storedBefore);
+  const countsBefore = value.counts();
+  const saveTurnsBefore = value.mutations.filter((mutation) => mutation === "saveTurn").length;
+
+  await assert.rejects(value.service.regenerate(userId, {
+    type: "regenerate",
+    caseId: startActionId,
+    actionId: laterActionId,
+    turnVersion: answered.turnVersion,
+  }), (error: unknown) => error instanceof ConversationalRectificationError
+    && error.code === "service_unavailable");
+
+  const storedAfter = value.cases.get(startActionId)?.row;
+  assert.deepEqual(storedAfter, snapshotBefore);
+  assert.equal(storedAfter?.turnVersion, answered.turnVersion);
+  assert.equal(storedAfter?.latestTurn.narrative, answered.narrative);
+  assert.equal(value.counts().reserveCount, countsBefore.reserveCount);
+  assert.equal(value.counts().releaseCount, countsBefore.releaseCount);
+  assert.equal(value.counts().packetBuilds, countsBefore.packetBuilds + 1);
+  assert.equal(
+    value.mutations.filter((mutation) => mutation === "saveTurn").length,
+    saveTurnsBefore,
+  );
 });
 
 test("overlapping identical answers converge on the first receipt despite different derived narratives", async () => {
@@ -1255,6 +1792,7 @@ test("confirm delegates to the atomic store call, preserves the old baseline unt
   assert.deepEqual(value.mutations.slice(before), ["confirm"]);
   assert.equal(confirmed.status, "completed");
   assert.equal(confirmed.candidate.status, "confirmed");
+  assert.equal(confirmed.narrative, ready.narrative);
   assert.equal(confirmed.pendingConsultationQuestion, "请继续回答原来的事业问题");
   assert.deepEqual(confirmed.actions, ["continue_original_question"]);
 });

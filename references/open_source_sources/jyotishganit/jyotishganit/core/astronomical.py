@@ -39,6 +39,10 @@ def _get_data_directory():
     Returns:
         str: Path to the data directory following platform conventions
     """
+    configured_dir = os.environ.get("JYOTISHGANIT_DATA_DIR", "").strip()
+    if configured_dir:
+        return os.path.abspath(os.path.expanduser(configured_dir))
+
     system = platform.system()
 
     if system == "Windows":

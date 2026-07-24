@@ -128,6 +128,36 @@ test("period-only birth declaration can generate the home starter questions with
   assert.deepEqual(body, { ...payloadA, source: "agent" });
 });
 
+test("global place with an IANA timezone can enter home before a numeric offset is resolved", async () => {
+  const repository = new StatefulOnboardingProfileRepository(completeProfileRow({
+    name: "jesse",
+    birth_date: "1955-02-24",
+    birth_time: null,
+    reported_birth_time: null,
+    active_birth_time: null,
+    birth_time_source: "period_only",
+    birth_time_period: "evening",
+    birth_time_clue: "大约晚上七点左右，可能前后差四十五分钟。",
+    birth_time_status: null,
+    country_code: "US",
+    province_code: null,
+    city_code: null,
+    latitude: 37.7879363,
+    longitude: -122.4075201,
+    timezone_offset: null,
+    birth_place_label: "旧金山, 加利福尼亚州, 美国",
+    timezone_id: "America/Los_Angeles",
+  }));
+  let generationCount = 0;
+  const response = await createPost(repository, async () => {
+    generationCount += 1;
+    return generatedText(payloadA);
+  })();
+
+  assert.equal(response.status, 200);
+  assert.equal(generationCount, 1);
+});
+
 test("stale A generation returns pending after profile B replaces its claim", async () => {
   // Given: A owns a claim whose generation remains in flight.
   const repository = new StatefulOnboardingProfileRepository(completeProfileRow());

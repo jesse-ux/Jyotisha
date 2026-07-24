@@ -2748,6 +2748,126 @@ def run_official_full_snapshot_for_case(
     return _store_official_full_snapshot_semantic_cache(case, case_id, result)
 
 
+def _rectification_position(value: Any) -> dict[str, Any] | None:
+    if not isinstance(value, dict) or not value.get("sign"):
+        return None
+    position = {"sign": str(value["sign"])}
+    degree = value.get("degree_in_sign")
+    if isinstance(degree, (int, float)):
+        position["degree_in_sign"] = round(float(degree), 6)
+    return position
+
+
+def _rectification_varga_positions(
+    chart: dict[str, Any],
+    varga: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    houses = chart.get("houses") if isinstance(chart.get("houses"), dict) else {}
+    planets = chart.get("planets") if isinstance(chart.get("planets"), dict) else {}
+    house_positions = {
+        name: position
+        for name, item in sorted(houses.items())
+        if isinstance(item, dict)
+        and (position := _rectification_position((item.get("vargas") or {}).get(varga)))
+    }
+    planet_positions = {
+        name: position
+        for name, item in sorted(planets.items())
+        if isinstance(item, dict)
+        and (position := _rectification_position((item.get("vargas") or {}).get(varga)))
+    }
+    return house_positions, planet_positions
+
+
+def _rectification_timeline_item_count(value: Any) -> int:
+    if isinstance(value, list):
+        return len(value)
+    if isinstance(value, dict):
+        return max(
+            (_rectification_timeline_item_count(item) for item in value.values()),
+            default=0,
+        )
+    return 0
+
+
+def run_rectification_minute_snapshot_for_case(
+    case: dict[str, Any],
+    *,
+    case_id: str = "user_chart",
+) -> dict[str, Any]:
+    """Return a safe official fingerprint for minute-candidate comparison.
+
+    The summary intentionally excludes raw official responses. SearchEvents is
+    not part of this fingerprint; it remains a separate background check.
+    """
+    snapshot = run_official_full_snapshot_for_case(case, case_id=case_id)
+    chart = snapshot.get("official_chart") if isinstance(snapshot.get("official_chart"), dict) else {}
+    houses = chart.get("houses") if isinstance(chart.get("houses"), dict) else {}
+    ascendant = _rectification_position(chart.get("ascendant"))
+    house_positions = {
+        name: position
+        for name, item in sorted(houses.items())
+        if (position := _rectification_position(item))
+    }
+    d9_houses, d9_planets = _rectification_varga_positions(chart, "D9")
+    d10_houses, d10_planets = _rectification_varga_positions(chart, "D10")
+    sections = snapshot.get("snapshot_sections") if isinstance(snapshot.get("snapshot_sections"), dict) else {}
+    section_statuses = snapshot.get("section_statuses") if isinstance(snapshot.get("section_statuses"), dict) else {}
+    dasha_payload = sections.get("dasha_all")
+
+    ascendant_house_payload = {
+        "ascendant": ascendant,
+        "houses": house_positions,
+    }
+    d9_payload = {"houses": d9_houses, "planets": d9_planets}
+    d10_payload = {"houses": d10_houses, "planets": d10_planets}
+    dasha_available = section_statuses.get("dasha_all") == "ok" and isinstance(dasha_payload, dict)
+    layers = {
+        "ascendant_house_boundaries": {
+            "status": "ok" if ascendant and house_positions else "missing",
+            **ascendant_house_payload,
+            "fingerprint": _hash_payload(ascendant_house_payload) if ascendant and house_positions else None,
+        },
+        "D9": {
+            "status": "ok" if d9_houses or d9_planets else "missing",
+            **d9_payload,
+            "fingerprint": _hash_payload(d9_payload) if d9_houses or d9_planets else None,
+        },
+        "D10": {
+            "status": "ok" if d10_houses or d10_planets else "missing",
+            **d10_payload,
+            "fingerprint": _hash_payload(d10_payload) if d10_houses or d10_planets else None,
+        },
+        "dasha_boundaries": {
+            "status": "ok" if dasha_available else "missing",
+            "boundary_count": _rectification_timeline_item_count(dasha_payload) if dasha_available else 0,
+            "fingerprint": _hash_payload(dasha_payload) if dasha_available else None,
+        },
+        "kp_cusp_sub_lord": {
+            "status": "unsupported_by_verified_official_interface",
+            "reason": "The verified VedAstro interface exposes KP house-membership helpers, not an auditable cusp/sub-lord result.",
+        },
+    }
+    required_statuses = [layers[name]["status"] for name in (
+        "ascendant_house_boundaries", "D9", "D10", "dasha_boundaries"
+    )]
+    available = bool(snapshot.get("available")) and all(status == "ok" for status in required_statuses)
+    source_metadata = snapshot.get("source_metadata") if isinstance(snapshot.get("source_metadata"), dict) else {}
+    return {
+        "available": available,
+        "status": "ok" if available else "partial" if any(status == "ok" for status in required_statuses) else "blocked",
+        "source": "vedastro_official",
+        "operation": "rectification_minute_snapshot",
+        "candidate_time": f'{int(case.get("hour") or 0):02d}:{int(case.get("minute") or 0):02d}',
+        "layers": layers,
+        "kp_cusp_sub_lord": layers["kp_cusp_sub_lord"],
+        "source_metadata": {
+            "response_hash": source_metadata.get("response_hash"),
+            "official_snapshot_status": snapshot.get("status"),
+        },
+    }
+
+
 def _run_range_scan_case(case: dict[str, Any], domain: str, start_date: str, end_date: str) -> dict[str, Any]:
     if domain not in SUPPORTED_RANGE_SCAN_DOMAINS:
         return {
@@ -2772,17 +2892,6 @@ def _run_range_scan_case(case: dict[str, Any], domain: str, start_date: str, end
             "available": False,
             "status": "network_execution_disabled",
             "reason": f"{ALLOW_NETWORK_ENV} is not enabled; range scan stops after building request/provenance metadata.",
-            "request_preview": request_preview,
-            "source_metadata": _source_metadata(endpoint),
-        }
-
-    range_scan_enabled = os.environ.get("VEDASTRO_RANGE_SCAN_NETWORK_ENABLED", "1").strip().lower() in {"1", "true", "yes", "on"}
-    if not range_scan_enabled:
-        return {
-            "backend": "vedastro_service_adapter_candidate",
-            "available": False,
-            "status": "network_execution_disabled",
-            "reason": "VEDASTRO_RANGE_SCAN_NETWORK_ENABLED is disabled for the interactive chat path.",
             "request_preview": request_preview,
             "source_metadata": _source_metadata(endpoint),
         }

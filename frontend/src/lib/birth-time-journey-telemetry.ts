@@ -16,6 +16,7 @@ export const conversationalRectificationTelemetryActionKinds = [
   "start",
   "resume",
   "answer",
+  "regenerate",
   "pause",
   "abandon",
   "confirm",

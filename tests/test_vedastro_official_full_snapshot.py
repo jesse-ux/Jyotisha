@@ -196,6 +196,22 @@ def test_official_full_snapshot_marks_semantic_rate_limit_payloads(monkeypatch) 
     monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "https://example.invalid/api")
     monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "1")
     monkeypatch.setenv("VEDASTRO_OFFICIAL_FULL_SNAPSHOT_CACHE_TTL_SECONDS", "0")
+    monkeypatch.setenv("VEDASTRO_FULL_SNAPSHOT_FANOUT_ENABLED", "1")
+    monkeypatch.setattr(
+        adapter,
+        "_try_official_capability_runner_snapshot_bundle",
+        lambda _case: {"available": False, "status": "blocked", "snapshot_sections": {}, "section_statuses": {}},
+    )
+    monkeypatch.setattr(
+        adapter,
+        "_try_official_python_bridge_snapshot_bundle",
+        lambda _case: {"available": False, "status": "blocked", "snapshot_sections": {}, "section_statuses": {}},
+    )
+    monkeypatch.setattr(
+        adapter,
+        "_try_official_full_capability_catalog_bundle",
+        lambda _case: {"available": False, "status": "blocked", "summary": {}, "coverage": {}},
+    )
     monkeypatch.setattr(adapter, "_post_official_snapshot_section", fake_post)
 
     result = adapter.run_official_full_snapshot_for_case(
@@ -522,6 +538,23 @@ def test_official_full_snapshot_extracts_official_chart_and_varga_from_pass_payl
 
     monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "https://example.invalid/api")
     monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "1")
+    monkeypatch.setenv("VEDASTRO_OFFICIAL_FULL_SNAPSHOT_CACHE_TTL_SECONDS", "0")
+    monkeypatch.setenv("VEDASTRO_FULL_SNAPSHOT_FANOUT_ENABLED", "1")
+    monkeypatch.setattr(
+        adapter,
+        "_try_official_capability_runner_snapshot_bundle",
+        lambda _case: {"available": False, "status": "blocked", "snapshot_sections": {}, "section_statuses": {}},
+    )
+    monkeypatch.setattr(
+        adapter,
+        "_try_official_python_bridge_snapshot_bundle",
+        lambda _case: {"available": False, "status": "blocked", "snapshot_sections": {}, "section_statuses": {}},
+    )
+    monkeypatch.setattr(
+        adapter,
+        "_try_official_full_capability_catalog_bundle",
+        lambda _case: {"available": False, "status": "blocked", "summary": {}, "coverage": {}},
+    )
     monkeypatch.setattr(adapter, "_post_official_snapshot_section", fake_post)
 
     result = adapter.run_official_full_snapshot_for_case(
@@ -661,6 +694,77 @@ def test_official_full_snapshot_can_use_python_bridge_bundle_without_rest_endpoi
     assert result["official_chart"]["ascendant"]["sign"] == "Leo"
     assert result["snapshot_sections"]["shadbala"]["Payload"]["AllPlanetStrength"]["Sun"] == 527.36
     assert result["snapshot_sections"]["ashtakavarga"]["Payload"]["AshtakvargaLifeMap"]["TotalBindus"] == 337
+
+
+def test_rectification_minute_snapshot_exposes_safe_official_layer_fingerprints(monkeypatch) -> None:
+    from scripts import vedastro_service_adapter as adapter
+
+    monkeypatch.setattr(
+        adapter,
+        "run_official_full_snapshot_for_case",
+        lambda _case, case_id="user_chart": {
+            "available": True,
+            "status": "ok",
+            "official_chart": {
+                "ascendant": {"sign": "Leo", "degree_in_sign": 13.0, "raw_response": "secret"},
+                "houses": {
+                    "House1": {
+                        "sign": "Leo",
+                        "degree_in_sign": 13.0,
+                        "vargas": {
+                            "D9": {"sign": "Cancer", "degree_in_sign": 27.7},
+                            "D10": {"sign": "Sagittarius", "degree_in_sign": 10.8},
+                        },
+                    }
+                },
+                "planets": {
+                    "Sun": {
+                        "sign": "Aries",
+                        "degree_in_sign": 3.5,
+                        "vargas": {
+                            "D9": {"sign": "Taurus", "degree_in_sign": 1.5},
+                            "D10": {"sign": "Taurus", "degree_in_sign": 5.0},
+                        },
+                    }
+                },
+            },
+            "snapshot_sections": {
+                "dasha_all": {"Payload": {"DasaAtRange": [{"start": "2020-01-01"}, {"start": "2021-01-01"}]}},
+                "raw_response": {"must_not": "leak"},
+            },
+            "section_statuses": {"dasha_all": "ok"},
+            "source_metadata": {"response_hash": "official-response-hash", "api_key": "must-not-leak"},
+        },
+    )
+
+    result = adapter.run_rectification_minute_snapshot_for_case(
+        {
+            "year": 1955,
+            "month": 2,
+            "day": 24,
+            "hour": 19,
+            "minute": 15,
+            "lat": 37.7749,
+            "lon": -122.4194,
+            "tz": -8,
+        },
+        case_id="minute_snapshot_unit",
+    )
+
+    assert result["available"] is True
+    assert result["status"] == "ok"
+    assert result["candidate_time"] == "19:15"
+    assert all(
+        result["layers"][layer]["status"] == "ok"
+        for layer in ("ascendant_house_boundaries", "D9", "D10", "dasha_boundaries")
+    )
+    assert all(
+        result["layers"][layer]["fingerprint"]
+        for layer in ("ascendant_house_boundaries", "D9", "D10", "dasha_boundaries")
+    )
+    assert result["layers"]["kp_cusp_sub_lord"]["status"] == "unsupported_by_verified_official_interface"
+    assert "raw_response" not in str(result)
+    assert "must-not-leak" not in str(result)
 
 
 def test_official_full_snapshot_prefers_official_capability_runner_bundle(monkeypatch) -> None:
@@ -1015,6 +1119,12 @@ def test_official_full_snapshot_skips_rest_sections_already_filled_by_python_bun
 
     monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "https://example.invalid/api")
     monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "1")
+    monkeypatch.setenv("VEDASTRO_FULL_SNAPSHOT_FANOUT_ENABLED", "1")
+    monkeypatch.setattr(
+        adapter,
+        "_try_official_full_capability_catalog_bundle",
+        lambda _case: {"available": False, "status": "blocked", "summary": {}, "coverage": {}},
+    )
     monkeypatch.setattr(adapter, "_try_official_python_bridge_snapshot_bundle", fake_bundle)
     monkeypatch.setattr(adapter, "_post_official_snapshot_section", fake_post)
 

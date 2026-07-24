@@ -49,7 +49,8 @@ export type DeclaredBirthPlace = Readonly<{
   label: string;
   lat: number;
   lon: number;
-  tz: number;
+  tz: number | null;
+  timezoneId?: string;
 }>;
 
 export function parseBirthDate(value: string): Date | undefined {
@@ -193,9 +194,10 @@ export function isDeclaredBirthProfileComplete(
     && Number.isFinite(place.lon)
     && place.lon >= -180
     && place.lon <= 180
-    && Number.isFinite(place.tz)
-    && place.tz >= -12
-    && place.tz <= 14);
+    && ((Number.isFinite(place.tz)
+      && (place.tz as number) >= -12
+      && (place.tz as number) <= 14)
+      || Boolean(place.timezoneId?.trim())));
 }
 
 export function isBirthTimeReadyForConsultation(draft: BirthTimeDraft) {

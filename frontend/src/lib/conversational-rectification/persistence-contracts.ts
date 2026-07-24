@@ -24,16 +24,21 @@ const birthDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) =
 const locationCodeSchema = boundedText(80);
 const birthplaceSchema = boundedJson(z.object({
   city: boundedText(120).optional(),
+  placeId: boundedText(240).optional(),
+  placeType: boundedText(80).optional(),
+  provider: boundedText(80).optional(),
   countryCode: z.string().regex(/^[A-Z0-9-]{1,8}$/).optional(),
   provinceCode: locationCodeSchema.optional(),
   cityCode: locationCodeSchema.optional(),
   districtCode: locationCodeSchema.optional(),
   latitude: z.number().finite().min(-90).max(90).optional(),
   longitude: z.number().finite().min(-180).max(180).optional(),
+  timezoneId: boundedText(120).optional(),
+  timezoneSource: boundedText(80).optional(),
   timezoneOffset: z.number().finite().min(-12).max(14),
 }).strict().superRefine((value, context) => {
-  if (!value.city && !value.cityCode) {
-    context.addIssue({ code: "custom", message: "city or cityCode is required" });
+  if (!value.city && !value.cityCode && !value.placeId) {
+    context.addIssue({ code: "custom", message: "city, cityCode, or placeId is required" });
   }
   if ((value.latitude === undefined) !== (value.longitude === undefined)) {
     context.addIssue({ code: "custom", message: "coordinates must be supplied as a pair" });

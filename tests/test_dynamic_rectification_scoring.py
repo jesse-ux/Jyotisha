@@ -138,7 +138,7 @@ def test_authenticated_dynamic_questionnaire_cannot_open_minute_confirmation(mon
 
     assert result["confidence"] == "high"
     assert result["can_apply"] is False
-    assert "minute_holdout_not_ready" in result["reasons"]
+    assert "vedastro_validation_required" in result["reasons"]
 
 
 def test_opportunity_route_defaults_legacy_missing_events_to_empty(monkeypatch) -> None:
