@@ -55,13 +55,31 @@ export async function GET() {
     // Read the profile after the case snapshot. If a declaration edit races
     // with this request, matching uses the later profile and cannot resurrect
     // an older case. A concurrently created case simply appears on refresh.
-    const { data: profile, error } = await supabase
+    let { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("credits,active_birth_time,birth_time_status,birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset")
+      .select("credits,active_birth_time,birth_time_status,birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset,birth_place_label,birth_place_type,birth_place_provider,birth_place_provider_id,timezone_id,timezone_source")
       .eq("id", userId)
       .single();
 
-    if (error) {
+    if (profileError && isMissingProfileColumn(profileError)) {
+      const fallback = await supabase
+        .from("profiles")
+        .select("credits,active_birth_time,birth_time_status,birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset")
+        .eq("id", userId)
+        .single();
+      profile = fallback.data ? {
+        ...fallback.data,
+        birth_place_label: undefined,
+        birth_place_type: undefined,
+        birth_place_provider: undefined,
+        birth_place_provider_id: undefined,
+        timezone_id: undefined,
+        timezone_source: undefined,
+      } : null;
+      profileError = fallback.error;
+    }
+
+    if (profileError || !profile) {
       return NextResponse.json({ error: "暂时无法读取账户余额" }, { status: 500 });
     }
     const rectificationCase = resolveAccountRectificationCase(
@@ -77,6 +95,17 @@ export async function GET() {
       hasConfirmedBirthTime: profile.birth_time_status === "confirmed"
         && typeof profile.active_birth_time === "string",
       rectificationCase,
+      birthLocation: {
+        label: profile.birth_place_label ?? null,
+        placeType: profile.birth_place_type ?? null,
+        provider: profile.birth_place_provider ?? null,
+        providerPlaceId: profile.birth_place_provider_id ?? null,
+        timezoneId: profile.timezone_id ?? null,
+        timezoneSource: profile.timezone_source ?? null,
+        timezoneOffset: profile.timezone_offset ?? null,
+        latitude: profile.latitude ?? null,
+        longitude: profile.longitude ?? null,
+      },
     });
   } catch (error) {
     if (isSupabaseConfigurationError(error)) {
@@ -108,7 +137,7 @@ export async function PATCH(request: Request) {
     const admin = createAdminSupabaseClient();
     let { data: currentProfile, error: currentProfileError } = await admin
       .from("profiles")
-      .select("birth_date,birth_time,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_time_status,rectification_case_id,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset")
+      .select("birth_date,birth_time,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_time_status,rectification_case_id,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset,birth_place_label,birth_place_type,birth_place_provider,birth_place_provider_id,timezone_id,timezone_source")
       .eq("id", userId)
       .maybeSingle();
     if (currentProfileError && isMissingProfileColumn(currentProfileError)) {
@@ -122,6 +151,12 @@ export async function PATCH(request: Request) {
         latitude: undefined,
         longitude: undefined,
         timezone_offset: undefined,
+        birth_place_label: undefined,
+        birth_place_type: undefined,
+        birth_place_provider: undefined,
+        birth_place_provider_id: undefined,
+        timezone_id: undefined,
+        timezone_source: undefined,
       } : null;
       currentProfileError = fallback.error;
     }
@@ -165,6 +200,12 @@ export async function PATCH(request: Request) {
       ...(payload.latitude !== undefined ? { latitude: payload.latitude } : {}),
       ...(payload.longitude !== undefined ? { longitude: payload.longitude } : {}),
       ...(payload.timezone_offset !== undefined ? { timezone_offset: payload.timezone_offset } : {}),
+      ...(payload.birth_place_label !== undefined ? { birth_place_label: payload.birth_place_label } : {}),
+      ...(payload.birth_place_type !== undefined ? { birth_place_type: payload.birth_place_type } : {}),
+      ...(payload.birth_place_provider !== undefined ? { birth_place_provider: payload.birth_place_provider } : {}),
+      ...(payload.birth_place_provider_id !== undefined ? { birth_place_provider_id: payload.birth_place_provider_id } : {}),
+      ...(payload.timezone_id !== undefined ? { timezone_id: payload.timezone_id } : {}),
+      ...(payload.timezone_source !== undefined ? { timezone_source: payload.timezone_source } : {}),
     };
     const withoutCoordinates = baseProfile;
     const invalidatesUnconfirmedApplication = Object.keys(applicationPatch).length > 0;

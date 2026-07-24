@@ -7,7 +7,7 @@ import hashlib
 import json
 import math
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -53,18 +53,66 @@ def _lookup_timezone_name(lat: float, lon: float) -> str | None:
 
 
 def infer_timezone_offset(*, lat: float, lon: float, local_datetime: datetime) -> float:
+    timezone_context = resolve_timezone_context(
+        lat=lat,
+        lon=lon,
+        local_datetime=local_datetime,
+    )
+    offset = timezone_context["timezone_offset"]
+    if offset is None:
+        raise TimezoneInferenceError(
+            f"local time is {timezone_context['local_time_status']} in IANA zone"
+        )
+    return float(offset)
+
+
+def resolve_timezone_context(
+    *, lat: float, lon: float, local_datetime: datetime | None = None
+) -> dict[str, Any]:
+    """Resolve an IANA zone and, when safe, its historical local UTC offset.
+
+    A missing local time still permits timezone identification. DST folds and
+    gaps deliberately return no offset instead of silently choosing one.
+    """
     if not (-90 <= lat <= 90 and -180 <= lon <= 180):
         raise TimezoneInferenceError("timezone inference received invalid coordinates")
     tz_name = _lookup_timezone_name(lat, lon)
     if not tz_name:
         raise TimezoneInferenceError("timezone inference returned no IANA zone")
+    if local_datetime is None:
+        return {
+            "timezone_id": tz_name,
+            "timezone_offset": None,
+            "local_time_status": "not_provided",
+        }
     try:
-        offset = local_datetime.replace(tzinfo=ZoneInfo(tz_name)).utcoffset()
+        zone = ZoneInfo(tz_name)
+        valid_offsets: set[float] = set()
+        for fold in (0, 1):
+            aware = local_datetime.replace(tzinfo=zone, fold=fold)
+            round_trip = aware.astimezone(timezone.utc).astimezone(zone).replace(tzinfo=None)
+            offset = aware.utcoffset()
+            if round_trip == local_datetime and offset is not None:
+                valid_offsets.add(offset.total_seconds() / 3600.0)
     except Exception as exc:
         raise TimezoneInferenceError("timezone inference failed for IANA zone") from exc
-    if offset is None:
-        raise TimezoneInferenceError("timezone inference returned no UTC offset")
-    return offset.total_seconds() / 3600.0
+    if not valid_offsets:
+        return {
+            "timezone_id": tz_name,
+            "timezone_offset": None,
+            "local_time_status": "nonexistent",
+        }
+    if len(valid_offsets) > 1:
+        return {
+            "timezone_id": tz_name,
+            "timezone_offset": None,
+            "local_time_status": "ambiguous",
+        }
+    return {
+        "timezone_id": tz_name,
+        "timezone_offset": valid_offsets.pop(),
+        "local_time_status": "resolved",
+    }
 
 
 def _normalized_request(payload: dict[str, Any]) -> dict[str, Any]:
@@ -83,9 +131,16 @@ def _normalized_request(payload: dict[str, Any]) -> dict[str, Any]:
     lat = float(payload["lat"])
     lon = float(payload["lon"])
     tz_requested = payload.get("tz")
+    timezone_id = payload.get("timezone_id", payload.get("timezoneId"))
     timezone_source = "explicit_offset"
     if tz_requested in {None, ""}:
-        tz = infer_timezone_offset(lat=lat, lon=lon, local_datetime=local_dt)
+        timezone_context = resolve_timezone_context(lat=lat, lon=lon, local_datetime=local_dt)
+        timezone_id = timezone_context["timezone_id"]
+        tz = timezone_context["timezone_offset"]
+        if tz is None:
+            raise TimezoneInferenceError(
+                f"local time is {timezone_context['local_time_status']} in IANA zone"
+            )
         timezone_source = "iana_inferred"
     else:
         tz = float(tz_requested)
@@ -101,6 +156,7 @@ def _normalized_request(payload: dict[str, Any]) -> dict[str, Any]:
         "lat": lat,
         "lon": lon,
         "tz": tz,
+        "timezone_id": str(timezone_id).strip() if timezone_id else None,
         "timezone_source": timezone_source,
         "ayanamsa": ayanamsa,
         "node_mode": requested_node,
@@ -151,11 +207,16 @@ def compute_chart(payload: dict[str, Any]) -> dict[str, Any]:
         "ephemeris_source": "swisseph_calc_ut",
         "ephemeris_flags_verified": False,
     }
+    if request["timezone_id"]:
+        effective["timezone_id"] = request["timezone_id"]
     requested = {
         "ayanamsa": payload.get("ayanamsa", "lahiri"),
         "node_mode": payload.get("node_mode", payload.get("nodeMode", "mean")),
         "timezone_offset": payload.get("tz"),
     }
+    requested_timezone_id = payload.get("timezone_id", payload.get("timezoneId"))
+    if requested_timezone_id:
+        requested["timezone_id"] = requested_timezone_id
     contract = _contract(requested, effective, algorithm="sidereal_natal_chart")
     hash_payload = {
         "contract": contract,

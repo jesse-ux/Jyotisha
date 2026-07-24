@@ -195,7 +195,7 @@ test("dynamic scores map independent engine values into guarded candidates", () 
   assert.equal(parsed.candidate.algorithmVersion, "birth-time-choice-scoring-v2");
 });
 
-test("dynamic score adapters keep minute confirmation closed before holdout release", () => {
+test("dynamic score adapters keep minute confirmation closed before VedAstro validation", () => {
   const parsed = parseDynamicChoiceScoring({
     ...apiScore,
     confidence: "high",
@@ -211,5 +211,5 @@ test("dynamic score adapters keep minute confirmation closed before holdout rele
 
   assert.equal(parsed.candidate.confidence, "high");
   assert.equal(parsed.candidate.canApply, false);
-  assert.ok(parsed.candidate.reasons.includes("minute_holdout_not_ready"));
+  assert.ok(parsed.candidate.reasons.includes("vedastro_validation_required"));
 });

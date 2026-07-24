@@ -30,6 +30,11 @@ export type OnboardingProfileRow = {
   readonly country_code: string | null;
   readonly province_code: string | null;
   readonly city_code: string | null;
+  readonly latitude: number | null;
+  readonly longitude: number | null;
+  readonly timezone_offset: number | null;
+  readonly birth_place_label: string | null;
+  readonly timezone_id: string | null;
   readonly onboarding_payload: unknown;
   readonly onboarding_version: string | null;
   readonly onboarding_generated_at: string | null;
@@ -92,28 +97,39 @@ function hasCompleteBirthProfile(profile: OnboardingProfileRow): boolean {
   const status = knownStatuses.find((item) => item === profile.birth_time_status)
     ?? (persistedTime ? "confirmed" : "");
   const clock = (value: string | null) => value ? value.slice(0, 5) : "";
+  const birthDraft = {
+    date: profile.birth_date ?? "",
+    time: clock(persistedTime),
+    reportedTime: clock(profile.reported_birth_time)
+      || (source === "legacy_import" ? clock(persistedTime) : ""),
+    birthTimeSource: source,
+    birthTimePeriod: profile.birth_time_period === "early_morning"
+      || profile.birth_time_period === "morning"
+      || profile.birth_time_period === "afternoon"
+      || profile.birth_time_period === "evening"
+      || profile.birth_time_period === "late_night"
+      ? profile.birth_time_period
+      : "",
+    birthTimeClue: profile.birth_time_clue ?? "",
+    uncertaintyBeforeMinutes: profile.uncertainty_before_minutes,
+    uncertaintyAfterMinutes: profile.uncertainty_after_minutes,
+    birthTimeStatus: status,
+  } as const;
+  const globalPlace = profile.birth_place_label && profile.timezone_id
+    ? {
+        label: profile.birth_place_label,
+        lat: profile.latitude ?? Number.NaN,
+        lon: profile.longitude ?? Number.NaN,
+        tz: profile.timezone_offset,
+        timezoneId: profile.timezone_id,
+      }
+    : null;
+  const placeComplete = globalPlace
+    ? isDeclaredBirthProfileComplete(birthDraft, globalPlace)
+    : Boolean(profile.country_code && profile.province_code && profile.city_code);
   return Boolean(profile.name
-    && profile.country_code
-    && profile.province_code
-    && profile.city_code
-    && isDeclaredBirthProfileComplete({
-      date: profile.birth_date ?? "",
-      time: clock(persistedTime),
-      reportedTime: clock(profile.reported_birth_time)
-        || (source === "legacy_import" ? clock(persistedTime) : ""),
-      birthTimeSource: source,
-      birthTimePeriod: profile.birth_time_period === "early_morning"
-        || profile.birth_time_period === "morning"
-        || profile.birth_time_period === "afternoon"
-        || profile.birth_time_period === "evening"
-        || profile.birth_time_period === "late_night"
-        ? profile.birth_time_period
-        : "",
-      birthTimeClue: profile.birth_time_clue ?? "",
-      uncertaintyBeforeMinutes: profile.uncertainty_before_minutes,
-      uncertaintyAfterMinutes: profile.uncertainty_after_minutes,
-      birthTimeStatus: status,
-    }));
+    && placeComplete
+    && isDeclaredBirthProfileComplete(birthDraft));
 }
 
 export function createOnboardingPost(dependencies: OnboardingPostDependencies): () => Promise<Response> {

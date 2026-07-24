@@ -192,6 +192,76 @@ test("creates an account-level case and first public turn through one RPC", asyn
   assert.deepEqual(result.validationReceipts, storedRow.validation_receipts);
 });
 
+test("omits the optional new-event follow-up marker for legacy first-turn SQL validators", async () => {
+  let firstTurnPayload: unknown;
+  const store = new ConversationalRectificationStore(rpcClient((name, args) => {
+    assert.equal(name, "create_conversational_rectification_case");
+    firstTurnPayload = args.p_first_turn;
+    return storedRow;
+  }));
+
+  await store.createCaseWithFirstTurn({
+    userId,
+    caseId,
+    actionId: caseId,
+    expectedVersion: 0,
+    revisionOfCaseId: null,
+    pendingConsultationQuestion: null,
+    declaredBirthInput: storedRow.declared_birth_input as never,
+    firstTurn: {
+      ...firstTurn,
+      evidenceRequest: {
+        ...firstTurn.evidenceRequest,
+        followUp: { kind: "new_event", evidenceId: null },
+      },
+    },
+    validationReceipt,
+    privateCandidate: storedRow.private_candidate,
+  });
+
+  assert.deepEqual(
+    (firstTurnPayload as { evidenceRequest?: { followUp?: unknown } }).evidenceRequest,
+    {
+      domains: firstTurn.evidenceRequest.domains,
+      datePrecision: firstTurn.evidenceRequest.datePrecision,
+      freeTextAllowed: true,
+    },
+  );
+});
+
+test("omits the optional new-event follow-up marker when saving a turn", async () => {
+  let turnPayload: unknown;
+  const store = new ConversationalRectificationStore(rpcClient((name, args) => {
+    assert.equal(name, "save_conversational_rectification_turn");
+    turnPayload = args.p_turn;
+    return storedRow;
+  }));
+
+  await store.saveTurn({
+    userId,
+    caseId,
+    actionId: "00000000-0000-4000-8000-000000000099",
+    expectedVersion: 0,
+    commandFingerprint: "a".repeat(64),
+    turn: {
+      ...firstTurn,
+      turnVersion: 1,
+      evidenceRequest: {
+        ...firstTurn.evidenceRequest,
+        followUp: { kind: "new_event", evidenceId: null },
+      },
+    },
+    evidence: [],
+    validationReceipt,
+    privateCandidate: storedRow.private_candidate,
+  });
+
+  assert.equal(
+    (turnPayload as { evidenceRequest?: { followUp?: unknown } }).evidenceRequest?.followUp,
+    undefined,
+  );
+});
+
 test("loads the latest unfinished case by account without a chat identifier", async () => {
   const calls: unknown[] = [];
   const store = new ConversationalRectificationStore(rpcClient((name, args) => {
@@ -501,6 +571,33 @@ test("declared birth input is strict, source-aware, bounded, and location-comple
       timezoneOffset: 8,
     },
   };
+  assert.equal(declaredBirthInputSchema.safeParse({
+    ...commonDeclaration,
+    source: "unknown",
+    birthplace: {
+      city: "台湾 · 台北市",
+      placeId: "1668341",
+      placeType: "locality",
+      provider: "geonames",
+      countryCode: "TW",
+      latitude: 25.03,
+      longitude: 121.56,
+      timezoneId: "Asia/Taipei",
+      timezoneSource: "iana_historical",
+      timezoneOffset: 8,
+    },
+  }).success, true);
+  assert.equal(declaredBirthInputSchema.safeParse({
+    ...commonDeclaration,
+    source: "unknown",
+    birthplace: {
+      placeId: "provider-place-id",
+      latitude: 40.7128,
+      longitude: -74.006,
+      timezoneId: "America/New_York",
+      timezoneOffset: -5,
+    },
+  }).success, true);
   for (const value of [
     { ...commonDeclaration, source: "hospital_record", reportedTime: "05:20", uncertaintyBeforeMinutes: 2, uncertaintyAfterMinutes: 2 },
     { ...commonDeclaration, source: "family_exact", reportedTime: "05:20", uncertaintyBeforeMinutes: 10, uncertaintyAfterMinutes: 10 },

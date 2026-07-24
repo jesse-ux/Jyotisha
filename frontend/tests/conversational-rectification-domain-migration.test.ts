@@ -23,6 +23,13 @@ const requestCardinalityMigration = readFileSync(
   ),
   "utf8",
 );
+const followUpMigration = readFileSync(
+  new URL(
+    "../supabase/migrations/20260723010000_align_conversational_follow_up_request.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 test("durable rectification SQL accepts every application evidence domain", () => {
   for (const validator of [
@@ -72,4 +79,17 @@ test("durable evidence requests allow one focused follow-up domain", () => {
   );
   assert.match(requestCardinalityMigration, /'between 2 and 4'/);
   assert.match(requestCardinalityMigration, /'between 1 and 4'/);
+});
+
+test("durable evidence requests accept bounded follow-up targeting", () => {
+  assert.match(
+    followUpMigration,
+    /array\['domains', 'datePrecision', 'freeTextAllowed', 'followUp'\]/,
+  );
+  assert.match(followUpMigration, /array\['kind', 'evidenceId'\]/);
+  assert.match(
+    followUpMigration,
+    /'new_event', 'event_date', 'event_detail'/,
+  );
+  assert.match(followUpMigration, /valid_uuid_text/);
 });

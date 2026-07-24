@@ -468,11 +468,17 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
   let turn = await post(handler, { type: "start", actionId: caseId, pendingConsultationQuestion: originalQuestion });
   assert.equal(turn.pendingConsultationQuestion, originalQuestion);
   assert.equal(turn.status, "active");
-  assert.match(turn.narrative, /05:00–06:00.*不能/);
+  assert.equal(
+    turn.narrative,
+    "当前仍在核对 05:00–06:00 的候选范围，不能视为已经确认的出生分钟。先说一件已经发生的重要经历好吗？请注明哪一年、哪一月以及发生了什么。",
+    "the first visible reply must remain the narrator's authored answer rather than receive a deterministic prefix or suffix",
+  );
   assert.doesNotMatch(turn.narrative, /\bD\d+\b/);
-  assert.equal((turn.narrative.match(/[？?]/g) ?? []).length, 1);
-  assert.match(turn.narrative, /哪一年、哪一月/);
-  assert.deepEqual(turn.evidenceRequest?.domains, ["career"]);
+  assert.deepEqual(
+    turn.evidenceRequest?.domains,
+    ["career"],
+    "the narrator chooses the next useful domain instead of receiving a program-authored domain list",
+  );
   assert.equal(turn.evidenceRequest?.freeTextAllowed, true);
   assert.equal(JSON.stringify(turn).includes("candidateWeights"), false);
   assert.equal(JSON.stringify(turn).includes("private-synthetic-partition"), false);
@@ -485,16 +491,23 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
     turnVersion: turn.turnVersion, domain: "career", answer: "都不符合，我想换一个方向",
   });
   assert.equal(turn.status, "active");
-  assert.match(turn.narrative, /不沿用不符合.*自由描述另一件已经发生/);
+  assert.equal(
+    turn.narrative,
+    "当前仍在核对 05:00–06:00 的候选范围，不能视为已经确认的出生分钟。先说一件已经发生的重要经历好吗？请注明哪一年、哪一月以及发生了什么。",
+    "a direction change must show the model reply instead of a program-authored redirect template",
+  );
+  assert.doesNotMatch(turn.narrative, /不沿用不符合|自由描述另一件已经发生/);
   assert.equal(backend.billing().chargeCount, 1);
 
   turn = await post(handler, {
     type: "answer", caseId, actionId: "00000000-0000-4000-8000-000000009004",
     turnVersion: turn.turnVersion, domain: "career", answer: "后来工作压力很大",
   });
-  assert.match(turn.narrative, /工作压力很大/);
-  assert.match(turn.narrative, /什么年月/);
-  assert.doesNotMatch(turn.narrative, /请提供.*真实事件/);
+  assert.equal(
+    turn.narrative,
+    "当前仍在核对 05:00–06:00 的候选范围，不能视为已经确认的出生分钟。先说一件已经发生的重要经历好吗？请注明哪一年、哪一月以及发生了什么。",
+  );
+  assert.doesNotMatch(turn.narrative, /我先按你的原话记下|我已保存你的原话|还差时间定位/);
   assert.equal(turn.evidenceRecap.at(-1)?.dateLabel, "日期待补充");
 
   const futureEvidenceAction = "00000000-0000-4000-8000-000000009050";
@@ -502,7 +515,12 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
     type: "answer", caseId, actionId: futureEvidenceAction,
     turnVersion: turn.turnVersion, domain: "career", answer: "2027年计划换工作",
   });
-  assert.match(turn.narrative, /未来事件只能作为背景.*不能用于校正评分/);
+  assert.equal(
+    turn.narrative,
+    "当前仍在核对 05:00–06:00 的候选范围，不能视为已经确认的出生分钟。先说一件已经发生的重要经历好吗？请注明哪一年、哪一月以及发生了什么。",
+    "future evidence must remain non-scoreable without replacing the model's visible answer",
+  );
+  assert.doesNotMatch(turn.narrative, /未来事件只能作为背景|不能用于校正评分/);
   assert.equal(turn.evidenceRecap.at(-1)?.dateLabel, "2027（未来，仅作背景）");
   const futureEvidenceId = turn.evidenceRecap.at(-1)?.id;
   assert.ok(futureEvidenceId);
@@ -881,12 +899,20 @@ test("rollback flag stops only new cases while existing v3 resume stays readable
     allowNewCaseCreation: pendingPolicy.allowNewCaseCreation,
   });
   backend.cases.set(caseId, enabled.cases.get(caseId)!);
+  const blockedHandler = createBirthTimeConversationPostHandler({
+    authenticate: async () => ({
+      userId: "00000000-0000-4000-8000-000000009098",
+      context: {},
+    }),
+    createService: async () => backend.service,
+    telemetry: () => undefined,
+  });
   const handler = createBirthTimeConversationPostHandler({
     authenticate: async () => ({ userId, context: {} }),
     createService: async () => backend.service,
     telemetry: () => undefined,
   });
-  const blockedStart = await handler(new Request("https://example.invalid/api/birth-time-conversation", {
+  const blockedStart = await blockedHandler(new Request("https://example.invalid/api/birth-time-conversation", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ type: "start", actionId: "00000000-0000-4000-8000-000000009050" }),

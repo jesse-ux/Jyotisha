@@ -20,32 +20,29 @@ def _row(time: str, score: float) -> CandidateScoreRow:
     }
 
 
-def test_high_evidence_candidate_remains_blocked_until_public_holdout_release() -> None:
+def test_locally_stable_high_evidence_candidate_can_enter_external_validation() -> None:
     result = adjudicate_candidate_rows(
-        [
-            _row("14:22", 16),
-            _row("14:23", 16),
-            _row("14:24", 16),
-            _row("14:25", 16),
-            _row("14:26", 16),
-            _row("14:27", 10),
-        ],
+        [_row(f"14:{minute:02d}", 20 if minute == 25 else 10) for minute in range(20, 31)],
         event_count=4,
         domain_count=3,
         request_fingerprint="high-fixture",
+        leave_one_event_out={"status": "pass", "runs": []},
     )
 
     assert result["confidence"] == "high"
-    assert result["can_apply"] is False
-    assert "minute_holdout_not_ready" in result["reasons"]
+    assert result["can_apply"] is True
     assert result["winning_segment"] == {
-        "start_time": "14:22",
-        "end_time": "14:26",
-        "representative_time": "14:24",
-        "width_minutes": 5,
+        "start_time": "14:25",
+        "end_time": "14:25",
+        "representative_time": "14:25",
+        "width_minutes": 1,
     }
-    assert result["margin_percent"] == 37.5
-    assert result["stability_diagnostics"]["neighbor_stability"]["all_required_passed"] is False
+    assert result["margin_percent"] == 50.0
+    assert result["stability_diagnostics"]["neighbor_stability"]["all_required_passed"] is True
+    assert result["candidate_ranking_summary"][:2] == [
+        {"rank": 1, "time": "14:25", "score": 20, "tied_minute_count": 1},
+        {"rank": 2, "time": "14:24", "score": 10, "tied_minute_count": 10},
+    ]
 
 
 def test_tied_disjoint_candidates_abstain() -> None:
@@ -213,7 +210,7 @@ def test_event_summary_is_fingerprinted_without_unlocking_minute_application() -
     assert changed_hash != input_hash
     assert result["canonical_input_hash"] == input_hash
     assert result["can_apply"] is False
-    assert "minute_holdout_not_ready" in result["reasons"]
+    assert "insufficient_events" in result["reasons"]
 
 
 def test_finance_events_use_d2_d11_and_recompute_both_dashas_per_minute(monkeypatch) -> None:

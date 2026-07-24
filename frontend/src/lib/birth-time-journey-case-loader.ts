@@ -22,6 +22,7 @@ import {
   parseDynamicPrivateRow,
 } from "./birth-time-journey-dynamic-state.ts";
 import { BirthTimeJourneyStoreError } from "./birth-time-journey-store-errors.ts";
+import { resolveMissingBirthTimezoneOffset } from "./birth-profile-timezone.ts";
 
 type JourneyLoadResult = { readonly data: unknown; readonly error: unknown };
 type JourneyLoadQuery = {
@@ -140,11 +141,17 @@ export async function loadStoredRectificationCase(
   const parsed = storedCaseSchema.parse(data);
   const { data: profile, error: profileError } = await client
     .from("profiles")
-    .select("latitude,longitude,timezone_offset")
+    .select("birth_date,reported_birth_time,birth_time_period,latitude,longitude,timezone_id,timezone_offset")
     .eq("id", userId)
     .maybeSingle();
   if (profileError || !profile) throw new BirthTimeJourneyStoreError("load_case");
-  const location = eventLocationSchema.parse(profile);
+  let resolvedProfile: unknown;
+  try {
+    resolvedProfile = await resolveMissingBirthTimezoneOffset(profile);
+  } catch {
+    throw new BirthTimeJourneyStoreError("load_case");
+  }
+  const location = eventLocationSchema.parse(resolvedProfile);
   const scoring = Object.keys(parsed.scoring_result).length > 0
     ? parseRectificationScoring(parsed.scoring_result)
     : undefined;

@@ -87,6 +87,19 @@ test("never invents a missing month or day", () => {
   assert.equal(evidence?.eventSummary, "毕业");
 });
 
+test("expands abbreviated historical years without losing the first scoreable event", () => {
+  const evidence = extractLifeEventEvidence({
+    rawText: "之后 21 年元旦回家准备备考考研，然后又遇到疫情封控，一直到21年底，我实际上在家呆到23年才出来",
+    sourceTurnId,
+    asOfDate: "2026-07-24",
+  });
+
+  assert.equal(evidence[0]?.dateValue, "2021");
+  assert.equal(evidence[0]?.eventSummary, "元旦回家准备备考考研");
+  assert.equal(evidence[0]?.scoreable, true);
+  assert.ok(evidence.some((item) => item.dateValue === "2023"));
+});
+
 test("accepts nineteenth-century Chinese and ISO dates as scoreable historical evidence", () => {
   const [education] = extractLifeEventEvidence({
     rawText: "1891年11月进入巴黎大学学习",
@@ -170,6 +183,8 @@ test("keeps a bare year as non-scoreable clarification instead of an event summa
 
 for (const rawText of [
   "2021年7月毕业并次年工作",
+  "2021年7月毕业并来年工作",
+  "2021年7月毕业并翌年工作",
   "2021年7月毕业并后来工作",
   "2021年7月毕业并第二年工作",
   "2021年7月毕业并此前工作",

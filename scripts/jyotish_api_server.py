@@ -90,6 +90,246 @@ _RATE_LIMIT_LOCK = threading.Lock()
 _RATE_LIMIT_BUCKETS: dict[str, tuple[float, int]] = {}
 
 
+def resolve_location_timezone_payload(body):
+    """Resolve a global coordinate to IANA timezone and safe historical offset."""
+    calculation_service = _load_local_module('domain_calculation_service')
+    lat = float(body['latitude'])
+    lon = float(body['longitude'])
+    birth_date = str(body.get('birthDate') or '').strip()
+    birth_time = str(body.get('birthTime') or '').strip()
+    local_datetime = None
+    if birth_time and not birth_date:
+        raise ValueError('birthDate is required when birthTime is supplied')
+    if birth_date:
+        if not re.fullmatch(r'\d{4}-\d{2}-\d{2}', birth_date):
+            raise ValueError('birthDate must be YYYY-MM-DD')
+        if birth_time:
+            if not re.fullmatch(r'(?:[01]\d|2[0-3]):[0-5]\d', birth_time):
+                raise ValueError('birthTime must be HH:MM')
+            local_datetime = datetime.fromisoformat(f'{birth_date}T{birth_time}:00')
+        else:
+            datetime.fromisoformat(birth_date)
+    context = calculation_service.resolve_timezone_context(
+        lat=lat,
+        lon=lon,
+        local_datetime=local_datetime,
+    )
+    return {
+        'available': True,
+        'timezoneId': context['timezone_id'],
+        'timezoneOffset': context['timezone_offset'],
+        'timezoneSource': 'iana_historical',
+        'localTimeStatus': context['local_time_status'],
+    }
+
+_VEDASTRO_RECTIFICATION_DOMAIN_MAP = {
+    'career': ('career', 'direct'),
+    'finance': ('wealth', 'direct'),
+    'relationship': ('marriage', 'direct'),
+    'education': ('career', 'proxy'),
+    'relocation': ('career', 'proxy'),
+}
+
+
+def _rectification_event_date_range(event):
+    value = str(event.get('date') or '')
+    precision = str(event.get('precision') or '')
+    if precision == 'day':
+        return value, value
+    if precision == 'month':
+        start = datetime.strptime(value, '%Y-%m')
+        next_month = (
+            datetime(start.year + 1, 1, 1)
+            if start.month == 12
+            else datetime(start.year, start.month + 1, 1)
+        )
+        return start.strftime('%Y-%m-%d'), (next_month - timedelta(days=1)).strftime('%Y-%m-%d')
+    if precision == 'year':
+        year = int(value)
+        return f'{year:04d}-01-01', f'{year:04d}-12-31'
+    raise ValueError(f'Unsupported event precision: {precision}')
+
+
+def _rectification_event_representative_date(start_date, end_date):
+    start = datetime.strptime(start_date, '%Y-%m-%d')
+    end = datetime.strptime(end_date, '%Y-%m-%d')
+    return (start + (end - start) / 2).strftime('%Y-%m-%d')
+
+
+def _select_vedastro_rectification_events(events):
+    precision_rank = {'year': 1, 'month': 2, 'day': 3}
+    selected_by_domain = {}
+    eligible_event_count = 0
+    unsupported_events = []
+    for event in events:
+        mapping = _VEDASTRO_RECTIFICATION_DOMAIN_MAP.get(event['domain'])
+        if mapping is None:
+            unsupported_events.append({
+                'event_id': event['id'],
+                'ui_domain': event['domain'],
+                'status': 'unsupported_range_scan_domain',
+                'reason': 'VedAstro SearchEvents does not expose a supported health-pressure range-scan domain.',
+            })
+            continue
+        eligible_event_count += 1
+        adapter_domain, mapping_mode = mapping
+        start_date, end_date = _rectification_event_date_range(event)
+        rank = (
+            1 if mapping_mode == 'direct' else 0,
+            precision_rank.get(str(event.get('precision') or ''), 0),
+            end_date,
+        )
+        current = selected_by_domain.get(adapter_domain)
+        if current is None or rank > current[0]:
+            representative_date = _rectification_event_representative_date(start_date, end_date)
+            selected_by_domain[adapter_domain] = (
+                rank,
+                event,
+                adapter_domain,
+                mapping_mode,
+                representative_date,
+                representative_date,
+            )
+    selected_events = [
+        selected_by_domain[domain][1:]
+        for domain in sorted(selected_by_domain)
+    ]
+    return selected_events, eligible_event_count, unsupported_events
+
+
+def _safe_vedastro_range_scan_summary(event, adapter_domain, mapping_mode, start_date, end_date, report):
+    ledger = report.get('evidence_ledger') if isinstance(report.get('evidence_ledger'), list) else []
+    signal_lift = round(sum(
+        float(item.get('signal_lift') or 0)
+        for item in ledger
+        if isinstance(item, dict) and isinstance(item.get('signal_lift'), (int, float))
+    ), 6)
+    event_count = int(report.get('event_count') or 0)
+    return {
+        'event_id': str(event.get('id') or ''),
+        'ui_domain': str(event.get('domain') or ''),
+        'adapter_domain': adapter_domain,
+        'mapping_mode': mapping_mode,
+        'start_date': start_date,
+        'end_date': end_date,
+        'status': str(report.get('status') or 'unknown'),
+        'available': bool(report.get('available')),
+        'event_count': event_count,
+        'matched': event_count > 0,
+        'signal_lift': signal_lift,
+        'top_event_id': str((report.get('top_event') or {}).get('event_id') or ''),
+    }
+
+
+def _vedastro_candidate_metric(event_scans):
+    successful = [item for item in event_scans if item.get('status') == 'ok' and item.get('available')]
+    return {
+        'requested_event_count': len(event_scans),
+        'successful_event_count': len(successful),
+        'matched_event_count': sum(1 for item in successful if item.get('matched')),
+        'event_hit_count': sum(int(item.get('event_count') or 0) for item in successful),
+        'signal_lift': round(sum(float(item.get('signal_lift') or 0) for item in successful), 6),
+    }
+
+
+def _vedastro_metric_key(metric):
+    return (
+        int(metric.get('matched_event_count') or 0),
+        float(metric.get('signal_lift') or 0),
+        int(metric.get('event_hit_count') or 0),
+    )
+
+
+_VEDASTRO_MINUTE_SENSITIVE_LAYERS = (
+    'ascendant_house_boundaries',
+    'D9',
+    'D10',
+    'dasha_boundaries',
+)
+
+
+def _safe_vedastro_minute_snapshot_summary(candidate_time, report):
+    layers = report.get('layers') if isinstance(report.get('layers'), dict) else {}
+    safe_layers = {}
+    for name in (*_VEDASTRO_MINUTE_SENSITIVE_LAYERS, 'kp_cusp_sub_lord'):
+        layer = layers.get(name) if isinstance(layers.get(name), dict) else {}
+        safe_layer = {
+            'status': str(layer.get('status') or 'missing'),
+        }
+        if name in _VEDASTRO_MINUTE_SENSITIVE_LAYERS:
+            safe_layer['fingerprint'] = layer.get('fingerprint')
+        if name == 'ascendant_house_boundaries':
+            safe_layer['ascendant'] = layer.get('ascendant')
+            safe_layer['house_count'] = len(layer.get('houses') or {})
+        elif name in {'D9', 'D10'}:
+            safe_layer['house_count'] = len(layer.get('houses') or {})
+            safe_layer['planet_count'] = len(layer.get('planets') or {})
+        elif name == 'dasha_boundaries':
+            safe_layer['boundary_count'] = int(layer.get('boundary_count') or 0)
+        elif name == 'kp_cusp_sub_lord':
+            safe_layer['reason'] = str(layer.get('reason') or '')
+        safe_layers[name] = safe_layer
+    return {
+        'candidate_time': candidate_time,
+        'status': str(report.get('status') or 'blocked'),
+        'available': bool(report.get('available')),
+        'source': str(report.get('source') or 'vedastro_official'),
+        'layers': safe_layers,
+    }
+
+
+def _compare_vedastro_minute_snapshots(candidate_snapshots):
+    comparison_ready = len(candidate_snapshots) == 2 and all(
+        item.get('available') for item in candidate_snapshots
+    )
+    differences = {}
+    discriminated_layers = []
+    for layer_name in _VEDASTRO_MINUTE_SENSITIVE_LAYERS:
+        left = (candidate_snapshots[0].get('layers') or {}).get(layer_name, {}) if candidate_snapshots else {}
+        right = (candidate_snapshots[1].get('layers') or {}).get(layer_name, {}) if len(candidate_snapshots) > 1 else {}
+        both_available = left.get('status') == 'ok' and right.get('status') == 'ok'
+        differs = bool(
+            both_available
+            and left.get('fingerprint')
+            and right.get('fingerprint')
+            and left.get('fingerprint') != right.get('fingerprint')
+        )
+        differences[layer_name] = {
+            'status': 'different' if differs else 'same' if both_available else 'unavailable',
+            'discriminated': differs,
+        }
+        if differs:
+            discriminated_layers.append(layer_name)
+    return {
+        'comparison_ready': comparison_ready,
+        'discriminated': comparison_ready and bool(discriminated_layers),
+        'discriminated_layers': discriminated_layers,
+        'differences': differences,
+    }
+
+
+def _rectification_candidate_ready_for_external_validation(result):
+    """Allow external validation once local scoring has a narrow, auditable lead."""
+    segment = result.get('winning_segment')
+    ranking = result.get('candidate_ranking_summary')
+    if not isinstance(segment, dict) or not isinstance(ranking, list) or len(ranking) < 2:
+        return False
+    try:
+        width_minutes = int(segment.get('width_minutes') or 0)
+        top_score = float(result.get('top_score'))
+        second_score = float(result.get('second_score'))
+    except (TypeError, ValueError):
+        return False
+    return (
+        int(result.get('event_count') or 0) >= 3
+        and int(result.get('domain_count') or 0) >= 2
+        and 1 <= width_minutes <= 15
+        and bool(segment.get('representative_time'))
+        and top_score > second_score
+        and 'missing_mandatory_layers' not in (result.get('reasons') or [])
+    )
+
+
 def build_evidence_packet_view(job_record: dict | None) -> dict:
     """Public, token-protected job view. Excludes prompt internals and raw input."""
     job_record = job_record or {}
@@ -1693,6 +1933,11 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 else:
                     lat, lon, tz = CITY_DB[matched]
                     self._json({'status': 'local_city_match', 'city': matched, 'lat': lat, 'lon': lon, 'tz': tz})
+            elif path == '/api/location/timezone':
+                try:
+                    self._json(resolve_location_timezone_payload(body))
+                except (KeyError, TypeError, ValueError) as exc:
+                    self._error_json(str(exc), 400, 'ERR_INVALID_LOCATION_TIMEZONE_REQUEST')
             elif path == '/api/chart':
                 result = self._compute_chart(body)
                 self._json(result)
@@ -6938,8 +7183,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         lon = self._get_float(body, 'lon', 0, -180, 180)
         tz = self._get_float(body, 'tz', 0, -14, 14)
         events = body.get('events')
-        if not isinstance(events, list) or not 3 <= len(events) <= 6:
-            raise BadRequest('events must contain between 3 and 6 items')
+        if not isinstance(events, list) or len(events) < 3:
+            raise BadRequest('events must contain at least 3 items')
         normalized_events = []
         allowed_domains = {'education', 'relocation', 'relationship', 'career', 'finance', 'health_pressure'}
         formats = {'year': '%Y', 'month': '%Y-%m', 'day': '%Y-%m-%d'}
@@ -6986,35 +7231,220 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'tz': tz,
             'events': normalized_events,
         })
+        external_validation = {
+            'status': 'not_evaluated',
+            'reason': 'local_candidate_not_ready_for_external_validation',
+            'vedastro_status': 'not_evaluated',
+            'vedastro_reason': 'official_vedastro_runs_after_local_scoring_produces_a_narrow_candidate',
+            'blockers': [],
+        }
+        local_candidate_ready = _rectification_candidate_ready_for_external_validation(result)
+        if high_rigor and local_candidate_ready:
+            from scripts.rectification_three_engine_packet import build_packet
+
+            representative_time = result['winning_segment']['representative_time']
+            representative_hour, representative_minute = representative_time.split(':', 1)
+            engine_case = {
+                'year': parsed_birth_date.year,
+                'month': parsed_birth_date.month,
+                'day': parsed_birth_date.day,
+                'hour': int(representative_hour),
+                'minute': int(representative_minute),
+                'lat': lat,
+                'lon': lon,
+                'tz': tz,
+            }
+            three_engine_packet = build_packet(engine_case)
+            vedastro_events = [{
+                'date': event['date'],
+                'domain': event['domain'],
+                'summary': event.get('summary', ''),
+            } for event in normalized_events]
+            vedastro_result = self._compute_vedastro_gateway_run({
+                **engine_case,
+                'question': (
+                    'Validate this rectified birth-minute candidate against the dated life events '
+                    'and minute-sensitive chart boundaries. Events: '
+                    + json.dumps(vedastro_events, ensure_ascii=False, sort_keys=True)
+                ),
+                'theme': sorted({
+                    _VEDASTRO_RECTIFICATION_DOMAIN_MAP[event['domain']][0]
+                    for event in normalized_events
+                    if event['domain'] in _VEDASTRO_RECTIFICATION_DOMAIN_MAP
+                }),
+                'reference_date': datetime.now().strftime('%Y-%m-%d'),
+            })
+            vedastro_status = str(
+                vedastro_result.get('official_closure_state')
+                or vedastro_result.get('status')
+                or 'blocked'
+            )
+            parity_passed = (
+                all(status == 'ok' for status in three_engine_packet.get('engine_status', {}).values())
+                and three_engine_packet.get('mismatch_count') == 0
+            )
+            official_response_present = vedastro_status == 'official_verified'
+            ranking = result.get('candidate_ranking_summary') or []
+            candidate_times = [
+                str(item.get('time') or '')
+                for item in ranking[:2]
+                if isinstance(item, dict) and item.get('time')
+            ]
+            supported_events, eligible_event_count, unsupported_events = (
+                _select_vedastro_rectification_events(normalized_events)
+            )
+
+            vedastro_adapter = _load_local_module('vedastro_service_adapter')
+            candidate_validations = []
+            minute_candidate_snapshots = []
+            range_scan_cache = {}
+            for candidate_time in candidate_times:
+                candidate_hour, candidate_minute = candidate_time.split(':', 1)
+                candidate_case = {
+                    **engine_case,
+                    'hour': int(candidate_hour),
+                    'minute': int(candidate_minute),
+                }
+                minute_snapshot = vedastro_adapter.run_rectification_minute_snapshot_for_case(
+                    candidate_case,
+                    case_id=f'user_rectification_{candidate_time.replace(":", "")}',
+                )
+                minute_candidate_snapshots.append(
+                    _safe_vedastro_minute_snapshot_summary(candidate_time, minute_snapshot)
+                )
+                event_scans = []
+                for event, adapter_domain, mapping_mode, event_start, event_end in supported_events:
+                    cache_key = (candidate_time, adapter_domain, event_start, event_end)
+                    if cache_key not in range_scan_cache:
+                        range_scan_cache[cache_key] = vedastro_adapter.run_range_scan_for_case(
+                            candidate_case,
+                            adapter_domain,
+                            event_start,
+                            event_end,
+                            case_id=f'user_rectification_{candidate_time.replace(":", "")}',
+                        )
+                    event_scans.append(_safe_vedastro_range_scan_summary(
+                        event,
+                        adapter_domain,
+                        mapping_mode,
+                        event_start,
+                        event_end,
+                        range_scan_cache[cache_key],
+                    ))
+                candidate_validations.append({
+                    'candidate_time': candidate_time,
+                    'metric': _vedastro_candidate_metric(event_scans),
+                    'events': event_scans,
+                })
+
+            minute_comparison = _compare_vedastro_minute_snapshots(minute_candidate_snapshots)
+            minute_snapshots_verified = bool(
+                minute_comparison['comparison_ready']
+                and all(item.get('source') == 'vedastro_official' for item in minute_candidate_snapshots)
+            )
+            official_response_present = official_response_present or minute_snapshots_verified
+            if minute_snapshots_verified:
+                vedastro_status = 'official_verified'
+            background_comparison_ready = len(candidate_validations) == 2 and bool(supported_events)
+            scans_succeeded = background_comparison_ready and all(
+                item['metric']['successful_event_count'] == item['metric']['requested_event_count']
+                for item in candidate_validations
+            )
+            semantic_validation_passed = (
+                official_response_present
+                and minute_snapshots_verified
+                and minute_comparison['discriminated']
+            )
+            external_blockers = []
+            if not parity_passed:
+                external_blockers.append('three_engine_parity_not_passed')
+            if not official_response_present:
+                external_blockers.append('vedastro_official_response_missing')
+            if len(candidate_times) < 2:
+                external_blockers.append('vedastro_runner_up_candidate_missing')
+            if len(candidate_times) >= 2 and not minute_snapshots_verified:
+                external_blockers.append('vedastro_minute_snapshot_failed')
+            if minute_snapshots_verified and not minute_comparison['discriminated']:
+                external_blockers.append('vedastro_minute_sensitive_layers_not_discriminated')
+            background_status = (
+                'pass'
+                if scans_succeeded
+                else 'partial'
+                if candidate_validations
+                else 'not_evaluated'
+            )
+            external_validation = {
+                'status': 'pass' if parity_passed and semantic_validation_passed else 'fail',
+                'reason': (
+                    'winner_must_pass_three_engine_parity_and_official_vedastro_minute_sensitive_candidate_identity_checks; '
+                    'SearchEvents_is_background_only'
+                ),
+                'vedastro_status': vedastro_status,
+                'vedastro_reason': str(
+                    vedastro_result.get('official_closure_reason')
+                    or 'official_minute_snapshot_required'
+                ),
+                'blockers': external_blockers,
+                'candidate_time': representative_time,
+                'engine_status': three_engine_packet.get('engine_status', {}),
+                'match_count': three_engine_packet.get('match_count', 0),
+                'mismatch_count': three_engine_packet.get('mismatch_count', 0),
+                'minute_sensitive_validation': {
+                    'status': 'pass' if semantic_validation_passed else 'fail',
+                    'comparison_contract': (
+                        'official_ascendant_house_boundaries_plus_D9_plus_D10_plus_dasha_boundary_identity; '
+                        'local_event_scoring_keeps_candidate_order'
+                    ),
+                    'candidate_order_source': 'local_dated_event_scoring',
+                    'candidates': minute_candidate_snapshots,
+                    **minute_comparison,
+                    'kp_cusp_sub_lord': {
+                        'status': 'unsupported_by_verified_official_interface',
+                        'used_for_decision': False,
+                    },
+                },
+                'event_background_validation': {
+                    'status': background_status,
+                    'used_for_decision': False,
+                    'comparison_contract': 'SearchEvents provides background event context and never selects the final minute',
+                    'eligible_event_count': eligible_event_count,
+                    'supported_event_count': len(supported_events),
+                    'selection_policy': (
+                        'one_strongest_event_per_native_adapter_domain; '
+                        'direct_mapping_before_proxy; day_before_month_before_year; '
+                        'newest_on_equal_precision; month_or_year_uses_midpoint_day'
+                    ),
+                    'unsupported_events': unsupported_events,
+                    'candidates': candidate_validations,
+                },
+            }
+            result['three_engine_packet'] = {
+                **three_engine_packet,
+                'vedastro': {
+                    'status': vedastro_status,
+                    'official_closure_reason': vedastro_result.get('official_closure_reason'),
+                    'minute_sensitive_layers': list(_VEDASTRO_MINUTE_SENSITIVE_LAYERS),
+                    'search_events_role': 'background_only',
+                },
+                'can_confirm': parity_passed and semantic_validation_passed,
+            }
+
         from scripts.rectification_technique_contract import build_rectification_technique_contract
         result['technique_contract'] = build_rectification_technique_contract(
             event_count=result.get('event_count', 0),
             domain_count=result.get('domain_count', 0),
             high_rigor=high_rigor,
+            local_candidate_ready=local_candidate_ready,
             stability_diagnostics=result.get('stability_diagnostics'),
             required_layers_complete='missing_mandatory_layers' not in result.get('reasons', []),
             canonical_input_hash=result.get('canonical_input_hash', ''),
             missing_required_layers=result.get('missing_layers', []),
+            external_validation=external_validation,
         )
         result['can_apply'] = bool(result['technique_contract']['confirmation_allowed'])
-        if high_rigor:
-            from scripts.rectification_three_engine_packet import build_packet
-            result['three_engine_packet'] = build_packet({
-                'year': parsed_birth_date.year,
-                'month': parsed_birth_date.month,
-                'day': parsed_birth_date.day,
-                'hour': int(start_time.split(':', 1)[0]),
-                'minute': int(start_time.split(':', 1)[1]),
-                'lat': lat,
-                'lon': lon,
-                'tz': tz,
-            },
-                enqueue_vedastro_gateway=True,
-                vedastro_question='High-rigor birth-time rectification evidence packet',
-                vedastro_reference_date=datetime.now().strftime('%Y-%m-%d'),
-            )
-            result['can_apply'] = False
-            result.setdefault('reasons', []).append('three_engine_parity_not_passed')
+        result['reasons'] = list(dict.fromkeys(
+            result.get('reasons', []) + result['technique_contract']['hard_blockers']
+        ))
         return {
             'success': True,
             'endpoint': 'active_rectification_events',
@@ -7147,7 +7577,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         except (KeyError, TypeError, ValueError) as exc:
             raise BadRequest(str(exc)) from exc
         result['can_apply'] = False
-        result.setdefault('reasons', []).append('minute_holdout_not_ready')
+        result.setdefault('reasons', []).append('vedastro_validation_required')
         return {'success': True, 'endpoint': 'dynamic_rectification_score', **result}
 
     def _compute_case_validation(self, body):

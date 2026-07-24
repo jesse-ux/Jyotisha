@@ -1,18 +1,26 @@
 "use client";
 
-import { ArrowUp, Square } from "lucide-react";
+import { ArrowUp, Check, Copy, RotateCcw, Square, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ChatMessageRow } from "./chat-message-row.tsx";
+import { AppLoadingIndicator } from "./app-loading-indicator.tsx";
+import { ModelSelector } from "./model-selector.tsx";
 import { Button } from "./ui/button.tsx";
 import { Textarea } from "./ui/textarea.tsx";
 import {
   useConversationalRectification,
+  type ConversationalRectificationMessage,
+  type ConversationalRectificationStoredMessage,
   type ConversationalRectificationController,
 } from "../hooks/use-conversational-rectification.ts";
 import type { ConversationalRectificationTurn } from "../lib/conversational-rectification/contracts.ts";
+import type { PublicLanguageModel } from "../lib/public-models.ts";
 
 type SurfaceProps = Readonly<{
   controller: ConversationalRectificationController;
+  models: readonly PublicLanguageModel[];
+  selectedModelId: string;
+  onSelectModel: (modelId: string) => void;
   pendingConsultationQuestion?: string | null;
   continuationPending?: boolean;
   onContinueOriginalQuestion?: (question: string) => void;
@@ -24,20 +32,20 @@ function safely(request: Promise<unknown>) {
   void request.catch(() => undefined);
 }
 
-function candidateStatus(turn: ConversationalRectificationTurn): string {
-  if (turn.status === "completed" && turn.candidate.status === "confirmed") return "已确认";
-  if (turn.status === "completed") return "范围已保存，分钟未确认";
-  if (turn.candidate.status === "ready_for_confirmation") return "待确认，尚未验证";
-  return "待验证";
-}
-
 export function ConversationalRectificationSurface({
   controller,
+  models,
+  selectedModelId,
+  onSelectModel,
   pendingConsultationQuestion,
   continuationPending = false,
   onContinueOriginalQuestion,
 }: SurfaceProps) {
   const composer = useRef<HTMLTextAreaElement>(null);
+  const conversationEnd = useRef<HTMLDivElement>(null);
+  const [feedback, setFeedback] = useState<Record<string, "up" | "down" | undefined>>({});
+  const [copiedMessageKey, setCopiedMessageKey] = useState<string | null>(null);
+  const [regeneratingMessageKey, setRegeneratingMessageKey] = useState<string | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [submission, setSubmission] = useState<Readonly<{
     text: string;
@@ -45,9 +53,22 @@ export function ConversationalRectificationSurface({
     turnVersion: number;
   }> | null>(null);
   const turn = controller.turn;
+  const messageCount = controller.messages?.length ?? 0;
+  const latestMessageText = controller.messages?.[messageCount - 1]?.text ?? turn?.narrative ?? "";
+  const latestAssistantKey = [...(controller.messages ?? [])]
+    .reverse()
+    .find((message) => message.role === "assistant")?.renderKey
+    ?? `assistant-${turn?.turnVersion ?? 0}`;
   useEffect(() => () => {
     if (undoTimer.current) clearTimeout(undoTimer.current);
   }, []);
+  useEffect(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    conversationEnd.current?.scrollIntoView({
+      behavior: controller.pending || submission !== null || reduceMotion ? "auto" : "smooth",
+      block: "end",
+    });
+  }, [controller.error, controller.pending, latestMessageText, messageCount, submission, turn?.turnVersion]);
   const pendingQuestion = turn?.status === "completed"
     ? turn.pendingConsultationQuestion
     : turn?.pendingConsultationQuestion ?? pendingConsultationQuestion ?? null;
@@ -55,7 +76,9 @@ export function ConversationalRectificationSurface({
   if (!turn) {
     return (
       <section className="conversational-rectification" aria-busy={controller.pending} aria-label="生时校正对话">
-        <p className="conversational-empty-state" aria-live="polite" role="status">正在建立校正记录…</p>
+        <div className="conversational-loading" aria-live="polite" role="status">
+          <AppLoadingIndicator title="正在建立校正记录…" detail="正在加载校正进度，准备第一条问题。" />
+        </div>
         {controller.error && <p className="form-error" role="alert">{controller.error}</p>}
       </section>
     );
@@ -87,6 +110,25 @@ export function ConversationalRectificationSurface({
       }
     }, ANSWER_UNDO_WINDOW_MS);
   };
+  const copyMessage = async (message: ConversationalRectificationMessage) => {
+    try {
+      await navigator.clipboard.writeText(message.text);
+      setCopiedMessageKey(message.renderKey);
+      window.setTimeout(() => setCopiedMessageKey((current) => (
+        current === message.renderKey ? null : current
+      )), 1_500);
+    } catch {
+      // Clipboard permission failures must not interrupt the conversation.
+    }
+  };
+  const regenerateMessage = async (messageKey: string) => {
+    setRegeneratingMessageKey(messageKey);
+    try {
+      await controller.regenerate();
+    } finally {
+      setRegeneratingMessageKey((current) => current === messageKey ? null : current);
+    }
+  };
   const undoSubmission = () => {
     if (submission?.phase !== "undo") return;
     if (undoTimer.current) clearTimeout(undoTimer.current);
@@ -105,70 +147,73 @@ export function ConversationalRectificationSurface({
           text: turn.narrative,
           renderKey: `assistant-${turn.turnVersion}`,
         }]).map((message) => (
-          <ChatMessageRow
-            key={message.renderKey}
-            message={{
-              role: message.role,
-              text: message.text,
-              renderKey: message.renderKey,
-              state: "settled",
-            }}
-          />
+          <div className="rectification-message-entry" key={message.renderKey}>
+            <ChatMessageRow
+              message={regeneratingMessageKey === message.renderKey
+                ? { role: "assistant", text: "", renderKey: message.renderKey, state: "thinking" }
+                : {
+                    role: message.role,
+                    text: message.text,
+                    renderKey: message.renderKey,
+                    state: "settled",
+                  }}
+            />
+            {message.role === "assistant" && regeneratingMessageKey !== message.renderKey && (
+              <div className="rectification-message-actions" aria-label="Agent 回答操作">
+                <button
+                  aria-label="赞"
+                  aria-pressed={feedback[message.renderKey] === "up"}
+                  className={feedback[message.renderKey] === "up" ? "is-active" : ""}
+                  title="赞"
+                  type="button"
+                  onClick={() => setFeedback((current) => ({
+                    ...current,
+                    [message.renderKey]: current[message.renderKey] === "up" ? undefined : "up",
+                  }))}
+                >
+                  <ThumbsUp aria-hidden="true" />
+                </button>
+                <button
+                  aria-label="踩"
+                  aria-pressed={feedback[message.renderKey] === "down"}
+                  className={feedback[message.renderKey] === "down" ? "is-active" : ""}
+                  title="踩"
+                  type="button"
+                  onClick={() => setFeedback((current) => ({
+                    ...current,
+                    [message.renderKey]: current[message.renderKey] === "down" ? undefined : "down",
+                  }))}
+                >
+                  <ThumbsDown aria-hidden="true" />
+                </button>
+                <button aria-label="复制回答" title="复制" type="button" onClick={() => void copyMessage(message)}>
+                  {copiedMessageKey === message.renderKey
+                    ? <Check aria-hidden="true" />
+                    : <Copy aria-hidden="true" />}
+                </button>
+                <button
+                  aria-label="重跑回答"
+                  disabled={busy || message.renderKey !== latestAssistantKey || !canAnswer}
+                  title={message.renderKey === latestAssistantKey ? "重跑" : "只能重跑最新回答"}
+                  type="button"
+                  onClick={() => safely(regenerateMessage(message.renderKey))}
+                >
+                  <RotateCcw aria-hidden="true" />
+                </button>
+              </div>
+            )}
+          </div>
         ))}
         {submission && turn.turnVersion === submission.turnVersion && (
           <ChatMessageRow
             message={{ role: "user", text: submission.text, renderKey: "pending-evidence", state: "settled" }}
           />
         )}
-        <details className="rectification-message-details rectification-progress-details">
-                <summary>
-                  {turn.candidate.representativeTime
-                    ? `当前候选 ${turn.candidate.representativeTime} · ${candidateStatus(turn)}`
-                    : `校正进度 · ${candidateStatus(turn)}`}
-                </summary>
-                <p>
-                  {turn.candidate.rangeStart && turn.candidate.rangeEnd
-                    ? `候选范围 ${turn.candidate.rangeStart}—${turn.candidate.rangeEnd}；已记录 ${turn.evidenceRecap.length} 条经历。`
-                    : `已记录 ${turn.evidenceRecap.length} 条经历，尚未缩小候选范围。`}
-                </p>
-                <p>候选只用于继续验证；这一步不会自动采用候选，未经发布门禁与明确确认不会成为当前排盘时间。</p>
-                {turn.evidenceRecap.length > 0 && (
-                  <ul aria-label="已记录的真实经历">
-                    {turn.evidenceRecap.map((entry) => (
-                      <li key={entry.id}>
-                        <span>{entry.dateLabel} · {entry.summary}{entry.isCorrection ? "（已修订）" : ""}</span>
-                        {canAnswer && (
-                          <button
-                            aria-label={`更正这条经历：${entry.summary}`}
-                            disabled={busy}
-                            type="button"
-                            onClick={() => {
-                              controller.beginEvidenceCorrection(entry.id);
-                              composer.current?.focus();
-                            }}
-                          >
-                            更正
-                          </button>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-        </details>
-        {controller.pending && canAnswer && (
+        {controller.pending && canAnswer && regeneratingMessageKey === null && (
           <ChatMessageRow message={{ role: "assistant", text: "", renderKey: "rectification-thinking", state: "thinking" }} />
         )}
-        {turn.status === "paused" && <ChatMessageRow message={{ role: "assistant", text: "校正已暂停，输入与现有证据都已保留。", renderKey: "rectification-paused", state: "settled" }} />}
-        {turn.status === "abandoned" && <ChatMessageRow message={{ role: "assistant", text: "本次校正已放弃，候选时间没有应用。", renderKey: "rectification-abandoned", state: "settled" }} />}
-        {turn.status === "completed" && <ChatMessageRow message={{
-          role: "assistant",
-          text: turn.candidate.status === "confirmed"
-            ? "候选时间已经过你的明确确认。"
-            : "候选范围已保存，代表时间没有自动设为当前排盘时间。",
-          renderKey: "rectification-completed",
-          state: "settled",
-        }} />}
         {controller.error && <p className="error-message" role="alert">{controller.error}</p>}
+        <div ref={conversationEnd} />
       </div>
 
       {(canAnswer || canConfirm || canContinue) && <div className="composer-wrap rectification-composer-wrap">
@@ -238,9 +283,12 @@ export function ConversationalRectificationSurface({
           )}
           </form>
           <div className="composer-footer">
-            <p>{submission?.phase === "undo"
-              ? "已发送，2.5 秒内可撤回修改，本次不会计入校正。"
-              : busy ? "正在核对这段经历…" : "Enter 发送 · Shift + Enter 换行"}</p>
+            <ModelSelector
+              models={models}
+              selectedModelId={selectedModelId}
+              disabled={busy}
+              onSelect={onSelectModel}
+            />
           </div>
         </>}
       </div>}
@@ -250,9 +298,16 @@ export function ConversationalRectificationSurface({
 
 type ConversationalBirthTimeRectificationProps = Readonly<{
   initialTurn?: ConversationalRectificationTurn | null;
+  initialMessages?: readonly ConversationalRectificationStoredMessage[];
+  models: readonly PublicLanguageModel[];
+  selectedModelId: string;
+  onSelectModel: (modelId: string) => void;
   pendingConsultationQuestion?: string | null;
   continuationPending?: boolean;
-  onTurn?: (turn: ConversationalRectificationTurn) => void;
+  onTurn?: (
+    turn: ConversationalRectificationTurn,
+    messages: readonly ConversationalRectificationMessage[],
+  ) => void;
   onPendingChange?: (pending: boolean) => void;
   onContinueOriginalQuestion?: (question: string) => void;
 }>;
@@ -265,12 +320,17 @@ export function ConversationalBirthTimeRectification(props: ConversationalBirthT
   useEffect(() => () => pendingChange.current?.(false), []);
   const controller = useConversationalRectification({
     initialTurn: props.initialTurn,
+    initialMessages: props.initialMessages,
+    modelId: props.selectedModelId,
     onTurn: props.onTurn,
     onPendingChange: props.onPendingChange,
   });
   return (
     <ConversationalRectificationSurface
       controller={controller}
+      models={props.models}
+      selectedModelId={props.selectedModelId}
+      onSelectModel={props.onSelectModel}
       pendingConsultationQuestion={props.pendingConsultationQuestion}
       continuationPending={props.continuationPending}
       onContinueOriginalQuestion={props.onContinueOriginalQuestion}

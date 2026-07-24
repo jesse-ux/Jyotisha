@@ -196,7 +196,7 @@ export function parseDynamicChoiceScoring(value: unknown): DynamicChoiceScoringR
     topScore: parsed.top_score,
     secondScore: parsed.second_score,
     marginPercent: parsed.margin_percent,
-    reasons: [...new Set([...parsed.reasons, "minute_holdout_not_ready"])],
+    reasons: [...new Set([...parsed.reasons, "vedastro_validation_required"])],
     evidence: [],
     algorithmVersion: parsed.algorithm_version,
   });

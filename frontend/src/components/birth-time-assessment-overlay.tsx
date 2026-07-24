@@ -1,3 +1,5 @@
+import { AppLoadingIndicator } from "./app-loading-indicator.tsx";
+
 export type BirthTimeAssessmentPhase = "saving_profile" | "assessing" | "entering_home";
 
 const progressCopy = {
@@ -26,14 +28,11 @@ export function BirthTimeAssessmentOverlay({ phase }: { readonly phase: BirthTim
       role="status"
       aria-live="polite"
     >
-      <div className="birth-time-assessment-progress">
-        <div className="app-loading-symbol" aria-hidden="true">
-          <span className="app-loading-orbit" />
-          <span className="app-loading-mark" />
-        </div>
-        <strong>{copy.title}</strong>
-        <span>{copy.detail}</span>
-      </div>
+      <AppLoadingIndicator
+        className="birth-time-assessment-progress"
+        title={copy.title}
+        detail={copy.detail}
+      />
     </div>
   );
 }

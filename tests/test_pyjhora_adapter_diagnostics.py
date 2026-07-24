@@ -29,7 +29,9 @@ def test_pyjhora_adapter_diagnostics_reports_current_status() -> None:
 
     assert report["scope"] == "pyjhora_adapter_diagnostics"
     assert report["adapter_command"] == "python3 benchmarks/jyotish/scripts/run_pyjhora_compare.py"
-    assert report["status"] in {"available", "missing_dependency"}
+    assert report["status"] in {"available", "missing_dependency", "dependency_import_failed"}
+    if report["status"] == "available":
+        assert report["dependency_import_error"] is None
 
 
 def test_pyjhora_adapter_diagnostics_reports_missing_dependency() -> None:
@@ -43,6 +45,6 @@ def test_pyjhora_adapter_diagnostics_reports_actionable_external_boundary() -> N
     report = _run_diag({"PYJHORA_MODULE_NAME": "__definitely_missing_pyjhora_module__"})
 
     assert report["install_hint"]["package"] == "PyJHora"
-    assert "pip install PyJHora" in report["install_hint"]["commands"]
+    assert "requirements-reference-engines.txt" in report["install_hint"]["commands"][0]
     assert report["license_boundary"] == "AGPL external benchmark only; do not vendor or make it a runtime dependency."
     assert report["ephemeris_data_note"]

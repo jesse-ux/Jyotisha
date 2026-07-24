@@ -207,6 +207,22 @@ function requirePublicTurn(turn: ConversationalRectificationTurnInput): Conversa
   return parsed.data;
 }
 
+/**
+ * A new-event marker is only an explicit form of the legacy default. Older
+ * databases reject that optional field and surface a misleading
+ * action_conflict, so omit it at the durable boundary. The follow-up migration
+ * remains required for event_date/event_detail turns.
+ */
+function turnForDurableContract(
+  turn: ConversationalRectificationTurnInput,
+): ConversationalRectificationTurn {
+  const parsed = requirePublicTurn(turn);
+  if (parsed.evidenceRequest?.followUp?.kind !== "new_event") return parsed;
+  const evidenceRequest = { ...parsed.evidenceRequest };
+  delete evidenceRequest.followUp;
+  return { ...parsed, evidenceRequest };
+}
+
 function invalidDurableInput(): never {
   throw new ConversationalRectificationError("action_conflict");
 }
@@ -288,7 +304,9 @@ export class ConversationalRectificationStore {
   ): Promise<StoredConversationalRectificationCase | null> {
     try {
       const { data, error } = await this.supabase.rpc(functionName, args);
-      if (error) throw mapConversationalRectificationStoreError(error);
+      if (error) {
+        throw mapConversationalRectificationStoreError(error);
+      }
       return parseStoredCase(data, allowNull);
     } catch (error) {
       if (error instanceof ConversationalRectificationError) throw error;
@@ -307,7 +325,7 @@ export class ConversationalRectificationStore {
       p_revision_of_case_id: input.revisionOfCaseId,
       p_pending_consultation_question: input.pendingConsultationQuestion,
       p_declared_birth_input: requireDeclaredBirthInput(input.declaredBirthInput),
-      p_first_turn: requirePublicTurn(input.firstTurn),
+      p_first_turn: turnForDurableContract(input.firstTurn),
       p_validation_receipt: requireValidationReceipt(input.validationReceipt),
       p_private_candidate: requirePrivateCandidate(input.privateCandidate),
     });
@@ -354,7 +372,7 @@ export class ConversationalRectificationStore {
     const result = await this.callCaseRpc(functionName, {
       ...mutationArgs(input),
       p_command_fingerprint: commandFingerprint(input),
-      p_turn: requirePublicTurn(input.turn),
+      p_turn: turnForDurableContract(input.turn),
       p_evidence: requireEvidence(input.evidence),
       p_validation_receipt: requireValidationReceipt(input.validationReceipt),
       p_private_candidate: requirePrivateCandidate(input.privateCandidate),

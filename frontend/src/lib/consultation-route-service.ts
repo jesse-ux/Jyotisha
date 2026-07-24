@@ -1,5 +1,6 @@
 import { chinaLocations } from "../data/china-locations.ts";
 import { isBirthClockTime, parseBirthDate } from "./birth-time-intake-model.ts";
+import { resolveMissingBirthTimezoneOffset } from "./birth-profile-timezone.ts";
 import type { ConsultationBirthTimeMode } from "./consultation-birth-time-mode.ts";
 
 export type ConsultationProfileTruthErrorCode =
@@ -42,11 +43,16 @@ export type ServerChartConsultation = Readonly<{
     birthTimeStatus: string;
     placeLabel: string;
     placeCodes: Readonly<{
-      countryCode: string;
-      provinceCode: string;
-      cityCode: string;
+      countryCode: string | null;
+      provinceCode: string | null;
+      cityCode: string | null;
       districtCode: string | null;
     }>;
+    placeId: string | null;
+    placeType: string | null;
+    placeProvider: string | null;
+    timezoneId: string | null;
+    timezoneSource: string | null;
     latitude: number;
     longitude: number;
     timezoneOffset: number;
@@ -57,6 +63,7 @@ type PrepareConsultationRouteInput<Reservation> = Readonly<{
   userId: string;
   mode: ConsultationBirthTimeMode;
   loadProfile: (userId: string) => Promise<unknown>;
+  resolveTimezoneOffset?: (profile: unknown, selectedTime?: string) => Promise<unknown>;
   reserve: () => Promise<Reservation>;
 }>;
 
@@ -110,8 +117,27 @@ function requiredFiniteNumber(profile: RecordValue, key: string, minimum: number
   return value;
 }
 
-function sameCoordinate(left: number, right: number) {
-  return Math.abs(left - right) <= 0.000001;
+function optionalText(profile: RecordValue, key: string): string | null {
+  const value = profile[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function legacyChinaPlaceLabel(profile: RecordValue): string | null {
+  const countryCode = optionalText(profile, "country_code");
+  const provinceCode = optionalText(profile, "province_code");
+  const cityCode = optionalText(profile, "city_code");
+  const districtCode = optionalText(profile, "district_code");
+  const country = chinaLocations.country;
+  if (countryCode !== country.code || !provinceCode || !cityCode) return null;
+  const province = country.provinces.find((candidate) => candidate.code === provinceCode);
+  const city = province?.cities.find((candidate) => candidate.code === cityCode);
+  const district = districtCode
+    ? city?.districts.find((candidate) => candidate.code === districtCode)
+    : undefined;
+  if (!province || !city || (districtCode && !district)) return null;
+  return [country.name, province.name, city.name, district?.name]
+    .filter((label, index, labels) => Boolean(label) && labels.indexOf(label) === index)
+    .join(" · ");
 }
 
 function serverChartFromProfile(
@@ -137,37 +163,22 @@ function serverChartFromProfile(
     throw new ConsultationProfileTruthError("profile_inconsistent");
   }
 
-  const countryCode = requiredText(profile, "country_code");
-  const provinceCode = requiredText(profile, "province_code");
-  const cityCode = requiredText(profile, "city_code");
-  const districtValue = profile.district_code;
-  const districtCode = typeof districtValue === "string" && districtValue.trim()
-    ? districtValue.trim()
-    : null;
+  const countryCode = optionalText(profile, "country_code");
+  const provinceCode = optionalText(profile, "province_code");
+  const cityCode = optionalText(profile, "city_code");
+  const districtCode = optionalText(profile, "district_code");
+  const placeId = optionalText(profile, "birth_place_provider_id");
+  const placeType = optionalText(profile, "birth_place_type");
+  const placeProvider = optionalText(profile, "birth_place_provider");
+  const timezoneId = optionalText(profile, "timezone_id");
+  const timezoneSource = optionalText(profile, "timezone_source");
   const latitude = requiredFiniteNumber(profile, "latitude", -90, 90);
   const longitude = requiredFiniteNumber(profile, "longitude", -180, 180);
   const timezoneOffset = requiredFiniteNumber(profile, "timezone_offset", -12, 14);
-
-  const country = chinaLocations.country;
-  const province = country.provinces.find((candidate) => candidate.code === provinceCode);
-  const city = province?.cities.find((candidate) => candidate.code === cityCode);
-  const district = districtCode
-    ? city?.districts.find((candidate) => candidate.code === districtCode)
-    : undefined;
-  if (countryCode !== country.code || !province || !city
-    || (city.districts.length > 0 && !district)
-    || (districtCode !== null && !district)) {
-    throw new ConsultationProfileTruthError("profile_inconsistent");
-  }
-  const location = district ?? city;
-  if (!sameCoordinate(latitude, location.center[1])
-    || !sameCoordinate(longitude, location.center[0])
-    || !sameCoordinate(timezoneOffset, country.timezone)) {
-    throw new ConsultationProfileTruthError("profile_inconsistent");
-  }
-  const placeLabel = [country.name, province.name, city.name, district?.name]
-    .filter((label, index, labels) => Boolean(label) && labels.indexOf(label) === index)
-    .join(" · ");
+  const placeLabel = optionalText(profile, "birth_place_label")
+    ?? legacyChinaPlaceLabel(profile)
+    ?? placeId;
+  if (!placeLabel) throw new ConsultationProfileTruthError("profile_incomplete");
 
   let selectedTime: string;
   let selectedTimeKind: "reported" | "active";
@@ -215,6 +226,11 @@ function serverChartFromProfile(
         cityCode,
         districtCode,
       }),
+      placeId,
+      placeType,
+      placeProvider,
+      timezoneId,
+      timezoneSource,
       latitude,
       longitude,
       timezoneOffset,
@@ -236,6 +252,17 @@ export async function prepareConsultationRoute<Reservation>(
       profile = await input.loadProfile(input.userId);
     } catch (error) {
       if (error instanceof ConsultationProfileTruthError) throw error;
+      throw new ConsultationProfileTruthError("profile_unavailable");
+    }
+    const profileValue = record(profile);
+    const selectedTime = input.mode === "verified_chart"
+      ? nullableClock(profileValue ?? {}, "active_birth_time")
+      : nullableClock(profileValue ?? {}, "reported_birth_time");
+    try {
+      profile = await (input.resolveTimezoneOffset ?? ((value, time) => (
+        resolveMissingBirthTimezoneOffset(value, { preferredTime: time })
+      )))(profile, selectedTime ?? undefined);
+    } catch {
       throw new ConsultationProfileTruthError("profile_unavailable");
     }
     serverChart = serverChartFromProfile(profile, input.mode);

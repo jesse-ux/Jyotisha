@@ -4,7 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
+import importlib
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -19,11 +22,22 @@ def build_report() -> dict:
     module_name = os.environ.get("PYJHORA_MODULE_NAME", "jhora").strip() or "jhora"
     adapter_exists = adapter.exists()
     module_available = importlib.util.find_spec(module_name) is not None
+    import_error = None
+    if module_available:
+        try:
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                importlib.import_module(f"{module_name}.utils")
+                importlib.import_module(f"{module_name}.horoscope.chart.charts")
+                importlib.import_module(f"{module_name}.panchanga.drik")
+        except Exception as exc:
+            import_error = f"{exc.__class__.__name__}: {exc}"
 
     if not adapter_exists:
         status = "missing_adapter"
     elif not module_available:
         status = "missing_dependency"
+    elif import_error:
+        status = "dependency_import_failed"
     else:
         status = "available"
 
@@ -35,14 +49,17 @@ def build_report() -> dict:
         "dependency_module": module_name,
         "dependency_available": module_available,
         "missing_dependency": None if module_available else module_name,
+        "dependency_import_error": import_error,
         "install_hint": {
             "package": "PyJHora",
-            "commands": ["pip install PyJHora"],
+            "commands": [
+                "pip install -r requirements.txt -r requirements-reference-engines.txt"
+            ],
             "note": "Install in an isolated optional benchmark environment, not as a hard runtime dependency.",
         },
         "license_boundary": "AGPL external benchmark only; do not vendor or make it a runtime dependency.",
         "ephemeris_data_note": "Recent PyJHora releases may require separate Swiss Ephemeris data download/configuration before full chart comparison can run.",
-        "boundary": "This is an adapter readiness smoke check only; it does not run PyJHora chart comparison.",
+        "boundary": "This verifies required PyJHora modules import successfully, but does not run chart comparison.",
     }
 
 

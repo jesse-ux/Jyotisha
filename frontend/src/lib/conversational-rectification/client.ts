@@ -9,6 +9,25 @@ import {
 
 export const CONVERSATIONAL_RECTIFICATION_UNAVAILABLE = "生时校正暂时无法继续，请稍后重试。";
 
+export type ConversationalRectificationHistoryMessage = Readonly<{
+  role: "assistant" | "user";
+  text: string;
+}>;
+
+const conversationHistoryMessageSchema = z.object({
+  role: z.enum(["assistant", "user"]),
+  text: z.string().trim().min(1).max(12_000),
+}).strict();
+
+const conversationHistorySchema = z.array(conversationHistoryMessageSchema).max(500);
+const conversationHistoryByTurn = new WeakMap<object, readonly ConversationalRectificationHistoryMessage[]>();
+
+export function conversationalRectificationHistoryForTurn(
+  turn: ConversationalRectificationTurn,
+): readonly ConversationalRectificationHistoryMessage[] {
+  return conversationHistoryByTurn.get(turn) ?? [];
+}
+
 const publicErrorSchema = z.object({
   code: z.string(),
   message: z.string(),
@@ -134,7 +153,20 @@ export async function sendConversationalRectificationCommand(
         safeServerMessage,
       );
     }
-    return conversationalRectificationTurnSchema.parse(payload);
+    const payloadRecord = payload !== null && typeof payload === "object" && !Array.isArray(payload)
+      ? payload as Readonly<Record<string, unknown>>
+      : null;
+    const history = conversationHistorySchema.safeParse(payloadRecord?.conversationMessages);
+    const turnPayload = payloadRecord && "conversationMessages" in payloadRecord
+      ? Object.fromEntries(
+          Object.entries(payloadRecord).filter(([key]) => key !== "conversationMessages"),
+        )
+      : payload;
+    const turn = conversationalRectificationTurnSchema.parse(turnPayload);
+    if (history.success && history.data.length > 0) {
+      conversationHistoryByTurn.set(turn, history.data);
+    }
+    return turn;
   } catch (error) {
     if (error instanceof ConversationalRectificationRequestError) throw error;
     throw new ConversationalRectificationRequestError(

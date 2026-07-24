@@ -98,6 +98,24 @@ test("homepage birth-time card starts the first rectification turn without a sec
   const handler = source.slice(start, end);
 
   assert.match(handler, /sendConversationalRectificationCommand\(\{[\s\S]*?type:\s*"start"/);
+  assert.match(
+    handler,
+    /sendConversationalRectificationCommand\(\{[\s\S]*?type:\s*"start"[\s\S]*?modelId:\s*rectificationSession\.modelId/,
+  );
+});
+
+test("a stale start snapshot refreshes and resumes the existing unfinished case after a 409", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("async function openBirthTimeRectification");
+  const end = source.indexOf("function handleConversationalRectificationTurn", start);
+  const handler = source.slice(start, end);
+
+  assert.match(handler, /error instanceof ConversationalRectificationRequestError/);
+  assert.match(handler, /error\.status !== 409/);
+  assert.match(handler, /const latest = await fetchAccount\(\)/);
+  assert.match(handler, /if \(!latest\.rectificationCase\) throw error/);
+  assert.match(handler, /type: "resume"[\s\S]*?latest\.rectificationCase\.caseId/);
+  assert.match(handler, /latest\.rectificationCase\.turnVersion/);
 });
 
 test("homepage birth-time card opens its dedicated session before the first turn resolves", () => {

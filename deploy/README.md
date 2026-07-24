@@ -66,6 +66,7 @@ It must return `103.117.123.53`. Caddy provisions and renews HTTPS automatically
 ```dotenv
 SITE_ADDRESS=https://jyotisha.chat
 JYOTISH_API_BASE=http://api:5200
+GEOAPIFY_API_KEY=<server-side Geoapify geocoding key>
 
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
@@ -101,6 +102,8 @@ OPENAI_API_KEY=<server-secret>
 VEDASTRO_GATEWAY_MODE=official_first
 VEDASTRO_API_ENDPOINT=https://api.vedastro.org/api
 VEDASTRO_ENABLE_NETWORK=1
+# Compatibility flag only; rectification range scans follow VEDASTRO_ENABLE_NETWORK.
+VEDASTRO_RANGE_SCAN_NETWORK_ENABLED=1
 VEDASTRO_TIMEOUT_SECONDS=20
 VEDASTRO_API_KEY=<server-secret>
 ```

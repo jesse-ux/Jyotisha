@@ -23,16 +23,12 @@ import {
 } from "./narrative-agent.ts";
 import {
   projectRectificationTechnicalPacket,
-  type RectificationEvidenceDomain,
   type RectificationTechnicalPacket,
 } from "./technical-packet.ts";
 import {
   convergenceNotes,
   MINIMUM_SCOREABLE_EVENTS,
   nextPlateauCount,
-  rangeCompletionCopy,
-  rangeCompletionReason,
-  type RangeCompletionReason,
 } from "./convergence.ts";
 import type { ConversationalRectificationBilling } from "./billing.ts";
 import {
@@ -102,6 +98,7 @@ export type ConversationalRectificationService = Readonly<{
   start(userId: string, command: CommandOf<"start">): Promise<ConversationalRectificationTurn>;
   resume(userId: string, command: CommandOf<"resume">): Promise<ConversationalRectificationTurn>;
   answer(userId: string, command: CommandOf<"answer">): Promise<ConversationalRectificationTurn>;
+  regenerate(userId: string, command: CommandOf<"regenerate">): Promise<ConversationalRectificationTurn>;
   pause(userId: string, command: CommandOf<"pause">): Promise<ConversationalRectificationTurn>;
   abandon(userId: string, command: CommandOf<"abandon">): Promise<ConversationalRectificationTurn>;
   confirm(userId: string, command: CommandOf<"confirm">): Promise<ConversationalRectificationTurn>;
@@ -126,6 +123,9 @@ export function conversationalRectificationTelemetryOutcome(
 const transitionValidatorVersion = "conversational-rectification-orchestrator-v1";
 const explicitDirectionChangePattern = /(?:都不符合|都不是|不符合|换(?:个|一)?(?:方向|领域)|其他方向|别的方向|不想(?:谈|说|回答)|拒绝回答)/;
 const genericUncertaintyPattern = /(?:不知道|不确定)/;
+const contextualRelativeMonthPattern = /(?:来年|次年|第二年|翌年|同年|当年|那年)\s*(\d{1,2})\s*月份?/;
+const contextualBareMonthDayPattern = /^\s*(\d{1,2})\s*月\s*(\d{1,2})\s*(?:日|号)\s*[。.]?\s*$/;
+const contextualBareDayPattern = /^\s*(\d{1,2})\s*(?:日|号)\s*[。.]?\s*$/;
 
 export function evidencePredatesBirthDate(
   evidence: Pick<LifeEventEvidence, "dateValue" | "datePrecision">,
@@ -140,6 +140,21 @@ export function evidencePredatesBirthDate(
         ? birthDate
         : null;
   return boundary !== null && evidence.dateValue < boundary;
+}
+
+function evidencePostdatesAsOfDate(
+  evidence: Pick<LifeEventEvidence, "dateValue" | "datePrecision">,
+  asOfDate: string,
+): boolean {
+  if (!evidence.dateValue) return false;
+  const boundary = evidence.datePrecision === "year"
+    ? asOfDate.slice(0, 4)
+    : evidence.datePrecision === "month"
+      ? asOfDate.slice(0, 7)
+      : evidence.datePrecision === "day"
+        ? asOfDate
+        : null;
+  return boundary !== null && evidence.dateValue > boundary;
 }
 
 function evidenceForDeclaredBirthDate(
@@ -170,7 +185,7 @@ function parseCommand<Type extends ConversationalRectificationCommand["type"]>(
 }
 
 type MutableCommand = Extract<ConversationalRectificationCommand, {
-  readonly type: "answer" | "pause" | "abandon" | "confirm";
+  readonly type: "answer" | "regenerate" | "pause" | "abandon" | "confirm";
 }>;
 
 function commandFingerprint(command: MutableCommand): string {
@@ -181,6 +196,28 @@ function commandFingerprint(command: MutableCommand): string {
       ? [command.type, command.caseId, command.actionId, command.turnVersion, command.time]
       : [command.type, command.caseId, command.actionId, command.turnVersion];
   return createHash("sha256").update(JSON.stringify(identity), "utf8").digest("hex");
+}
+
+function sameDeclaredBirthInput(
+  left: unknown,
+  right: unknown,
+): boolean {
+  const leftParsed = declaredBirthInputSchema.safeParse(left);
+  const rightParsed = declaredBirthInputSchema.safeParse(right);
+  return leftParsed.success
+    && rightParsed.success
+    && stableJson(leftParsed.data) === stableJson(rightParsed.data);
+}
+
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value !== null && typeof value === "object") {
+    return `{${Object.entries(value as Record<string, unknown>)
+      .sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey))
+      .map(([key, nested]) => `${JSON.stringify(key)}:${stableJson(nested)}`)
+      .join(",")}}`;
+  }
+  return JSON.stringify(value);
 }
 
 function visibleEvidenceSummary(value: string): string {
@@ -237,6 +274,35 @@ export function effectiveLifeEventEvidence<
   return evidence.filter((item) => !correctedIds.has(item.id));
 }
 
+function normalizedEventSemantics(value: string): string {
+  return value
+    .normalize("NFKC")
+    .toLocaleLowerCase("zh-CN")
+    .replace(/^(?:我|本人|其实|准确(?:的是)?|更正(?:为|成|：|:)*)+/u, "")
+    .replace(/[\p{P}\p{S}\s]+/gu, "");
+}
+
+function uniqueScoreableLifeEventEvidence(
+  evidence: ReadonlyArray<LifeEventEvidenceInput>,
+  birthDate: string,
+): ReadonlyArray<LifeEventEvidenceInput> {
+  const seen = new Set<string>();
+  return effectiveLifeEventEvidence(evidence)
+    .filter((item) => item.scoreable === true
+      && item.extractionStatus !== "needs_clarification"
+      && !evidencePredatesBirthDate(item, birthDate))
+    .filter((item) => {
+      const identity = [
+        item.dateValue ?? "",
+        item.domain,
+        normalizedEventSemantics(item.eventSummary),
+      ].join("|");
+      if (seen.has(identity)) return false;
+      seen.add(identity);
+      return true;
+    });
+}
+
 function evidenceRecap(evidence: ReadonlyArray<LifeEventEvidenceInput>) {
   return effectiveLifeEventEvidence(evidence).slice(-20).map((item) => ({
     id: item.id,
@@ -261,6 +327,7 @@ function narrativeConversationContext(input: Readonly<{
   return {
     latestUserText: input.latestUserText.trim().slice(0, 4_000),
     latestEvidence: evidenceRecap(input.newEvidence).map((item) => ({
+      id: item.id,
       dateLabel: item.dateLabel,
       summary: item.summary,
       domain: item.domain,
@@ -285,92 +352,6 @@ function narrativeConversationContext(input: Readonly<{
         domain: item.domain,
         dateLabel: item.dateValue ?? "日期待补充",
       })),
-  };
-}
-
-const progressDomainLabels = {
-  career: "事业",
-  education: "学业",
-  finance: "财务",
-  health_pressure: "健康与重大压力",
-  relocation: "搬迁",
-  relationship: "重要关系",
-  family: "家庭",
-  other: "其他关键经历",
-} as const satisfies Readonly<Record<RectificationEvidenceDomain, string>>;
-
-function evidenceProgressNarrative(input: Readonly<{
-  previousCandidate: PrivateCandidateInput;
-  packet: RectificationTechnicalPacket;
-  newEvidence: ReadonlyArray<LifeEventEvidenceInput>;
-  allEvidence: ReadonlyArray<LifeEventEvidenceInput>;
-  scoreableEventCount: number;
-  willContinue: boolean;
-  authoredNarrative?: string | null;
-}>): string {
-  const recorded = evidenceRecap(input.newEvidence);
-  const acknowledgement = recorded.length === 0
-    ? "这段经历已经保存。"
-    : `已记录：${recorded.map((item) => `${item.dateLabel} · ${item.summary}`).join("；")}。`;
-  const previousStart = input.previousCandidate.rangeStart;
-  const previousEnd = input.previousCandidate.rangeEnd;
-  const nextStart = input.packet.candidate.range.startTime;
-  const nextEnd = input.packet.candidate.range.endTime;
-  const rangeChanged = previousStart !== nextStart || previousEnd !== nextEnd;
-  const progress = input.scoreableEventCount < MINIMUM_SCOREABLE_EVENTS
-    ? `当前累计 ${input.scoreableEventCount} 条可评分经历；系统至少需要 ${MINIMUM_SCOREABLE_EVENTS} 条时间明确的经历才开始事件排序，所以本轮候选范围暂时保持 ${nextStart}–${nextEnd}。`
-    : rangeChanged
-      ? `候选范围已从 ${previousStart ?? "原范围"}–${previousEnd ?? "原范围"} 更新为 ${nextStart}–${nextEnd}。`
-      : `本轮已纳入 ${input.scoreableEventCount} 条可评分经历，但候选范围暂未稳定缩小；这不是提交失败。`;
-  const suggested = nextEvidenceDomains(input.packet, input.allEvidence)
-    .map((item) => progressDomainLabels[item.domain]);
-  const nextStep = input.willContinue && suggested.length > 0
-    ? `下一步：请优先补充一件${suggested.join("或")}领域已经发生的事件，并选择大致年月。`
-    : "";
-  const differenceBasis = input.packet.suggestedDomains.length > 0
-    ? `本轮区分重点：${input.packet.suggestedDomains.slice(0, 2)
-      .map((item) => `${progressDomainLabels[item.domain]}事件用于比较 ${item.layer}`)
-      .join("；")}。`
-    : "";
-  const authored = input.authoredNarrative?.trim();
-  if (authored) return authored.slice(0, 12_000);
-  return [acknowledgement, authored, progress, nextStep, differenceBasis]
-    .filter(Boolean)
-    .join("\n")
-    .slice(0, 12_000);
-}
-
-function unansweredEvidenceDomains(
-  packet: RectificationTechnicalPacket,
-  evidence: ReadonlyArray<LifeEventEvidenceInput>,
-) {
-  const answeredDomains = new Set(effectiveLifeEventEvidence(evidence)
-    .filter((item) => item.extractionStatus !== "needs_clarification")
-    .map((item) => item.domain));
-  return packet.suggestedDomains.filter((item) => !answeredDomains.has(item.domain));
-}
-
-function nextEvidenceDomains(
-  packet: RectificationTechnicalPacket,
-  evidence: ReadonlyArray<LifeEventEvidenceInput>,
-) {
-  const unanswered = unansweredEvidenceDomains(packet, evidence);
-  return (unanswered.length > 0 ? unanswered : packet.suggestedDomains).slice(0, 2);
-}
-
-function evidenceRequestForProgress(input: Readonly<{
-  packet: RectificationTechnicalPacket;
-  evidence: ReadonlyArray<LifeEventEvidenceInput>;
-  willContinue: boolean;
-}>): RectificationNarrativeResult["output"]["evidenceRequest"] {
-  if (!input.willContinue) return null;
-  const suggested = nextEvidenceDomains(input.packet, input.evidence);
-  if (suggested.length === 0) return null;
-  const labels = suggested.map((item) => progressDomainLabels[item.domain]);
-  return {
-    domains: suggested.map((item) => item.domain),
-    datePrecision: "month_preferred",
-    prompt: `请说一件${labels.join("或")}方面已经发生的事，尽量写明哪一年、哪一月以及发生了什么。`,
   };
 }
 
@@ -419,6 +400,7 @@ function turnFromNarrative(input: {
         domains: input.narrative.output.evidenceRequest.domains,
         datePrecision: input.narrative.output.evidenceRequest.datePrecision,
         freeTextAllowed: true as const,
+        followUp: input.narrative.output.evidenceRequest.followUp,
       }
     : null;
   const candidate = {
@@ -480,23 +462,6 @@ function privateCandidateFromPacket(input: {
   return parsed.data;
 }
 
-function completedRangeTurn(
-  turn: ConversationalRectificationTurn,
-  reason: RangeCompletionReason,
-): ConversationalRectificationTurn {
-  const suffix = `${rangeCompletionCopy(reason)} 当前证据没有收敛到可确认分钟，因此本次不计费，已退回暂扣点数。候选范围仅作记录，代表时间不会替换当前排盘时间。`;
-  const parsed = conversationalRectificationTurnSchema.safeParse({
-    ...turn,
-    status: "completed",
-    narrative: boundedNarrative(turn.narrative, suffix),
-    candidate: { ...turn.candidate, status: "pending_validation" },
-    evidenceRequest: null,
-    actions: turn.pendingConsultationQuestion ? ["continue_original_question"] : [],
-  });
-  if (!parsed.success) throw new ConversationalRectificationError("service_unavailable");
-  return parsed.data;
-}
-
 function changedTurn(input: {
   readonly current: LoadedConversationalRectificationCase;
   readonly status: "paused" | "abandoned" | "completed";
@@ -525,11 +490,6 @@ function changedTurn(input: {
   return { turn: parsed.data, receipt: input.receipt ?? transitionReceipt() };
 }
 
-function boundedNarrative(previous: string, suffix: string): string {
-  const room = Math.max(1, 12_000 - suffix.length - 2);
-  return `${previous.slice(0, room)}\n\n${suffix}`.slice(0, 12_000);
-}
-
 function midpointOfRange(range: Readonly<{ startTime: string; endTime: string }>): string {
   const minute = (value: string) => {
     const [hour = 0, part = 0] = value.split(":").map(Number);
@@ -545,76 +505,60 @@ function midpointOfRange(range: Readonly<{ startTime: string; endTime: string }>
   return clock(Math.round((start + end) / 2));
 }
 
-function domainsForClarification(
-  current: ConversationalRectificationTurn,
-  hint: RectificationEvidenceDomain | undefined,
-): readonly RectificationEvidenceDomain[] {
-  const values = [
-    hint,
-    ...(current.evidenceRequest?.domains ?? []),
-    "career" as const,
-    "relationship" as const,
-  ].filter((value): value is RectificationEvidenceDomain => Boolean(value));
-  return [...new Set(values)].slice(0, 4).length >= 2
-    ? [...new Set(values)].slice(0, 4)
-    : ["career", "relationship"];
-}
-
 type CorrectionResetReason =
   | "needs_clarification"
   | "non_scoreable"
-  | "direction_change"
-  | "validation_fallback";
+  | "direction_change";
 
 function nonScoringTurn(input: {
   readonly current: LoadedConversationalRectificationCase;
   readonly newEvidence: ReadonlyArray<LifeEventEvidenceInput>;
-  readonly domain?: RectificationEvidenceDomain;
-  readonly directionChange: boolean;
+  readonly latestUserText: string;
+  readonly authoredNarrative?: RectificationNarrativeResult | null;
   readonly correctionReset?: Readonly<{
     packet: RectificationTechnicalPacket;
     reason: CorrectionResetReason;
   }>;
 }): { readonly turn: ConversationalRectificationTurn; readonly receipt: ValidationReceipt } {
   const allEvidence = [...input.current.eventEvidence, ...input.newEvidence];
-  const hasFuture = input.newEvidence.some((item) => item.extractionStatus !== "needs_clarification"
-    && item.scoreable === false && item.dateValue !== null);
   const latestIncomplete = input.newEvidence
     .filter((item) => item.extractionStatus === "needs_clarification")
     .at(-1);
-  const clarificationNarrative = latestIncomplete?.dateValue === null
-    && latestIncomplete.eventSummary !== "事件内容待补充"
-    ? `你提到“${visibleEvidenceSummary(latestIncomplete.eventSummary)}”，具体内容我已经记下了。它大致是什么年月？只记得年份也可以。`
-    : latestIncomplete?.dateValue
-      && latestIncomplete.eventSummary === "事件内容待补充"
-      ? `我已经记下 ${latestIncomplete.dateValue} 这个时间。那时具体发生了什么重要事情？`
-      : null;
-  const correctionNarrative = input.correctionReset?.reason === "validation_fallback"
-    ? "这条更正已保存，原记录已经停止参与候选评分，候选范围也已重新计算。为避免只凭一次修订直接确认出生分钟，本轮先保持待验证；请继续补充另一件已经发生的真实经历。"
-    : input.correctionReset?.reason === "direction_change"
-      ? "这条更正已保存，原记录已经停止参与候选评分。我们会从声明范围重新开始核对，你可以换一个真实事件方向并尽量写明年月；本轮不会沿用旧候选推进确认。"
-      : input.correctionReset?.reason === "non_scoreable"
-        ? "这条更正已保存，原记录已经停止参与候选评分。更正后的内容目前不能作为已经发生的评分证据，候选已从声明范围重新计算；请再补充一件已发生并带有年月的事件。"
-        : "这条更正已保存，原记录已经停止参与候选评分。更正后的事件时间还不够清楚，候选已从声明范围重新计算；请补充大约年份、月份和发生了什么。";
-  const narrative = input.correctionReset
-    ? correctionNarrative
-    : input.directionChange
-      ? "好的，我们不沿用不符合你的方向。你可以自由描述另一件已经发生的生活变化，尽量写明年月；我会根据事实继续，而不是让你选择宽泛年份。"
-      : hasFuture
-        ? "已保存这段描述。未来事件只能作为背景，不能用于校正评分；请再说一件已经发生的事件，并尽量写明年月。"
-        : clarificationNarrative
-          ?? "我已保存你的原话，但还缺少可用于区分候选的明确时间。请用自己的话补充这件已经发生的事大约是哪一年、哪一月；不需要选择固定答案。";
+  const authoredNarrative = input.authoredNarrative;
+  const latestSummary = input.newEvidence.at(-1)?.eventSummary;
+  const fallbackSubject = latestSummary && latestSummary !== "事件内容待补充"
+    ? latestSummary
+    : input.latestUserText.trim().slice(0, 80);
+  const narrative = authoredNarrative?.narrative
+    ?? `我收到了你这轮关于“${fallbackSubject || "这段经历"}”的补充，但这次分析暂时没有完成。内容会保留，你可以继续补充它的时间和经过，或直接说下一件已经发生的经历。`;
   const status = input.correctionReset
     ? "active" as const
     : input.current.status === "confirming" ? "confirming" as const : "active" as const;
   const actions = actionsFor(status);
-  const evidenceRequest = status === "confirming" && input.current.latestTurn.evidenceRequest === null
+  const clarificationFollowUp = latestIncomplete?.dateValue === null
+    && latestIncomplete.eventSummary !== "事件内容待补充"
+    ? { kind: "event_date" as const, evidenceId: latestIncomplete.id }
+    : latestIncomplete?.dateValue
+      && latestIncomplete.eventSummary === "事件内容待补充"
+      ? { kind: "event_detail" as const, evidenceId: latestIncomplete.id }
+      : null;
+  const authoredRequest = authoredNarrative?.output.evidenceRequest;
+  const priorRequest = input.current.latestTurn.evidenceRequest;
+  const evidenceRequest = status === "confirming" && priorRequest === null
     ? null
-    : {
-        domains: domainsForClarification(input.current.latestTurn, input.domain),
-        datePrecision: "month_preferred" as const,
-        freeTextAllowed: true as const,
-      };
+    : authoredRequest
+      ? {
+          domains: authoredRequest.domains,
+          datePrecision: authoredRequest.datePrecision,
+          freeTextAllowed: true as const,
+          followUp: clarificationFollowUp ?? authoredRequest.followUp,
+        }
+      : priorRequest
+        ? {
+            ...priorRequest,
+            followUp: clarificationFollowUp ?? priorRequest.followUp,
+          }
+        : null;
   const parsed = conversationalRectificationTurnSchema.safeParse({
     ...input.current.latestTurn,
     status,
@@ -634,7 +578,16 @@ function nonScoringTurn(input: {
   if (!parsed.success) throw new ConversationalRectificationError("service_unavailable");
   return {
     turn: parsed.data,
-    receipt: transitionReceipt("deterministic-evidence-clarification"),
+    receipt: authoredNarrative
+      ? validationReceiptSchema.parse(authoredNarrative.validationReceipt)
+      : validationReceiptSchema.parse({
+          modelId: "deterministic-evidence-failure-continuation",
+          schemaValidated: false,
+          validatorVersion: transitionValidatorVersion,
+          retryCount: 0,
+          fallbackUsed: true,
+          issues: ["technical_or_narrative_generation_failed"],
+        }),
   };
 }
 
@@ -825,16 +778,61 @@ export function createConversationalRectificationService(
     }
   }
 
-  function extractedEvidence(command: CommandOf<"answer">): readonly LifeEventEvidence[] {
+  function contextualizedAnswer(
+    command: CommandOf<"answer">,
+    current: LoadedConversationalRectificationCase,
+  ): string {
+    const followUp = current.latestTurn.evidenceRequest?.followUp;
+    if (followUp?.kind !== "event_date" && followUp?.kind !== "event_detail") {
+      return command.answer;
+    }
+    const activeEvidence = effectiveLifeEventEvidence(current.eventEvidence);
+    const target = followUp.evidenceId
+      ? activeEvidence.find((item) => item.id === followUp.evidenceId)
+      : null;
+    const anchor = target?.dateValue
+      ? target
+      : activeEvidence.filter((item) => item.dateValue !== null).at(-1);
+    const anchorYear = Number(anchor?.dateValue?.slice(0, 4));
+    if (!Number.isInteger(anchorYear)) return command.answer;
+
+    const bareMonthDay = followUp.kind === "event_date"
+      ? command.answer.match(contextualBareMonthDayPattern)
+      : null;
+    if (bareMonthDay) {
+      return `${anchorYear}年${Number(bareMonthDay[1])}月${Number(bareMonthDay[2])}号`;
+    }
+    const bareDay = followUp.kind === "event_date"
+      ? command.answer.match(contextualBareDayPattern)
+      : null;
+    const anchorMonth = Number(anchor?.dateValue?.slice(5, 7));
+    if (bareDay && Number.isInteger(anchorMonth)) {
+      return `${anchorYear}年${anchorMonth}月${Number(bareDay[1])}号`;
+    }
+
+    const match = command.answer.match(contextualRelativeMonthPattern);
+    if (!match) return command.answer;
+    const month = Number(match[1]);
+    if (month < 1 || month > 12) return command.answer;
+    const sameYear = /(?:同年|当年|那年)/.test(match[0]);
+    return command.answer.replace(match[0], `${sameYear ? anchorYear : anchorYear + 1}年${month}月`);
+  }
+
+  async function extractedEvidence(
+    command: CommandOf<"answer">,
+    current: LoadedConversationalRectificationCase,
+  ): Promise<readonly LifeEventEvidence[]> {
     let extracted: readonly LifeEventEvidence[];
     try {
+      const answerForExtraction = contextualizedAnswer(command, current);
       extracted = extractLifeEventEvidence({
-        rawText: command.answer,
+        rawText: answerForExtraction,
         sourceTurnId: command.actionId,
         asOfDate: ports.asOfDate(),
         correctsEvidenceId: command.correctsEvidenceId,
       }).map((item) => ({
         ...item,
+        rawText: command.answer,
         correctsEvidenceIds: [...item.correctsEvidenceIds],
         domain: item.domain === "other" && command.domain && command.domain !== "other"
           ? command.domain
@@ -847,6 +845,26 @@ export function createConversationalRectificationService(
     if (command.correctsEvidenceId && extracted.length !== 1) {
       throw new ConversationalRectificationError("invalid_command");
     }
+    const ambiguous = extracted.length === 1 && extracted[0]?.domain === "other"
+      ? extracted[0]
+      : null;
+    if (ambiguous && ports.narrativeGenerator.classifyEvidenceDomain) {
+      try {
+        const domain = await ports.narrativeGenerator.classifyEvidenceDomain({
+          text: command.answer,
+          recentEvidence: effectiveLifeEventEvidence(current.eventEvidence).slice(-6).map((item) => ({
+            summary: item.eventSummary,
+            domain: item.domain,
+          })),
+        }, { signal: AbortSignal.timeout(8_000) });
+        if (domain && domain !== "other") {
+          return [{ ...ambiguous, domain }];
+        }
+      } catch {
+        // Semantic classification is advisory. Keep the deterministic fallback
+        // instead of blocking the user's event when the model is unavailable.
+      }
+    }
     return extracted;
   }
 
@@ -856,29 +874,59 @@ export function createConversationalRectificationService(
     extracted: readonly LifeEventEvidence[];
   }>): readonly LifeEventEvidence[] {
     if (input.command.correctsEvidenceId || input.extracted.length !== 1) return input.extracted;
-    const pending = effectiveLifeEventEvidence(input.current.eventEvidence)
-      .filter((item) => item.extractionStatus === "needs_clarification")
-      .at(-1);
+    const activeEvidence = effectiveLifeEventEvidence(input.current.eventEvidence);
+    const declaredFollowUp = input.current.latestTurn.evidenceRequest?.followUp;
     const supplied = input.extracted[0];
+    if (declaredFollowUp?.kind === "new_event") return input.extracted;
+    const followUp = declaredFollowUp;
+    const pending = followUp?.evidenceId
+      ? activeEvidence.find((item) => item.id === followUp.evidenceId)
+      : activeEvidence.filter((item) => item.extractionStatus === "needs_clarification").at(-1);
     if (!pending || !supplied) return input.extracted;
 
     const pendingHasSummary = pending.eventSummary !== "事件内容待补充";
     const suppliedHasSummary = supplied.eventSummary !== "事件内容待补充";
-    const fillsMissingDate = pending.dateValue === null
+    const suppliedMatchesPending = !suppliedHasSummary
+      || supplied.domain === "other"
+      || supplied.domain === pending.domain;
+    const fillsMissingDate = followUp?.kind !== "event_detail"
+      && pending.dateValue === null
       && supplied.dateValue !== null
+      && !evidencePostdatesAsOfDate(supplied, ports.asOfDate())
       && pendingHasSummary
-      && !suppliedHasSummary;
-    const fillsMissingSummary = pending.dateValue !== null
+      && suppliedMatchesPending;
+    const refinesKnownDate = followUp?.kind === "event_date"
+      && pending.dateValue !== null
+      && supplied.dateValue !== null
+      && supplied.dateValue.startsWith(`${pending.dateValue}-`)
+      && !evidencePostdatesAsOfDate(supplied, ports.asOfDate())
+      && pendingHasSummary
+      && suppliedMatchesPending;
+    const fillsMissingSummary = followUp?.kind !== "event_date"
+      && pending.dateValue !== null
       && supplied.dateValue === null
       && !pendingHasSummary
       && suppliedHasSummary;
-    if (!fillsMissingDate && !fillsMissingSummary) return input.extracted;
+    const addsEventDetail = followUp?.kind === "event_detail"
+      && pending.dateValue !== null
+      && suppliedHasSummary
+      && (supplied.dateValue === null || supplied.dateValue === pending.dateValue);
+    if (!fillsMissingDate && !refinesKnownDate && !fillsMissingSummary && !addsEventDetail) {
+      return input.extracted;
+    }
 
     const dateValue = supplied.dateValue ?? pending.dateValue;
-    const summary = suppliedHasSummary ? supplied.eventSummary : pending.eventSummary;
+    const summary = fillsMissingDate || refinesKnownDate
+      ? pending.eventSummary
+      : addsEventDetail
+      ? [...new Set([pending.eventSummary, supplied.eventSummary])].join("；")
+      : suppliedHasSummary ? supplied.eventSummary : pending.eventSummary;
     if (!dateValue || summary === "事件内容待补充") return input.extracted;
+    // Re-parse the original event as one dated sentence. Detail replies may
+    // contain punctuation that the extractor treats as separate boundaries;
+    // apply the composed summary after deriving the single event metadata.
     const merged = extractLifeEventEvidence({
-      rawText: `${dateValue} ${summary}`,
+      rawText: `${dateValue} ${pending.eventSummary}`,
       sourceTurnId: input.command.actionId,
       asOfDate: ports.asOfDate(),
       correctsEvidenceId: pending.id,
@@ -887,6 +935,7 @@ export function createConversationalRectificationService(
     return merged.map((item) => ({
       ...item,
       rawText: `${pending.rawText}\n补充：${input.command.answer}`,
+      eventSummary: summary,
       domain: pending.domain === "other" ? item.domain : pending.domain,
       correctsEvidenceIds: [...item.correctsEvidenceIds],
     }));
@@ -967,6 +1016,25 @@ export function createConversationalRectificationService(
         }
         return publicTurn(existing);
       }
+
+      // A new action id is not a new rectification session. The durable
+      // reserve RPC rejects a second unfinished case for the same account,
+      // so resolve that invariant before spending time or credits. This is
+      // intentionally limited to the same declared birth input; a changed
+      // profile must not silently continue an old calculation.
+      let existingForUser: LoadedConversationalRectificationCase | null;
+      try {
+        existingForUser = await ports.store.loadCase({ userId });
+      } catch (error) {
+        throw safeFailure(error);
+      }
+      if (existingForUser && existingForUser.caseId !== caseId) {
+        observeCase(existingForUser);
+        if (sameDeclaredBirthInput(existingForUser.declaredBirthInput, declared.data)) {
+          return publicTurn(existingForUser);
+        }
+        throw new ConversationalRectificationError("action_conflict");
+      }
       if (ports.allowNewCaseCreation === false) {
         throw new ConversationalRectificationError("service_unavailable");
       }
@@ -1032,6 +1100,7 @@ export function createConversationalRectificationService(
         observeCase(created, "charged");
         return publicTurn(created);
       } catch (error) {
+        const failure = safeFailure(error);
         if (reserved) {
           try {
             await ports.billing.release({
@@ -1049,7 +1118,21 @@ export function createConversationalRectificationService(
             throw new ConversationalRectificationError("billing_failed");
           }
         }
-        throw safeFailure(error);
+        // A concurrent start can win between the account-level read above
+        // and the reserve/create RPC. Re-read the account after releasing our
+        // reservation and return the winner when it uses the same profile.
+        if (failure.code === "action_conflict") {
+          try {
+            const winner = await ports.store.loadCase({ userId });
+            if (winner && sameDeclaredBirthInput(winner.declaredBirthInput, declared.data)) {
+              observeCase(winner);
+              return publicTurn(winner);
+            }
+          } catch {
+            // Preserve the original stable conflict below.
+          }
+        }
+        throw failure;
       }
     },
 
@@ -1072,7 +1155,7 @@ export function createConversationalRectificationService(
         completeLatestClarification({
           command,
           current,
-          extracted: extractedEvidence(command),
+          extracted: await extractedEvidence(command, current),
         }),
         current.declaredBirthInput.birthDate,
       );
@@ -1108,10 +1191,10 @@ export function createConversationalRectificationService(
       const explicitDirectionChange = explicitDirectionChangePattern.test(command.answer);
       const directionChange = explicitDirectionChange
         || (scoreableEvidence.length === 0 && genericUncertaintyPattern.test(command.answer));
-      const allScoreable = effectiveLifeEventEvidence([...current.eventEvidence, ...evidence])
-        .filter((item) => item.scoreable === true
-          && item.extractionStatus !== "needs_clarification"
-          && !evidencePredatesBirthDate(item, current.declaredBirthInput.birthDate));
+      const allScoreable = uniqueScoreableLifeEventEvidence(
+        [...current.eventEvidence, ...evidence],
+        current.declaredBirthInput.birthDate,
+      );
 
       if (command.correctsEvidenceId) {
         try {
@@ -1138,11 +1221,21 @@ export function createConversationalRectificationService(
               ? "needs_clarification"
               : replacement.scoreable !== true ? "non_scoreable" : null;
           if (resetReason) {
+            const authoredNarrative = await generateRectificationNarrative({
+              phase: "intermediate",
+              packet: gatedPacket,
+              generator: ports.narrativeGenerator,
+              context: narrativeConversationContext({
+                latestUserText: command.answer,
+                allEvidence: [...current.eventEvidence, ...evidence],
+                newEvidence: evidence,
+              }),
+            });
             const next = nonScoringTurn({
               current,
               newEvidence: evidence,
-              domain: command.domain,
-              directionChange: false,
+              latestUserText: command.answer,
+              authoredNarrative,
               correctionReset: { packet: computed.packet, reason: resetReason },
             });
             const privateCandidate = privateCandidateFromPacket({
@@ -1178,36 +1271,6 @@ export function createConversationalRectificationService(
               newEvidence: evidence,
             }),
           });
-          if (narrative.fallbackUsed) {
-            const next = nonScoringTurn({
-              current,
-              newEvidence: evidence,
-              domain: command.domain,
-              directionChange: false,
-              correctionReset: {
-                packet: gatedPacket,
-                reason: "validation_fallback",
-              },
-            });
-            const privateCandidate = privateCandidateFromPacket({
-              packet: gatedPacket,
-              resultId: null,
-              iteration: (current.privateCandidate.workingState?.iteration ?? 0) + 1,
-              forceCollecting: true,
-            });
-            const saved = await ports.store.saveTurn({
-              userId,
-              caseId: command.caseId,
-              expectedVersion: command.turnVersion,
-              actionId: command.actionId,
-              commandFingerprint: fingerprint,
-              turn: next.turn,
-              evidence,
-              validationReceipt: narrative.validationReceipt,
-              privateCandidate,
-            });
-            return publicTurn(saved);
-          }
           const privateCandidate = privateCandidateFromPacket({
             packet: gatedPacket,
             resultId: gatedPacket.candidate.status === "ready_for_confirmation"
@@ -1241,11 +1304,40 @@ export function createConversationalRectificationService(
         }
       }
       if (directionChange || scoreableEvidence.length === 0) {
+        let authoredNarrative: RectificationNarrativeResult | null = null;
+        try {
+          const computed = await ports.buildTechnicalPacket({
+            userId,
+            caseId: command.caseId,
+            asOfDate: ports.asOfDate(),
+            declaredBirthInput: current.declaredBirthInput,
+            privateCandidate: current.privateCandidate,
+            evidence: allScoreable,
+          });
+          const gatedPacket = confirmationGatedPacket(
+            computed.packet,
+            allScoreable.length,
+          );
+          authoredNarrative = await generateRectificationNarrative({
+            phase: "intermediate",
+            packet: gatedPacket,
+            generator: ports.narrativeGenerator,
+            context: narrativeConversationContext({
+              latestUserText: command.answer,
+              allEvidence: [...current.eventEvidence, ...evidence],
+              newEvidence: evidence,
+            }),
+          });
+        } catch (error) {
+          console.warn("[rectification-non-scoring-narrative-fallback]", JSON.stringify({
+            error: error instanceof Error ? error.name : "UnknownError",
+          }));
+        }
         const next = nonScoringTurn({
           current,
           newEvidence: evidence,
-          domain: command.domain,
-          directionChange,
+          latestUserText: command.answer,
+          authoredNarrative,
         });
         try {
           const saved = await ports.store.saveTurn({
@@ -1292,37 +1384,6 @@ export function createConversationalRectificationService(
           }),
         });
         const plateauCount = nextPlateauCount(current.privateCandidate, gatedPacket);
-        const completionReason = rangeCompletionReason({
-          packet: gatedPacket,
-          scoreableEventCount: allScoreable.length,
-          plateauCount,
-          unansweredSuggestedDomainCount: unansweredEvidenceDomains(
-            gatedPacket,
-            [...current.eventEvidence, ...evidence],
-          ).length,
-        });
-        const narrativeWithProgress = {
-          ...narrative,
-          narrative: evidenceProgressNarrative({
-            previousCandidate: current.privateCandidate,
-            packet: gatedPacket,
-            newEvidence: evidence,
-            allEvidence: [...current.eventEvidence, ...evidence],
-            scoreableEventCount: allScoreable.length,
-            willContinue: completionReason === null
-              && gatedPacket.candidate.status !== "ready_for_confirmation",
-            authoredNarrative: narrative.fallbackUsed ? null : narrative.narrative,
-          }),
-          output: {
-            ...narrative.output,
-            evidenceRequest: evidenceRequestForProgress({
-              packet: gatedPacket,
-              evidence: [...current.eventEvidence, ...evidence],
-              willContinue: completionReason === null
-                && gatedPacket.candidate.status !== "ready_for_confirmation",
-            }),
-          },
-        } satisfies RectificationNarrativeResult;
         const privateCandidate = privateCandidateFromPacket({
           packet: gatedPacket,
           resultId: gatedPacket.candidate.status === "ready_for_confirmation"
@@ -1337,12 +1398,77 @@ export function createConversationalRectificationService(
           turnVersion: command.turnVersion + 1,
           pendingConsultationQuestion: current.pendingConsultationQuestion,
           packet: gatedPacket,
-          narrative: narrativeWithProgress,
+          narrative,
           evidence: [...current.eventEvidence, ...evidence],
         });
-        const turn = completionReason
-          ? completedRangeTurn(narratedTurn, completionReason)
-          : narratedTurn;
+        const saved = await ports.store.saveTurn({
+          userId,
+          caseId: command.caseId,
+          expectedVersion: command.turnVersion,
+          actionId: command.actionId,
+          commandFingerprint: fingerprint,
+          turn: narratedTurn,
+          evidence,
+          validationReceipt: narrative.validationReceipt,
+          privateCandidate,
+        });
+        return publicTurn(saved);
+      } catch (error) {
+        throw safeFailure(error);
+      }
+    },
+
+    async regenerate(userId, rawCommand) {
+      resetTelemetryOutcome();
+      const command = parseCommand("regenerate", rawCommand);
+      const fingerprint = commandFingerprint(command);
+      const receipt = await replayMutation(userId, command, "save_turn", fingerprint);
+      if (receipt) return receipt;
+      const current = await load(userId, command.caseId);
+      requireMutable(current);
+      requireExactVersion(current, command.turnVersion);
+      if (!current.latestTurn.actions.includes("answer")) {
+        throw new ConversationalRectificationError("invalid_transition");
+      }
+
+      try {
+        const activeEvidence = effectiveLifeEventEvidence(current.eventEvidence);
+        const latestEvidence = activeEvidence.at(-1);
+        const scoreableEvidence = uniqueScoreableLifeEventEvidence(
+          current.eventEvidence,
+          current.declaredBirthInput.birthDate,
+        );
+        const computed = await ports.buildTechnicalPacket({
+          userId,
+          caseId: command.caseId,
+          asOfDate: ports.asOfDate(),
+          declaredBirthInput: current.declaredBirthInput,
+          privateCandidate: current.privateCandidate,
+          evidence: scoreableEvidence,
+          preserveCandidateRange: true,
+        });
+        const gatedPacket = confirmationGatedPacket(computed.packet, scoreableEvidence.length);
+        const phase = gatedPacket.candidate.status === "ready_for_confirmation"
+          ? "final" as const
+          : activeEvidence.length === 0 ? "first" as const : "intermediate" as const;
+        const narrative = await generateRectificationNarrative({
+          phase,
+          packet: gatedPacket,
+          generator: ports.narrativeGenerator,
+          context: latestEvidence ? narrativeConversationContext({
+            latestUserText: latestEvidence.rawText,
+            allEvidence: current.eventEvidence,
+            newEvidence: [latestEvidence],
+          }) : undefined,
+        });
+        const turn = turnFromNarrative({
+          caseId: command.caseId,
+          turnVersion: command.turnVersion + 1,
+          pendingConsultationQuestion: current.pendingConsultationQuestion,
+          packet: gatedPacket,
+          narrative,
+          evidence: current.eventEvidence,
+        });
         const saved = await ports.store.saveTurn({
           userId,
           caseId: command.caseId,
@@ -1350,9 +1476,9 @@ export function createConversationalRectificationService(
           actionId: command.actionId,
           commandFingerprint: fingerprint,
           turn,
-          evidence,
+          evidence: [],
           validationReceipt: narrative.validationReceipt,
-          privateCandidate,
+          privateCandidate: current.privateCandidate,
         });
         return publicTurn(saved);
       } catch (error) {
@@ -1390,7 +1516,7 @@ export function createConversationalRectificationService(
       const next = changedTurn({
         current,
         status: "paused",
-        narrative: boundedNarrative(current.latestTurn.narrative, "校正已暂停，现有证据和候选已保存；继续时不会重复扣点。"),
+        narrative: current.latestTurn.narrative,
       });
       try {
         return publicTurn(await ports.store.pause({
@@ -1434,7 +1560,7 @@ export function createConversationalRectificationService(
       const next = changedTurn({
         current,
         status: "abandoned",
-        narrative: boundedNarrative(current.latestTurn.narrative, "本次校正已放弃；再次校正期间原有确认时间始终没有被替换。"),
+        narrative: current.latestTurn.narrative,
       });
       try {
         return publicTurn(await ports.store.abandon({
@@ -1490,12 +1616,7 @@ export function createConversationalRectificationService(
       const next = changedTurn({
         current,
         status: "completed",
-        narrative: boundedNarrative(
-          current.latestTurn.narrative,
-          current.pendingConsultationQuestion
-            ? "你已明确确认这个候选时间。现在可以使用新确认时间继续回答原问题。"
-            : "你已明确确认这个候选时间，账户当前排盘时间已原子更新。",
-        ),
+        narrative: current.latestTurn.narrative,
       });
       try {
         return publicTurn(await ports.store.confirm({

@@ -3,9 +3,13 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   buildProductionConversationalRectificationPacket,
+  conversationMessagesFromStoredTurns,
   createBirthTimeConversationPostHandler,
   declaredBirthInputForLegacyCase,
   loadProductionConversationalRectificationProfile,
+  rectificationNarrativeTextFromMastraResult,
+  resolveRectificationNarrativeModels,
+  resolveMissingProfileTimezoneOffset,
   type BirthTimeConversationRouteService,
 } from "../src/app/api/birth-time-conversation/route.ts";
 import { ConversationalRectificationError } from "../src/lib/conversational-rectification/errors.ts";
@@ -29,7 +33,64 @@ test("production narrator loads the Jyotish Skill without overriding packet trut
   assert.match(source, /explain the supplied expert workflow/);
   assert.match(source, /supplied packet facts as the exclusive source/);
   assert.match(source, /blocked or not_evaluated technique must never be described as used/);
+  assert.match(source, /Never expose internal event classifications, domain labels, scores, weights, or routing metadata/);
+  assert.match(source, /on collecting turns, keep the reply conversational and ask exactly one next question/);
   assert.match(source, /Never invent, recalculate, or confirm candidate data/);
+  assert.match(source, /schema:\s*rectificationNarrativeAuthoredOutputSchema/);
+  assert.match(source, /RECTIFICATION_NARRATIVE_RETRY_MODEL_ID/);
+  assert.match(source, /deepseek-v4-flash/);
+  assert.match(source, /options\?\.attempt === 2 \? retryModel : preferredModel/);
+});
+
+test("rectification narrator prefers the model selected in the session UI", () => {
+  const models = new Map([
+    ["gpt-5-5", { id: "gpt-5-5" }],
+    ["deepseek-v4-pro", { id: "deepseek-v4-pro" }],
+    ["deepseek-v4-flash", { id: "deepseek-v4-flash" }],
+  ]);
+  const selected = resolveRectificationNarrativeModels({
+    requestedModelId: "gpt-5-5",
+    configuredPreferredModelId: "deepseek-v4-pro",
+    configuredRetryModelId: "deepseek-v4-flash",
+    resolveModel: (modelId) => models.get(modelId) ?? null,
+    defaultModel: () => models.get("deepseek-v4-pro") ?? null,
+  });
+
+  assert.equal(selected?.preferredModel.id, "gpt-5-5");
+  assert.equal(selected?.retryModel.id, "deepseek-v4-flash");
+});
+
+test("rectification narrator rejects a stale or unavailable selected model", () => {
+  assert.throws(
+    () => resolveRectificationNarrativeModels({
+      requestedModelId: "removed-model",
+      configuredPreferredModelId: "deepseek-v4-pro",
+      configuredRetryModelId: "deepseek-v4-flash",
+      resolveModel: () => null,
+      defaultModel: () => ({ id: "default-model" }),
+    }),
+    (error: unknown) => error instanceof ConversationalRectificationError
+      && error.code === "model_unavailable",
+  );
+});
+
+test("production narrator accepts provider JSON text when Mastra leaves result.object empty", () => {
+  const text = '{"narrative":"自然首轮回答"}';
+  assert.equal(rectificationNarrativeTextFromMastraResult({ object: undefined, text }), text);
+});
+
+test("production narrator preserves timeout classification when Mastra resolves empty after abort", () => {
+  const controller = new AbortController();
+  const timeout = new DOMException("The operation was aborted due to timeout", "TimeoutError");
+  controller.abort(timeout);
+
+  assert.throws(
+    () => rectificationNarrativeTextFromMastraResult(
+      { object: undefined, text: undefined },
+      controller.signal,
+    ),
+    (error) => error === timeout,
+  );
 });
 
 const turn = {
@@ -60,6 +121,26 @@ const turn = {
   pendingConsultationQuestion: null,
 };
 
+test("stored turn history is restored as real alternating Agent and user messages", () => {
+  const messages = conversationMessagesFromStoredTurns([
+    { id: "turn-0", turn_version: 0, narrative: "请先告诉我一件时间明确的重要经历。" },
+    { id: "turn-1", turn_version: 1, narrative: "大学毕业已经记下。下一步核对职业事件。" },
+    { id: "turn-2", turn_version: 2, narrative: "职业起点已经记下。下一步核对关系事件。" },
+  ], [
+    { source_turn_id: "turn-1", raw_text: "2014 年 6 月大学毕业。" },
+    { source_turn_id: "turn-1", raw_text: "2014 年 6 月大学毕业。" },
+    { source_turn_id: "turn-2", raw_text: "2017 年 7 月入职第一家公司。" },
+  ]);
+
+  assert.deepEqual(messages, [
+    { role: "assistant", text: "请先告诉我一件时间明确的重要经历。" },
+    { role: "user", text: "2014 年 6 月大学毕业。" },
+    { role: "assistant", text: "大学毕业已经记下。下一步核对职业事件。" },
+    { role: "user", text: "2017 年 7 月入职第一家公司。" },
+    { role: "assistant", text: "职业起点已经记下。下一步核对关系事件。" },
+  ]);
+});
+
 function request(body: unknown, events: string[]) {
   return {
     headers: new Headers({ "x-request-id": requestId }),
@@ -77,6 +158,7 @@ function service(overrides: Partial<BirthTimeConversationRouteService> = {}): Bi
     start: response,
     resume: response,
     answer: response,
+    regenerate: response,
     pause: response,
     abandon: response,
     confirm: response,
@@ -151,7 +233,7 @@ function packetEngine(options: {
     },
     async score() { throw new Error("unexpected questionnaire score"); },
     async scoreEvents(input) {
-      assert.ok(input.events.length >= 3 && input.events.length <= 8);
+      assert.ok(input.events.length >= 3);
       for (const event of input.events) {
         const birthBoundary = event.precision === "year"
           ? input.birthDate.slice(0, 4)
@@ -240,9 +322,6 @@ test("production first turn skips the minute-heavy candidate partition call for 
       declaredBirthInput: {
         source: "unknown",
         birthDate: "1990-01-01",
-        reportedTime: null,
-        uncertaintyBeforeMinutes: null,
-        uncertaintyAfterMinutes: null,
         birthTimeClue: null,
         birthplace: packetBirthplace,
       },
@@ -314,13 +393,15 @@ test("strict invalid commands return 400 before admin, billing, or service const
 test("valid commands dispatch exactly one authenticated service method", async () => {
   const events: string[] = [];
   const calls: unknown[] = [];
+  const serviceCommands: unknown[] = [];
   const handler = createBirthTimeConversationPostHandler({
     async authenticate() {
       events.push("auth");
       return { userId, context: { authenticated: true } };
     },
-    async createService() {
+    async createService(_authenticated, command) {
       events.push("service");
+      serviceCommands.push(command);
       return service({
         async answer(receivedUserId, command) {
           calls.push([receivedUserId, command]);
@@ -330,12 +411,77 @@ test("valid commands dispatch exactly one authenticated service method", async (
     },
     createRequestId: () => requestId,
   });
-  const command = { type: "answer", caseId, actionId, turnVersion: 1, answer: "2021年7月毕业" };
+  const command = {
+    type: "answer",
+    caseId,
+    actionId,
+    turnVersion: 1,
+    modelId: "gpt-5-5",
+    answer: "2021年7月毕业",
+  };
   const response = await handler(request(command, events));
   assert.equal(response.status, 200);
   assert.deepEqual(events, ["auth", "body", "service"]);
+  assert.deepEqual(serviceCommands, [command]);
   assert.deepEqual(calls, [[userId, command]]);
   assert.deepEqual(await response.json(), turn);
+});
+
+test("regenerate dispatches without replaying an answer payload", async () => {
+  const events: string[] = [];
+  const calls: unknown[] = [];
+  const handler = createBirthTimeConversationPostHandler({
+    async authenticate() {
+      return { userId, context: null };
+    },
+    async createService() {
+      return service({
+        async regenerate(receivedUserId, command) {
+          calls.push([receivedUserId, command]);
+          return { ...turn, turnVersion: 2, narrative: "重新生成后的完整回答。" };
+        },
+      });
+    },
+    createRequestId: () => requestId,
+  });
+  const command = { type: "regenerate", caseId, actionId, turnVersion: 1 };
+
+  const response = await handler(request(command, events));
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(calls, [[userId, command]]);
+  assert.equal((await response.json() as { narrative: string }).narrative, "重新生成后的完整回答。");
+});
+
+test("resume includes the durable alternating transcript when the service can restore it", async () => {
+  const conversationMessages = [
+    { role: "assistant" as const, text: "请先告诉我一件时间明确的重要经历。" },
+    { role: "user" as const, text: "2014 年 6 月大学毕业。" },
+    { role: "assistant" as const, text: turn.narrative },
+  ];
+  const handler = createBirthTimeConversationPostHandler({
+    async authenticate() { return { userId, context: null }; },
+    async createService() {
+      return service({
+        async loadConversationMessages(receivedUserId, receivedCaseId) {
+          assert.equal(receivedUserId, userId);
+          assert.equal(receivedCaseId, caseId);
+          return conversationMessages;
+        },
+      });
+    },
+    createRequestId: () => requestId,
+  });
+
+  const response = await handler(request({
+    type: "resume",
+    caseId,
+    actionId,
+    turnVersion: 2,
+  }, []));
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { ...turn, conversationMessages });
 });
 
 test("known conflicts and unavailable failures use stable safe Chinese responses", async () => {
@@ -483,6 +629,63 @@ test("legacy import declaration uses the immutable old case time while preservin
       timezoneOffset: 8,
     },
   });
+});
+
+test("period-only global profile resolves its historical offset before rectification", async () => {
+  const profile = {
+    birth_date: "1955-02-24",
+    reported_birth_time: null,
+    active_birth_time: null,
+    birth_time_source: "period_only",
+    birth_time_period: "evening",
+    birth_time_clue: "大约晚上七点左右，可能前后差四十五分钟。",
+    uncertainty_before_minutes: null,
+    uncertainty_after_minutes: null,
+    birth_place_label: "旧金山, 加利福尼亚州, 美国",
+    birth_place_type: "city",
+    birth_place_provider: "geoapify",
+    birth_place_provider_id: "san-francisco",
+    country_code: "US",
+    province_code: null,
+    city_code: null,
+    district_code: null,
+    latitude: 37.7879363,
+    longitude: -122.4075201,
+    timezone_id: "America/Los_Angeles",
+    timezone_source: "iana_historical",
+    timezone_offset: null,
+    rectification_case_id: null,
+  };
+  let timezoneRequest: Record<string, unknown> | null = null;
+  const resolve = (value: unknown) => resolveMissingProfileTimezoneOffset(
+    value,
+    async (_input, init) => {
+      timezoneRequest = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      return Response.json({
+        available: true,
+        timezoneId: "America/Los_Angeles",
+        timezoneOffset: -8,
+      });
+    },
+    "http://api:5200",
+  );
+  const loaded = await loadProductionConversationalRectificationProfile({
+    loadProfile: async () => profile,
+    loadRectificationCase: async () => null,
+    resolveTimezoneOffset: resolve,
+  }, userId);
+
+  assert.deepEqual(timezoneRequest, {
+    latitude: 37.7879363,
+    longitude: -122.4075201,
+    birthDate: "1955-02-24",
+    birthTime: "20:30",
+  });
+  assert.equal(loaded.declaredBirthInput.birthplace.timezoneOffset, -8);
+  assert.equal(loaded.declaredBirthInput.birthplace.timezoneId, "America/Los_Angeles");
+  assert.equal(loaded.declaredBirthInput.birthplace.latitude, 37.787936);
+  assert.equal(loaded.declaredBirthInput.birthplace.longitude, -122.40752);
+  assert.equal(loaded.declaredBirthInput.source, "period_only");
 });
 
 test("an abandoned imported v3 profile pointer becomes the paid revision base", async () => {
@@ -906,12 +1109,12 @@ test("production rescans the declared range after correction while ordinary evid
   assert.equal(ordinary.packet.sensitivityScope.sampleTimes.includes("04:50"), false);
 });
 
-test("production packet sends health evidence and uses the shared eight-event convergence limit", async () => {
+test("production packet sends every accumulated event without an eight-event cap", async () => {
   const scoreCalls: LifeEvent[][] = [];
   const differenceCalls: DifferencePacketInput[] = [];
   const engine = packetEngine({ scoreCalls, differenceCalls });
   const domains = ["education", "relocation", "career", "relationship", "health_pressure"] as const;
-  const evidence = Array.from({ length: 8 }, (_, index) =>
+  const evidence = Array.from({ length: 12 }, (_, index) =>
     syntheticEvidence(index + 1, domains[index % domains.length] ?? "career"));
 
   await buildProductionConversationalRectificationPacket(engine, {

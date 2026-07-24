@@ -87,6 +87,7 @@ export function eventScorePayload(input: JourneyEventScoreInput) {
     lat: input.lat,
     lon: input.lon,
     tz: input.tz,
+    high_rigor: true,
     events: (input.events ?? []).map((event) => ({
       id: event.id,
       domain: event.domain,

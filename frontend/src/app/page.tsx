@@ -4,7 +4,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { ArrowUp, ArrowUpRight, Sparkles, Square, X } from "lucide-react";
 import { useGSAP } from "@gsap/react";
-import gsap from "gsap";
+import { gsap } from "gsap";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, KeyboardEvent } from "react";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -13,10 +13,15 @@ import {
   type BirthTimeAssessmentPhase,
 } from "@/components/birth-time-assessment-overlay";
 import { BirthTimeIntakeFields } from "@/components/birth-time-intake";
+import { AppLoadingIndicator } from "@/components/app-loading-indicator";
 import { ConversationalBirthTimeRectification } from "@/components/conversational-birth-time-rectification";
 import { ChatMessageContent } from "@/components/chat-message-content";
 import { AgentAvatar, ChatMessageRow } from "@/components/chat-message-row";
 import { ModelSelector } from "@/components/model-selector";
+import {
+  LocationSearchCombobox,
+  type ResolvedBirthLocation,
+} from "@/components/location-search-combobox";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
@@ -48,7 +53,11 @@ import {
   type RectificationCardAction,
 } from "@/lib/birth-time-consultation-consent";
 import type { ConsultationBirthTimeMode } from "@/lib/consultation-birth-time-mode";
-import { sendConversationalRectificationCommand } from "@/lib/conversational-rectification/client";
+import {
+  ConversationalRectificationRequestError,
+  conversationalRectificationHistoryForTurn,
+  sendConversationalRectificationCommand,
+} from "@/lib/conversational-rectification/client";
 import type { ConversationalRectificationTurn } from "@/lib/conversational-rectification/contracts";
 import {
   createDurableRectificationQuestionHandoffClient,
@@ -56,6 +65,7 @@ import {
   DurableRectificationHandoffError,
 } from "@/lib/rectification-question-handoff";
 import { useBirthTimeGuidedJourney } from "@/hooks/use-birth-time-guided-journey";
+import type { ConversationalRectificationMessage } from "@/hooks/use-conversational-rectification";
 import {
   requestBirthTimeAssessment,
   type JourneyClientResponse,
@@ -105,10 +115,19 @@ type Theme = ReplyTheme;
 type Message = ChatMessage;
 type Profile = BirthTimeDraft & {
   name: string;
-  countryCode: "CN";
+  countryCode: string;
   provinceCode: string;
   cityCode: string;
   districtCode: string;
+  birthPlaceLabel: string;
+  birthPlaceType: string;
+  birthPlaceProvider: string;
+  birthPlaceProviderId: string;
+  timezoneId: string;
+  timezoneSource: string;
+  latitude: number | null;
+  longitude: number | null;
+  timezoneOffset: number | null;
   rectificationCaseId: string;
 };
 type ChartLibraryRecord = {
@@ -154,9 +173,23 @@ type ChatSession = {
   sessionType: ChatSessionType;
   rectificationCaseId: string | null;
 };
+
+function durableRectificationMessages(
+  messages: readonly ConversationalRectificationMessage[],
+): Message[] {
+  const durable = messages.map(({ role, text }) => ({ role, text }));
+  if (durable.length <= 500) return durable;
+  return [durable[0]!, ...durable.slice(-(500 - 1))];
+}
 type RequestError = { sessionId: string; message: string };
 type StreamingReply = { sessionId: string; text: string };
-type BirthPlace = { label: string; lat: number; lon: number; tz: number };
+type BirthPlace = {
+  label: string;
+  lat: number;
+  lon: number;
+  tz: number | null;
+  timezoneId: string;
+};
 type Account = {
   user: { id: string; email: string | null };
   credits: number;
@@ -260,6 +293,15 @@ const emptyProfile: Profile = {
   provinceCode: "",
   cityCode: "",
   districtCode: "",
+  birthPlaceLabel: "",
+  birthPlaceType: "",
+  birthPlaceProvider: "",
+  birthPlaceProviderId: "",
+  timezoneId: "",
+  timezoneSource: "",
+  latitude: null,
+  longitude: null,
+  timezoneOffset: null,
 };
 
 function timestamp() {
@@ -291,6 +333,20 @@ function findCity(province: ProvinceNode | undefined, code: string) {
 }
 
 function selectedBirthPlace(profile: Profile): BirthPlace | null {
+  if (profile.birthPlaceLabel
+    && Number.isFinite(profile.latitude)
+    && Number.isFinite(profile.longitude)
+    && profile.timezoneId.trim()
+    && (profile.timezoneOffset === null || Number.isFinite(profile.timezoneOffset))) {
+    return {
+      label: profile.birthPlaceLabel,
+      lat: profile.latitude as number,
+      lon: profile.longitude as number,
+      tz: profile.timezoneOffset,
+      timezoneId: profile.timezoneId,
+    };
+  }
+
   const province = findProvince(profile.provinceCode);
   const city = findCity(province, profile.cityCode);
   if (!province || !city) return null;
@@ -303,7 +359,35 @@ function selectedBirthPlace(profile: Profile): BirthPlace | null {
     .filter((name, index, names) => Boolean(name) && names.indexOf(name) === index)
     .join(" · ");
 
-  return { label, lat: location.center[1], lon: location.center[0], tz: china.timezone };
+  return {
+    label,
+    lat: location.center[1],
+    lon: location.center[0],
+    tz: china.timezone,
+    timezoneId: "Asia/Shanghai",
+  };
+}
+
+function selectedLocationValue(profile: Profile): ResolvedBirthLocation | null {
+  const birthPlace = selectedBirthPlace(profile);
+  if (!birthPlace) return null;
+  return {
+    id: profile.birthPlaceProviderId || `legacy-cn:${profile.provinceCode}:${profile.cityCode}:${profile.districtCode}`,
+    label: birthPlace.label,
+    placeType: profile.birthPlaceType || "legacy_china_admin",
+    provider: profile.birthPlaceProvider || "legacy_china_locations",
+    providerPlaceId: profile.birthPlaceProviderId,
+    countryCode: profile.countryCode || "CN",
+    countryName: profile.countryCode === "CN" ? "中国" : "",
+    admin1: "",
+    admin2: "",
+    locality: "",
+    latitude: birthPlace.lat,
+    longitude: birthPlace.lon,
+    timezoneId: birthPlace.timezoneId,
+    timezoneOffset: birthPlace.tz,
+    timezoneSource: profile.timezoneSource || "legacy_fixed_offset",
+  };
 }
 
 function chartLibraryStorageKey(accountId: string) {
@@ -521,6 +605,15 @@ function readProfile(value: unknown): Profile {
     province_code?: unknown;
     city_code?: unknown;
     district_code?: unknown;
+    birth_place_label?: unknown;
+    birth_place_type?: unknown;
+    birth_place_provider?: unknown;
+    birth_place_provider_id?: unknown;
+    timezone_id?: unknown;
+    timezone_source?: unknown;
+    latitude?: unknown;
+    longitude?: unknown;
+    timezone_offset?: unknown;
   };
   const date = typeof profile.birth_date === "string" ? profile.birth_date : profile.date;
   const legacyTime = typeof profile.birth_time === "string" ? profile.birth_time.slice(0, 5) : profile.time;
@@ -544,6 +637,20 @@ function readProfile(value: unknown): Profile {
   const provinceCode = typeof profile.province_code === "string" ? profile.province_code : profile.provinceCode;
   const cityCode = typeof profile.city_code === "string" ? profile.city_code : profile.cityCode;
   const districtCode = typeof profile.district_code === "string" ? profile.district_code : profile.districtCode;
+  const countryCode = typeof profile.country_code === "string" ? profile.country_code : profile.countryCode;
+  const birthPlaceLabel = typeof profile.birth_place_label === "string" ? profile.birth_place_label : profile.birthPlaceLabel;
+  const birthPlaceType = typeof profile.birth_place_type === "string" ? profile.birth_place_type : profile.birthPlaceType;
+  const birthPlaceProvider = typeof profile.birth_place_provider === "string" ? profile.birth_place_provider : profile.birthPlaceProvider;
+  const birthPlaceProviderId = typeof profile.birth_place_provider_id === "string" ? profile.birth_place_provider_id : profile.birthPlaceProviderId;
+  const timezoneId = typeof profile.timezone_id === "string" ? profile.timezone_id : profile.timezoneId;
+  const timezoneSource = typeof profile.timezone_source === "string" ? profile.timezone_source : profile.timezoneSource;
+  const latitude = typeof profile.latitude === "number" && Number.isFinite(profile.latitude) ? profile.latitude : null;
+  const longitude = typeof profile.longitude === "number" && Number.isFinite(profile.longitude) ? profile.longitude : null;
+  const timezoneOffset = typeof profile.timezone_offset === "number" && Number.isFinite(profile.timezone_offset)
+    ? profile.timezone_offset
+    : typeof profile.timezoneOffset === "number" && Number.isFinite(profile.timezoneOffset)
+      ? profile.timezoneOffset
+      : null;
 
   return {
     name: typeof profile.name === "string" ? profile.name.slice(0, 80) : "",
@@ -557,10 +664,19 @@ function readProfile(value: unknown): Profile {
     uncertaintyAfterMinutes: typeof profile.uncertainty_after_minutes === "number" ? profile.uncertainty_after_minutes : null,
     birthTimeStatus: status,
     rectificationCaseId: typeof profile.rectification_case_id === "string" ? profile.rectification_case_id : "",
-    countryCode: "CN",
+    countryCode: typeof countryCode === "string" && countryCode ? countryCode : "CN",
     provinceCode: typeof provinceCode === "string" ? provinceCode : "",
     cityCode: typeof cityCode === "string" ? cityCode : "",
     districtCode: typeof districtCode === "string" ? districtCode : "",
+    birthPlaceLabel: typeof birthPlaceLabel === "string" ? birthPlaceLabel : "",
+    birthPlaceType: typeof birthPlaceType === "string" ? birthPlaceType : "",
+    birthPlaceProvider: typeof birthPlaceProvider === "string" ? birthPlaceProvider : "",
+    birthPlaceProviderId: typeof birthPlaceProviderId === "string" ? birthPlaceProviderId : "",
+    timezoneId: typeof timezoneId === "string" ? timezoneId : "",
+    timezoneSource: typeof timezoneSource === "string" ? timezoneSource : "",
+    latitude,
+    longitude,
+    timezoneOffset,
   };
 }
 
@@ -618,25 +734,46 @@ function readSessions(value: unknown, catalog: PublicLanguageModelCatalog | null
 }
 
 function BirthLocationFields({ value, onChange }: { value: Profile; onChange: (profile: Profile) => void }) {
-  const province = findProvince(value.provinceCode);
-  const cities = province?.cities ?? [];
-  const city = findCity(province, value.cityCode);
-  const districts = city?.districts ?? [];
-
   return (
     <fieldset className="location-fieldset">
       <legend>出生地点</legend>
-      <div className="location-grid">
-        <label><span>国家 / 地区</span><select value={value.countryCode} onChange={() => onChange({ ...value, countryCode: "CN", provinceCode: "", cityCode: "", districtCode: "" })}><option value="CN">中国</option></select></label>
-        <label><span>省 / 自治区</span><select required value={value.provinceCode} onChange={(event) => onChange({ ...value, provinceCode: event.target.value, cityCode: "", districtCode: "" })}><option value="" disabled>请选择省 / 自治区</option>{china.provinces.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</select></label>
-        <label><span>市 / 州</span><select required disabled={!province} value={value.cityCode} onChange={(event) => onChange({ ...value, cityCode: event.target.value, districtCode: "" })}><option value="" disabled>{province ? "请选择市 / 州" : "请先选择省 / 自治区"}</option>{cities.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</select></label>
-        <label><span>县 / 区</span><select required={districts.length > 0} disabled={!city || districts.length === 0} value={value.districtCode} onChange={(event) => onChange({ ...value, districtCode: event.target.value })}><option value="" disabled>{districts.length > 0 ? "请选择县 / 区" : "该地区无需继续选择"}</option>{districts.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}</select></label>
-      </div>
+      <LocationSearchCombobox
+        value={selectedLocationValue(value)}
+        birthDate={value.date}
+        birthTime={value.reportedTime || value.time}
+        onChange={(location) => onChange({
+          ...value,
+          countryCode: location?.countryCode || "CN",
+          provinceCode: "",
+          cityCode: "",
+          districtCode: "",
+          birthPlaceLabel: location?.label || "",
+          birthPlaceType: location?.placeType || "",
+          birthPlaceProvider: location?.provider || "",
+          birthPlaceProviderId: location?.providerPlaceId || "",
+          timezoneId: location?.timezoneId || "",
+          timezoneSource: location?.timezoneSource || "",
+          latitude: location?.latitude ?? null,
+          longitude: location?.longitude ?? null,
+          timezoneOffset: location?.timezoneOffset ?? null,
+        })}
+      />
     </fieldset>
   );
 }
 
-const birthLocationKeys = ["countryCode", "provinceCode", "cityCode", "districtCode"] as const;
+const birthLocationKeys = [
+  "countryCode",
+  "provinceCode",
+  "cityCode",
+  "districtCode",
+  "birthPlaceLabel",
+  "birthPlaceProviderId",
+  "timezoneId",
+  "latitude",
+  "longitude",
+  "timezoneOffset",
+] as const;
 
 function birthProfileDeclarationChanged(current: Profile, next: Profile) {
   return declaredBirthInputChanged(current, next)
@@ -823,6 +960,7 @@ export default function Home() {
   const stoppedRequestAwaitingSettlement = useRef<string | null>(null);
   const stoppedSessionPersistence = useRef(new Map<string, Promise<void>>());
   const modelPersistence = useRef(new SessionModelPersistenceQueue());
+  const rectificationPersistence = useRef(new SessionModelPersistenceQueue());
   const modelSyncFailures = useRef(new Set<string>());
   const modelSelectionVersions = useRef(new Map<string, number>());
   const activeSessionIdRef = useRef("");
@@ -1038,6 +1176,7 @@ export default function Home() {
           const previewProfile: Profile = previewMode === "onboarding"
             ? emptyProfile
             : {
+              ...emptyProfile,
               name: "林遥",
               date: "1990-06-15",
               time: isCompletedCandidatePreview ? "04:53" : isRectificationPreview || isAssessmentLoadingPreview ? "" : "12:30",
@@ -1129,7 +1268,7 @@ export default function Home() {
         const [profileResult, sessionsResult] = await Promise.all([
           supabase
             .from("profiles")
-            .select("name,birth_date,birth_time,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_time_status,rectification_case_id,country_code,province_code,city_code,district_code")
+            .select("name,birth_date,birth_time,reported_birth_time,active_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,birth_time_status,rectification_case_id,country_code,province_code,city_code,district_code,birth_place_label,birth_place_type,birth_place_provider,birth_place_provider_id,latitude,longitude,timezone_id,timezone_offset,timezone_source")
             .eq("id", nextAccount.user.id)
             .abortSignal(controller.signal)
             .maybeSingle(),
@@ -1573,9 +1712,15 @@ export default function Home() {
         province_code: nextProfile.provinceCode || null,
         city_code: nextProfile.cityCode || null,
         district_code: nextProfile.districtCode || null,
+        birth_place_label: nextProfile.birthPlaceLabel || null,
+        birth_place_type: nextProfile.birthPlaceType || null,
+        birth_place_provider: nextProfile.birthPlaceProvider || null,
+        birth_place_provider_id: nextProfile.birthPlaceProviderId || null,
         latitude: birthPlace?.lat ?? null,
         longitude: birthPlace?.lon ?? null,
+        timezone_id: nextProfile.timezoneId || null,
         timezone_offset: birthPlace?.tz ?? null,
+        timezone_source: nextProfile.timezoneSource || null,
       }),
     });
     if (!response.ok) {
@@ -1910,7 +2055,6 @@ export default function Home() {
       || rectificationMutationPending
       || rectificationContinuationInFlight.current) return;
     const sourceSession = sourceSessionOverride ?? activeSession;
-    if (!sourceSession) return;
     const action = resolveRectificationCardAction({
       rectificationCase: account.rectificationCase,
       hasConfirmedBirthTime: account.hasConfirmedBirthTime,
@@ -1951,7 +2095,7 @@ export default function Home() {
         ...current.filter((session) => session.id !== rectificationSession.id),
       ]);
     }
-    if (sourceSession.id !== rectificationSession.id) {
+    if (sourceSession && sourceSession.id !== rectificationSession.id) {
       setRectificationReturnSessionId(sourceSession.id);
     }
     setRectificationSessionId(rectificationSession.id);
@@ -1961,13 +2105,33 @@ export default function Home() {
       let turn: ConversationalRectificationTurn;
       if (action !== "resume" || !account.rectificationCase) {
         const durable = await durableRectificationQuestionHandoff.current.load();
-        turn = durable && durable.status !== "consumed"
-          ? durable.turn
-          : await sendConversationalRectificationCommand({
+        if (durable && durable.status !== "consumed") {
+          turn = durable.turn;
+        } else {
+          try {
+            turn = await sendConversationalRectificationCommand({
               type: "start",
               actionId: globalThis.crypto.randomUUID(),
+              modelId: rectificationSession.modelId,
               pendingConsultationQuestion: requestedQuestion,
             });
+          } catch (error) {
+            // A stale account snapshot can make an existing unfinished case look
+            // like a fresh start. The database rejects that second case with a
+            // 409 to protect billing; refresh and resume the durable case instead.
+            if (!(error instanceof ConversationalRectificationRequestError)
+              || error.status !== 409) throw error;
+            const latest = await fetchAccount();
+            if (!latest.rectificationCase) throw error;
+            setAccount(latest);
+            turn = await sendConversationalRectificationCommand({
+              type: "resume",
+              caseId: latest.rectificationCase.caseId,
+              actionId: globalThis.crypto.randomUUID(),
+              turnVersion: latest.rectificationCase.turnVersion,
+            });
+          }
+        }
       } else {
         let current = account.rectificationCase;
         if (pendingConsultationQuestion) {
@@ -1992,18 +2156,46 @@ export default function Home() {
             });
           }
         } else {
-          turn = await sendConversationalRectificationCommand({
-            type: "resume",
-            caseId: current.caseId,
-            actionId: globalThis.crypto.randomUUID(),
-            turnVersion: current.turnVersion,
-          });
+          try {
+            turn = await sendConversationalRectificationCommand({
+              type: "resume",
+              caseId: current.caseId,
+              actionId: globalThis.crypto.randomUUID(),
+              turnVersion: current.turnVersion,
+            });
+          } catch (error) {
+            if (!(error instanceof ConversationalRectificationRequestError)
+              || error.status !== 409) throw error;
+            const latest = await fetchAccount();
+            if (!latest.rectificationCase
+              || latest.rectificationCase.caseId !== current.caseId) throw error;
+            current = latest.rectificationCase;
+            setAccount(latest);
+            turn = await sendConversationalRectificationCommand({
+              type: "resume",
+              caseId: current.caseId,
+              actionId: globalThis.crypto.randomUUID(),
+              turnVersion: current.turnVersion,
+            });
+          }
         }
       }
 
-      const boundSession = rectificationSession.rectificationCaseId === turn.caseId
-        ? rectificationSession
-        : { ...rectificationSession, rectificationCaseId: turn.caseId, updatedAt: timestamp() };
+      const recoveredConversation = conversationalRectificationHistoryForTurn(turn);
+      const firstSessionMessages = recoveredConversation.length > 0
+        ? recoveredConversation.map(({ role, text }) => ({ role, text }))
+        : !reusingRectificationSession && rectificationSession.messages.length === 0
+          ? [{ role: "assistant" as const, text: turn.narrative.trim() }]
+          : rectificationSession.messages;
+      const boundSession = {
+        ...rectificationSession,
+        messages: firstSessionMessages,
+        rectificationCaseId: turn.caseId,
+        updatedAt: rectificationSession.rectificationCaseId === turn.caseId
+          && firstSessionMessages === rectificationSession.messages
+          ? rectificationSession.updatedAt
+          : timestamp(),
+      };
       let sessionSyncFailed = false;
       if (!reusingRectificationSession) {
         try {
@@ -2032,8 +2224,10 @@ export default function Home() {
       if (!reusingRectificationSession) {
         setSessions((current) => current.filter((session) => session.id !== rectificationSession.id));
         setRectificationSessionId(null);
-        activeSessionIdRef.current = sourceSession.id;
-        setActiveSessionId(sourceSession.id);
+        if (sourceSession) {
+          activeSessionIdRef.current = sourceSession.id;
+          setActiveSessionId(sourceSession.id);
+        }
       }
     } finally {
       rectificationOpenInFlight.current = false;
@@ -2045,19 +2239,25 @@ export default function Home() {
     void openBirthTimeRectification(null, session);
   };
 
-  function handleConversationalRectificationTurn(turn: ConversationalRectificationTurn) {
+  function handleConversationalRectificationTurn(
+    turn: ConversationalRectificationTurn,
+    messages: readonly ConversationalRectificationMessage[],
+  ) {
     const requestIdentity = accountRefreshGuard.current.begin();
     setRectificationInitialTurn(turn);
     synchronizeRectificationQuestion(turn);
-    if (activeSession?.sessionType === "birth_time_rectification"
-      && activeSession.rectificationCaseId !== turn.caseId) {
+    if (activeSession?.sessionType === "birth_time_rectification") {
       const boundSession = {
         ...activeSession,
+        messages: durableRectificationMessages(messages),
         rectificationCaseId: turn.caseId,
         updatedAt: timestamp(),
       };
       updateSession(activeSession.id, () => boundSession);
-      void persistSession(boundSession).catch(() => {
+      void rectificationPersistence.current.enqueue(
+        boundSession.id,
+        () => persistSession(boundSession),
+      ).catch(() => {
         setComposerNotice("校正进度已经保留，但会话关联暂时未同步到云端。");
       });
     }
@@ -2761,14 +2961,7 @@ export default function Home() {
   if (!hydrated || (!account && !accountError)) {
     return (
       <main className="app-loading" aria-busy="true" aria-live="polite">
-        <div className="app-loading-content">
-          <div className="app-loading-symbol" aria-hidden="true">
-            <span className="app-loading-orbit" />
-            <span className="app-loading-mark" />
-          </div>
-          <strong>正在和星星对口供</strong>
-          <span>顺便同步你的账户与对话记录</span>
-        </div>
+        <AppLoadingIndicator title="正在和星星对口供" detail="顺便同步你的账户与对话记录" />
       </main>
     );
   }
@@ -2903,11 +3096,18 @@ export default function Home() {
                 <div className="onboarding-card-reveal">
                   <div className="onboarding-card-reveal-inner">
                     <form className="profile-form onboarding-card onboarding-step-card birth-time-transition-card" onSubmit={saveOnboardingBirth} aria-busy={birthTimeAssessmentPhase !== null}>
-                      <div className="onboarding-card-heading"><b>出生时间</b><small>按你实际知道的程度填写，不需要猜测</small></div>
+                      <div className="onboarding-card-heading">
+                        <div className="onboarding-card-heading-copy">
+                          <span className="onboarding-card-kicker">先完成出生资料</span>
+                          <b>出生日期与时间</b>
+                        </div>
+                      </div>
                       <fieldset className="birth-time-transition-fields" disabled={birthTimeAssessmentPhase !== null}>
                         <BirthTimeIntakeFields value={profileDraft} onPatch={(patch) => setProfileDraft((current) => applyBirthTimeDraftPatch(current, patch))} />
                         {accountError && <p className="form-error" role="alert">{accountError}</p>}
-                        <div className="onboarding-card-actions"><button className="button-primary" type="submit" disabled={profileSaving || !isBirthTimeDraftReady(profileDraft)}>{profileSaving ? "保存中" : "继续"}</button></div>
+                        <div className="onboarding-card-actions">
+                          <button className="button-primary" type="submit" disabled={profileSaving || !isBirthTimeDraftReady(profileDraft)}>{profileSaving ? "保存中" : "继续"}</button>
+                        </div>
                       </fieldset>
                       <BirthTimeAssessmentOverlay phase={birthTimeAssessmentPhase} />
                     </form>
@@ -2919,7 +3119,7 @@ export default function Home() {
                 <div className="onboarding-card-reveal">
                   <div className="onboarding-card-reveal-inner">
                     <form className="profile-form onboarding-card onboarding-step-card birth-time-transition-card" onSubmit={saveOnboardingPlace} aria-busy={birthTimeAssessmentPhase !== null}>
-                      <div className="onboarding-card-heading"><b>出生地点</b><small>目前先支持中国大陆地区</small></div>
+                      <div className="onboarding-card-heading"><b>出生地点</b><small>搜索全球城市或区县，系统会匹配出生当日的时区。</small></div>
                       <fieldset className="birth-time-transition-fields" disabled={birthTimeAssessmentPhase !== null}>
                         <BirthLocationFields value={profileDraft} onChange={setProfileDraft} />
                         {accountError && <p className="form-error" role="alert">{accountError}</p>}
@@ -2954,7 +3154,9 @@ export default function Home() {
               {!profileComplete && onboardingStep === "name" && accountError && <p className="form-error onboarding-inline-error" role="alert">{accountError}</p>}
 
               {profileComplete && presetMessageFinished && !rectificationSurfaceOpen && (onboardingPending ? (
-                <div className="starter-loading" role="status">正在准备三个入门问题…</div>
+                <div className="starter-loading" role="status">
+                  <AppLoadingIndicator title="正在准备三个入门问题…" detail="我会根据你的资料，整理适合开始的方向。" />
+                </div>
               ) : (
                 <div className="starter-list starter-workbench" ref={starterWorkbench} aria-label="Jyotisha 推荐的初始问题">
                   <section className="starter-hero" aria-labelledby="starter-heading">
@@ -3067,6 +3269,10 @@ export default function Home() {
           ) : (
             <ConversationalBirthTimeRectification
               initialTurn={visibleRectificationTurn}
+              initialMessages={activeSession?.messages ?? []}
+              models={modelCatalog?.models ?? []}
+              selectedModelId={activeSession?.modelId ?? ""}
+              onSelectModel={(modelId) => void selectSessionModel(modelId)}
               pendingConsultationQuestion={rectificationPendingQuestion}
               continuationPending={rectificationContinuationPending}
               onPendingChange={setRectificationMutationPending}
@@ -3133,11 +3339,11 @@ export default function Home() {
               disabled={!activeSession || isLoading || cancellationPending || creatingSession}
               onSelect={(modelId) => void selectSessionModel(modelId)}
             />
-            <p className={composerNotice || consultationPhase === "undo" ? "composer-notice" : undefined} role={composerNotice || consultationPhase === "undo" ? "status" : undefined}>{composerNotice || (consultationPhase === "undo"
-              ? "已加入发送队列，2.5 秒内可免费撤回。"
-              : !profileComplete
-                ? onboardingStep === "name" ? "Enter 确认称呼" : onboardingStep === "rectification" ? "生时校正为可选增强" : "请先完成上方资料"
-                : "Enter 发送 · Shift + Enter 换行")}</p>
+            {(composerNotice || consultationPhase === "undo" || (!profileComplete && onboardingStep !== "name")) && (
+              <p className={composerNotice || consultationPhase === "undo" ? "composer-notice" : undefined} role={composerNotice || consultationPhase === "undo" ? "status" : undefined}>{composerNotice || (consultationPhase === "undo"
+                ? "已加入发送队列，2.5 秒内可免费撤回。"
+                : onboardingStep === "rectification" ? "生时校正为可选增强" : "请先完成上方资料")}</p>
+            )}
           </div>
         </div>}
         </SidebarInset>

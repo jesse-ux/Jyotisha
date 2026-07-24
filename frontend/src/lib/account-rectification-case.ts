@@ -4,6 +4,7 @@ import {
   declaredBirthInputSchema,
   type DeclaredBirthInput,
 } from "./conversational-rectification/persistence-contracts.ts";
+import { durableBirthCoordinate } from "./birth-profile-timezone.ts";
 
 type RecordValue = Record<string, unknown>;
 
@@ -39,25 +40,34 @@ function integer(value: unknown): number | null {
   return typeof value === "number" && Number.isInteger(value) ? value : null;
 }
 
-function currentDeclaration(value: unknown): DeclaredBirthInput | null {
+function currentDeclaration(value: unknown, fallbackTimezoneOffset?: number): DeclaredBirthInput | null {
   const profile = record(value);
   if (!profile) return null;
   const birthDate = text(profile.birth_date);
   const source = text(profile.birth_time_source);
   const cityCode = text(profile.city_code);
-  const latitude = finiteNumber(profile.latitude);
-  const longitude = finiteNumber(profile.longitude);
-  const timezoneOffset = finiteNumber(profile.timezone_offset);
-  if (!birthDate || !source || !cityCode || latitude === null || longitude === null
+  const city = text(profile.birth_place_label);
+  const placeId = text(profile.birth_place_provider_id);
+  const latitude = durableBirthCoordinate(profile.latitude);
+  const longitude = durableBirthCoordinate(profile.longitude);
+  const timezoneOffset = finiteNumber(profile.timezone_offset) ?? fallbackTimezoneOffset ?? null;
+  if (!birthDate || !source || (!city && !cityCode && !placeId)
+    || latitude === null || longitude === null
     || timezoneOffset === null) return null;
 
   const birthplace = {
+    ...(city ? { city } : {}),
+    ...(placeId ? { placeId } : {}),
+    ...(text(profile.birth_place_type) ? { placeType: text(profile.birth_place_type) } : {}),
+    ...(text(profile.birth_place_provider) ? { provider: text(profile.birth_place_provider) } : {}),
     ...(text(profile.country_code) ? { countryCode: text(profile.country_code) } : {}),
     ...(text(profile.province_code) ? { provinceCode: text(profile.province_code) } : {}),
-    cityCode,
+    ...(cityCode ? { cityCode } : {}),
     ...(text(profile.district_code) ? { districtCode: text(profile.district_code) } : {}),
     latitude,
     longitude,
+    ...(text(profile.timezone_id) ? { timezoneId: text(profile.timezone_id) } : {}),
+    ...(text(profile.timezone_source) ? { timezoneSource: text(profile.timezone_source) } : {}),
     timezoneOffset,
   };
   const common = {
@@ -107,6 +117,7 @@ function currentDeclaration(value: unknown): DeclaredBirthInput | null {
 
 function canonicalPlaceLabel(input: DeclaredBirthInput): string | null {
   const place = input.birthplace;
+  if (place.city) return place.city;
   const country = chinaLocations.country;
   if (place.countryCode !== country.code || !place.provinceCode || !place.cityCode) return null;
   const province = country.provinces.find((candidate) => candidate.code === place.provinceCode);
@@ -120,10 +131,10 @@ function canonicalPlaceLabel(input: DeclaredBirthInput): string | null {
     .join(" · ");
 }
 
-function withoutOptionalPlaceLabel(input: DeclaredBirthInput): unknown {
-  const birthplace: Record<string, unknown> = { ...input.birthplace };
-  delete birthplace.city;
-  return { ...input, birthplace };
+function withoutBirthplace(input: DeclaredBirthInput): unknown {
+  const declaration: Record<string, unknown> = { ...input };
+  delete declaration.birthplace;
+  return declaration;
 }
 
 function sameJson(left: unknown, right: unknown): boolean {
@@ -144,8 +155,14 @@ function sameJson(left: unknown, right: unknown): boolean {
 }
 
 function declarationMatches(current: DeclaredBirthInput, stored: DeclaredBirthInput) {
-  if (!sameJson(withoutOptionalPlaceLabel(current), withoutOptionalPlaceLabel(stored))) {
+  if (!sameJson(withoutBirthplace(current), withoutBirthplace(stored))) {
     return false;
+  }
+  const currentPlace = current.birthplace as Record<string, unknown>;
+  const storedPlace = stored.birthplace as Record<string, unknown>;
+  for (const [key, value] of Object.entries(storedPlace)) {
+    if (key === "city") continue;
+    if (!sameJson(currentPlace[key], value)) return false;
   }
   if (!stored.birthplace.city) return true;
   return stored.birthplace.city === canonicalPlaceLabel(current);
@@ -177,15 +194,15 @@ export function resolveAccountRectificationCase(
   profile: unknown,
   rows: readonly unknown[],
 ): AccountRectificationCaseState | null {
-  const current = currentDeclaration(profile);
-  if (!current) return null;
   for (const value of rows) {
     const row = record(value);
     if (!row) continue;
     const projected = project(row);
     if (!projected) continue;
     const declared = declaredBirthInputSchema.safeParse(row.declared_birth_input);
-    if (declared.success && declarationMatches(current, declared.data)) return projected;
+    if (!declared.success) continue;
+    const current = currentDeclaration(profile, declared.data.birthplace.timezoneOffset);
+    if (current && declarationMatches(current, declared.data)) return projected;
   }
   return null;
 }

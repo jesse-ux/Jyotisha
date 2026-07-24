@@ -1,7 +1,8 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import { BirthDatePicker } from "@/components/birth-date-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { birthTimeConsultationOptionsCopy } from "@/lib/birth-time-consultation-consent";
 import {
   birthTimeDisplayState,
@@ -16,6 +17,54 @@ type BirthTimeIntakeProps = {
   readonly value: BirthTimeDraft;
   readonly onPatch: (patch: BirthTimeDraftPatch) => void;
 };
+
+
+const hours = Array.from({ length: 24 }, (_, index) => String(index).padStart(2, "0"));
+const minutes = Array.from({ length: 60 }, (_, index) => String(index).padStart(2, "0"));
+
+function splitBirthTime(value: string) {
+  const [hour = "", minute = ""] = value.split(":");
+  return { hour, minute };
+}
+
+type BirthClockSelectProps = {
+  readonly value: string;
+  readonly onChange: (value: string) => void;
+};
+
+function BirthClockSelect({ value, onChange }: BirthClockSelectProps) {
+  const currentTime = value || "";
+  const [timeParts, setTimeParts] = useState(() => splitBirthTime(currentTime));
+
+  const patchTime = (part: "hour" | "minute", nextValue: string | null) => {
+    if (nextValue === null) return;
+    const nextParts = { ...timeParts, [part]: nextValue };
+    setTimeParts(nextParts);
+    if (nextParts.hour && nextParts.minute) onChange(`${nextParts.hour}:${nextParts.minute}`);
+  };
+
+  return (
+    <div className="birth-time-clock-selects" aria-label="选择出生时间">
+      <Select required value={timeParts.hour || null} onValueChange={(nextValue) => patchTime("hour", nextValue)}>
+        <SelectTrigger aria-label="出生时间小时">
+          <SelectValue placeholder="时" />
+        </SelectTrigger>
+        <SelectContent className="birth-time-clock-menu" style={{ width: 108, minWidth: 108 }}>
+          {hours.map((hour) => <SelectItem key={hour} value={hour}>{hour}</SelectItem>)}
+        </SelectContent>
+      </Select>
+      <span className="birth-time-clock-separator" aria-hidden="true">:</span>
+      <Select required value={timeParts.minute || null} onValueChange={(nextValue) => patchTime("minute", nextValue)}>
+        <SelectTrigger aria-label="出生时间分钟">
+          <SelectValue placeholder="分" />
+        </SelectTrigger>
+        <SelectContent className="birth-time-clock-menu" style={{ width: 108, minWidth: 108 }}>
+          {minutes.map((minute) => <SelectItem key={minute} value={minute}>{minute}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
 
 const sourceDefaults = {
   hospital_record: {
@@ -99,7 +148,8 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
       )}
 
       {!isConfirmed && <fieldset className="birth-time-source-fieldset">
-        <legend>你是否知道准确出生时间？</legend>
+        <legend>你对出生时间了解多少？</legend>
+        <p className="birth-time-source-intro">不用猜具体分钟，先选一个最符合你的情况的选项。</p>
         <div className="birth-time-source-list">
           {birthTimeSourceOptions.map((option) => (
             <label
@@ -135,12 +185,10 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
         <div className="birth-time-detail-grid onboarding-card-reveal">
           <label>
             <span>{isConfirmed ? "当前排盘时间" : source === "approximate" ? "大概时间" : "记录时间"}</span>
-            <input
-              required
-              disabled={isConfirmed}
-              type="time"
+            <BirthClockSelect
+              key={`${source}-${value.reportedTime || value.time}`}
               value={value.reportedTime || value.time}
-              onChange={(event) => onPatch({ reportedTime: event.target.value })}
+              onChange={(reportedTime) => onPatch({ reportedTime })}
             />
           </label>
           {source === "hospital_record" && (
@@ -149,39 +197,52 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
           {source === "approximate" && (
             <label>
               <span>可能误差</span>
-              <select
-                value={value.uncertaintyBeforeMinutes ?? ""}
-                onChange={(event) => {
-                  const minutes = Number(event.target.value);
+              <Select
+                value={value.uncertaintyBeforeMinutes?.toString() ?? ""}
+                onValueChange={(nextValue) => {
+                  if (nextValue === null) return;
+                  const minutes = Number(nextValue);
                   onPatch({ uncertaintyBeforeMinutes: minutes, uncertaintyAfterMinutes: minutes });
                 }}
               >
-                {[15, 30, 60].map((minutes) => (
-                  <option key={minutes} value={minutes}>前后 {minutes} 分钟</option>
-                ))}
-              </select>
+                <SelectTrigger aria-label="可能误差">
+                  <SelectValue placeholder="选择误差范围">
+                    {(selectedValue) => selectedValue ? `前后 ${selectedValue} 分钟` : "选择误差范围"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {[15, 30, 60].map((minutes) => (
+                    <SelectItem key={minutes} value={minutes.toString()}>前后 {minutes} 分钟</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </label>
           )}
         </div>
       )}
 
       {source === "period_only" && (
-        <div className="birth-time-detail-grid onboarding-card-reveal">
+        <div className="birth-time-detail-grid birth-time-period-details onboarding-card-reveal">
           <label>
             <span>请选择最接近的时间范围</span>
-            <select
+            <Select
               required
-              value={value.birthTimePeriod}
-              onChange={(event) => {
-                const period = birthTimePeriodOptions.find((option) => option.value === event.target.value);
-                if (period) onPatch({ birthTimePeriod: period.value });
+              value={value.birthTimePeriod || null}
+              onValueChange={(nextValue) => {
+                if (typeof nextValue === "string") onPatch({ birthTimePeriod: nextValue });
               }}
             >
-              <option value="" disabled>请选择大致时段</option>
-              {birthTimePeriodOptions.map((option) => (
-                <option key={option.value} value={option.value}>{option.label}</option>
-              ))}
-            </select>
+              <SelectTrigger aria-label="最接近的时间范围">
+                <SelectValue placeholder="请选择大致时段">
+                  {(selectedValue) => birthTimePeriodOptions.find((option) => option.value === selectedValue)?.label ?? "请选择大致时段"}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {birthTimePeriodOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </label>
           <label>
             <span>补充描述（可选）</span>
@@ -194,7 +255,7 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
             />
           </label>
           <button
-            className="button-secondary"
+            className="button-secondary birth-time-skip-button"
             type="button"
             onClick={() => onPatch({
               birthTimeSource: "unknown",

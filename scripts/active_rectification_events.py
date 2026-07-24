@@ -88,6 +88,7 @@ class CandidateResult(TypedDict):
     calculation_contract: dict[str, Any]
     stability_diagnostics: dict[str, Any]
     missing_layers: list[str]
+    candidate_ranking_summary: NotRequired[list[dict[str, Any]]]
 
 
 def precision_weight(precision: EventPrecision) -> float:
@@ -270,12 +271,39 @@ def adjudicate_candidate_rows(
         reasons.append("neighbor_stability_not_passed")
     if (leave_one_event_out or {}).get("status") != "pass":
         reasons.append("leave_one_event_out_not_passed")
-    # Minute confirmation remains release-gated until the frozen public AA holdout passes.
-    reasons.append("minute_holdout_not_ready")
+    can_apply = (
+        confidence == "high"
+        and segment is not None
+        and neighbor_stability["all_required_passed"]
+        and (leave_one_event_out or {}).get("status") == "pass"
+        and not missing_layers
+        and not any(reason in reasons for reason in (
+            "tied_leader",
+            "insufficient_events",
+            "insufficient_domains",
+            "winning_interval_too_wide",
+            "lead_margin_below_medium_threshold",
+        ))
+    )
+    ranking_summary: list[dict[str, Any]] = []
+    for score in ranked_scores[:3]:
+        score_rows = sorted(
+            (row for row in rows if row["score"] == score),
+            key=lambda row: _minute_value(row["time"]),
+        )
+        if not score_rows:
+            continue
+        representative = score_rows[(len(score_rows) - 1) // 2]
+        ranking_summary.append({
+            "rank": len(ranking_summary) + 1,
+            "time": representative["time"],
+            "score": score,
+            "tied_minute_count": len(score_rows),
+        })
     return {
         "result_id": str(uuid5(NAMESPACE_URL, f"{ALGORITHM_VERSION}:{request_fingerprint}")),
         "confidence": confidence,
-        "can_apply": False,
+        "can_apply": can_apply,
         "winning_segment": segment,
         "event_count": event_count,
         "domain_count": domain_count,
@@ -292,6 +320,7 @@ def adjudicate_candidate_rows(
             "leave_one_event_out": leave_one_event_out or {"status": "not_evaluated", "runs": []},
         },
         "missing_layers": missing_layers,
+        "candidate_ranking_summary": ranking_summary,
     }
 
 

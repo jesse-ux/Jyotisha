@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _birth_case() -> dict[str, object]:
@@ -59,24 +63,35 @@ def test_fast_snapshot_executes_only_five_scalar_methods(monkeypatch) -> None:
     }
 
 
-def test_disabled_range_scan_never_calls_network(monkeypatch) -> None:
+def test_rectification_range_scan_cannot_be_disabled_separately_from_official_network(monkeypatch) -> None:
     from scripts import vedastro_service_adapter
 
     monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "https://api.vedastro.org/api")
     monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "1")
     monkeypatch.setenv("VEDASTRO_RANGE_SCAN_NETWORK_ENABLED", "0")
+    calls: list[dict[str, object]] = []
 
-    def fail_if_called(*_args, **_kwargs):
-        raise AssertionError("range scan network request should not run in chat mode")
+    def fake_post(_endpoint: str, request_preview: dict[str, object]):
+        calls.append(request_preview)
+        return {"Status": "Pass", "Payload": []}, 1, []
 
-    monkeypatch.setattr(vedastro_service_adapter, "_post_json_with_retry", fail_if_called)
+    monkeypatch.setattr(vedastro_service_adapter, "_post_json_with_retry", fake_post)
 
     result = vedastro_service_adapter.run_range_scan_for_case(
         _birth_case(),
         "career",
         "2026-07-14",
-        "2026-08-14",
+        "2026-07-14",
     )
 
-    assert result["status"] == "network_execution_disabled"
-    assert "interactive chat path" in result["reason"]
+    assert len(calls) == 1
+    assert result["status"] == "ok"
+
+
+def test_official_env_example_enables_official_gateway_and_range_scan() -> None:
+    example = (ROOT / ".env.official.example").read_text(encoding="utf-8")
+
+    assert "VEDASTRO_GATEWAY_MODE=official_first" in example
+    assert "VEDASTRO_API_ENDPOINT=https://api.vedastro.org/api" in example
+    assert "VEDASTRO_ENABLE_NETWORK=1" in example
+    assert "VEDASTRO_RANGE_SCAN_NETWORK_ENABLED=1" in example

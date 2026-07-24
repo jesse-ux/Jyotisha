@@ -236,16 +236,30 @@ function buildExpertWorkflow(
         boundary: "当前服务端生时校正评分合同未提供可审计的 KP cusp 结果，禁止声称已使用。",
       },
       {
+        technique: "VedAstro official validation",
+        status: receipt?.externalEngines?.status === "pass"
+          ? "used"
+          : receipt?.externalEngines?.status === "fail" ? "blocked" : "not_evaluated",
+        evidence: [
+          String(receipt?.externalEngines?.validation?.vedastro_status ?? "not_evaluated"),
+          String(receipt?.externalEngines?.status ?? "not_evaluated"),
+          String(receipt?.externalEngines?.validation?.candidate_time ?? ""),
+        ].filter((item) => item.length > 0),
+        boundary: receipt?.externalEngines?.status === "pass"
+          ? "VedAstro 已返回官方结果，且胜出分钟在已发生事件扫描中严格领先次优分钟；仍需与本地、PyJHora、jyotishganit 及稳定性结果同时成立。"
+          : "候选未通过本地稳定性前不调用付费验证；进入分钟确认阶段后 VedAstro 官方验证为必跑项。",
+      },
+      {
         technique: "Minute confirmation",
         status: receipt?.confirmationAllowed === true ? "used" : "blocked",
-        evidence: receipt?.hardBlockers ?? ["minute_holdout_not_ready"],
+        evidence: receipt?.hardBlockers ?? ["evidence_and_external_validation_pending"],
         boundary: receipt?.confirmationAllowed === true
           ? "仍须用户明确确认后才能替换当前排盘时间。"
-          : "公开 AA 分钟 holdout 与盲测门禁未通过前，不得自动确认分钟。",
+          : "继续采集事件，直到本轮稳定性、必需技法、本地三引擎一致性与 VedAstro 官方验证全部通过。",
       },
     ],
     confirmationAllowed: receipt?.confirmationAllowed === true,
-    hardBlockers: receipt?.hardBlockers ?? ["minute_holdout_not_ready"],
+    hardBlockers: receipt?.hardBlockers ?? ["evidence_and_external_validation_pending"],
     gates: receipt?.gates ?? {},
   };
 }

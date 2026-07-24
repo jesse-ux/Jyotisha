@@ -77,8 +77,6 @@ test("the rectification chat renders the controller's alternating message histor
   assert.match(source, /controller\.messages/);
   assert.match(source, /controller\.messages[\s\S]*?\.map\(\(message\)/);
   const messageHistoryIndex = source.indexOf("controller.messages");
-  const progressDetailsIndex = source.indexOf("rectification-progress-details");
-  const evidenceRecapIndex = source.indexOf("turn.evidenceRecap.map");
-  assert.ok(messageHistoryIndex >= 0 && messageHistoryIndex < progressDetailsIndex);
-  assert.ok(evidenceRecapIndex > progressDetailsIndex);
+  assert.doesNotMatch(source, /rectification-progress-details|turn\.evidenceRecap\.map/);
+  assert.ok(messageHistoryIndex >= 0);
 });

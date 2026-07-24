@@ -25,18 +25,24 @@ type ParsedDate = {
   readonly precision: "day" | "month" | "year";
 };
 
-const chineseDatePattern = /(?:1\d{3}|20\d{2})\s*年(?:\s*\d{1,2}\s*月(?:\s*\d{1,2}\s*(?:日|号))?)?/g;
+const chineseDatePattern = /(?:1\d{3}|20\d{2}|\d{2})\s*年(?:\s*\d{1,2}\s*月(?:\s*\d{1,2}\s*(?:日|号))?)?/g;
 const isoDatePattern = /(?:1\d{3}|20\d{2})-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12]\d|3[01]))?/g;
-const unresolvedRelativeTimePattern = /(?:次年|第二年|后来|此前|同年|当年|那年|随后|先前|然后|之前|之后|今年|去年|前年|明年)/;
-const leadingRelativeTimePattern = /^\s*(?:(?:次年|第二年|后来(?:又)?|此前|同年|当年|那年|随后|先前|然后|之前|之后|今年|去年|前年|明年)\s*)+/;
+const unresolvedRelativeTimePattern = /(?:来年|次年|第二年|翌年|后来|此前|同年|当年|那年|随后|先前|然后|之前|之后|今年|去年|前年|明年)/;
+const leadingRelativeTimePattern = /^\s*(?:(?:来年|次年|第二年|翌年|后来(?:又)?|此前|同年|当年|那年|随后|先前|然后|之前|之后|今年|去年|前年|明年)\s*)+/;
 const missingEventSummary = "事件内容待补充";
 
-function normalizedDate(value: string): ParsedDate | null {
-  const chinese = value.match(/^((?:1\d{3}|20\d{2}))\s*年(?:\s*(\d{1,2})\s*月(?:\s*(\d{1,2})\s*(?:日|号))?)?$/);
+function normalizedDate(value: string, asOfDate: string): ParsedDate | null {
+  const chinese = value.match(/^((?:1\d{3}|20\d{2}|\d{2}))\s*年(?:\s*(\d{1,2})\s*月(?:\s*(\d{1,2})\s*(?:日|号))?)?$/);
   const iso = value.match(/^((?:1\d{3}|20\d{2}))-(\d{2})(?:-(\d{2}))?$/);
   const match = chinese ?? iso;
   if (!match) return null;
-  const year = Number(match[1]);
+  const rawYear = match[1] ?? "";
+  const asOfYear = Number(asOfDate.slice(0, 4));
+  const currentCentury = Math.floor(asOfYear / 100) * 100;
+  const expandedYear = currentCentury + Number(rawYear);
+  const year = rawYear.length === 2
+    ? expandedYear <= asOfYear ? expandedYear : expandedYear - 100
+    : Number(rawYear);
   const rawMonth = match[2];
   if (!rawMonth) return { value: String(year), precision: "year" };
   const month = Number(rawMonth);
@@ -56,11 +62,11 @@ function normalizedDate(value: string): ParsedDate | null {
   };
 }
 
-function datesIn(value: string): ParsedDate[] {
+function datesIn(value: string, asOfDate: string): ParsedDate[] {
   const matches = [...value.matchAll(chineseDatePattern), ...value.matchAll(isoDatePattern)]
     .sort((left, right) => (left.index ?? 0) - (right.index ?? 0));
   return matches.flatMap((match) => {
-    const parsed = normalizedDate(match[0]);
+    const parsed = normalizedDate(match[0], asOfDate);
     return parsed ? [parsed] : [];
   });
 }
@@ -177,10 +183,10 @@ export function extractLifeEventEvidence(
   const events: ExtractedLifeEventEvidence[] = [];
 
   for (const fragments of splitSentences(input.rawText.normalize("NFKC"))) {
-    const sentenceDates = datesIn(fragments.join("并"));
+    const sentenceDates = datesIn(fragments.join("并"), input.asOfDate);
     const sharedDate = sentenceDates.length === 1 ? sentenceDates[0] ?? null : null;
     for (const fragment of fragments) {
-      const ownDates = datesIn(fragment);
+      const ownDates = datesIn(fragment, input.asOfDate);
       const unresolvedRelativeTime = ownDates.length === 0 && unresolvedRelativeTimePattern.test(fragment);
       const date = ownDates.length === 1
         ? ownDates[0] ?? null

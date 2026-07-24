@@ -34,7 +34,7 @@ const profileSchema = z.object({
   uncertainty_after_minutes: z.number().int().nullable().optional(),
   latitude: z.number(),
   longitude: z.number(),
-  timezone_offset: z.number(),
+  timezone_offset: z.number().nullable(),
 });
 
 const optionSchema = z.object({
@@ -132,6 +132,11 @@ const candidateResultApiSchema = z.object({
     missing_layers: z.array(z.string()),
     auxiliary_layers: z.array(z.string()).default([]),
     hard_blockers: z.array(z.string()),
+    external_engines: z.object({
+      status: z.string(),
+      providers: z.array(z.string()),
+      validation: z.record(z.string(), z.unknown()).optional(),
+    }).strict().optional(),
     canonical_input_hash: z.string().optional(),
     confirmation_allowed: z.boolean().optional(),
     decision: z.enum(["continue_rectification", "confirm_minute"]).optional(),
@@ -152,6 +157,13 @@ class UnexpectedProfileSourceError extends Error {
 
 export function parseBirthTimeProfile(value: unknown): BirthTimeAssessment {
   const profile = profileSchema.parse(value);
+  if (profile.timezone_offset === null) {
+    throw new z.ZodError([{
+      code: "custom",
+      path: ["timezone_offset"],
+      message: "Historical timezone offset must be resolved before parsing",
+    }]);
+  }
   const location = {
     lat: profile.latitude,
     lon: profile.longitude,
@@ -279,6 +291,11 @@ function adaptCandidateResult(parsed: z.infer<typeof candidateResultApiSchema>):
       missingLayers: parsed.technique_contract.missing_layers,
       auxiliaryLayers: parsed.technique_contract.auxiliary_layers,
       hardBlockers: parsed.technique_contract.hard_blockers,
+      externalEngines: parsed.technique_contract.external_engines ? {
+        status: parsed.technique_contract.external_engines.status,
+        providers: parsed.technique_contract.external_engines.providers,
+        validation: parsed.technique_contract.external_engines.validation,
+      } : undefined,
       canonicalInputHash: parsed.technique_contract.canonical_input_hash,
       confirmationAllowed: parsed.technique_contract.confirmation_allowed,
       decision: parsed.technique_contract.decision,

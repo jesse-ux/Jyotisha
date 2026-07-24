@@ -38,6 +38,15 @@ test("account API scopes the service-role case lookup to the authenticated accou
   assert.match(caseSelect, /\.order\("updated_at", \{ ascending: false \}\)/);
 });
 
+test("account GET falls back when global birthplace columns are not migrated yet", () => {
+  const getSource = source.slice(source.indexOf("export async function GET"), source.indexOf("export async function PATCH"));
+
+  assert.match(getSource, /profileError && isMissingProfileColumn\(profileError\)/);
+  assert.match(getSource, /select\("credits,active_birth_time[^"]*timezone_offset"\)/);
+  assert.match(getSource, /birth_place_label: undefined/);
+  assert.match(getSource, /timezone_id: undefined/);
+});
+
 const currentDeclaredProfile = Object.freeze({
   credits: 7,
   active_birth_time: null,
@@ -197,6 +206,86 @@ test("account case matching validates optional canonical place labels and can fi
   );
 });
 
+test("account case matching resumes a normalized global birthplace without China location codes", () => {
+  const globalProfile = {
+    ...currentDeclaredProfile,
+    country_code: "TW",
+    province_code: null,
+    city_code: null,
+    district_code: null,
+    birth_place_label: "台湾 · 台北市",
+    birth_place_type: "locality",
+    birth_place_provider: "geonames",
+    birth_place_provider_id: "1668341",
+    timezone_id: "Asia/Taipei",
+    timezone_source: "iana_historical",
+    latitude: 25.033,
+    longitude: 121.5654,
+    timezone_offset: 8,
+  };
+  const globalDeclaration = {
+    ...currentDeclaredInput,
+    birthplace: {
+      city: "台湾 · 台北市",
+      placeId: "1668341",
+      placeType: "locality",
+      provider: "geonames",
+      countryCode: "TW",
+      latitude: 25.033,
+      longitude: 121.5654,
+      timezoneId: "Asia/Taipei",
+      timezoneSource: "iana_historical",
+      timezoneOffset: 8,
+    },
+  };
+
+  assert.ok(resolveAccountRectificationCase(globalProfile, [unfinishedCase(globalDeclaration)]));
+  assert.equal(resolveAccountRectificationCase(globalProfile, [unfinishedCase({
+    ...globalDeclaration,
+    birthplace: { ...globalDeclaration.birthplace, placeId: "wrong-id" },
+  })]), null);
+});
+
+test("account case matching recovers an existing global case when profile offset is null and coordinates need durable rounding", () => {
+  const globalProfile = {
+    ...currentDeclaredProfile,
+    country_code: "US",
+    province_code: null,
+    city_code: null,
+    district_code: null,
+    birth_place_label: "San Francisco, California, United States",
+    birth_place_type: "city",
+    birth_place_provider: "geoapify",
+    birth_place_provider_id: "sf-place",
+    timezone_id: "America/Los_Angeles",
+    timezone_source: "iana_historical",
+    latitude: 37.7879363,
+    longitude: -122.4075201,
+    timezone_offset: null,
+  };
+  const declaration = {
+    ...currentDeclaredInput,
+    birthplace: {
+      city: "San Francisco, California, United States",
+      placeId: "sf-place",
+      placeType: "city",
+      provider: "geoapify",
+      countryCode: "US",
+      latitude: 37.787936,
+      longitude: -122.40752,
+      timezoneId: "America/Los_Angeles",
+      timezoneSource: "iana_historical",
+      timezoneOffset: -8,
+    },
+  };
+
+  assert.ok(resolveAccountRectificationCase(globalProfile, [unfinishedCase(declaration)]));
+  assert.equal(resolveAccountRectificationCase(
+    { ...globalProfile, timezone_id: "America/New_York" },
+    [unfinishedCase(declaration)],
+  ), null);
+});
+
 test("account route reads declaration truth only for server matching and does not key resume to profile case id", () => {
   const caseSelect = source.match(/\.from\("birth_time_rectification_cases"\)[\s\S]*?\.limit\(\d+\)/)?.[0] ?? "";
   const responseStart = source.indexOf("return NextResponse.json({\n      user:");
@@ -237,6 +326,16 @@ test("profile patch schema validates calendar, clock, source requirements, and l
   assert.equal(accountProfilePatchSchema.safeParse({ ...valid, latitude: 91 }).success, false);
   assert.equal(accountProfilePatchSchema.safeParse({ reported_birth_time: "05:30" }).success, false);
   assert.equal(accountProfilePatchSchema.safeParse({ ...valid, longitude: null }).success, false);
+  assert.equal(accountProfilePatchSchema.safeParse({
+    ...valid,
+    timezone_offset: null,
+    birth_place_label: "New York, New York, United States",
+    birth_place_type: "place",
+    birth_place_provider: "mapbox",
+    birth_place_provider_id: "place.123",
+    timezone_id: "America/New_York",
+    timezone_source: "iana_historical",
+  }).success, true);
   assert.equal(accountProfilePatchSchema.safeParse({ name: "只改称呼" }).success, true);
   assert.equal(accountProfilePatchSchema.safeParse({
     ...valid,
@@ -334,6 +433,7 @@ test("account PATCH uses the shared validator and never writes client birth_time
   assert.match(patchSource, /"birth_time_status"/);
   assert.match(patchSource, /"active_birth_time"/);
   assert.match(source, /latitude,longitude,timezone_offset/);
+  assert.match(source, /birth_place_label,birth_place_type,birth_place_provider,birth_place_provider_id,timezone_id,timezone_source/);
   assert.match(source, /applyAccountProfileConcurrencyGuards/);
   assert.match(source, /最新确认结果已保留/);
 });
