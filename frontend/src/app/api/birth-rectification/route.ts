@@ -1,41 +1,10 @@
 import { NextResponse } from "next/server";
-import { chinaLocations } from "@/data/china-locations";
-import { finiteBirthNumber, resolveMissingBirthTimezoneOffset } from "@/lib/birth-profile-timezone";
-
-type Profile = {
-  date?: string;
-  time?: string;
-  provinceCode?: string;
-  cityCode?: string;
-  districtCode?: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  timezoneId?: string;
-  timezoneOffset?: number | null;
-};
+import {
+  payloadFromProfile,
+  type BirthRectificationProfile,
+} from "@/lib/birth-rectification-payload";
 
 const jyotishApiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200";
-
-export async function payloadFromProfile(profile: Profile) {
-  if (!profile.date || !profile.time) return null;
-  const resolved = await resolveMissingBirthTimezoneOffset(profile, { preferredTime: profile.time }) as Profile;
-  const province = chinaLocations.country.provinces.find((item) => item.code === profile.provinceCode);
-  const city = province?.cities.find((item) => item.code === profile.cityCode);
-  const district = city?.districts.find((item) => item.code === profile.districtCode);
-  const location = district ?? city;
-  const lat = finiteBirthNumber(resolved.latitude) ?? location?.center[1] ?? null;
-  const lon = finiteBirthNumber(resolved.longitude) ?? location?.center[0] ?? null;
-  const tz = finiteBirthNumber(resolved.timezoneOffset) ?? (location ? chinaLocations.country.timezone : null);
-  if (lat === null || lon === null || tz === null) return null;
-  return {
-    birth_time: `${profile.date} ${profile.time}`,
-    uncertainty_minutes: 30,
-    step_minutes: 2,
-    lat,
-    lon,
-    tz,
-  };
-}
 
 async function fetchQuestionnaire(payload: Record<string, unknown>) {
   const controller = new AbortController();
@@ -56,7 +25,7 @@ async function fetchQuestionnaire(payload: Record<string, unknown>) {
 }
 
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => null) as { profile?: Profile } | null;
+  const body = await request.json().catch(() => null) as { profile?: BirthRectificationProfile } | null;
   const payload = await payloadFromProfile(body?.profile ?? {}).catch(() => null);
   if (!payload) {
     return NextResponse.json({

@@ -25,7 +25,14 @@ const requestCardinalityMigration = readFileSync(
 );
 const followUpMigration = readFileSync(
   new URL(
-    "../supabase/migrations/20260723010000_align_conversational_follow_up_request.sql",
+    "../supabase/migrations/20260723030000_align_conversational_follow_up_request.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
+const assistantOnlyRegenerateMigration = readFileSync(
+  new URL(
+    "../supabase/migrations/20260724030000_allow_assistant_only_rectification_regenerate.sql",
     import.meta.url,
   ),
   "utf8",
@@ -92,4 +99,13 @@ test("durable evidence requests accept bounded follow-up targeting", () => {
     /'new_event', 'event_date', 'event_detail'/,
   );
   assert.match(followUpMigration, /valid_uuid_text/);
+});
+
+test("durable regenerate turns may persist an assistant-only replacement", () => {
+  assert.match(assistantOnlyRegenerateMigration, /p_user_message is not null and/);
+  assert.match(assistantOnlyRegenerateMigration, /v_saved_user_message is distinct from p_user_message/);
+  assert.doesNotMatch(
+    assistantOnlyRegenerateMigration,
+    /if p_user_message is null\s+or/,
+  );
 });

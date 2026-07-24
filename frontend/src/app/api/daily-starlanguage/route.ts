@@ -1,19 +1,8 @@
 import { NextResponse } from "next/server";
-import { chinaLocations } from "@/data/china-locations";
-import { finiteBirthNumber, resolveMissingBirthTimezoneOffset } from "@/lib/birth-profile-timezone";
-
-type Profile = {
-  name?: string;
-  date?: string;
-  time?: string;
-  provinceCode?: string;
-  cityCode?: string;
-  districtCode?: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  timezoneId?: string;
-  timezoneOffset?: number | null;
-};
+import {
+  dailyProfilePayload,
+  type GlobalBirthProfile as Profile,
+} from "@/lib/global-birth-payloads";
 
 const jyotishApiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200";
 
@@ -28,36 +17,6 @@ function pickCard(profile: Profile, today: string) {
   const seed = `${today}-${profile.date ?? ""}-${profile.time ?? ""}-${profile.provinceCode ?? ""}-${profile.cityCode ?? ""}`;
   const index = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0) % cards.length;
   return cards[index];
-}
-
-export async function profilePayload(profile: Profile, today: string) {
-  if (!profile.date || !profile.time) return null;
-  const resolved = await resolveMissingBirthTimezoneOffset(profile, { preferredTime: profile.time }) as Profile;
-  const [year, month, day] = profile.date.split("-").map(Number);
-  const [hour, minute] = profile.time.split(":").map(Number);
-  const province = chinaLocations.country.provinces.find((item) => item.code === profile.provinceCode);
-  const city = province?.cities.find((item) => item.code === profile.cityCode);
-  const district = city?.districts.find((item) => item.code === profile.districtCode);
-  const location = district ?? city;
-  const lat = finiteBirthNumber(resolved.latitude) ?? location?.center[1] ?? null;
-  const lon = finiteBirthNumber(resolved.longitude) ?? location?.center[0] ?? null;
-  const tz = finiteBirthNumber(resolved.timezoneOffset) ?? (location ? chinaLocations.country.timezone : null);
-  if (!year || !month || !day || Number.isNaN(hour) || Number.isNaN(minute)
-    || lat === null || lon === null || tz === null) return null;
-  return {
-    year,
-    month,
-    day,
-    hour,
-    minute,
-    lat,
-    lon,
-    tz,
-    transit_date: today,
-    today,
-    ayanamsa: "lahiri",
-    node_mode: "mean",
-  };
 }
 
 function chartPoints(chart: Record<string, unknown>) {
@@ -87,7 +46,7 @@ async function fetchJson(path: string, body: Record<string, unknown>) {
 }
 
 async function transitBackedCard(profile: Profile, today: string) {
-  const payload = await profilePayload(profile, today);
+  const payload = await dailyProfilePayload(profile, today);
   if (!payload) return null;
   const chart = await fetchJson("/api/chart", payload);
   const points = chartPoints(chart);

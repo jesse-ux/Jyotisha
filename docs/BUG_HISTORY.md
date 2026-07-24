@@ -1277,3 +1277,18 @@
 - 相关记录：BUG-055、BUG-064、BUG-065
 - 复发自：无
 - 修复版本：待提交（本地可测）
+
+## BUG-067 | 主分支同步后生时校正首轮流式、历史与重跑持久化回归
+
+- 状态：resolved
+- 首次发现：2026-07-24
+- 最近更新：2026-07-24
+- 影响面：生时校正首轮引导、NDJSON 流式回答、刷新后的交替历史、重跑持久化、Next.js 生产构建与迁移顺序
+- 用户现象：进入生时校正后首条 Agent 引导不显示或不流式；成功回答在页面上消失，刷新后 Agent 与用户消息错位；重跑后同一条用户消息被重复保存；同步主分支后开发测试可过但生产构建因 App Router 非法导出或缺失状态 setter 失败。
+- 根因：合并时删除了首轮 opening stream 与控制器 `streamingAssistantText` 的部分状态链，并把 NDJSON 客户端退回整包解析；持久化读取只恢复最终 turn，没有按 authored narrative 还原完整交替历史。重跑仍把上一条用户文本作为新 turn 保存，导致刷新后重复。两个迁移使用相同版本号；多个 `route.ts` 还导出了测试 helper，违反 Next.js App Router 生产构建的导出合同。最后，页面保留了 `setRectificationOpeningAssistantText` 调用但状态声明被删，只有完整生产 type-check 才暴露。
+- 修复：恢复服务端 NDJSON 增量事件和客户端逐块解析；恢复首轮 opening stream、控制器流式状态及持久化交替历史。重跑改为 assistant-only turn，数据库向前迁移允许 `user_message = null`，历史折叠时用新 Agent 回答替换上一轮回答而不复制用户气泡。迁移版本改为唯一顺序；将出生资料和全局地点 helper 移出 App Router route 文件，复杂生时校正实现移入 `handler.ts`，路由仅导出 HTTP handler 与受支持配置；补回首轮流式状态声明。
+- 验证：Next.js webpack 生产构建通过；除已知会使本机 Chrome 崩溃的真实 Chromium 组件测试外，前端测试 968/968 通过；VedAstro 适配器测试 24/24 通过；ESLint 0 error（保留 3 条既有 warning）；`git diff --check` 通过。新增回归覆盖首轮流式增量、刷新后交替历史、assistant-only regenerate、迁移合同、全局出生地点 helper 与路由导出边界。
+- 防复发：发布门禁必须包含真实 `next build --webpack`，不能只跑单元测试或 `tsc`；App Router `route.ts` 不得导出测试 helper；重跑必须以“替换上一轮 Agent 回答”为持久化语义；首轮消息、后续消息和刷新恢复必须共享同一对话历史合同。
+- 相关记录：BUG-052、BUG-053、BUG-055、BUG-058、BUG-060
+- 复发自：无
+- 修复版本：待提交（待生产验收）

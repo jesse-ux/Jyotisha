@@ -2,9 +2,11 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { profilePayload } from "../src/app/api/daily-starlanguage/route.ts";
-import { payloadFromProfile } from "../src/app/api/birth-rectification/route.ts";
-import { birthPayload } from "../src/app/api/synastry/route.ts";
+import { payloadFromProfile } from "../src/lib/birth-rectification-payload.ts";
+import {
+  dailyProfilePayload,
+  synastryBirthPayload,
+} from "../src/lib/global-birth-payloads.ts";
 import { resolveMissingBirthTimezoneOffset } from "../src/lib/birth-profile-timezone.ts";
 import { parseBirthTimeProfile } from "../src/lib/birth-time-journey-adapters.ts";
 
@@ -22,14 +24,14 @@ const sanFrancisco = Object.freeze({
 });
 
 test("daily, synastry, and legacy rectification use global coordinates instead of requiring China codes", async () => {
-  const daily = await profilePayload(sanFrancisco, "2026-07-24");
+  const daily = await dailyProfilePayload(sanFrancisco, "2026-07-24");
   assert.deepEqual(daily && { lat: daily.lat, lon: daily.lon, tz: daily.tz }, {
     lat: 37.7879363,
     lon: -122.4075201,
     tz: -8,
   });
 
-  const synastry = await birthPayload(sanFrancisco);
+  const synastry = await synastryBirthPayload(sanFrancisco);
   assert.deepEqual({ lat: synastry.lat, lon: synastry.lon, tz: synastry.tz }, {
     lat: 37.7879363,
     lon: -122.4075201,

@@ -440,7 +440,7 @@ test("ordinary declaration edits clear stale candidate application but never ove
 test("account PATCH uses the shared validator and never writes client birth_time over account truth", () => {
   assert.match(source, /accountProfilePatchSchema\.safeParse/);
   assert.match(source, /resolveAccountBirthTimeApplicationPatch/);
-  assert.match(source, /payload\.birth_time_source[\s\S]*birth_time_status: "reported"/);
+  assert.match(patchSource, /birthTimeSource[\s\S]*birth_time_status: "reported"/);
   assert.doesNotMatch(source, /birth_time:\s*nullableString\(payload\.birth_time\)/);
   assert.match(source, /invalidatesUnconfirmedApplication/);
   assert.match(patchSource, /"birth_time_status"/);

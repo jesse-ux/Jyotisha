@@ -11,7 +11,7 @@ import {
   resolveRectificationNarrativeModels,
   resolveMissingProfileTimezoneOffset,
   type BirthTimeConversationRouteService,
-} from "../src/app/api/birth-time-conversation/route.ts";
+} from "../src/app/api/birth-time-conversation/handler.ts";
 import { ConversationalRectificationError } from "../src/lib/conversational-rectification/errors.ts";
 import type {
   BirthTimeJourneyEngine,
@@ -26,7 +26,7 @@ const caseId = "00000000-0000-4000-8000-000000000713";
 const requestId = "00000000-0000-4000-8000-000000000714";
 
 test("production narrator loads the Jyotish Skill without overriding packet truth", () => {
-  const source = readFileSync(new URL("../src/app/api/birth-time-conversation/route.ts", import.meta.url), "utf8");
+  const source = readFileSync(new URL("../src/app/api/birth-time-conversation/handler.ts", import.meta.url), "utf8");
 
   assert.match(source, /skills:\s*\[jyotishSkillPath\]/);
   assert.match(source, /Load the Jyotish Skill to choose a natural, one-question-at-a-time evidence strategy/);

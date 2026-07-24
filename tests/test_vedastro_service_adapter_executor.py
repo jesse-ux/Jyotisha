@@ -131,6 +131,8 @@ def test_vedastro_official_subprocess_timeouts_are_controlled(monkeypatch) -> No
 def test_vedastro_official_snapshot_stops_when_foreground_budget_is_exhausted(monkeypatch) -> None:
     from scripts import vedastro_service_adapter as adapter
 
+    monkeypatch.setenv("VEDASTRO_API_ENDPOINT", "https://api.vedastro.org/api")
+    monkeypatch.setenv("VEDASTRO_ENABLE_NETWORK", "1")
     monkeypatch.setenv("VEDASTRO_TIMEOUT_SECONDS", "4")
     monkeypatch.setattr(
         adapter,

@@ -1,50 +1,12 @@
 import { NextResponse } from "next/server";
-import { chinaLocations } from "@/data/china-locations";
-import { finiteBirthNumber, resolveMissingBirthTimezoneOffset } from "@/lib/birth-profile-timezone";
-
-type Profile = {
-  name?: string;
-  date?: string;
-  time?: string;
-  countryCode?: string;
-  provinceCode?: string;
-  cityCode?: string;
-  districtCode?: string;
-  latitude?: number | null;
-  longitude?: number | null;
-  timezoneId?: string;
-  timezoneOffset?: number | null;
-};
+import {
+  synastryBirthPayload,
+  type GlobalBirthProfile as Profile,
+} from "@/lib/global-birth-payloads";
 
 type RelationshipType = "romance" | "business" | "family" | "general";
 
 const apiBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200";
-const china = chinaLocations.country;
-
-export async function birthPayload(profile: Profile) {
-  const resolved = await resolveMissingBirthTimezoneOffset(profile, { preferredTime: profile.time }) as Profile;
-  const [year, month, day] = String(profile.date || "").split("-").map(Number);
-  const [hour, minute] = String(profile.time || "").split(":").map(Number);
-  const province = china.provinces.find((item) => item.code === profile.provinceCode);
-  const city = province?.cities.find((item) => item.code === profile.cityCode);
-  const district = city?.districts.find((item) => item.code === profile.districtCode);
-  const location = district ?? city;
-  const lat = finiteBirthNumber(resolved.latitude) ?? location?.center[1] ?? null;
-  const lon = finiteBirthNumber(resolved.longitude) ?? location?.center[0] ?? null;
-  const tz = finiteBirthNumber(resolved.timezoneOffset) ?? (location ? china.timezone : null);
-  if (![year, month, day, hour, minute].every(Number.isFinite)
-    || lat === null || lon === null || tz === null) {
-    throw new Error("birth_profile_incomplete");
-  }
-  return {
-    year, month, day, hour, minute,
-    second: 0,
-    lat,
-    lon,
-    tz,
-  };
-}
-
 function moonLongitude(chart: Record<string, unknown>) {
   const planets = chart.planets && typeof chart.planets === "object" ? chart.planets as Record<string, unknown> : {};
   const moon = planets.Moon && typeof planets.Moon === "object" ? planets.Moon as Record<string, unknown> : {};
@@ -159,8 +121,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "请提供双方星盘资料" }, { status: 400 });
     }
     const [selfPayload, partnerPayload] = await Promise.all([
-      birthPayload(body.selfProfile),
-      birthPayload(body.partnerProfile),
+      synastryBirthPayload(body.selfProfile),
+      synastryBirthPayload(body.partnerProfile),
     ]);
     const selfChart = await postPython("/api/chart", selfPayload);
     const partnerChart = await postPython("/api/chart", partnerPayload);

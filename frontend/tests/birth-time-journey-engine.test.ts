@@ -19,6 +19,7 @@ test("journey engine serializes only stored event-scoring inputs", () => {
     lat: 31.2304,
     lon: 121.4737,
     tz: 8,
+    high_rigor: true,
     events: [
       { id: "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5", domain: "career", date: "2019-07", precision: "month", summary: "晋升为团队负责人" },
       { id: "0790866c-ad5e-4a45-b2b4-a5c73f6be6ea", domain: "education", date: "2011", precision: "year" },
@@ -33,6 +34,7 @@ test("journey engine serializes only stored event-scoring inputs", () => {
     lat: 31.2304,
     lon: 121.4737,
     tz: 8,
+    high_rigor: true,
     events: [
       { id: "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5", domain: "career", date: "2019-07", precision: "month", summary: "晋升为团队负责人" },
       { id: "0790866c-ad5e-4a45-b2b4-a5c73f6be6ea", domain: "education", date: "2011", precision: "year" },

@@ -265,16 +265,11 @@ function harness() {
         events.push("narrative");
         return { text: JSON.stringify({
           narrative: "05:18—05:42 是继承的待验证候选范围。D1 稳定，D9、D10 对分钟敏感；请补充一件带年月的真实事业或关系事件。",
-          evidenceRequest: { domains: ["career", "relationship"], datePrecision: "month_preferred" },
-          facts: {
-            calculationVersion: "legacy-import-technical-v1",
-            candidateStatus: "pending_validation",
-            representativeTime: "05:30",
-            rangeStart: "05:18",
-            rangeEnd: "05:42",
-            stableLayers: ["D1"],
-            sensitiveLayers: ["D9", "D10"],
-            candidateDifferenceRefs: ["d9-boundary", "d10-boundary", "career-rule"],
+          evidenceRequest: {
+            domains: ["career", "relationship"],
+            datePrecision: "month_preferred",
+            prompt: "请补充一件带年月的真实事业或关系事件。",
+            followUp: { kind: "new_event", evidenceId: null },
           },
         }) };
       },
@@ -298,7 +293,7 @@ test("start imports an owner-bound unfinished case once, waives billing, and ret
   });
   assert.equal(first.caseId, actionId);
   assert.equal(first.evidenceRecap[0]?.id, lifeEventId);
-  assert.deepEqual(value.events, ["packet", "narrative", "narrative", "import"]);
+  assert.deepEqual(value.events, ["packet", "narrative", "import"]);
   assert.deepEqual(value.counts(), { importCount: 1, reserved: 0, loadLegacyCount: 1 });
   const stored = value.cases.get(actionId);
   assert.equal(stored?.importedFromCaseId, legacyCaseId);

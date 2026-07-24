@@ -232,7 +232,8 @@ test("omits the optional new-event follow-up marker for legacy first-turn SQL va
 test("omits the optional new-event follow-up marker when saving a turn", async () => {
   let turnPayload: unknown;
   const store = new ConversationalRectificationStore(rpcClient((name, args) => {
-    assert.equal(name, "save_conversational_rectification_turn");
+    assert.equal(name, "save_conversational_rectification_turn_with_history");
+    assert.equal(args.p_user_message, "2019 年 7 月换工作");
     turnPayload = args.p_turn;
     return storedRow;
   }));
@@ -243,6 +244,7 @@ test("omits the optional new-event follow-up marker when saving a turn", async (
     actionId: "00000000-0000-4000-8000-000000000099",
     expectedVersion: 0,
     commandFingerprint: "a".repeat(64),
+    userMessage: "2019 年 7 月换工作",
     turn: {
       ...firstTurn,
       turnVersion: 1,
@@ -260,6 +262,27 @@ test("omits the optional new-event follow-up marker when saving a turn", async (
     (turnPayload as { evidenceRequest?: { followUp?: unknown } }).evidenceRequest?.followUp,
     undefined,
   );
+});
+
+test("passes a null user message for an assistant-only regenerated turn", async () => {
+  const store = new ConversationalRectificationStore(rpcClient((name, args) => {
+    assert.equal(name, "save_conversational_rectification_turn_with_history");
+    assert.equal(args.p_user_message, null);
+    return { ...storedRow, turn_version: 1 };
+  }));
+
+  await store.saveTurn({
+    userId,
+    caseId,
+    actionId: "00000000-0000-4000-8000-000000000098",
+    expectedVersion: 0,
+    commandFingerprint: "b".repeat(64),
+    userMessage: null,
+    turn: { ...firstTurn, turnVersion: 1 },
+    evidence: [],
+    validationReceipt,
+    privateCandidate: { resultId, calculationVersion: "rectification-v3.1" },
+  });
 });
 
 test("loads the latest unfinished case by account without a chat identifier", async () => {

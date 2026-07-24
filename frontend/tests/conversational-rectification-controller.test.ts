@@ -284,6 +284,33 @@ test("controller restores the real user and Agent history without synthesizing r
   assert.doesNotMatch(messages?.map(({ text }) => text).join("\n") ?? "", /已记录这段经历/);
 });
 
+test("controller folds an assistant-only regenerate into the preceding exchange after refresh", () => {
+  const prior = turnWithMessageHistory(3);
+  const controller = createConversationalRectificationController({
+    initialTurn: {
+      ...prior,
+      turnVersion: 4,
+      narrative: "重写后的回答会替换旧回答，并自然追问下一件经历。",
+      messageHistory: [
+        ...(prior.messageHistory ?? []),
+        {
+          turnVersion: 4,
+          userMessage: null,
+          narrative: "重写后的回答会替换旧回答，并自然追问下一件经历。",
+        },
+      ],
+    },
+  });
+
+  assert.deepEqual(controller.getSnapshot().messages?.map(({ role, text }) => ({ role, text })), [
+    { role: "assistant", text: "我们先从一件时间明确的经历开始。" },
+    { role: "user", text: "2017 年 7 月入职第一家公司，从事数据分析。" },
+    { role: "assistant", text: "这段职业起点已经记下。你当时为什么选择数据分析？" },
+    { role: "user", text: "专业相关，也觉得数据工作更适合我。" },
+    { role: "assistant", text: "重写后的回答会替换旧回答，并自然追问下一件经历。" },
+  ]);
+});
+
 test("legacy responses without message history show only the real latest Agent narrative", () => {
   const legacy = {
     ...correctableTurn(3),

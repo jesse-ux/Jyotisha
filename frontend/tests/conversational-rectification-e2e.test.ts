@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createBirthTimeConversationPostHandler } from "../src/app/api/birth-time-conversation/route.ts";
+import { createBirthTimeConversationPostHandler } from "../src/app/api/birth-time-conversation/handler.ts";
 import {
   clearBirthTimeConsultationConsent,
   createBirthTimeConsultationConsentState,
@@ -143,23 +143,13 @@ function narrativeGenerator() {
       };
       const packet = request.packet;
       const final = request.phase === "final";
-      const nextDomain = packet.suggestedDomains[0]?.domain ?? "career";
       return { text: JSON.stringify({
         narrative: [
           `当前仍在核对 ${packet.candidate.rangeStart}–${packet.candidate.rangeEnd} 的候选范围，不能视为已经确认的出生分钟。`,
           final ? "现有已发生事件支持进入候选确认。" : "先说一件已经发生的重要经历好吗？请注明哪一年、哪一月以及发生了什么。",
         ].join(""),
-        candidateStatus: packet.candidate.status,
-        representativeTime: packet.candidate.representativeTime,
-        rangeStart: packet.candidate.rangeStart,
-        rangeEnd: packet.candidate.rangeEnd,
-        useBoundary: packet.useBoundary,
-        stableLayers: packet.stableLayers.map((item) => item.layer),
-        sensitiveLayers: packet.sensitiveLayers.map((item) => item.layer),
-        referenceIds: [],
-        domainReasons: packet.suggestedDomains.map((item) => ({ ...item })),
         evidenceRequest: final ? null : {
-          domains: [nextDomain],
+          domains: ["career"],
           datePrecision: "month_preferred",
           prompt: "请提供已经发生的真实事件，并写明哪一年、哪一月以及发生了什么。",
         },

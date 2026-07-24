@@ -927,6 +927,7 @@ export default function Home() {
   const [rectificationSessionId, setRectificationSessionId] = useState<string | null>(null);
   const [rectificationReturnSessionId, setRectificationReturnSessionId] = useState<string | null>(null);
   const [rectificationInitialTurn, setRectificationInitialTurn] = useState<ConversationalRectificationTurn | null>(null);
+  const [rectificationOpeningAssistantText, setRectificationOpeningAssistantText] = useState("");
   const [rectificationPendingQuestion, setRectificationPendingQuestion] = useState<string | null>(null);
   const [rectificationLoading, setRectificationLoading] = useState(false);
   const [rectificationMutationPending, setRectificationMutationPending] = useState(false);
@@ -2055,22 +2056,32 @@ export default function Home() {
       || rectificationMutationPending
       || rectificationContinuationInFlight.current) return;
     const sourceSession = sourceSessionOverride ?? activeSession;
+    if (!sourceSession) return;
     const action = resolveRectificationCardAction({
       rectificationCase: account.rectificationCase,
       hasConfirmedBirthTime: account.hasConfirmedBirthTime,
     });
-    const resumableSession = action === "resume" && account.rectificationCase
+    const sourceBoundCaseId = sourceSession.sessionType === "birth_time_rectification"
+      ? sourceSession.rectificationCaseId
+      : null;
+    const accountResumeCase = action === "resume" ? account.rectificationCase : null;
+    const resumeTarget = sourceBoundCaseId
+      ? {
+          caseId: sourceBoundCaseId,
+          turnVersion: accountResumeCase?.caseId === sourceBoundCaseId
+            ? accountResumeCase.turnVersion
+            : 0,
+        }
+      : accountResumeCase;
+    const resumableSession = !sourceBoundCaseId && accountResumeCase
       ? sessions.find((session) => session.sessionType === "birth_time_rectification"
-        && session.rectificationCaseId === account.rectificationCase?.caseId)
+        && session.rectificationCaseId === accountResumeCase.caseId)
         ?? sessions.find((session) => session.sessionType === "birth_time_rectification"
           && session.rectificationCaseId === null)
         ?? null
       : null;
-    const canReuseSourceRectificationSession = action === "resume"
-      && sourceSession.sessionType === "birth_time_rectification"
-      && account.rectificationCase !== null
-      && (sourceSession.rectificationCaseId === account.rectificationCase.caseId
-        || sourceSession.rectificationCaseId === null);
+    const canReuseSourceRectificationSession = sourceSession.sessionType === "birth_time_rectification"
+      && (sourceBoundCaseId !== null || accountResumeCase !== null);
     const rectificationSession = canReuseSourceRectificationSession
       ? sourceSession
       : resumableSession ?? createSession(modelCatalog.defaultModelId, "birth_time_rectification");
@@ -2087,6 +2098,7 @@ export default function Home() {
     setDraftEntrypoint(null);
     setRectificationPendingQuestion(requestedQuestion);
     setRectificationInitialTurn(null);
+    setRectificationOpeningAssistantText("");
     setRectificationError("");
     setRectificationLoading(true);
     if (!reusingRectificationSession) {
@@ -2103,7 +2115,7 @@ export default function Home() {
     setActiveSessionId(rectificationSession.id);
     try {
       let turn: ConversationalRectificationTurn;
-      if (action !== "resume" || !account.rectificationCase) {
+      if (!resumeTarget) {
         const durable = await durableRectificationQuestionHandoff.current.load();
         if (durable && durable.status !== "consumed") {
           turn = durable.turn;
@@ -2114,6 +2126,10 @@ export default function Home() {
               actionId: globalThis.crypto.randomUUID(),
               modelId: rectificationSession.modelId,
               pendingConsultationQuestion: requestedQuestion,
+            }, {
+              onNarrativeDelta(text) {
+                setRectificationOpeningAssistantText((current) => current + text);
+              },
             });
           } catch (error) {
             // A stale account snapshot can make an existing unfinished case look
@@ -2129,12 +2145,18 @@ export default function Home() {
               caseId: latest.rectificationCase.caseId,
               actionId: globalThis.crypto.randomUUID(),
               turnVersion: latest.rectificationCase.turnVersion,
+            }, {
+              onNarrativeDelta(text) {
+                setRectificationOpeningAssistantText((current) => current + text);
+              },
             });
           }
         }
       } else {
-        let current = account.rectificationCase;
-        if (pendingConsultationQuestion) {
+        let current = resumeTarget;
+        const canAttachQuestion = pendingConsultationQuestion
+          && accountResumeCase?.caseId === current.caseId;
+        if (canAttachQuestion) {
           try {
             turn = await durableRectificationQuestionHandoff.current.attach({
               caseId: current.caseId,
@@ -2162,6 +2184,10 @@ export default function Home() {
               caseId: current.caseId,
               actionId: globalThis.crypto.randomUUID(),
               turnVersion: current.turnVersion,
+            }, {
+              onNarrativeDelta(text) {
+                setRectificationOpeningAssistantText((value) => value + text);
+              },
             });
           } catch (error) {
             if (!(error instanceof ConversationalRectificationRequestError)
@@ -2176,6 +2202,10 @@ export default function Home() {
               caseId: current.caseId,
               actionId: globalThis.crypto.randomUUID(),
               turnVersion: current.turnVersion,
+            }, {
+              onNarrativeDelta(text) {
+                setRectificationOpeningAssistantText((value) => value + text);
+              },
             });
           }
         }
@@ -2213,6 +2243,7 @@ export default function Home() {
         }
       }
       setRectificationInitialTurn(turn);
+      setRectificationOpeningAssistantText("");
       synchronizeRectificationQuestion(turn, sourceSession);
       setComposerNotice(sessionSyncFailed ? "校正已经开始，但会话关联暂时未同步到云端。" : "");
     } catch (caught) {
@@ -2265,16 +2296,22 @@ export default function Home() {
       ...current,
       hasConfirmedBirthTime: current.hasConfirmedBirthTime
         || (turn.status === "completed" && turn.candidate.status === "confirmed"),
-      rectificationCase: {
-        caseId: turn.caseId,
-        journeyProtocol: "conversational-evidence-v3",
-        status: turn.status,
-        turnVersion: turn.turnVersion,
-        isRevision: current.rectificationCase?.isRevision
-          ?? current.hasConfirmedBirthTime,
-        preservesActiveTime: current.rectificationCase?.preservesActiveTime
-          ?? current.hasConfirmedBirthTime,
-      },
+      rectificationCase: ["active", "paused", "confirming"].includes(turn.status)
+        ? {
+            caseId: turn.caseId,
+            journeyProtocol: "conversational-evidence-v3",
+            status: turn.status,
+            turnVersion: turn.turnVersion,
+            isRevision: current.rectificationCase?.caseId === turn.caseId
+              ? current.rectificationCase.isRevision
+              : current.hasConfirmedBirthTime,
+            preservesActiveTime: current.rectificationCase?.caseId === turn.caseId
+              ? current.rectificationCase.preservesActiveTime
+              : current.hasConfirmedBirthTime,
+          }
+        : current.rectificationCase?.caseId === turn.caseId
+          ? null
+          : current.rectificationCase,
     } : current);
     if (turn.status === "completed"
       && turn.candidate.status === "confirmed"
@@ -2296,6 +2333,7 @@ export default function Home() {
       .then((latest) => {
         if (!accountRefreshGuard.current.isCurrent(requestIdentity)) return;
         setAccount((current) => {
+          if (turn.status === "completed" || turn.status === "abandoned") return latest;
           if (latest.rectificationCase?.caseId !== turn.caseId
             || latest.rectificationCase.turnVersion < turn.turnVersion) return current;
           return latest;
@@ -3270,6 +3308,7 @@ export default function Home() {
             <ConversationalBirthTimeRectification
               initialTurn={visibleRectificationTurn}
               initialMessages={activeSession?.messages ?? []}
+              openingAssistantText={rectificationOpeningAssistantText}
               models={modelCatalog?.models ?? []}
               selectedModelId={activeSession?.modelId ?? ""}
               onSelectModel={(modelId) => void selectSessionModel(modelId)}

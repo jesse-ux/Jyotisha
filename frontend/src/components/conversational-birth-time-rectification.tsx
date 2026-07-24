@@ -18,6 +18,7 @@ import type { PublicLanguageModel } from "../lib/public-models.ts";
 
 type SurfaceProps = Readonly<{
   controller: ConversationalRectificationController;
+  openingAssistantText?: string;
   models: readonly PublicLanguageModel[];
   selectedModelId: string;
   onSelectModel: (modelId: string) => void;
@@ -34,6 +35,7 @@ function safely(request: Promise<unknown>) {
 
 export function ConversationalRectificationSurface({
   controller,
+  openingAssistantText = "",
   models,
   selectedModelId,
   onSelectModel,
@@ -76,9 +78,16 @@ export function ConversationalRectificationSurface({
   if (!turn) {
     return (
       <section className="conversational-rectification" aria-busy={controller.pending} aria-label="生时校正对话">
-        <div className="conversational-loading" aria-live="polite" role="status">
-          <AppLoadingIndicator title="正在建立校正记录…" detail="正在加载校正进度，准备第一条问题。" />
-        </div>
+        {openingAssistantText
+          ? <ChatMessageRow message={{
+              role: "assistant",
+              text: openingAssistantText,
+              renderKey: "rectification-opening-assistant",
+              state: "streaming",
+            }} />
+          : <div className="conversational-loading" aria-live="polite" role="status">
+              <AppLoadingIndicator title="正在建立校正记录…" detail="正在加载校正进度，准备第一条问题。" />
+            </div>}
         {controller.error && <p className="form-error" role="alert">{controller.error}</p>}
       </section>
     );
@@ -299,6 +308,7 @@ export function ConversationalRectificationSurface({
 type ConversationalBirthTimeRectificationProps = Readonly<{
   initialTurn?: ConversationalRectificationTurn | null;
   initialMessages?: readonly ConversationalRectificationStoredMessage[];
+  openingAssistantText?: string;
   models: readonly PublicLanguageModel[];
   selectedModelId: string;
   onSelectModel: (modelId: string) => void;
@@ -328,6 +338,7 @@ export function ConversationalBirthTimeRectification(props: ConversationalBirthT
   return (
     <ConversationalRectificationSurface
       controller={controller}
+      openingAssistantText={props.openingAssistantText}
       models={props.models}
       selectedModelId={props.selectedModelId}
       onSelectModel={props.onSelectModel}

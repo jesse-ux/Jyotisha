@@ -258,7 +258,7 @@ test("rectification adapter normalizes an event-scored candidate result", () => 
   assert.equal("legacy_server_metadata" in (result.evidence[0] ?? {}), false);
 });
 
-test("candidate compatibility result accepts ten effective items but not eleven", () => {
+test("candidate compatibility result accepts event counts beyond the former safety cap", () => {
   const lowCandidate = {
     result_id: "1d8ee348-61a3-433d-8907-ff6d281b9992",
     confidence: "low",
@@ -275,5 +275,5 @@ test("candidate compatibility result accepts ten effective items but not eleven"
   } as const;
 
   assert.equal(parseCandidateResult(lowCandidate).eventCount, 10);
-  assert.throws(() => parseCandidateResult({ ...lowCandidate, event_count: 11 }));
+  assert.equal(parseCandidateResult({ ...lowCandidate, event_count: 11 }).eventCount, 11);
 });
