@@ -50,6 +50,116 @@ jobs:
           chmod 600 ~/.ssh/jyotisha-production
           printf '%s\n' '[103.117.123.53]:22000 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHQJvN2Mo3Yq8e6ZIK4P2blJ5Vjj0HbknEuk7TyjhMbO' > ~/.ssh/known_hosts
 
+      - name: Sync reviewed production environment keys
+        if: steps.revision.outputs.deploy == 'true'
+        env:
+          GEOAPIFY_API_KEY: ${{ secrets.GEOAPIFY_API_KEY }}
+          VEDASTRO_API_KEY: ${{ secrets.VEDASTRO_API_KEY }}
+          VEDASTRO_API_ENDPOINT: ${{ secrets.VEDASTRO_API_ENDPOINT }}
+          VEDASTRO_ENABLE_NETWORK: ${{ secrets.VEDASTRO_ENABLE_NETWORK }}
+          VEDASTRO_GATEWAY_MODE: ${{ secrets.VEDASTRO_GATEWAY_MODE }}
+          VEDASTRO_RANGE_SCAN_NETWORK_ENABLED: ${{ secrets.VEDASTRO_RANGE_SCAN_NETWORK_ENABLED }}
+          VEDASTRO_TIMEOUT_SECONDS: ${{ secrets.VEDASTRO_TIMEOUT_SECONDS }}
+          JYOTISH_DYNAMIC_RECTIFICATION_TOKEN: ${{ secrets.JYOTISH_DYNAMIC_RECTIFICATION_TOKEN }}
+        run: |
+          set -euo pipefail
+          set +x
+          UPDATE_FILE="$RUNNER_TEMP/production-env-update.json"
+          REMOTE_UPDATE_FILE="$DEPLOY_PATH/.env.production.update.$GITHUB_RUN_ID"
+          export UPDATE_FILE
+          umask 077
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          keys = (
+              "GEOAPIFY_API_KEY",
+              "VEDASTRO_API_KEY",
+              "VEDASTRO_API_ENDPOINT",
+              "VEDASTRO_ENABLE_NETWORK",
+              "VEDASTRO_GATEWAY_MODE",
+              "VEDASTRO_RANGE_SCAN_NETWORK_ENABLED",
+              "VEDASTRO_TIMEOUT_SECONDS",
+              "JYOTISH_DYNAMIC_RECTIFICATION_TOKEN",
+          )
+          values = {key: os.environ.get(key, "") for key in keys}
+          missing = [key for key, value in values.items() if not value]
+          if missing:
+              raise SystemExit("required production environment secret is missing")
+          Path(os.environ["UPDATE_FILE"]).write_text(
+              json.dumps(values, ensure_ascii=False),
+              encoding="utf-8",
+          )
+          PY
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-production -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          SCP_OPTIONS="-i $HOME/.ssh/jyotisha-production -P $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=20"
+          scp $SCP_OPTIONS "$UPDATE_FILE" "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_UPDATE_FILE"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "cd '$DEPLOY_PATH' && python3 - '$REMOTE_UPDATE_FILE'" <<'PY'
+          import json
+          import os
+          import re
+          import sys
+          import tempfile
+          from pathlib import Path
+
+          env_path = Path(".env.production")
+          update_path = Path(sys.argv[1])
+          try:
+              if not env_path.is_file():
+                  raise SystemExit("production environment file is missing")
+              updates = json.loads(update_path.read_text(encoding="utf-8"))
+              if not isinstance(updates, dict) or not updates:
+                  raise SystemExit("production environment update is empty")
+              for key, value in updates.items():
+                  if not re.fullmatch(r"[A-Z][A-Z0-9_]*", key):
+                      raise SystemExit("production environment key is invalid")
+                  if not isinstance(value, str) or not value or "\n" in value or "\0" in value:
+                      raise SystemExit("production environment value is invalid")
+
+              original = env_path.read_text(encoding="utf-8").splitlines()
+              output = []
+              written = set()
+              assignment = re.compile(r"^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=")
+
+              def quote(value):
+                  return "'" + value.replace("'", "'\"'\"'") + "'"
+
+              for line in original:
+                  match = assignment.match(line)
+                  key = match.group(1) if match else None
+                  if key not in updates:
+                      output.append(line)
+                      continue
+                  if key not in written:
+                      output.append(f"{key}={quote(updates[key])}")
+                      written.add(key)
+              for key, value in updates.items():
+                  if key not in written:
+                      output.append(f"{key}={quote(value)}")
+
+              fd, temporary_name = tempfile.mkstemp(
+                  prefix=".env.production.",
+                  dir=str(env_path.parent),
+                  text=True,
+              )
+              try:
+                  with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                      handle.write("\n".join(output) + "\n")
+                      handle.flush()
+                      os.fsync(handle.fileno())
+                  os.chmod(temporary_name, 0o600)
+                  os.replace(temporary_name, env_path)
+              finally:
+                  if os.path.exists(temporary_name):
+                      os.unlink(temporary_name)
+              print(f"updated {len(updates)} production environment keys")
+          finally:
+              update_path.unlink(missing_ok=True)
+          PY
+          rm -f "$UPDATE_FILE"
+
       - name: Sync and rebuild
         if: steps.revision.outputs.deploy == 'true'
         env:
