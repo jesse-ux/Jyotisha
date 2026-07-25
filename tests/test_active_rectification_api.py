@@ -537,6 +537,7 @@ def test_high_rigor_event_rectification_requires_real_vedastro_candidate_discrim
                 },
                 {"id": "0790866c-ad5e-4a45-b2b4-a5c73f6be6ea", "domain": "career", "date": "2019-07-01", "precision": "day"},
                 {"id": "0ef52e51-ab5f-453b-81e5-adb44a929224", "domain": "relationship", "date": "2021", "precision": "year"},
+                {"id": "300c1c47-c223-4b40-8e27-47b3f6902795", "domain": "finance", "date": "2022-06", "precision": "month"},
             ],
         }
     )
@@ -701,9 +702,11 @@ def test_long_real_conversation_reaches_vedastro_after_local_range_is_narrow(mon
     assert result["three_engine_packet"]["vedastro"]["search_events_role"] == "background_only"
     assert result["technique_contract"]["gates"]["vedastro_minute_sensitive_validation"]["status"] == "pass"
     assert validation["minute_sensitive_validation"]["discriminated"] is True
-    assert result["technique_contract"]["confirmation_allowed"] is True
-    assert result["technique_contract"]["decision"] == "confirm_minute"
-    assert result["can_apply"] is True
+    assert result["margin_percent"] < 20
+    assert result["technique_contract"]["confirmation_allowed"] is False
+    assert result["technique_contract"]["decision"] == "continue_rectification"
+    assert result["can_apply"] is False
+    assert "local_candidate_not_ready" in result["technique_contract"]["hard_blockers"]
     assert "neighbor_stability_not_passed" not in result["technique_contract"]["hard_blockers"]
     assert "leave_one_event_out_not_passed" not in result["technique_contract"]["hard_blockers"]
 
@@ -838,6 +841,7 @@ def test_search_events_difference_cannot_override_identical_minute_snapshots(mon
                 {"id": "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5", "domain": "education", "date": "2011-09", "precision": "month"},
                 {"id": "0790866c-ad5e-4a45-b2b4-a5c73f6be6ea", "domain": "career", "date": "2019-07-01", "precision": "day"},
                 {"id": "0ef52e51-ab5f-453b-81e5-adb44a929224", "domain": "relationship", "date": "2021", "precision": "year"},
+                {"id": "300c1c47-c223-4b40-8e27-47b3f6902795", "domain": "finance", "date": "2022-06", "precision": "month"},
             ],
         }
     )

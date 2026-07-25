@@ -30,6 +30,7 @@ import {
 } from "../../../lib/conversational-rectification/narrative-agent.ts";
 import type { BirthTimeJourneyEngine, RectificationQuestionnaire } from "../../../lib/birth-time-journey-service.ts";
 import type { CandidateResult, LifeEvent } from "../../../lib/birth-time-evidence.ts";
+import { RECTIFICATION_POLICY } from "../../../lib/rectification-policy.ts";
 import type { CandidateDifferenceBuild } from "../../../lib/birth-time-dynamic-choice-internal.ts";
 import {
   BirthProfileTimezoneError,
@@ -683,7 +684,7 @@ export async function buildProductionConversationalRectificationPacket(
     input.evidence as readonly LifeEventEvidence[],
     input.declaredBirthInput.birthDate,
   );
-  const eventScore: CandidateResult | null = events.length >= 3
+  const eventScore: CandidateResult | null = events.length >= RECTIFICATION_POLICY.minScoringEvents
     ? await rectificationPacketStage("score_events", () => engine.scoreEvents({
         birthDate: input.declaredBirthInput.birthDate,
         startTime: baseRange.startTime,
@@ -782,28 +783,13 @@ export async function buildProductionConversationalRectificationPacket(
   const packetEventScore = input.preserveCandidateRange && eventScore
     ? { ...eventScore, confidence: "low" as const, canApply: false, winningSegment: null }
     : eventScore;
-  try {
-    return {
-      packet: await buildForRange(selectedRange, packetEventScore),
-      resultId: eventScore?.resultId ?? null,
-    };
-  } catch (error) {
-    const selectedWasNarrowed = selectedRange.startTime !== baseRange.startTime
-      || selectedRange.endTime !== baseRange.endTime;
-    if (!selectedWasNarrowed
-      || !(error instanceof technicalPacketModule.RectificationTechnicalPacketRangeError)) {
-      return rectificationPacketStage("technical_packet", () => Promise.reject(error));
-    }
-    return {
-      packet: await rectificationPacketStage("technical_packet", () => buildForRange(
-        baseRange,
-        eventScore
-          ? { ...eventScore, confidence: "low", canApply: false, winningSegment: null }
-          : null,
-      )),
-      resultId: null,
-    };
-  }
+  return {
+    packet: await rectificationPacketStage(
+      "technical_packet",
+      () => buildForRange(selectedRange, packetEventScore),
+    ),
+    resultId: eventScore?.resultId ?? null,
+  };
 }
 
 function requestedNarrativeModelId(command: ConversationalRectificationCommand): string | undefined {

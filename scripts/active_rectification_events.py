@@ -12,6 +12,21 @@ from collections.abc import Sequence
 from typing import Any, Final, Literal, NotRequired, TypedDict, assert_never
 from uuid import NAMESPACE_URL, uuid5
 
+try:
+    from scripts.rectification_policy import (
+        MAX_CONFIRMATION_WIDTH_MINUTES,
+        MIN_CONFIRMATION_DOMAINS,
+        MIN_CONFIRMATION_EVENTS,
+        MIN_CONFIRMATION_MARGIN_PERCENT,
+    )
+except ModuleNotFoundError:  # pragma: no cover - direct script execution
+    from rectification_policy import (
+        MAX_CONFIRMATION_WIDTH_MINUTES,
+        MIN_CONFIRMATION_DOMAINS,
+        MIN_CONFIRMATION_EVENTS,
+        MIN_CONFIRMATION_MARGIN_PERCENT,
+    )
+
 EventPrecision = Literal["year", "month", "day"]
 EventDomain = Literal[
     "education",
@@ -253,11 +268,11 @@ def adjudicate_candidate_rows(
     if reasons:
         confidence: Confidence = "low"
     elif (
-        event_count >= 4
-        and domain_count >= 3
+        event_count >= MIN_CONFIRMATION_EVENTS
+        and domain_count >= MIN_CONFIRMATION_DOMAINS
         and segment is not None
-        and segment["width_minutes"] <= 5
-        and margin >= 20
+        and segment["width_minutes"] <= MAX_CONFIRMATION_WIDTH_MINUTES
+        and margin >= MIN_CONFIRMATION_MARGIN_PERCENT
     ):
         confidence = "high"
     else:

@@ -3,6 +3,14 @@ from __future__ import annotations
 
 from typing import Any
 
+try:
+    from scripts.rectification_policy import (
+        MIN_CONFIRMATION_DOMAINS,
+        MIN_CONFIRMATION_EVENTS,
+    )
+except ModuleNotFoundError:  # pragma: no cover - direct script execution
+    from rectification_policy import MIN_CONFIRMATION_DOMAINS, MIN_CONFIRMATION_EVENTS
+
 
 def _gate(status: str, reason: str) -> dict[str, str]:
     return {"status": status, "reason": reason}
@@ -21,9 +29,9 @@ def build_rectification_technique_contract(
     external_validation: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     blockers: list[str] = []
-    if event_count < 3:
+    if event_count < MIN_CONFIRMATION_EVENTS:
         blockers.append("insufficient_events")
-    if domain_count < 2:
+    if domain_count < MIN_CONFIRMATION_DOMAINS:
         blockers.append("insufficient_domains")
     neighbor = (stability_diagnostics or {}).get("neighbor_stability") or {}
     leave_one_out = (stability_diagnostics or {}).get("leave_one_event_out") or {}
@@ -38,17 +46,17 @@ def build_rectification_technique_contract(
     elif external_status != "pass":
         blockers.extend(external.get("blockers") or ["vedastro_validation_not_passed"])
     confirmation_allowed = (
-        event_count >= 3
-        and domain_count >= 2
+        event_count >= MIN_CONFIRMATION_EVENTS
+        and domain_count >= MIN_CONFIRMATION_DOMAINS
         and local_candidate_ready
         and required_layers_complete
         and high_rigor
         and external_status == "pass"
     )
     gates = {
-        "event_quality": _gate("pass" if event_count >= 3 else "fail", "requires_at_least_three_dated_events"),
-        "cross_domain_coverage": _gate("pass" if domain_count >= 2 else "fail", "requires_at_least_two_event_domains"),
-        "local_candidate": _gate("pass" if local_candidate_ready else "fail", "requires_a_unique_leading_candidate_range_no_wider_than_fifteen_minutes"),
+        "event_quality": _gate("pass" if event_count >= MIN_CONFIRMATION_EVENTS else "fail", "requires_confirmation_event_count"),
+        "cross_domain_coverage": _gate("pass" if domain_count >= MIN_CONFIRMATION_DOMAINS else "fail", "requires_confirmation_domain_count"),
+        "local_candidate": _gate("pass" if local_candidate_ready else "fail", "requires_final_confirmation_width_and_margin_policy"),
         "required_layers": _gate("pass" if required_layers_complete else "fail", "all_event_required_layers_must_compute"),
         "neighbor_stability": _gate("pass" if neighbor.get("all_required_passed") else "diagnostic_fail", "diagnostic_only_unique_lead_at_plus_minus_1_2_5_minutes"),
         "leave_one_event_out": _gate("pass" if leave_one_out.get("status") == "pass" else "diagnostic_fail", "diagnostic_only_leader_survival_after_removing_each_event"),

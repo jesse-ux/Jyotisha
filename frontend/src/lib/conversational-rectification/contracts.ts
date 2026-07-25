@@ -17,6 +17,41 @@ const evidenceDomainSchema = z.enum([
   "other",
 ]);
 
+const proposedDateSchema = z.object({
+  value: z.string().regex(/^\d{4}(?:-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12]\d|3[01]))?)?$/),
+  precision: z.enum(["year", "month", "day"]),
+}).strict();
+
+export const rectificationFollowUpSchema = z.object({
+  kind: z.enum(["new_event", "event_date", "event_detail"]),
+  evidenceId: z.string().uuid().nullable(),
+  answerMode: z.enum(["free_text", "yes_no"]).optional(),
+  proposedDate: proposedDateSchema.nullable().optional(),
+}).strict().superRefine((value, context) => {
+  if (value.kind === "new_event" && value.evidenceId !== null) {
+    context.addIssue({ code: "custom", message: "new_event cannot target existing evidence" });
+  }
+  if (value.kind !== "new_event" && value.evidenceId === null) {
+    context.addIssue({ code: "custom", message: "event follow-up requires evidenceId" });
+  }
+  if (value.answerMode === "yes_no" && (value.kind !== "event_date" || !value.proposedDate)) {
+    context.addIssue({ code: "custom", message: "date confirmation requires proposedDate" });
+  }
+  if (value.answerMode !== "yes_no" && value.proposedDate) {
+    context.addIssue({ code: "custom", message: "proposedDate requires yes_no answer mode" });
+  }
+  if (value.proposedDate) {
+    const expectedParts = value.proposedDate.precision === "year"
+      ? 1
+      : value.proposedDate.precision === "month" ? 2 : 3;
+    if (value.proposedDate.value.split("-").length !== expectedParts) {
+      context.addIssue({ code: "custom", message: "proposedDate precision does not match value" });
+    }
+  }
+});
+
+export type RectificationFollowUp = z.infer<typeof rectificationFollowUpSchema>;
+
 const boundedNonblankText = (maximum: number) => z.string()
   .min(1)
   .max(maximum)
@@ -85,11 +120,10 @@ const evidenceRequestSchema = boundedJson(z.object({
   domains: z.array(evidenceDomainSchema).min(1).max(4),
   datePrecision: z.enum(["month_preferred", "year_accepted"]),
   freeTextAllowed: z.literal(true),
+  // Optional for turns written before the authored question was persisted.
+  prompt: boundedNonblankText(1_000).optional(),
   // Optional for turns written before follow-up state was persisted.
-  followUp: z.object({
-    kind: z.enum(["new_event", "event_date", "event_detail"]),
-    evidenceId: z.string().uuid().nullable(),
-  }).strict().optional(),
+  followUp: rectificationFollowUpSchema.optional(),
 }).strict(), 2_048);
 
 const evidenceRecapEntrySchema = boundedJson(z.object({

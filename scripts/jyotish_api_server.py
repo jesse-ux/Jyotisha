@@ -41,9 +41,25 @@ if SCRIPTS_DIR not in sys.path:
 
 try:
     from scripts.local_env import load_local_env
+    from scripts.rectification_policy import (
+        MAX_CONFIRMATION_WIDTH_MINUTES,
+        MAX_EXTERNAL_VALIDATION_WIDTH_MINUTES,
+        MIN_CONFIRMATION_DOMAINS,
+        MIN_CONFIRMATION_EVENTS,
+        MIN_CONFIRMATION_MARGIN_PERCENT,
+        MIN_SCORING_EVENTS,
+    )
     from scripts.vedastro_runtime_context import temporary_timeout_seconds
 except ModuleNotFoundError:  # pragma: no cover - script execution path
     from local_env import load_local_env
+    from rectification_policy import (
+        MAX_CONFIRMATION_WIDTH_MINUTES,
+        MAX_EXTERNAL_VALIDATION_WIDTH_MINUTES,
+        MIN_CONFIRMATION_DOMAINS,
+        MIN_CONFIRMATION_EVENTS,
+        MIN_CONFIRMATION_MARGIN_PERCENT,
+        MIN_SCORING_EVENTS,
+    )
     from vedastro_runtime_context import temporary_timeout_seconds
 try:
     from scripts.unified_consultation_orchestrator import UnifiedConsultationOrchestrator
@@ -321,11 +337,35 @@ def _rectification_candidate_ready_for_external_validation(result):
     except (TypeError, ValueError):
         return False
     return (
-        int(result.get('event_count') or 0) >= 3
-        and int(result.get('domain_count') or 0) >= 2
-        and 1 <= width_minutes <= 15
+        int(result.get('event_count') or 0) >= MIN_CONFIRMATION_EVENTS
+        and int(result.get('domain_count') or 0) >= MIN_CONFIRMATION_DOMAINS
+        and 1 <= width_minutes <= MAX_EXTERNAL_VALIDATION_WIDTH_MINUTES
         and bool(segment.get('representative_time'))
         and top_score > second_score
+        and 'missing_mandatory_layers' not in (result.get('reasons') or [])
+    )
+
+
+def _rectification_candidate_ready_for_confirmation(result):
+    """Keep final confirmation stricter than the external-validation entry gate."""
+    segment = result.get('winning_segment')
+    ranking = result.get('candidate_ranking_summary')
+    if not isinstance(segment, dict) or not isinstance(ranking, list) or len(ranking) < 2:
+        return False
+    try:
+        width_minutes = int(segment.get('width_minutes') or 0)
+        top_score = float(result.get('top_score'))
+        second_score = float(result.get('second_score'))
+        margin_percent = float(result.get('margin_percent') or 0)
+    except (TypeError, ValueError):
+        return False
+    return (
+        int(result.get('event_count') or 0) >= MIN_CONFIRMATION_EVENTS
+        and int(result.get('domain_count') or 0) >= MIN_CONFIRMATION_DOMAINS
+        and 1 <= width_minutes <= MAX_CONFIRMATION_WIDTH_MINUTES
+        and bool(segment.get('representative_time'))
+        and top_score > second_score
+        and margin_percent >= MIN_CONFIRMATION_MARGIN_PERCENT
         and 'missing_mandatory_layers' not in (result.get('reasons') or [])
     )
 
@@ -7183,8 +7223,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
         lon = self._get_float(body, 'lon', 0, -180, 180)
         tz = self._get_float(body, 'tz', 0, -14, 14)
         events = body.get('events')
-        if not isinstance(events, list) or len(events) < 3:
-            raise BadRequest('events must contain at least 3 items')
+        if not isinstance(events, list) or len(events) < MIN_SCORING_EVENTS:
+            raise BadRequest(f'events must contain at least {MIN_SCORING_EVENTS} item')
         normalized_events = []
         allowed_domains = {'education', 'relocation', 'relationship', 'career', 'finance', 'health_pressure'}
         formats = {'year': '%Y', 'month': '%Y-%m', 'day': '%Y-%m-%d'}
@@ -7238,8 +7278,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'vedastro_reason': 'official_vedastro_runs_after_local_scoring_produces_a_narrow_candidate',
             'blockers': [],
         }
-        local_candidate_ready = _rectification_candidate_ready_for_external_validation(result)
-        if high_rigor and local_candidate_ready:
+        external_validation_candidate_ready = _rectification_candidate_ready_for_external_validation(result)
+        if high_rigor and external_validation_candidate_ready:
             from scripts.rectification_three_engine_packet import build_packet
 
             representative_time = result['winning_segment']['representative_time']
@@ -7430,6 +7470,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             }
 
         from scripts.rectification_technique_contract import build_rectification_technique_contract
+        local_candidate_ready = _rectification_candidate_ready_for_confirmation(result)
         result['technique_contract'] = build_rectification_technique_contract(
             event_count=result.get('event_count', 0),
             domain_count=result.get('domain_count', 0),

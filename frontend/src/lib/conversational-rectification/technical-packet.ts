@@ -404,7 +404,7 @@ export function buildRectificationTechnicalPacket(input: PacketInput): Rectifica
       (timeToMinute(left.time) - timeToMinute(range.startTime) + 1_440) % 1_440
       - (timeToMinute(right.time) - timeToMinute(range.startTime) + 1_440) % 1_440
     ));
-  if (selectedSamples.length < 2) {
+  if (selectedSamples.length === 0 || (selectedSamples.length === 1 && !eventSegment)) {
     throw new RectificationTechnicalPacketRangeError("insufficient_samples");
   }
   const layers = layerEvidence(selectedSamples.map((item) => item.sample), input.consultation);
@@ -415,9 +415,6 @@ export function buildRectificationTechnicalPacket(input: PacketInput): Rectifica
     && item.values.length > 1
     && available.has(item.layer));
   const domains = suggestedDomains(sensitiveLayers, selectedSamples);
-  if (domains.length < 2) {
-    throw new RectificationTechnicalPacketRangeError("insufficient_domains");
-  }
   const scoredHistoricalEvidence = (input.eventScore?.evidence ?? []).map((item) => ({
     evidenceId: item.eventId,
     domain: eventDomain(item.domain),
@@ -497,11 +494,12 @@ export function projectRectificationTechnicalPacket(packet: RectificationTechnic
         .filter((reference) => reference.trim().length > 0 && reference.length <= 120)
         .slice(0, 40),
     },
-    evidenceRequest: {
-      domains: packet.suggestedDomains.map((item) => item.domain),
-      datePrecision: "month_preferred" as const,
-      freeTextAllowed: true as const,
-    },
+    evidenceRequest: packet.candidate.status === "ready_for_confirmation"
+      || packet.suggestedDomains.length === 0 ? null : {
+        domains: packet.suggestedDomains.map((item) => item.domain),
+        datePrecision: "month_preferred" as const,
+        freeTextAllowed: true as const,
+      },
     futureWindows: packet.futureWindows.map((window) => ({ ...window })),
   };
 }

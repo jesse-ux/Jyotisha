@@ -1,0 +1,10 @@
+{
+  "version": "rectification-policy-v1",
+  "minScoringEvents": 1,
+  "minConfirmationEvents": 4,
+  "minConfirmationDomains": 3,
+  "maxExternalValidationWidthMinutes": 15,
+  "maxConfirmationWidthMinutes": 5,
+  "minConfirmationMarginPercent": 20,
+  "maxPlateauRounds": 2
+}
