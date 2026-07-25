@@ -18,6 +18,7 @@ import {
 } from "./persistence-contracts.ts";
 import {
   generateRectificationNarrative,
+  type RectificationConversationMessage,
   type RectificationNarrativeGenerator,
   type RectificationNarrativeResult,
 } from "./narrative-agent.ts";
@@ -84,6 +85,10 @@ export type ConversationalRectificationServicePorts = Readonly<{
   buildTechnicalPacket(
     input: ConversationalRectificationPacketBuildInput,
   ): Promise<ComputedConversationalRectificationPacket>;
+  loadConversationMessages?(
+    userId: string,
+    caseId: string,
+  ): Promise<ReadonlyArray<RectificationConversationMessage>>;
   narrativeGenerator: RectificationNarrativeGenerator;
   asOfDate(): string;
 }>;
@@ -126,6 +131,8 @@ const genericUncertaintyPattern = /(?:不知道|不确定)/;
 const contextualRelativeMonthPattern = /(?:来年|次年|第二年|翌年|同年|当年|那年)\s*(\d{1,2})\s*月份?/;
 const contextualBareMonthDayPattern = /^\s*(\d{1,2})\s*月\s*(\d{1,2})\s*(?:日|号)\s*[。.]?\s*$/;
 const contextualBareDayPattern = /^\s*(\d{1,2})\s*(?:日|号)\s*[。.]?\s*$/;
+const affirmativeAnswerPattern = /^\s*(?:是(?:的)?|对(?:的)?|没错|正确|确认|嗯+|没问题)\s*[。.!！]?\s*$/;
+const proposedDatePattern = /((?:19|20)\d{2})\s*年\s*(1[0-2]|0?[1-9])\s*月(?:\s*(3[01]|[12]\d|0?[1-9])\s*(?:日|号))?/g;
 
 export function evidencePredatesBirthDate(
   evidence: Pick<LifeEventEvidence, "dateValue" | "datePrecision">,
@@ -318,6 +325,7 @@ function evidenceRecap(evidence: ReadonlyArray<LifeEventEvidenceInput>) {
 }
 
 function narrativeConversationContext(input: Readonly<{
+  recentConversation?: ReadonlyArray<RectificationConversationMessage>;
   latestUserText: string;
   allEvidence: ReadonlyArray<LifeEventEvidenceInput>;
   newEvidence: ReadonlyArray<LifeEventEvidenceInput>;
@@ -325,6 +333,7 @@ function narrativeConversationContext(input: Readonly<{
   const activeEvidence = effectiveLifeEventEvidence(input.allEvidence);
   const activeIds = new Set(activeEvidence.map((item) => item.id));
   return {
+    recentConversation: input.recentConversation,
     latestUserText: input.latestUserText.trim().slice(0, 4_000),
     latestEvidence: evidenceRecap(input.newEvidence).map((item) => ({
       id: item.id,
@@ -542,8 +551,8 @@ function nonScoringTurn(input: {
       && latestIncomplete.eventSummary === "事件内容待补充"
       ? { kind: "event_detail" as const, evidenceId: latestIncomplete.id }
       : null;
-  const authoredRequest = authoredNarrative?.output.evidenceRequest;
-  const priorRequest = input.current.latestTurn.evidenceRequest;
+    const authoredRequest = authoredNarrative?.output.evidenceRequest;
+    const priorRequest = input.current.latestTurn.evidenceRequest;
   const evidenceRequest = status === "confirming" && priorRequest === null
     ? null
     : authoredRequest
@@ -551,7 +560,7 @@ function nonScoringTurn(input: {
           domains: authoredRequest.domains,
           datePrecision: authoredRequest.datePrecision,
           freeTextAllowed: true as const,
-          followUp: clarificationFollowUp ?? authoredRequest.followUp,
+          followUp: authoredRequest.followUp,
         }
       : priorRequest
         ? {
@@ -786,6 +795,14 @@ export function createConversationalRectificationService(
     if (followUp?.kind !== "event_date" && followUp?.kind !== "event_detail") {
       return command.answer;
     }
+    if (followUp.kind === "event_date" && affirmativeAnswerPattern.test(command.answer)) {
+      const dates = [...current.latestTurn.narrative.matchAll(proposedDatePattern)];
+      const proposed = dates.at(-1);
+      if (proposed) {
+        const [, year, month, day] = proposed;
+        return `${year}年${Number(month)}月${day ? `${Number(day)}日` : ""}`;
+      }
+    }
     const activeEvidence = effectiveLifeEventEvidence(current.eventEvidence);
     const target = followUp.evidenceId
       ? activeEvidence.find((item) => item.id === followUp.evidenceId)
@@ -818,6 +835,33 @@ export function createConversationalRectificationService(
     return command.answer.replace(match[0], `${sameYear ? anchorYear : anchorYear + 1}年${month}月`);
   }
 
+  async function conversationContext(input: Readonly<{
+    userId: string;
+    current: LoadedConversationalRectificationCase;
+    latestUserText: string;
+    allEvidence: ReadonlyArray<LifeEventEvidenceInput>;
+    newEvidence: ReadonlyArray<LifeEventEvidenceInput>;
+  }>) {
+    let recentConversation: ReadonlyArray<RectificationConversationMessage> = [{
+      role: "assistant",
+      text: input.current.latestTurn.narrative,
+    }];
+    if (ports.loadConversationMessages) {
+      try {
+        const loaded = await ports.loadConversationMessages(input.userId, input.current.caseId);
+        if (loaded.length > 0) recentConversation = loaded;
+      } catch {
+        // Conversation history improves continuity but must not make a turn unavailable.
+      }
+    }
+    return narrativeConversationContext({
+      recentConversation: [...recentConversation, { role: "user", text: input.latestUserText }],
+      latestUserText: input.latestUserText,
+      allEvidence: input.allEvidence,
+      newEvidence: input.newEvidence,
+    });
+  }
+
   async function extractedEvidence(
     command: CommandOf<"answer">,
     current: LoadedConversationalRectificationCase,
@@ -825,6 +869,9 @@ export function createConversationalRectificationService(
     let extracted: readonly LifeEventEvidence[];
     try {
       const answerForExtraction = contextualizedAnswer(command, current);
+      if (affirmativeAnswerPattern.test(command.answer) && answerForExtraction === command.answer) {
+        return [];
+      }
       extracted = extractLifeEventEvidence({
         rawText: answerForExtraction,
         sourceTurnId: command.actionId,
@@ -1225,7 +1272,9 @@ export function createConversationalRectificationService(
               phase: "intermediate",
               packet: gatedPacket,
               generator: ports.narrativeGenerator,
-              context: narrativeConversationContext({
+              context: await conversationContext({
+                userId,
+                current,
                 latestUserText: command.answer,
                 allEvidence: [...current.eventEvidence, ...evidence],
                 newEvidence: evidence,
@@ -1265,7 +1314,9 @@ export function createConversationalRectificationService(
             phase,
             packet: gatedPacket,
             generator: ports.narrativeGenerator,
-            context: narrativeConversationContext({
+            context: await conversationContext({
+              userId,
+              current,
               latestUserText: command.answer,
               allEvidence: [...current.eventEvidence, ...evidence],
               newEvidence: evidence,
@@ -1322,7 +1373,9 @@ export function createConversationalRectificationService(
             phase: "intermediate",
             packet: gatedPacket,
             generator: ports.narrativeGenerator,
-            context: narrativeConversationContext({
+            context: await conversationContext({
+              userId,
+              current,
               latestUserText: command.answer,
               allEvidence: [...current.eventEvidence, ...evidence],
               newEvidence: evidence,
@@ -1377,7 +1430,9 @@ export function createConversationalRectificationService(
           phase,
           packet: gatedPacket,
           generator: ports.narrativeGenerator,
-          context: narrativeConversationContext({
+          context: await conversationContext({
+            userId,
+            current,
             latestUserText: command.answer,
             allEvidence: [...current.eventEvidence, ...evidence],
             newEvidence: evidence,
@@ -1455,7 +1510,9 @@ export function createConversationalRectificationService(
           phase,
           packet: gatedPacket,
           generator: ports.narrativeGenerator,
-          context: latestEvidence ? narrativeConversationContext({
+          context: latestEvidence ? await conversationContext({
+            userId,
+            current,
             latestUserText: latestEvidence.rawText,
             allEvidence: current.eventEvidence,
             newEvidence: [latestEvidence],

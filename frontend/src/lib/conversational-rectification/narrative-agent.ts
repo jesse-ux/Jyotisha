@@ -7,7 +7,13 @@ import {
 
 export type RectificationNarrativePhase = "first" | "intermediate" | "final";
 
+export type RectificationConversationMessage = Readonly<{
+  role: "assistant" | "user";
+  text: string;
+}>;
+
 export type RectificationNarrativeContext = Readonly<{
+  recentConversation?: ReadonlyArray<RectificationConversationMessage>;
   latestUserText?: string;
   latestEvidence?: ReadonlyArray<{
     id?: string;
@@ -353,6 +359,7 @@ function grounding(packet: RectificationTechnicalPacket, phase: RectificationNar
 
 function narrativeConversationContext(context: RectificationNarrativeContext) {
   return {
+    recentConversation: context.recentConversation?.slice(-40),
     latestUserText: context.latestUserText,
     latestEvidence: context.latestEvidence?.map(({ id, dateLabel, summary }) => ({
       id,
@@ -510,6 +517,7 @@ function promptFor(
     task: "write_grounded_rectification_narrative",
     phase,
     conversationContext: narrativeConversationContext(context),
+    continuity: "recentConversation 是同一会话的真实连续问答。必须直接理解用户对上一条问题的确认、否认、补充或纠正，不得把“是的/对/来年/那次”等回复当成脱离上下文的新事件，也不得重复询问已经确认的信息。",
     packet: grounding(packet, phase),
     outputContract: {
       returnOnlyNarrativeAndEvidenceRequest: true,

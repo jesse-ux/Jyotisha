@@ -125,6 +125,7 @@ function validGenerator(
       const request = JSON.parse(prompt) as {
         phase: "first" | "intermediate" | "final";
         conversationContext?: {
+          recentConversation?: Array<{ role: "assistant" | "user"; text: string }>;
           latestEvidence?: Array<{ dateLabel: string; summary: string }>;
           eventLedger?: Array<{
             id: string;
@@ -1176,6 +1177,62 @@ test("a bare month-day answer refines the targeted month without another confirm
   assert.equal(stored[1]?.rawText, "2026年7月我们三个人决定一起开公司\n补充：7 月 10 号");
   assert.equal(completed.evidenceRecap.at(-1)?.dateLabel, "2026-07-10");
   assert.doesNotMatch(completed.narrative, /是指.*7 月 10|哪一天|哪一年、哪一月/);
+});
+
+test("an affirmative reply confirms the date proposed by the previous Agent turn", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99 });
+  await start(value, null);
+
+  await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2020年我去石油化工研究院实习，后来主动辞职",
+  });
+
+  const current = value.cases.get(startActionId)?.row;
+  const target = current?.eventEvidence.at(-1);
+  const initialEvidenceCount = current?.eventEvidence.length ?? 0;
+  assert.ok(current);
+  assert.ok(target);
+  value.cases.set(startActionId, {
+    row: {
+      ...current,
+      latestTurn: {
+        ...current.latestTurn,
+        narrative: "你说实习到10月份然后辞职，这个10月是2020年10月吗？",
+        evidenceRequest: {
+          domains: ["career"],
+          datePrecision: "month_preferred",
+          freeTextAllowed: true,
+          followUp: { kind: "event_date", evidenceId: target.id },
+        },
+      },
+    },
+  });
+
+  await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "是的",
+  });
+
+  const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+  assert.equal(stored.length, initialEvidenceCount + 1, "confirmation is an auditable correction, not a standalone event");
+  assert.deepEqual(stored.at(-1)?.correctsEvidenceIds, [target.id]);
+  assert.equal(stored.at(-1)?.dateValue, "2020-10");
+  assert.doesNotMatch(stored.at(-1)?.eventSummary ?? "", /^是的$/);
+
+  const prompt = JSON.parse(value.narrativePrompts.at(-1) ?? "{}") as {
+    conversationContext?: { recentConversation?: Array<{ role: string; text: string }> };
+  };
+  assert.deepEqual(prompt.conversationContext?.recentConversation?.slice(-2), [
+    { role: "assistant", text: "你说实习到10月份然后辞职，这个10月是2020年10月吗？" },
+    { role: "user", text: "是的" },
+  ]);
 });
 
 test("an authored event-detail follow-up survives progress decoration and keeps the prior date", async () => {

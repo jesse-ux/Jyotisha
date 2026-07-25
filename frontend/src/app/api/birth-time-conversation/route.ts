@@ -941,6 +941,30 @@ async function createProductionService(
   const profileClient = authenticated.context as ProfileClient;
   const engine = createJyotishBirthTimeJourneyEngine();
   const store = createSupabaseConversationalRectificationStore(admin);
+  const loadConversationMessages = async (userId: string, caseId: string) => {
+    const { data: ownedCase, error: caseError } = await admin
+      .from("birth_time_rectification_cases")
+      .select("id")
+      .eq("id", caseId)
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (caseError || !ownedCase) return [];
+    const [{ data: turns, error: turnsError }, { data: evidence, error: evidenceError }] = await Promise.all([
+      admin
+        .from("birth_time_rectification_turns")
+        .select("id,turn_version,narrative")
+        .eq("case_id", caseId)
+        .order("turn_version", { ascending: true }),
+      admin
+        .from("birth_time_rectification_event_evidence")
+        .select("source_turn_id,raw_text,created_at,id")
+        .eq("case_id", caseId)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true }),
+    ]);
+    if (turnsError || evidenceError) return [];
+    return conversationMessagesFromStoredTurns(turns, evidence);
+  };
   const service = createConversationalRectificationService({
     store,
     billing: createSupabaseConversationalRectificationBilling(admin),
@@ -1025,35 +1049,13 @@ async function createProductionService(
       };
     },
     buildTechnicalPacket: (input) => buildProductionConversationalRectificationPacket(engine, input),
+    loadConversationMessages,
     narrativeGenerator,
     asOfDate: () => new Date().toISOString().slice(0, 10),
   });
   return {
     ...service,
-    async loadConversationMessages(userId, caseId) {
-      const { data: ownedCase, error: caseError } = await admin
-        .from("birth_time_rectification_cases")
-        .select("id")
-        .eq("id", caseId)
-        .eq("user_id", userId)
-        .maybeSingle();
-      if (caseError || !ownedCase) return [];
-      const [{ data: turns, error: turnsError }, { data: evidence, error: evidenceError }] = await Promise.all([
-        admin
-          .from("birth_time_rectification_turns")
-          .select("id,turn_version,narrative")
-          .eq("case_id", caseId)
-          .order("turn_version", { ascending: true }),
-        admin
-          .from("birth_time_rectification_event_evidence")
-          .select("source_turn_id,raw_text,created_at,id")
-          .eq("case_id", caseId)
-          .order("created_at", { ascending: true })
-          .order("id", { ascending: true }),
-      ]);
-      if (turnsError || evidenceError) return [];
-      return conversationMessagesFromStoredTurns(turns, evidence);
-    },
+    loadConversationMessages,
   };
 }
 
