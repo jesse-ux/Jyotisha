@@ -44,6 +44,13 @@ const structuredDateConfirmationMigration = readFileSync(
   ),
   "utf8",
 );
+const repairedStructuredDateValidatorMigration = readFileSync(
+  new URL(
+    "../supabase/migrations/20260725020000_repair_structured_conversational_date_validator.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const productionMigrationWorkflow = readFileSync(
   new URL(
     "../../.github/workflows/apply-production-rectification-migrations.yml",
@@ -139,9 +146,29 @@ test("durable evidence requests persist strict structured date confirmation", ()
   assert.match(structuredDateConfirmationMigration, /valid_uuid_text/);
 });
 
-test("production workflow uploads and applies the structured date confirmation migration", () => {
-  assert.equal(
-    productionMigrationWorkflow.match(/20260725010000_structured_conversational_date_confirmation\.sql/g)?.length,
-    2,
+test("repaired structured date validator relies on precision-specific date checks", () => {
+  assert.doesNotMatch(
+    repairedStructuredDateValidatorMigration,
+    /\^\[0-9\]\{4\}\(-/,
   );
+  assert.match(
+    repairedStructuredDateValidatorMigration,
+    /proposedDate,precision}' = 'month'/,
+  );
+  assert.match(
+    repairedStructuredDateValidatorMigration,
+    /proposedDate,precision}' = 'day'/,
+  );
+});
+
+test("production workflow uploads and applies the structured date confirmation migrations", () => {
+  for (const migration of [
+    "20260725010000_structured_conversational_date_confirmation",
+    "20260725020000_repair_structured_conversational_date_validator",
+  ]) {
+    assert.equal(
+      productionMigrationWorkflow.match(new RegExp(`${migration}\\.sql`, "g"))?.length,
+      2,
+    );
+  }
 });

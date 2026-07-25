@@ -1338,3 +1338,18 @@
 - 防复发：新增需要生产执行的 migration 时，必须同时更新受审生产迁移清单并由测试覆盖上传和执行两处引用。
 - 相关记录：BUG-068、BUG-069
 - 修复版本：待提交（本地可测）
+
+## BUG-071 | 结构化日期校验器的冗余正则在 PostgreSQL 执行时报错
+
+- 状态：resolved
+- 首次发现：2026-07-25
+- 最近更新：2026-07-25
+- 影响面：生产环境生时校正首次建案、`proposedDate` 持久化与预留点数释放
+- 用户现象：开始生时校正时接口返回 `409 action_conflict` 和“请加载最新进度后再试”，预留点数随后自动释放且没有创建 case。
+- 触发条件：首轮 Agent 生成带 `followUp.answerMode=yes_no` 和 `followUp.proposedDate` 的 evidence request，数据库开始执行结构化日期校验。
+- 根因：`20260725010000_structured_conversational_date_confirmation.sql` 同时保留了一个冗余的聚合日期正则；该正则括号不平衡，PostgreSQL 在函数运行时抛出 `2201B invalid regular expression`。下方按 `year/month/day` 精度分别校验的正则已经完整覆盖格式约束。
+- 修复：新增向前迁移 `20260725020000_repair_structured_conversational_date_validator.sql`，删除冗余聚合正则，只保留现有精度分支；同步加入生产迁移工作流。
+- 验证：生产事务回滚 dry-run 通过；以 `2020-10 + month + yes_no` 调用校验器返回 true；迁移账本、函数定义和生产健康状态均复核。
+- 防复发：数据库 JSON 合同的日期格式只维护一组精度分支；新增生产迁移时必须执行真实 PostgreSQL 函数调用，而不是只做 SQL 文本断言。
+- 相关记录：BUG-067、BUG-070
+- 修复版本：本次修复提交（生产已向前迁移）
