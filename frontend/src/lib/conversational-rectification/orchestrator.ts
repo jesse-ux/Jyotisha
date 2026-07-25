@@ -603,7 +603,7 @@ function openingRectificationState(input: {
     journeyProtocol: "conversational-evidence-v3",
     status: "active",
     turnVersion: 0,
-    narrative: "我们先从一件时间最明确、影响比较大的真实经历开始。请只说一件，并告诉我大约发生在哪一年、哪一月？",
+    narrative: `根据你填写的出生时间信息，当前先核对 ${range.startTime}–${range.endTime}。这只是待核对范围，还不能把其中某一分钟当作已确认出生时间。请先说一件时间最明确、影响比较大的真实经历，并尽量告诉我发生的年月。`,
     candidate: {
       status: "pending_validation",
       representativeTime,

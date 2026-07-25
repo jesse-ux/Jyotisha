@@ -523,6 +523,9 @@ test("start creates a deterministic opening without scanning or narrative genera
   assert.equal(turn.candidate.representativeTime, "05:20");
   assert.equal(turn.candidate.rangeStart, "04:50");
   assert.equal(turn.candidate.rangeEnd, "05:50");
+  assert.match(turn.narrative, /当前先核对 04:50–05:50/);
+  assert.match(turn.narrative, /还不能把其中某一分钟当作已确认出生时间/);
+  assert.match(turn.narrative, /请先说一件/);
   assert.deepEqual(turn.technicalReceipt, {
     calculationVersion: "rectification-opening-v1",
     stableLayers: [],
