@@ -66,6 +66,7 @@ jobs:
             frontend/supabase/migrations/20260724010000_global_birth_locations.sql \
             frontend/supabase/migrations/20260724020000_align_global_birthplace_rectification_contract.sql \
             frontend/supabase/migrations/20260724030000_allow_assistant_only_rectification_regenerate.sql \
+            frontend/supabase/migrations/20260725010000_structured_conversational_date_confirmation.sql \
             "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_DIR/"
 
       - name: Check or apply reviewed migrations
@@ -116,7 +117,8 @@ jobs:
             "$REMOTE_DIR/20260723030000_align_conversational_follow_up_request.sql" \
             "$REMOTE_DIR/20260724010000_global_birth_locations.sql" \
             "$REMOTE_DIR/20260724020000_align_global_birthplace_rectification_contract.sql" \
-            "$REMOTE_DIR/20260724030000_allow_assistant_only_rectification_regenerate.sql"
+            "$REMOTE_DIR/20260724030000_allow_assistant_only_rectification_regenerate.sql" \
+            "$REMOTE_DIR/20260725010000_structured_conversational_date_confirmation.sql"
           do
             filename="$(basename "$sql_file")"
             checksum="$(sha256sum "$sql_file" | awk '{print $1}')"
@@ -168,4 +170,3 @@ jobs:
             echo "production migration state is current"
           fi
           REMOTE
-

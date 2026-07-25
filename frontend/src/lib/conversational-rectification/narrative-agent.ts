@@ -65,6 +65,7 @@ const labeledYearChoicesPattern = /A\s*[.、:：)]?[\s\S]{0,80}(?:19|20)\d{2}\s*
 const affirmativeAnswerPattern = /^\s*(?:是(?:的)?|对(?:的)?|没错|正确|确认|就是|嗯+|没问题)\s*[。.!！,，]?\s*$/u;
 const negativeAnswerPattern = /^\s*(?:不是|不对|错了|并不是|否)\s*[。.!！,，]?\s*$/u;
 const proposedDateQuestionPattern = /(?:19|20)\d{2}\s*年(?:\s*(?:1[0-2]|0?[1-9])\s*月)?(?:\s*(?:3[01]|[12]\d|0?[1-9])\s*(?:日|号))?[\s\S]{0,30}(?:吗|是否|是不是|确认|对不对|正确)/u;
+const nonScoringDetailPattern = /为什么|原因|主动|被动|自愿|被迫|影响|感受|具体(?:体现|情况|经过)|哪些方面|正式工作|实习|兼职/u;
 const domainLabels = {
   career: "事业",
   education: "学业",
@@ -261,9 +262,11 @@ export function validateNarrativeAgainstPacket(
   phase: RectificationNarrativePhase = "first",
   context: RectificationNarrativeContext = {},
 ): NarrativeValidation {
-  void phase;
   const issues: string[] = [];
   const candidate = packet.candidate;
+  if (phase === "final" && output.evidenceRequest !== null) {
+    issues.push("final narrative must not request more evidence");
+  }
   if (output.candidateStatus !== candidate.status) {
     issues.push(`candidateStatus ${output.candidateStatus} is not packet-grounded`);
   }
@@ -301,6 +304,13 @@ export function validateNarrativeAgainstPacket(
     if (followUp?.kind === "event_detail"
       && packet.scoredHistoricalEvidence.some((item) => item.evidenceId === followUp.evidenceId)) {
       issues.push("event detail follow-up targets already scored evidence");
+    }
+    const latestActiveEvidenceId = context.eventLedger?.filter((item) => item.active).at(-1)?.id;
+    if (followUp?.kind === "new_event"
+      && latestActiveEvidenceId
+      && nonScoringDetailPattern.test(output.evidenceRequest.prompt)
+      && packet.scoredHistoricalEvidence.some((item) => item.evidenceId === latestActiveEvidenceId)) {
+      issues.push("new-event follow-up disguises detail about already scored evidence");
     }
     if (proposedDateQuestionPattern.test(output.evidenceRequest.prompt)
       && (followUp?.kind !== "event_date"

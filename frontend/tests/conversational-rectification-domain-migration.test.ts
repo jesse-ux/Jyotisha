@@ -44,6 +44,13 @@ const structuredDateConfirmationMigration = readFileSync(
   ),
   "utf8",
 );
+const productionMigrationWorkflow = readFileSync(
+  new URL(
+    "../../.github/workflows/apply-production-rectification-migrations.yml",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 test("durable rectification SQL accepts every application evidence domain", () => {
   for (const validator of [
@@ -130,4 +137,11 @@ test("durable evidence requests persist strict structured date confirmation", ()
   assert.match(structuredDateConfirmationMigration, /'free_text', 'yes_no'/);
   assert.match(structuredDateConfirmationMigration, /yes\/no date proposals/i);
   assert.match(structuredDateConfirmationMigration, /valid_uuid_text/);
+});
+
+test("production workflow uploads and applies the structured date confirmation migration", () => {
+  assert.equal(
+    productionMigrationWorkflow.match(/20260725010000_structured_conversational_date_confirmation\.sql/g)?.length,
+    2,
+  );
 });

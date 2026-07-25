@@ -1024,6 +1024,77 @@ test("uses a fresh second provider request after the first attempt times out", a
   assert.notEqual(signals[0], signals[1]);
 });
 
+test("retries when a final narrative asks for more evidence", async () => {
+  const invalid = richOutput();
+  const valid = {
+    ...richOutput(),
+    narrative: "当前证据只能支持候选范围，本次不再要求继续提供人生事件。",
+    evidenceRequest: null,
+  } satisfies RectificationNarrativeModelOutput;
+  const result = await generateRectificationNarrative({
+    phase: "final",
+    packet: syntheticTechnicalPacket(),
+    generator: generator([invalid, valid]),
+  });
+
+  assert.equal(result.attempts, 2);
+  assert.equal(result.fallbackUsed, false);
+  assert.equal(result.output.evidenceRequest, null);
+});
+
+test("retries a scored-event detail question mislabeled as new_event", async () => {
+  const evidenceId = "00000000-0000-4000-8000-000000000709";
+  const packet = {
+    ...syntheticTechnicalPacket(),
+    scoredHistoricalEvidence: [{
+      evidenceId,
+      domain: "education" as const,
+      candidateTime: "05:20",
+      score: 8,
+      ruleRefs: ["synthetic-education-rule"],
+    }],
+  };
+  const invalid = {
+    ...richOutput(),
+    evidenceRequest: {
+      domains: ["career" as const],
+      datePrecision: "month_preferred" as const,
+      prompt: "这几个月里，学业压力具体体现在哪些方面，主要原因是什么？",
+      followUp: { kind: "new_event" as const, evidenceId: null },
+    },
+  };
+  const valid = {
+    ...richOutput(),
+    evidenceRequest: {
+      domains: ["career" as const],
+      datePrecision: "month_preferred" as const,
+      prompt: "请再说一件已经发生的事业变化，并写明哪一年、哪一月。",
+      followUp: { kind: "new_event" as const, evidenceId: null },
+    },
+  };
+  const result = await generateRectificationNarrative({
+    phase: "intermediate",
+    packet,
+    context: {
+      eventLedger: [{
+        id: evidenceId,
+        rawText: "1972年12月因为学业压力正式退学",
+        dateLabel: "1972-12",
+        summary: "因为学业压力正式退学",
+        domain: "education",
+        extractionStatus: "clear",
+        active: true,
+        correctsEvidenceIds: [],
+      }],
+    },
+    generator: generator([invalid, valid]),
+  });
+
+  assert.equal(result.attempts, 2);
+  assert.equal(result.fallbackUsed, false);
+  assert.equal(result.output.evidenceRequest?.prompt, valid.evidenceRequest.prompt);
+});
+
 test("records first-turn generation timeouts separately from schema failures", async () => {
   const warnings: string[] = [];
   const originalWarn = console.warn;

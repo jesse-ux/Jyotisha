@@ -1498,7 +1498,7 @@ test("an authored event-detail follow-up survives progress decoration and keeps 
   assert.doesNotMatch(completed.narrative, /大致是什么年月|只记得年份/);
 });
 
-test("a mislabeled new-event follow-up never lets program heuristics rewrite an undated reply as a correction", async () => {
+test("an unscored event detail mislabeled as new_event is not heuristically merged as a correction", async () => {
   const value = harness({
     readyAfterEvidenceCount: 99,
     continueLatestEvent: true,
