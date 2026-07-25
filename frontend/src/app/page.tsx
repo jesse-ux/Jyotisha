@@ -2087,10 +2087,11 @@ export default function Home() {
       : resumableSession ?? createSession(modelCatalog.defaultModelId, "birth_time_rectification");
     const reusingRectificationSession = canReuseSourceRectificationSession
       || resumableSession !== null;
+    const localHandoff = rectificationQuestionHandoff.current.peek();
     const requestedQuestion = pendingConsultationQuestion
       ?? (reusingRectificationSession
         ? null
-        : rectificationQuestionHandoff.current.peek()?.question)
+        : localHandoff?.question)
       ?? null;
     rectificationOpenInFlight.current = true;
     setDraft("");
@@ -2116,7 +2117,9 @@ export default function Home() {
     try {
       let turn: ConversationalRectificationTurn;
       if (!resumeTarget) {
-        const durable = await durableRectificationQuestionHandoff.current.load();
+        const durable = requestedQuestion !== null || localHandoff !== null
+          ? await durableRectificationQuestionHandoff.current.load()
+          : null;
         if (durable && durable.status !== "consumed") {
           turn = durable.turn;
         } else {
@@ -2226,26 +2229,27 @@ export default function Home() {
           ? rectificationSession.updatedAt
           : timestamp(),
       };
-      let sessionSyncFailed = false;
-      if (!reusingRectificationSession) {
-        try {
-          await persistSession(boundSession, "create");
-        } catch {
-          sessionSyncFailed = true;
-        }
-        setSessions((current) => [boundSession, ...current.filter((session) => session.id !== boundSession.id)]);
-      } else if (boundSession !== rectificationSession) {
-        updateSession(rectificationSession.id, () => boundSession);
-        try {
-          await persistSession(boundSession);
-        } catch {
-          sessionSyncFailed = true;
-        }
-      }
       setRectificationInitialTurn(turn);
       setRectificationOpeningAssistantText("");
       synchronizeRectificationQuestion(turn, sourceSession);
-      setComposerNotice(sessionSyncFailed ? "校正已经开始，但会话关联暂时未同步到云端。" : "");
+      setComposerNotice("");
+      if (!reusingRectificationSession) {
+        setSessions((current) => [boundSession, ...current.filter((session) => session.id !== boundSession.id)]);
+        void rectificationPersistence.current.enqueue(
+          boundSession.id,
+          () => persistSession(boundSession, "create"),
+        ).catch(() => {
+          setComposerNotice("校正已经开始，但会话关联暂时未同步到云端。");
+        });
+      } else if (boundSession !== rectificationSession) {
+        updateSession(rectificationSession.id, () => boundSession);
+        void rectificationPersistence.current.enqueue(
+          boundSession.id,
+          () => persistSession(boundSession),
+        ).catch(() => {
+          setComposerNotice("校正已经开始，但会话关联暂时未同步到云端。");
+        });
+      }
     } catch (caught) {
       const message = caught instanceof Error
         ? caught.message

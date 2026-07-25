@@ -211,6 +211,7 @@ type MutableCase = {
 };
 
 function harness(options: {
+  readonly createFailure?: Error;
   readonly packetFailure?: Error;
   readonly packetFailureFromBuild?: number;
   readonly completeFailures?: number;
@@ -330,6 +331,7 @@ function harness(options: {
     async createCaseWithFirstTurn(input) {
       events.push("create");
       mutations.push("create");
+      if (options.createFailure) throw options.createFailure;
       return replay(input.actionId, input, () => {
         const row = stored({
           userId: input.userId,
@@ -508,18 +510,30 @@ async function start(value: ReturnType<typeof harness>, pendingConsultationQuest
   });
 }
 
-test("start validates profile, reads server price, reserves, computes, saves, then charges", async () => {
+test("start creates a deterministic opening without scanning or narrative generation", async () => {
   const value = harness();
   const turn = await start(value);
 
-  assert.deepEqual(value.events, ["profile", "price", "reserve:9", "packet", "narrative", "create", "complete"]);
+  assert.deepEqual(value.events, ["profile", "price", "reserve:9", "create", "complete"]);
+  assert.equal(value.counts().packetBuilds, 0);
   assert.equal(turn.caseId, startActionId);
   assert.equal(turn.turnVersion, 0);
   assert.equal(turn.pendingConsultationQuestion, "我的工作何时变化？");
-  assert.deepEqual(turn.technicalReceipt.sensitiveLayers, ["D9", "D10"]);
+  assert.equal(turn.candidate.status, "pending_validation");
+  assert.equal(turn.candidate.representativeTime, "05:20");
+  assert.equal(turn.candidate.rangeStart, "04:50");
+  assert.equal(turn.candidate.rangeEnd, "05:50");
+  assert.deepEqual(turn.technicalReceipt, {
+    calculationVersion: "rectification-opening-v1",
+    stableLayers: [],
+    sensitiveLayers: [],
+    candidateDifferenceRefs: [],
+  });
+  assert.equal(turn.evidenceRequest?.followUp?.kind, "new_event");
   assert.equal(JSON.stringify(turn).includes("candidateWeights"), false);
   assert.equal(value.cases.get(startActionId)?.row.revisionOfCaseId, priorCaseId);
   assert.equal(value.cases.get(startActionId)?.row.baselineActiveTime, "04:58");
+  assert.equal(value.cases.get(startActionId)?.row.validationReceipts[0]?.modelId, "deterministic-rectification-opening");
 });
 
 test("start rejects a client price before profile, billing, or calculation", async () => {
@@ -533,11 +547,11 @@ test("start rejects a client price before profile, billing, or calculation", asy
 
 test("every post-reservation failure releases exactly once and never leaks its cause", async () => {
   const raw = "SQL model browser secret detail";
-  const value = harness({ packetFailure: new Error(raw) });
+  const value = harness({ createFailure: new Error(raw) });
   await assert.rejects(start(value), (error: unknown) => error instanceof ConversationalRectificationError
     && error.code === "service_unavailable" && !error.message.includes(raw));
   assert.equal(value.counts().releaseCount, 1);
-  assert.deepEqual(value.events, ["profile", "price", "reserve:9", "packet", "release"]);
+  assert.deepEqual(value.events, ["profile", "price", "reserve:9", "create", "release"]);
 });
 
 test("a start retry settles an existing reservation without reserving or computing again", async () => {
@@ -550,7 +564,7 @@ test("a start retry settles an existing reservation without reserving or computi
 
   assert.equal(replayed.status, "active");
   assert.equal(value.cases.get(startActionId)?.row.billingState, "charged");
-  assert.deepEqual(value.counts(), { packetBuilds: 1, reserveCount: 1, releaseCount: 1 });
+  assert.deepEqual(value.counts(), { packetBuilds: 0, reserveCount: 1, releaseCount: 1 });
   assert.deepEqual(value.events.slice(-3), ["profile", "price", "complete"]);
 });
 
@@ -568,7 +582,7 @@ test("a duplicate start with the same declared birth input reuses the unfinished
   assert.deepEqual(replayed, first);
   assert.deepEqual(value.counts(), countsBeforeRetry);
   assert.deepEqual(value.events, [
-    "profile", "price", "reserve:9", "packet", "narrative", "create", "complete",
+    "profile", "price", "reserve:9", "create", "complete",
     "profile", "price",
   ]);
 });
@@ -595,7 +609,7 @@ test("a duplicate start with changed declared birth input remains a conflict", a
   }), (error: unknown) => error instanceof ConversationalRectificationError
     && error.code === "action_conflict");
   assert.equal(value.counts().reserveCount, 1);
-  assert.equal(value.counts().packetBuilds, 1);
+  assert.equal(value.counts().packetBuilds, 0);
 });
 
 test("a settlement failure releases its created case once and cannot replay as success", async () => {
@@ -607,7 +621,7 @@ test("a settlement failure releases its created case once and cannot replay as s
 
   await assert.rejects(start(value), (error: unknown) => error instanceof ConversationalRectificationError
     && error.code === "billing_failed");
-  assert.deepEqual(value.counts(), { packetBuilds: 1, reserveCount: 1, releaseCount: 1 });
+  assert.deepEqual(value.counts(), { packetBuilds: 0, reserveCount: 1, releaseCount: 1 });
 });
 
 test("clear historical evidence is extracted, scored, narrated, recapped, and atomically saved", async () => {
@@ -621,7 +635,7 @@ test("clear historical evidence is extracted, scored, narrated, recapped, and at
     answer: "2018年6月毕业，2019年7月开始第一份工作，2020年3月去外地工作，2022年8月结婚",
   });
 
-  assert.equal(value.counts().packetBuilds, 2);
+  assert.equal(value.counts().packetBuilds, 1);
   assert.equal(turn.status, "confirming");
   assert.equal(turn.candidate.status, "ready_for_confirmation");
   assert.equal(turn.turnVersion, 1);
@@ -685,7 +699,7 @@ test("evidence corrections are append-only while recap and scoring use only the 
     domain: "career",
     isCorrection: true,
   }]);
-  assert.deepEqual(value.packetEvidenceCounts, [0, 1, 1, 1]);
+  assert.deepEqual(value.packetEvidenceCounts, [1, 1, 1]);
 });
 
 test("uses Agent semantic classification when a single event falls through the deterministic keywords", async () => {
@@ -732,7 +746,7 @@ test("repeated evidence remains auditable but identical date-domain-semantics sc
   const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
   assert.equal(stored.length, 2, "both user submissions remain in the audit ledger");
   assert.equal(repeated.evidenceRecap.length, 2);
-  assert.deepEqual(value.packetEvidenceCounts, [0, 1, 1]);
+  assert.deepEqual(value.packetEvidenceCounts, [1, 1]);
   assert.deepEqual(value.packetEvidenceIds.at(-1), [firstId]);
   assert.equal(repeated.status, "active");
   assert.equal(repeated.actions.includes("confirm"), false);
@@ -771,13 +785,13 @@ test("an unclear correction immediately retires the wrong fact and stays retired
     value.cases.get(startActionId)?.row.privateCandidate.scoredHistoricalEvidence ?? [],
     [],
   );
-  assert.deepEqual(value.packetEvidenceCounts, [0, 1, 0]);
+  assert.deepEqual(value.packetEvidenceCounts, [1, 0]);
 
   const later = await value.service.answer(userId, {
     type: "answer", caseId: startActionId, actionId: thirdAnswerActionId,
     turnVersion: 2, answer: "2022年3月搬家",
   });
-  assert.deepEqual(value.packetEvidenceCounts, [0, 1, 0, 1]);
+  assert.deepEqual(value.packetEvidenceCounts, [1, 0, 1]);
   assert.equal(later.evidenceRecap.some((item) => item.id === wrongId), false);
   assert.equal(later.evidenceRecap.some((item) => item.id === unclear?.id), true);
 });
@@ -838,7 +852,7 @@ test("every non-confirmable correction rescans the declared range and withdraws 
 });
 
 test("a narrative fallback cannot discard a confirmation candidate produced by a valid correction", async () => {
-  const value = harness({ invalidNarrativeFromGeneration: 3 });
+  const value = harness({ invalidNarrativeFromGeneration: 2 });
   await start(value, null);
   await value.service.answer(userId, {
     type: "answer", caseId: startActionId, actionId: answerActionId,
@@ -944,7 +958,6 @@ test("ordinary new evidence continues incrementally from the current candidate r
   });
 
   assert.deepEqual(value.packetPrivateCandidates, [
-    null,
     { rangeStart: "04:50", rangeEnd: "05:50", resultId: null },
     { rangeStart: "05:16", rangeEnd: "05:20", resultId: null },
   ]);
@@ -999,7 +1012,7 @@ test("generic date uncertainty does not suppress clear historical evidence", asy
 
   assert.equal(turn.status, "active");
   assert.equal(turn.candidate.status, "pending_validation");
-  assert.equal(value.counts().packetBuilds, 2);
+  assert.equal(value.counts().packetBuilds, 1);
   assert.ok(value.events.includes("score-packet"));
   assert.ok((value.cases.get(startActionId)?.row.eventEvidence ?? [])
     .some((item) => item.eventSummary.includes("毕业") && item.scoreable === true));
@@ -1617,7 +1630,7 @@ test("the next evidence request moves past a domain the user already answered", 
 });
 
 test("a rejected intermediate narrative returns a retryable error without saving a template turn", async () => {
-  const value = harness({ invalidNarrativeFromGeneration: 2 });
+  const value = harness({ invalidNarrativeFromGeneration: 1 });
   await start(value, null);
 
   await assert.rejects(value.service.answer(userId, {
@@ -1660,8 +1673,8 @@ test("one through three supported events save and narrate before the fourth accu
     assert.doesNotMatch(turn.narrative, /当前累计|本轮已纳入|本轮区分重点|下一步：/);
   }
 
-  assert.equal(value.counts().packetBuilds, 5);
-  assert.equal(value.events.filter((event) => event === "narrative").length, 5);
+  assert.equal(value.counts().packetBuilds, 4);
+  assert.equal(value.events.filter((event) => event === "narrative").length, 4);
 });
 
 test("intermediate narrative receives the complete active event ledger", async () => {
@@ -1827,7 +1840,7 @@ test("family evidence remains stored and public without changing its domain", as
     dateLabel: "2020-07",
     domain: "family",
   }]);
-  assert.deepEqual(value.packetEvidenceCounts, [0, 0]);
+  assert.deepEqual(value.packetEvidenceCounts, [0]);
   assert.equal(turn.status, "active");
 });
 
@@ -1860,7 +1873,7 @@ test("three valid events plus pre-birth evidence wait until a later valid fourth
   assert.equal(preBirth?.extractionStatus, "needs_clarification");
   assert.equal(stored?.eventEvidence.length, 5);
   assert.equal(latest?.evidenceRecap.length, 5);
-  assert.deepEqual(value.packetEvidenceCounts, [0, 1, 2, 2, 3, 4]);
+  assert.deepEqual(value.packetEvidenceCounts, [1, 2, 2, 3, 4]);
 });
 
 test("vague, future, and unmatched answers stay conversational and never score", async () => {
@@ -1879,7 +1892,7 @@ test("vague, future, and unmatched answers stay conversational and never score",
       answer,
       ...(domain ? { domain } : {}),
     });
-    assert.equal(value.counts().packetBuilds, 2);
+    assert.equal(value.counts().packetBuilds, 1);
     assert.equal(turn.status, "active");
     assert.match(turn.narrative, /哪一年|哪一月|年月|已发生|已经发生|换个方向|未来/);
     assert.doesNotMatch(turn.narrative, /好的，我们不沿用不符合你的方向|已保存这段描述|我已保存你的原话|这条更正已保存/);
@@ -1891,7 +1904,7 @@ test("vague, future, and unmatched answers stay conversational and never score",
 test("a non-scoring packet failure responds to the current turn instead of replaying the prior agent message", async () => {
   const value = harness({
     packetFailure: new Error("synthetic packet outage"),
-    packetFailureFromBuild: 2,
+    packetFailureFromBuild: 1,
   });
   const initial = await start(value, null);
 
@@ -1947,7 +1960,7 @@ test("a lost-response retry replays the saved answer without rescoring or regene
   const before = [...value.events];
   const replayed = await value.service.answer(userId, command);
   assert.deepEqual(replayed, first);
-  assert.equal(value.counts().packetBuilds, 2);
+  assert.equal(value.counts().packetBuilds, 1);
   assert.deepEqual(value.events, before);
 });
 
@@ -1990,7 +2003,7 @@ test("regenerate rewrites only the current narrative and preserves evidence, sco
 });
 
 test("a failed regenerate preserves the prior turn, evidence, candidate, and billing", async () => {
-  const value = harness({ readyAfterEvidenceCount: 99, invalidNarrativeFromGeneration: 3 });
+  const value = harness({ readyAfterEvidenceCount: 99, invalidNarrativeFromGeneration: 2 });
   await start(value, null);
   const answered = await value.service.answer(userId, {
     type: "answer",
@@ -2044,7 +2057,7 @@ test("overlapping identical answers converge on the first receipt despite differ
 
   assert.deepEqual(second, first);
   assert.equal(value.cases.get(startActionId)?.row.eventEvidence.length, 2);
-  assert.equal(value.events.filter((event) => event === "narrative").length, 3);
+  assert.equal(value.events.filter((event) => event === "narrative").length, 2);
   assert.equal(value.mutations.filter((mutation) => mutation === "saveTurn").length, 2);
 });
 

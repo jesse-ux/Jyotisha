@@ -140,6 +140,32 @@ test("homepage birth-time card opens its dedicated session before the first turn
   assert.match(source, /rectificationSurfaceOpen && \(!visibleRectificationTurn && rectificationError \? \([\s\S]*?<ConversationalBirthTimeRectification[\s\S]*?initialTurn=\{visibleRectificationTurn\}[\s\S]*?openingAssistantText=\{rectificationOpeningAssistantText\}/);
 });
 
+test("the first rectification turn becomes interactive before session persistence finishes", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("async function openBirthTimeRectification");
+  const end = source.indexOf("function handleConversationalRectificationTurn", start);
+  const handler = source.slice(start, end);
+  const turnVisible = handler.indexOf("setRectificationInitialTurn(turn)");
+  const backgroundPersist = handler.indexOf("void rectificationPersistence.current.enqueue(");
+
+  assert.ok(turnVisible >= 0);
+  assert.ok(backgroundPersist > turnVisible);
+  assert.match(handler, /void rectificationPersistence\.current\.enqueue\([\s\S]*?\(\) => persistSession\([\s\S]*?\.catch\(\(\) => \{[\s\S]*?校正已经开始，但会话关联暂时未同步到云端。/);
+});
+
+test("a direct homepage start skips the durable handoff read when no question was handed off", () => {
+  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("async function openBirthTimeRectification");
+  const end = source.indexOf("function handleConversationalRectificationTurn", start);
+  const handler = source.slice(start, end);
+
+  assert.match(handler, /const localHandoff = rectificationQuestionHandoff\.current\.peek\(\)/);
+  assert.match(
+    handler,
+    /const durable = requestedQuestion !== null \|\| localHandoff !== null\s*\? await durableRectificationQuestionHandoff\.current\.load\(\)\s*:\s*null/,
+  );
+});
+
 test("rectification cards render only inside the active rectification session", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 

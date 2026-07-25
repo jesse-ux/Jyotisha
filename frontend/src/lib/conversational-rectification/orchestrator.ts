@@ -559,6 +559,89 @@ function midpointOfRange(range: Readonly<{ startTime: string; endTime: string }>
   return clock(Math.round((start + end) / 2));
 }
 
+function declaredRange(input: DeclaredBirthInput): Readonly<{ startTime: string; endTime: string }> {
+  if (input.source === "period_only") {
+    return {
+      early_morning: { startTime: "04:00", endTime: "07:59" },
+      morning: { startTime: "08:00", endTime: "11:59" },
+      afternoon: { startTime: "12:00", endTime: "17:59" },
+      evening: { startTime: "18:00", endTime: "22:59" },
+      late_night: { startTime: "23:00", endTime: "03:59" },
+    }[input.reportedPeriod];
+  }
+  if (input.source === "unknown") return { startTime: "00:00", endTime: "23:59" };
+  if (input.source === "legacy_import" && !input.reportedTime) {
+    return input.reportedPeriod
+      ? declaredRange({ ...input, source: "period_only", reportedPeriod: input.reportedPeriod })
+      : { startTime: "00:00", endTime: "23:59" };
+  }
+  if (!input.reportedTime) throw new ConversationalRectificationError("profile_incomplete");
+  const minute = (value: string) => {
+    const [hour = 0, part = 0] = value.split(":").map(Number);
+    return hour * 60 + part;
+  };
+  const clock = (value: number) => {
+    const normalized = ((value % 1_440) + 1_440) % 1_440;
+    return `${String(Math.floor(normalized / 60)).padStart(2, "0")}:${String(normalized % 60).padStart(2, "0")}`;
+  };
+  return {
+    startTime: clock(minute(input.reportedTime) - (input.uncertaintyBeforeMinutes ?? 2)),
+    endTime: clock(minute(input.reportedTime) + (input.uncertaintyAfterMinutes ?? 2)),
+  };
+}
+
+function openingRectificationState(input: {
+  readonly caseId: string;
+  readonly declaredBirthInput: DeclaredBirthInput;
+  readonly pendingConsultationQuestion: string | null;
+}) {
+  const range = declaredRange(input.declaredBirthInput);
+  const representativeTime = midpointOfRange(range);
+  const calculationVersion = "rectification-opening-v1";
+  const turn = conversationalRectificationTurnSchema.parse({
+    caseId: input.caseId,
+    journeyProtocol: "conversational-evidence-v3",
+    status: "active",
+    turnVersion: 0,
+    narrative: "我们先从一件时间最明确、影响比较大的真实经历开始。请只说一件，并告诉我大约发生在哪一年、哪一月？",
+    candidate: {
+      status: "pending_validation",
+      representativeTime,
+      rangeStart: range.startTime,
+      rangeEnd: range.endTime,
+    },
+    technicalReceipt: {
+      calculationVersion,
+      stableLayers: [],
+      sensitiveLayers: [],
+      candidateDifferenceRefs: [],
+    },
+    evidenceRequest: {
+      domains: ["career", "education", "relocation", "relationship"],
+      datePrecision: "month_preferred",
+      freeTextAllowed: true,
+      prompt: "请说一件已经发生、时间比较明确的重要经历，并告诉我大约是哪一年、哪一月？",
+      followUp: { kind: "new_event", evidenceId: null },
+    },
+    evidenceRecap: [],
+    actions: ["answer", "pause", "abandon"],
+    pendingConsultationQuestion: input.pendingConsultationQuestion,
+  });
+  const privateCandidate = privateCandidateSchema.parse({
+    resultId: null,
+    representativeTime,
+    rangeStart: range.startTime,
+    rangeEnd: range.endTime,
+    calculationVersion,
+    workingState: { phase: "collecting_evidence", iteration: 0, notes: [] },
+  });
+  return {
+    turn,
+    privateCandidate,
+    validationReceipt: transitionReceipt("deterministic-rectification-opening"),
+  };
+}
+
 type CorrectionResetReason =
   | "needs_clarification"
   | "non_scoreable"
@@ -1193,33 +1276,10 @@ export function createConversationalRectificationService(
         });
         reserved = reservation.billingState === "reserved";
         if (reserved) lastTelemetryOutcome = { billingState: "unknown", caseStatus: null };
-        const computed = await ports.buildTechnicalPacket({
-          userId,
+        const opening = openingRectificationState({
           caseId,
-          asOfDate: ports.asOfDate(),
-          declaredBirthInput: declared.data,
-          privateCandidate: null,
-          evidence: [],
-        });
-        const gatedPacket = confirmationGatedPacket(computed.packet, 0, 0);
-        const narrative = await generateRectificationNarrative({
-          phase: "first",
-          packet: gatedPacket,
-          generator: ports.narrativeGenerator,
-        });
-        const privateCandidate = privateCandidateFromPacket({
-          packet: gatedPacket,
-          resultId: null,
-          iteration: 0,
-          forceCollecting: true,
-        });
-        const firstTurn = turnFromNarrative({
-          caseId,
-          turnVersion: 0,
           pendingConsultationQuestion: command.pendingConsultationQuestion ?? null,
-          packet: gatedPacket,
-          narrative,
-          evidence: [],
+          declaredBirthInput: declared.data,
         });
         const created = await ports.store.createCaseWithFirstTurn({
           userId,
@@ -1229,9 +1289,9 @@ export function createConversationalRectificationService(
           revisionOfCaseId: profile.revisionOfCaseId,
           pendingConsultationQuestion: command.pendingConsultationQuestion ?? null,
           declaredBirthInput: declared.data,
-          firstTurn,
-          validationReceipt: narrative.validationReceipt,
-          privateCandidate,
+          firstTurn: opening.turn,
+          validationReceipt: opening.validationReceipt,
+          privateCandidate: opening.privateCandidate,
         });
         observeCase(created, "unknown");
         await ports.billing.complete({
