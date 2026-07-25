@@ -75,7 +75,7 @@ import {
   isGuidedBirthTimePreview,
   previewRectificationJourney,
 } from "@/lib/birth-time-guided-preview";
-import { defaultGuidedJyotishTopics } from "@/lib/guided-jyotish-topics";
+import { defaultGuidedJyotishTopics, generalGuidedJyotishTopics } from "@/lib/guided-jyotish-topics";
 import { keepFocusWithin } from "@/lib/focus-trap";
 import { chatMessageViews, type ChatMessage } from "@/lib/chat-message-view";
 import { writeChatSession } from "@/lib/chat-session-write-contract";
@@ -1123,6 +1123,9 @@ export default function Home() {
   }, [accountId, profile]);
 
   const profileComplete = isProfileComplete(profile);
+  const birthTimeRoute = resolveBirthTimeConsultationRoute(profile, birthTimeConsultationConsent, activeSessionId);
+  const personalChartAvailable = birthTimeRoute.kind === "consult" && birthTimeRoute.mode !== "general_no_birth_time";
+  const starterThemes = personalChartAvailable ? themes : generalGuidedJyotishTopics;
   const dailyStarlanguage = dailyStarlanguageCard ?? (profileComplete ? buildDailyStarlanguageCard(profile) : null);
   const onboardingPending = profileComplete && !onboarding && !onboardingError;
   const currentOnboardingMessage = onboardingJustCompleted
@@ -1137,8 +1140,9 @@ export default function Home() {
   const shouldStreamOnboarding = !profileComplete;
   const presetMessageFinished = !shouldStreamOnboarding || presetMessageLength >= currentOnboardingMessage.length;
   const onboardingCardReady = presetMessageFinished || birthTimeAssessmentPhase !== null;
-  const starterSuggestions = themes.map((theme) => onboarding?.suggestions.find((item) => item.theme === theme.id)
-    ?? { theme: theme.id, text: theme.prompt });
+  const starterSuggestions = starterThemes.map((theme) => personalChartAvailable
+    ? onboarding?.suggestions.find((item) => item.theme === theme.id) ?? { theme: theme.id, text: theme.prompt }
+    : { theme: theme.id, text: theme.prompt });
   const starterHomeVisible = profileComplete
     && presetMessageFinished
     && !onboardingPending
@@ -2031,7 +2035,11 @@ export default function Home() {
   }
 
   function draftDailyStarlanguageQuestion() {
-    chooseSuggestedQuestion("深入看今日", "timing", "daily_starlanguage");
+    chooseSuggestedQuestion(
+      personalChartAvailable ? "深入看今日" : "印度占星通常如何观察每日趋势？",
+      "timing",
+      personalChartAvailable ? "daily_starlanguage" : null,
+    );
   }
 
   function synchronizeRectificationQuestion(
@@ -3109,7 +3117,7 @@ export default function Home() {
               ? (consultationPhase === "undo" ? "即将发送，可撤回" : activeStreamingText ? "正在回答" : "正在核对星盘信息")
               : rectificationSurfaceOpen || (!profileComplete && onboardingStep === "rectification")
                 ? "正在校正出生时间"
-                : "基于星盘证据回答"}</span>
+                : personalChartAvailable ? "基于星盘证据回答" : "回答一般占星知识"}</span>
           </div>
           <button className="credit-button" ref={creditTrigger} type="button" onClick={() => openAccountDialog("redeem", creditTrigger.current)} aria-label={account ? `余额 ${account.credits} 点，兑换点数` : accountError || "读取余额中"}>
             <Sparkles className="credit-icon" aria-hidden="true" />
@@ -3205,7 +3213,9 @@ export default function Home() {
                     <div className="starter-hero-copy">
                       <p className="starter-greeting">{daypartGreeting}，{profile.name.trim()}。</p>
                       <h1 id="starter-heading">今天想先理清什么？</h1>
-                      <p className="starter-hero-note">从此刻最在意的事开始，我会结合你的星盘证据，帮你把问题拆得更清楚。</p>
+                      <p className="starter-hero-note">{personalChartAvailable
+                        ? "从此刻最在意的事开始，我会结合你的星盘证据，帮你把问题拆得更清楚。"
+                        : "你可以先了解一般占星知识；完成生时校正后，再讨论个人星盘结论。"}</p>
                     </div>
                     <div className="starter-celestial-visual" aria-hidden="true">
                       <span className="starter-orbit starter-orbit-outer" />
@@ -3221,18 +3231,18 @@ export default function Home() {
                       <button
                         className="product-entrypoint-hitarea"
                         type="button"
-                        aria-label="深入看今日"
+                        aria-label={personalChartAvailable ? "深入看今日" : "了解每日趋势的分析方法"}
                         disabled={productEntrypointsDisabled}
                         onClick={draftDailyStarlanguageQuestion}
                       />
                       <div className="product-entrypoint-copy">
-                        <span className="product-entrypoint-kicker">每日观察</span>
-                        <h2 id="daily-starlanguage-title">今日星语</h2>
-                        <p>{dailyStarlanguage?.trend}</p>
+                        <span className="product-entrypoint-kicker">{personalChartAvailable ? "每日观察" : "一般知识"}</span>
+                        <h2 id="daily-starlanguage-title">{personalChartAvailable ? "今日星语" : "如何看每日趋势"}</h2>
+                        <p>{personalChartAvailable ? dailyStarlanguage?.trend : "了解印度占星通常会用哪些因素观察一天的主题。"}</p>
                       </div>
                       <div className="product-entrypoint-footer">
-                        <small>{dailyStarlanguage?.action}</small>
-                        <span className="product-entrypoint-action" aria-hidden="true">深入看今日 <ArrowUpRight className="starter-arrow" /></span>
+                        <small>{personalChartAvailable ? dailyStarlanguage?.action : "不依赖个人出生分钟。"}</small>
+                        <span className="product-entrypoint-action" aria-hidden="true">{personalChartAvailable ? "深入看今日" : "了解方法"} <ArrowUpRight className="starter-arrow" /></span>
                       </div>
                     </article>
                     <article className="birth-rectification-card product-entrypoint-card" aria-labelledby="birth-rectification-title">
@@ -3266,7 +3276,7 @@ export default function Home() {
                     </div>
                     <div className="starter-theme-accordion">
                       {starterSuggestions.map((item) => {
-                        const theme = themes.find((candidate) => candidate.id === item.theme);
+                        const theme = starterThemes.find((candidate) => candidate.id === item.theme);
                         return (
                           <button
                             className="starter-theme-card"

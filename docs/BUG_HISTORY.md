@@ -1368,3 +1368,18 @@
 - 防复发：零证据首轮不得执行分钟级技术计算或模型调用；非关键会话同步不得阻塞已持久化 case 的首轮交互；可选 handoff 读取必须由实际 handoff 状态触发。
 - 相关记录：BUG-055、BUG-065、BUG-067
 - 修复版本：待提交（本地可测）
+
+## BUG-073 | 咨询入口与持久化出生时间能力不一致
+
+- 状态：resolved
+- 首次发现：2026-07-25
+- 最近更新：2026-07-25
+- 影响面：首页状态文案、每日观察入口、推荐初始问题、`/api/consult` 出生时间模式判定
+- 用户现象：一类用户没有具体出生分钟，首页却仍诱导个人星盘问题；另一类用户已经保存准确到分钟的填报时间，旧标签页或旧客户端仍可能把咨询请求标为 `general_no_birth_time`，随后错误提示当前一般咨询模式不能生成个人星盘结论。
+- 触发条件：无分钟资料仍出现个人入口，或数据库已保存合法 `family_exact` / `hospital_record` / `approximate` 填报分钟，但客户端咨询模式停留在旧的 `general_no_birth_time`。
+- 根因：首页没有复用出生时间路由结果来约束入口能力；同时 `/api/consult` 只在客户端请求星盘模式时加载 profile，收到 `general_no_birth_time` 时完全信任客户端状态，没有用持久化资料纠正陈旧模式。
+- 修复：首页复用 `resolveBirthTimeConsultationRoute()`：无具体分钟时只显示一般知识文案和问题，有合法填报分钟时保留个人星盘入口。服务端对一般咨询请求也 best-effort 读取 profile；若持久化资料含合法未校正填报分钟则提升为 `unverified_birth_time`，若为 `confirmed` 且有合法 active time 则提升为 `verified_chart`，并继续由服务端 profile 构建星盘输入。`period_only` / `unknown` 仍保持一般咨询，不虚构分钟，也不把用户填报时间伪装成已校正时间。
+- 验证：聚焦测试覆盖无分钟首页入口、陈旧 general 请求被准确分钟 profile 提升为 `unverified_birth_time`，以及无具体分钟仍保持 `general_no_birth_time`；目标 ESLint、Webpack 构建与 `git diff --check` 通过。
+- 防复发：首页可点击入口必须与 `resolveBirthTimeConsultationRoute()` 的能力结果一致；服务端不得把客户端咨询模式当作出生资料真源，具体填报分钟必须进入 `unverified_birth_time`，只有 `confirmed + active_birth_time` 才能进入 `verified_chart`。
+- 相关记录：BUG-009
+- 修复版本：待提交（本地可测）

@@ -226,19 +226,41 @@ test("historical timezone failure remains pre-billing", async () => {
   assert.equal(reserveCalls, 0);
 });
 
-test("general route reserves without loading chart profile", async () => {
-  let profileLoads = 0;
+test("stale general mode is upgraded from persisted exact-minute profile truth", async () => {
   const prepared = await prepareConsultationRoute({
     userId: "user-1",
     mode: "general_no_birth_time",
-    loadProfile: async () => {
-      profileLoads += 1;
-      return profile;
-    },
+    loadProfile: async () => ({
+      ...profile,
+      reported_birth_time: "14:49:00",
+      birth_time_source: "family_exact",
+      birth_time_status: "reported",
+    }),
     reserve: async () => "reserved",
   });
 
-  assert.equal(profileLoads, 0);
+  assert.equal(prepared.consultationMode, "unverified_birth_time");
+  assert.equal(prepared.serverChart?.toolInput.hour, 14);
+  assert.equal(prepared.serverChart?.toolInput.minute, 49);
+  assert.equal(prepared.serverChart?.truth.selectedTimeKind, "reported");
+  assert.equal(prepared.reservation, "reserved");
+});
+
+test("general mode remains general when persisted profile has no concrete minute", async () => {
+  const prepared = await prepareConsultationRoute({
+    userId: "user-1",
+    mode: "general_no_birth_time",
+    loadProfile: async () => ({
+      ...profile,
+      reported_birth_time: null,
+      active_birth_time: null,
+      birth_time_source: "period_only",
+      birth_time_status: "reported",
+    }),
+    reserve: async () => "reserved",
+  });
+
+  assert.equal(prepared.consultationMode, "general_no_birth_time");
   assert.equal(prepared.serverChart, null);
   assert.equal(prepared.reservation, "reserved");
 });

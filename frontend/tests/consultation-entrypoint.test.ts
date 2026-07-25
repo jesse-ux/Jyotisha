@@ -71,7 +71,7 @@ test("browser source does not own private entrypoint prompts", () => {
 test("ordinary product drafts keep the public question and clear hidden routing after edits", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 
-  assert.match(source, /chooseSuggestedQuestion\("深入看今日",[\s\S]*?"timing",[\s\S]*?"daily_starlanguage"\)/);
+  assert.match(source, /personalChartAvailable \? "深入看今日"[\s\S]*?"timing",[\s\S]*?personalChartAvailable \? "daily_starlanguage" : null/);
   assert.match(source, /messages:\s*\[\.\.\.preservedMessages,[\s\S]*?\{ role: "user", text: question \}\]/);
   assert.match(source, /body:\s*JSON\.stringify\(\{[\s\S]*?entrypoint:\s*entrypoint \?\? undefined,[\s\S]*?question,/);
   assert.match(source, /onChange=\{\(event\) => \{[\s\S]*?setDraft\(event\.target\.value\);[\s\S]*?setDraftTheme\(null\);[\s\S]*?setDraftEntrypoint\(null\);/);
@@ -319,7 +319,7 @@ test("starter homepage stays editorial and hides technical chart parameters", ()
   assert.match(starterHomepage, /className="starter-theme-accordion"/);
   assert.match(starterHomepage, /starterSuggestions\.map/);
   assert.doesNotMatch(starterHomepage, /evidencePreview|birthTimeDisplay|Vimshottari|D1|D9/);
-  assert.match(source, /const starterSuggestions = themes\.map/);
+  assert.match(source, /const starterSuggestions = starterThemes\.map/);
   assert.match(source, /composer-wrap-starter/);
   assert.match(styles, /\/\* Starter workbench \*\/[\s\S]*?\.starter-list \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);/);
   assert.match(styles, /\.starter-hero,[\s\S]*?\.product-entrypoints,[\s\S]*?\.starter-themes \{[\s\S]*?width: 100%;/);

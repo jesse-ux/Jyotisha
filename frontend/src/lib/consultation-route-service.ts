@@ -122,6 +122,20 @@ function optionalText(profile: RecordValue, key: string): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function persistedChartMode(value: unknown): Exclude<ConsultationBirthTimeMode, "general_no_birth_time"> | null {
+  const profile = record(value);
+  if (!profile) return null;
+  const status = optionalText(profile, "birth_time_status");
+  const source = optionalText(profile, "birth_time_source");
+  const activeTime = optionalText(profile, "active_birth_time")?.slice(0, 5) ?? "";
+  const reportedTime = optionalText(profile, "reported_birth_time")?.slice(0, 5) ?? "";
+  if (status === "confirmed" && isBirthClockTime(activeTime)) return "verified_chart";
+  if (status && allowedBirthTimeStatuses.has(status) && status !== "confirmed"
+    && source && concreteReportedSources.has(source)
+    && isBirthClockTime(reportedTime)) return "unverified_birth_time";
+  return null;
+}
+
 function legacyChinaPlaceLabel(profile: RecordValue): string | null {
   const countryCode = optionalText(profile, "country_code");
   const provinceCode = optionalText(profile, "province_code");
@@ -245,17 +259,22 @@ function serverChartFromProfile(
 export async function prepareConsultationRoute<Reservation>(
   input: PrepareConsultationRouteInput<Reservation>,
 ) {
+  let profile: unknown;
+  try {
+    profile = await input.loadProfile(input.userId);
+  } catch (error) {
+    if (input.mode === "general_no_birth_time") profile = null;
+    else if (error instanceof ConsultationProfileTruthError) throw error;
+    else throw new ConsultationProfileTruthError("profile_unavailable");
+  }
+
+  const consultationMode = input.mode === "general_no_birth_time"
+    ? persistedChartMode(profile) ?? input.mode
+    : input.mode;
   let serverChart: ServerChartConsultation | null = null;
-  if (input.mode !== "general_no_birth_time") {
-    let profile: unknown;
-    try {
-      profile = await input.loadProfile(input.userId);
-    } catch (error) {
-      if (error instanceof ConsultationProfileTruthError) throw error;
-      throw new ConsultationProfileTruthError("profile_unavailable");
-    }
+  if (consultationMode !== "general_no_birth_time") {
     const profileValue = record(profile);
-    const selectedTime = input.mode === "verified_chart"
+    const selectedTime = consultationMode === "verified_chart"
       ? nullableClock(profileValue ?? {}, "active_birth_time")
       : nullableClock(profileValue ?? {}, "reported_birth_time");
     try {
@@ -265,8 +284,8 @@ export async function prepareConsultationRoute<Reservation>(
     } catch {
       throw new ConsultationProfileTruthError("profile_unavailable");
     }
-    serverChart = serverChartFromProfile(profile, input.mode);
+    serverChart = serverChartFromProfile(profile, consultationMode);
   }
   const reservation = await input.reserve();
-  return Object.freeze({ serverChart, reservation });
+  return Object.freeze({ consultationMode, serverChart, reservation });
 }

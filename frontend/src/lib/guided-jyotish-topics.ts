@@ -48,3 +48,15 @@ export const defaultGuidedJyotishTopics: GuidedJyotishTopic[] = [
     claimBoundary: "精确月/日仍是探索性候选，未通过独立 holdout 前不升级。",
   },
 ];
+
+const generalPromptByTheme: Partial<Record<ConsultationTheme, string>> = {
+  career: "印度占星一般会从哪些因素理解事业方向？",
+  marriage: "印度占星一般如何分析关系模式？",
+  wealth: "印度占星一般如何分析财富结构与风险？",
+  timing: "印度占星中的时间推运通常会看哪些因素？",
+};
+
+export const generalGuidedJyotishTopics: GuidedJyotishTopic[] = defaultGuidedJyotishTopics.map((topic) => ({
+  ...topic,
+  prompt: generalPromptByTheme[topic.id] ?? topic.prompt,
+}));

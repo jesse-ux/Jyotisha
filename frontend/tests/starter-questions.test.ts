@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import {
+  defaultGuidedJyotishTopics,
+  generalGuidedJyotishTopics,
+} from "../src/lib/guided-jyotish-topics.ts";
 
 const pageSource = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 const globalStyles = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
@@ -37,7 +41,7 @@ test("completed account initialization switches directly to the home cards", () 
 test("default starter questions are guided Jyotish topics with evidence and claim boundaries", () => {
   assert.match(pageSource, /defaultGuidedJyotishTopics/);
   assert.match(pageSource, /starterSuggestions\.map/);
-  assert.match(pageSource, /themes\.find\(\(candidate\) => candidate\.id === item\.theme\)/);
+  assert.match(pageSource, /starterThemes\.find\(\(candidate\) => candidate\.id === item\.theme\)/);
   assert.match(pageSource, /chooseSuggestedQuestion\(item\.text, item\.theme\)/);
   assert.match(guidedTopicsSource, /strictWorkflowRoute/);
   assert.match(guidedTopicsSource, /evidencePreview/);
@@ -47,6 +51,20 @@ test("default starter questions are guided Jyotish topics with evidence and clai
   assert.match(guidedTopicsSource, /D9/);
   assert.match(guidedTopicsSource, /Ashtakavarga/);
   assert.match(guidedTopicsSource, /独立 holdout/);
+});
+
+test("profiles without a usable birth minute only receive general-knowledge homepage prompts", () => {
+  assert.deepEqual(generalGuidedJyotishTopics.map((topic) => topic.id), defaultGuidedJyotishTopics.map((topic) => topic.id));
+  assert.deepEqual(generalGuidedJyotishTopics.map((topic) => topic.prompt), [
+    "印度占星一般会从哪些因素理解事业方向？",
+    "印度占星一般如何分析关系模式？",
+    "印度占星一般如何分析财富结构与风险？",
+    "印度占星中的时间推运通常会看哪些因素？",
+  ]);
+  assert.match(pageSource, /const starterThemes = personalChartAvailable \? themes : generalGuidedJyotishTopics/);
+  assert.match(pageSource, /personalChartAvailable[\s\S]*?回答一般占星知识/);
+  assert.match(pageSource, /完成生时校正后，再讨论个人星盘结论/);
+  assert.match(pageSource, /personalChartAvailable \? "daily_starlanguage" : null/);
 });
 
 test("keeps follow-up suggestions visible while the user edits a draft", () => {

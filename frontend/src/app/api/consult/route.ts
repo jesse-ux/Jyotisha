@@ -439,7 +439,7 @@ export async function POST(request: Request) {
   try {
     const { history } = parsed.data;
     const name = prepared.serverChart?.name ?? parsed.data.name;
-    const consultationMode: ConsultationBirthTimeMode = parsed.data.consultationMode;
+    const consultationMode: ConsultationBirthTimeMode = prepared.consultationMode;
     if (!shouldRunBirthChartWorkflow(consultationMode)) {
       const result = await getGeneralJyotishAgent(selectedModel).stream([
         {
