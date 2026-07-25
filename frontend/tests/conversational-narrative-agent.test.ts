@@ -452,6 +452,11 @@ test("rejects a model-authored event table that exposes private numeric scoring"
 
   assert.equal(result.fallbackUsed, true);
   assert.doesNotMatch(result.narrative, /3\.5|得分 \/ 状态/);
+  assert.match(result.narrative, /候选范围/);
+  assert.match(result.narrative, /系统验证尚未闭环/);
+  assert.match(result.narrative, /不会替换当前排盘时间/);
+  assert.doesNotMatch(result.narrative, /先说一件|再说一件/);
+  assert.equal(result.output.evidenceRequest, null);
   assert.match(result.narrative, /\| 时间 \| 事件 \| 领域 \| 验证状态 \| 结论 \|/);
 });
 
@@ -777,6 +782,124 @@ test("does not mistake ordinary machine-readable status words for technical cita
     validateNarrativeAgainstPacket(output, syntheticTechnicalPacket(), "first"),
     { valid: true, issues: [] },
   );
+});
+
+test("rejects a date confirmation question without structured follow-up state", () => {
+  const output = richOutput();
+  assert.ok(output.evidenceRequest);
+  const invalid = {
+    ...output,
+    evidenceRequest: {
+      ...output.evidenceRequest,
+      prompt: "这个10月是2020年10月吗？",
+    },
+  } satisfies RectificationNarrativeModelOutput;
+  const result = validateNarrativeAgainstPacket(invalid, syntheticTechnicalPacket(), "intermediate");
+
+  assert.equal(result.valid, false);
+  assert.ok(result.issues.includes("date confirmation prompt lacks structured proposedDate"));
+});
+
+test("retries when an affirmative answer receives the same resolved date question", async () => {
+  const evidenceId = "11111111-1111-4111-8111-111111111111";
+  const repeatedPrompt = "这个10月是2020年10月吗？";
+  const followUp = {
+    kind: "event_date" as const,
+    evidenceId,
+    answerMode: "yes_no" as const,
+    proposedDate: { value: "2020-10", precision: "month" as const },
+  };
+  const output = richOutput();
+  assert.ok(output.evidenceRequest);
+  const repeated = {
+    ...output,
+    evidenceRequest: {
+      ...output.evidenceRequest,
+      prompt: repeatedPrompt,
+      followUp,
+    },
+  } satisfies RectificationNarrativeModelOutput;
+  const result = await generateRectificationNarrative({
+    phase: "intermediate",
+    packet: syntheticTechnicalPacket(),
+    context: {
+      latestUserText: "是的",
+      previousEvidencePrompt: repeatedPrompt,
+      previousFollowUp: followUp,
+    },
+    generator: generator([repeated, output]),
+  });
+
+  assert.equal(result.attempts, 2);
+  assert.notEqual(result.output.evidenceRequest?.prompt, repeatedPrompt);
+});
+
+test("rejects a follow-up that still targets evidence completed by an affirmative answer", () => {
+  const evidenceId = "11111111-1111-4111-8111-111111111111";
+  const previousFollowUp = {
+    kind: "event_date" as const,
+    evidenceId,
+    answerMode: "yes_no" as const,
+    proposedDate: { value: "2020-10", precision: "month" as const },
+  };
+  const output = richOutput();
+  assert.ok(output.evidenceRequest);
+  const invalid = {
+    ...output,
+    evidenceRequest: {
+      ...output.evidenceRequest,
+      prompt: "这段实习结束后，下一份工作是什么时候开始的？",
+      followUp: {
+        kind: "event_detail" as const,
+        evidenceId,
+        answerMode: "free_text" as const,
+        proposedDate: null,
+      },
+    },
+  } satisfies RectificationNarrativeModelOutput;
+  const result = validateNarrativeAgainstPacket(
+    invalid,
+    syntheticTechnicalPacket(),
+    "intermediate",
+    { latestUserText: "是的", previousFollowUp },
+  );
+
+  assert.equal(result.valid, false);
+  assert.ok(result.issues.includes("resolved follow-up still targets completed evidence"));
+});
+
+test("rejects non-scoring detail questions for evidence already used by the scorer", () => {
+  const evidenceId = "11111111-1111-4111-8111-111111111111";
+  const packet: RectificationTechnicalPacket = {
+    ...syntheticTechnicalPacket(),
+    scoredHistoricalEvidence: [{
+      evidenceId,
+      domain: "career",
+      candidateTime: "05:20",
+      score: 3.5,
+      ruleRefs: ["vim-md-career"],
+    }],
+  };
+  const output = richOutput();
+  assert.ok(output.evidenceRequest);
+  const invalid = {
+    ...output,
+    evidenceRequest: {
+      ...output.evidenceRequest,
+      prompt: "你当时为什么辞职，是主动还是被动，对生活有什么影响？",
+      followUp: {
+        kind: "event_detail" as const,
+        evidenceId,
+        answerMode: "free_text" as const,
+        proposedDate: null,
+      },
+    },
+  } satisfies RectificationNarrativeModelOutput;
+
+  const result = validateNarrativeAgainstPacket(invalid, packet, "intermediate");
+
+  assert.equal(result.valid, false);
+  assert.ok(result.issues.includes("event detail follow-up targets already scored evidence"));
 });
 
 test("retries a grounded validation failure once with a compact packet", async () => {

@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   convergenceNotes,
   nextPlateauCount,
+  shouldCompleteBoundedResult,
 } from "../src/lib/conversational-rectification/convergence.ts";
 import type { RectificationTechnicalPacket } from "../src/lib/conversational-rectification/technical-packet.ts";
 
@@ -48,4 +49,61 @@ test("a changed range resets background plateau state without completing the ses
   } as RectificationTechnicalPacket;
 
   assert.equal(nextPlateauCount(candidate, packet), 0);
+});
+
+test("a covered 4-event 3-domain plateau completes as a bounded result", () => {
+  assert.equal(shouldCompleteBoundedResult({
+    packet: pendingPacket,
+    scoreableEventCount: 4,
+    scoreableDomainCount: 3,
+    answeredDomains: new Set(["relationship", "finance", "career"]),
+    plateauCount: 2,
+  }), true);
+});
+
+test("an unanswered discriminating domain keeps the conversation active", () => {
+  assert.equal(shouldCompleteBoundedResult({
+    packet: pendingPacket,
+    scoreableEventCount: 4,
+    scoreableDomainCount: 3,
+    answeredDomains: new Set(["relationship", "career", "education"]),
+    plateauCount: 2,
+  }), false);
+});
+
+test("system-only blockers complete a covered range without waiting for another plateau", () => {
+  const packet = {
+    ...pendingPacket,
+    suggestedDomains: [],
+    expertWorkflow: { hardBlockers: ["required_layers_incomplete", "minute_holdout_not_ready"] },
+  } as unknown as RectificationTechnicalPacket;
+  assert.equal(shouldCompleteBoundedResult({
+    packet,
+    scoreableEventCount: 4,
+    scoreableDomainCount: 3,
+    answeredDomains: new Set(["relationship", "career", "education"]),
+    plateauCount: 0,
+  }), true);
+});
+
+test("user-resolvable blockers do not complete a bounded result", () => {
+  const packet = {
+    ...pendingPacket,
+    suggestedDomains: [],
+    expertWorkflow: { hardBlockers: ["insufficient_events"] },
+  } as unknown as RectificationTechnicalPacket;
+  assert.equal(shouldCompleteBoundedResult({
+    packet,
+    scoreableEventCount: 4,
+    scoreableDomainCount: 3,
+    answeredDomains: new Set(["relationship", "career", "education"]),
+    plateauCount: 2,
+  }), true, "the completed evidence plateau, not a stale blocker, is decisive");
+  assert.equal(shouldCompleteBoundedResult({
+    packet,
+    scoreableEventCount: 4,
+    scoreableDomainCount: 3,
+    answeredDomains: new Set(["relationship", "career", "education"]),
+    plateauCount: 1,
+  }), false);
 });

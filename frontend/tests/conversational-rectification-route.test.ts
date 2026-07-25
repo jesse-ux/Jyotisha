@@ -233,7 +233,7 @@ function packetEngine(options: {
     },
     async score() { throw new Error("unexpected questionnaire score"); },
     async scoreEvents(input) {
-      assert.ok(input.events.length >= 3);
+      assert.ok(input.events.length >= 1);
       for (const event of input.events) {
         const birthBoundary = event.precision === "year"
           ? input.birthDate.slice(0, 4)
@@ -824,7 +824,7 @@ test("production unknown-time adapter covers the declared full day with bounded 
   assert.deepEqual(sampleTimes, [...sampleTimes].sort((left, right) => minute(left) - minute(right)));
 });
 
-test("production packet waits for three supported events and then scores the accumulated evidence", async () => {
+test("production packet rescored after every supported event", async () => {
   const scoreCalls: LifeEvent[][] = [];
   const differenceCalls: DifferencePacketInput[] = [];
   const engine = packetEngine({ scoreCalls, differenceCalls });
@@ -852,16 +852,16 @@ test("production packet waits for three supported events and then scores the acc
       evidence: evidence.slice(0, count),
     });
     assert.equal(built.packet.candidate.status, "pending_validation");
-    assert.equal(
-      built.resultId,
-      count < 3 ? null : "00000000-0000-4000-8000-000000000899",
-    );
+    assert.equal(built.resultId, "00000000-0000-4000-8000-000000000899");
   }
 
-  assert.equal(scoreCalls.length, 1);
-  assert.deepEqual(scoreCalls[0]?.map((event) => event.id), evidence.map((item) => item.id));
+  assert.equal(scoreCalls.length, 3);
   assert.deepEqual(
-    scoreCalls[0]?.map((event) => event.summary),
+    scoreCalls.map((events) => events.map((event) => event.id)),
+    [evidence.slice(0, 1), evidence.slice(0, 2), evidence].map((items) => items.map((item) => item.id)),
+  );
+  assert.deepEqual(
+    scoreCalls[2]?.map((event) => event.summary),
     evidence.map((item) => item.eventSummary),
     "event scoring must retain the concrete user-reported fact, not only domain and date",
   );
@@ -872,12 +872,13 @@ test("production packet waits for three supported events and then scores the acc
   );
 });
 
-test("production keeps the prior candidate range when a scored segment loses technical discrimination", async () => {
+test("production preserves a single-minute winning segment without falling back to the prior range", async () => {
   const scanCalls: Array<{ readonly birthTime: string; readonly uncertaintyMinutes: number }> = [];
   const evidence = [
     syntheticEvidence(11, "education"),
     syntheticEvidence(12, "relocation"),
     syntheticEvidence(13, "career"),
+    syntheticEvidence(14, "relationship"),
   ];
   const overNarrowed: CandidateResult = {
     resultId: "00000000-0000-4000-8000-000000000897",
@@ -889,15 +890,15 @@ test("production keeps the prior candidate range when a scored segment loses tec
       representativeTime: "05:20",
       widthMinutes: 1,
     },
-    eventCount: 3,
-    domainCount: 3,
+    eventCount: 4,
+    domainCount: 4,
     topScore: 10,
     secondScore: 1,
     marginPercent: 90,
     reasons: ["synthetic over-narrowed segment"],
     evidence: evidence.map((item) => ({
       eventId: item.id,
-      domain: item.domain as "career" | "education" | "relocation",
+      domain: item.domain as "career" | "education" | "relocation" | "relationship",
       candidateTime: "05:20",
       ruleIds: ["synthetic-rule"],
       points: 1,
@@ -928,13 +929,10 @@ test("production keeps the prior candidate range when a scored segment loses tec
   assert.deepEqual(scanCalls, [{
     birthTime: "1990-01-01 05:20",
     uncertaintyMinutes: 1,
-  }, {
-    birthTime: "1990-01-01 05:20",
-    uncertaintyMinutes: 30,
   }]);
-  assert.deepEqual(built.packet.candidate.range, { startTime: "04:50", endTime: "05:50" });
-  assert.equal(built.packet.candidate.status, "pending_validation");
-  assert.equal(built.resultId, null);
+  assert.deepEqual(built.packet.candidate.range, { startTime: "05:20", endTime: "05:20" });
+  assert.equal(built.packet.candidate.status, "ready_for_confirmation");
+  assert.equal(built.resultId, overNarrowed.resultId);
   assert.deepEqual(
     built.packet.scoredHistoricalEvidence.map((item) => item.evidenceId),
     evidence.map((item) => item.id),
@@ -1274,7 +1272,7 @@ test("a single period-only scan filters duplicate and out-of-range samples from 
   assert.deepEqual(built.packet.sensitivityScope.sampleTimes, ["08:00", "08:01", "10:00"]);
 });
 
-test("year-precision evidence before birth waits while the birth year can become the valid third event", async () => {
+test("year-precision evidence before birth is excluded while every valid accumulated event scores", async () => {
   const scoreCalls: LifeEvent[][] = [];
   const engine = packetEngine({ scoreCalls });
   const valid = [
@@ -1303,17 +1301,19 @@ test("year-precision evidence before birth waits while the birth year can become
     ...input,
     evidence: [...valid, beforeBirth],
   });
-  assert.equal(waiting.resultId, null);
-  assert.equal(scoreCalls.length, 0);
+  assert.equal(waiting.resultId, "00000000-0000-4000-8000-000000000899");
+  assert.deepEqual(scoreCalls.map((events) => events.map((event) => event.id)), [[
+    ...valid.map((item) => item.id),
+  ]]);
 
   await buildProductionConversationalRectificationPacket(engine, {
     ...input,
     evidence: [...valid, beforeBirth, birthYear],
   });
-  assert.deepEqual(scoreCalls.map((events) => events.map((event) => event.id)), [[
-    ...valid.map((item) => item.id),
-    birthYear.id,
-  ]]);
+  assert.deepEqual(scoreCalls.map((events) => events.map((event) => event.id)), [
+    valid.map((item) => item.id),
+    [...valid.map((item) => item.id), birthYear.id],
+  ]);
 });
 
 test("month-precision evidence excludes the month before birth and accepts the birth month", async () => {

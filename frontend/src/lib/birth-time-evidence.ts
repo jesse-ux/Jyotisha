@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { RECTIFICATION_POLICY } from "./rectification-policy.ts";
 import type { JourneySnapshot } from "./birth-time-journey.ts";
 
 const timeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
@@ -128,14 +129,14 @@ export const candidateResultSchema = z.object({
   techniqueReceipt: rectificationTechniqueReceiptSchema.optional(),
 }).strict().readonly().superRefine((value, context) => {
   const eligible = value.confidence === "high" && highCandidateMeetsSafetyGates(value);
-  if (value.confidence === "high" && value.eventCount < 4) {
+  if (value.confidence === "high" && value.eventCount < RECTIFICATION_POLICY.minConfirmationEvents) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["eventCount"],
       message: "high candidates require at least four effective evidence items",
     });
   }
-  if (value.confidence === "high" && value.domainCount < 3) {
+  if (value.confidence === "high" && value.domainCount < RECTIFICATION_POLICY.minConfirmationDomains) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["domainCount"],
@@ -149,14 +150,15 @@ export const candidateResultSchema = z.object({
       message: "high candidates require a winning segment",
     });
   }
-  if (value.confidence === "high" && value.winningSegment !== null && value.winningSegment.widthMinutes > 5) {
+  if (value.confidence === "high" && value.winningSegment !== null
+    && value.winningSegment.widthMinutes > RECTIFICATION_POLICY.maxConfirmationWidthMinutes) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["winningSegment", "widthMinutes"],
       message: "high candidate segments cannot exceed five minutes",
     });
   }
-  if (value.confidence === "high" && value.marginPercent < 20) {
+  if (value.confidence === "high" && value.marginPercent < RECTIFICATION_POLICY.minConfirmationMarginPercent) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
       path: ["marginPercent"],
@@ -183,10 +185,10 @@ function highCandidateMeetsSafetyGates(value: {
 }): boolean {
   return value.confidence === "high"
     && value.winningSegment !== null
-    && value.eventCount >= 4
-    && value.domainCount >= 3
-    && value.winningSegment.widthMinutes <= 5
-    && value.marginPercent >= 20;
+    && value.eventCount >= RECTIFICATION_POLICY.minConfirmationEvents
+    && value.domainCount >= RECTIFICATION_POLICY.minConfirmationDomains
+    && value.winningSegment.widthMinutes <= RECTIFICATION_POLICY.maxConfirmationWidthMinutes
+    && value.marginPercent >= RECTIFICATION_POLICY.minConfirmationMarginPercent;
 }
 
 export class CandidateConfirmationError extends Error {

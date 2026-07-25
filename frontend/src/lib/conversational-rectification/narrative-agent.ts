@@ -1,5 +1,9 @@
 import { z } from "zod";
 import {
+  rectificationFollowUpSchema,
+  type RectificationFollowUp,
+} from "./contracts.ts";
+import {
   projectRectificationTechnicalPacket,
   type RectificationEvidenceDomain,
   type RectificationTechnicalPacket,
@@ -15,6 +19,9 @@ export type RectificationConversationMessage = Readonly<{
 export type RectificationNarrativeContext = Readonly<{
   recentConversation?: ReadonlyArray<RectificationConversationMessage>;
   latestUserText?: string;
+  previousAssistantNarrative?: string;
+  previousEvidencePrompt?: string;
+  previousFollowUp?: RectificationFollowUp;
   latestEvidence?: ReadonlyArray<{
     id?: string;
     dateLabel: string;
@@ -55,6 +62,9 @@ const broadYearRangePattern = /(?:19|20)\d{2}\s*年?\s*(?:[-–—~～至到\/]|
 const proposedYearAlternativesPattern = /(?:19|20)\d{2}\s*年?\s*(?:还是|或者|或是|或|、|,|，)\s*(?:19|20)\d{2}\s*年?/i;
 const choiceQuestionPattern = /(?:哪(?:一|个)?(?:年|年份|年代|时间段|区间|时期)|哪个时间段|还是|选择|选项|更符合|更匹配|A\s*[.、:：)]|B\s*[.、:：)]|which\s+(?:year|period|range)|options?)/i;
 const labeledYearChoicesPattern = /A\s*[.、:：)]?[\s\S]{0,80}(?:19|20)\d{2}\s*年?[\s\S]{0,120}B\s*[.、:：)]?[\s\S]{0,80}(?:19|20)\d{2}\s*年?/i;
+const affirmativeAnswerPattern = /^\s*(?:是(?:的)?|对(?:的)?|没错|正确|确认|就是|嗯+|没问题)\s*[。.!！,，]?\s*$/u;
+const negativeAnswerPattern = /^\s*(?:不是|不对|错了|并不是|否)\s*[。.!！,，]?\s*$/u;
+const proposedDateQuestionPattern = /(?:19|20)\d{2}\s*年(?:\s*(?:1[0-2]|0?[1-9])\s*月)?(?:\s*(?:3[01]|[12]\d|0?[1-9])\s*(?:日|号))?[\s\S]{0,30}(?:吗|是否|是不是|确认|对不对|正确)/u;
 const domainLabels = {
   career: "事业",
   education: "学业",
@@ -84,10 +94,7 @@ export const rectificationNarrativeOutputSchema = z.object({
     domains: z.array(domainSchema).min(1).max(4),
     datePrecision: z.enum(["month_preferred", "year_accepted"]),
     prompt: z.string().trim().min(1).max(1_000),
-    followUp: z.object({
-      kind: z.enum(["new_event", "event_date", "event_detail"]),
-      evidenceId: z.string().uuid().nullable(),
-    }).strict().default({ kind: "new_event", evidenceId: null }),
+    followUp: rectificationFollowUpSchema.default({ kind: "new_event", evidenceId: null }),
   }).strict().nullable(),
 }).strict();
 
@@ -99,10 +106,7 @@ export const rectificationNarrativeAuthoredOutputSchema = z.object({
     domains: z.array(domainSchema).min(1).max(4).optional(),
     datePrecision: z.enum(["month_preferred", "year_accepted"]),
     prompt: z.string().trim().min(1).max(1_000),
-    followUp: z.object({
-      kind: z.enum(["new_event", "event_date", "event_detail"]),
-      evidenceId: z.string().uuid().nullable(),
-    }).strict().default({ kind: "new_event", evidenceId: null }),
+    followUp: rectificationFollowUpSchema.default({ kind: "new_event", evidenceId: null }),
   }).strict().nullable(),
 }).strict();
 
@@ -255,6 +259,7 @@ export function validateNarrativeAgainstPacket(
   output: RectificationNarrativeModelOutput,
   packet: RectificationTechnicalPacket,
   phase: RectificationNarrativePhase = "first",
+  context: RectificationNarrativeContext = {},
 ): NarrativeValidation {
   void phase;
   const issues: string[] = [];
@@ -292,6 +297,37 @@ export function validateNarrativeAgainstPacket(
     for (const domain of output.evidenceRequest.domains) {
       if (!allowedDomains.has(domain)) issues.push(`evidence domain ${domain} is not packet-grounded`);
     }
+    const followUp = output.evidenceRequest.followUp;
+    if (followUp?.kind === "event_detail"
+      && packet.scoredHistoricalEvidence.some((item) => item.evidenceId === followUp.evidenceId)) {
+      issues.push("event detail follow-up targets already scored evidence");
+    }
+    if (proposedDateQuestionPattern.test(output.evidenceRequest.prompt)
+      && (followUp?.kind !== "event_date"
+        || followUp.answerMode !== "yes_no"
+        || !followUp.proposedDate)) {
+      issues.push("date confirmation prompt lacks structured proposedDate");
+    }
+  }
+
+  const previousFollowUp = context.previousFollowUp;
+  const latestUserText = context.latestUserText ?? "";
+  if (previousFollowUp?.kind === "event_date" && previousFollowUp.answerMode === "yes_no") {
+    const nextRequest = output.evidenceRequest;
+    if (affirmativeAnswerPattern.test(latestUserText)) {
+      if (nextRequest?.followUp?.evidenceId === previousFollowUp.evidenceId) {
+        issues.push("resolved follow-up still targets completed evidence");
+      }
+      if (context.previousEvidencePrompt
+        && normalizedQuestion(nextRequest?.prompt ?? "") === normalizedQuestion(context.previousEvidencePrompt)) {
+        issues.push("repeated resolved follow-up");
+      }
+    }
+    if (negativeAnswerPattern.test(latestUserText)
+      && nextRequest?.followUp?.evidenceId === previousFollowUp.evidenceId
+      && nextRequest.followUp?.answerMode === "yes_no") {
+      issues.push("repeated rejected follow-up");
+    }
   }
 
   const allowedTimes = [candidate.representativeTime, candidate.range.startTime, candidate.range.endTime];
@@ -319,6 +355,13 @@ export function validateNarrativeAgainstPacket(
   }
   const uniqueIssues = unique(issues);
   return { valid: uniqueIssues.length === 0, issues: uniqueIssues };
+}
+
+function normalizedQuestion(value: string): string {
+  return value
+    .normalize("NFKC")
+    .replace(/[\p{P}\p{S}\s]+/gu, "")
+    .toLocaleLowerCase("zh-CN");
 }
 
 function grounding(packet: RectificationTechnicalPacket, phase: RectificationNarrativePhase) {
@@ -361,6 +404,9 @@ function narrativeConversationContext(context: RectificationNarrativeContext) {
   return {
     recentConversation: context.recentConversation?.slice(-40),
     latestUserText: context.latestUserText,
+    previousAssistantNarrative: context.previousAssistantNarrative,
+    previousEvidencePrompt: context.previousEvidencePrompt,
+    previousFollowUp: context.previousFollowUp,
     latestEvidence: context.latestEvidence?.map(({ id, dateLabel, summary }) => ({
       id,
       dateLabel,
@@ -529,7 +575,8 @@ function promptFor(
       useExpertWorkflowAsTechniqueTruth: true,
       blockedOrNotEvaluatedTechniquesMustNeverBeClaimedAsUsed: true,
       technicalTablesMayAppearWhenRelevant: true,
-      completeTechnicalTableSummaryRequiredBeforeConfirmation: phase === "final",
+      completeTechnicalTableSummaryRequiredBeforeConfirmation: phase === "final"
+        && packet.candidate.status === "ready_for_confirmation",
       unchangedTechnicalTablesShouldNotBeRepeated: true,
       privateScoresAndCandidateWeightsMustNeverBeShown: true,
       internalEventDomainsAndRoutingMustNeverBeShown: true,
@@ -544,11 +591,15 @@ function promptFor(
       continueCurrentEventWhenItRemainsInformative: phase === "intermediate",
       resolveDateContradictionsBeforeScoring: phase === "intermediate",
       mergeSameEventDetailsWithoutDoubleCounting: phase === "intermediate",
-      treatCauseResultAgencyAndNextTransitionAsPartsOfTheCurrentEvent: phase === "intermediate",
+      onlyAskForDateEventIdentityOrInformationThatCanChangeTheScoringDomain: phase === "intermediate",
+      doNotAskWhyWhetherVoluntaryOrWhatImpactForAlreadyScoreableEvidence: phase === "intermediate",
       useEventLedgerToAvoidRepeatingAnsweredQuestions: phase === "intermediate",
       askForDatesOnlyWhenNeededToIdentifyOrScoreTheEvent: phase !== "final",
       persistFollowUpState: phase !== "final"
-        ? "Treat followUp as advisory metadata: use event_detail or event_date with an existing evidenceId when clear; otherwise omit assumptions and use new_event with null evidenceId."
+        ? "Persist the exact question intent. Use event_detail or event_date with an existing evidenceId. For a yes/no date proposal, set answerMode=yes_no and proposedDate={value,precision}; otherwise use answerMode=free_text and no proposedDate. Use new_event with null evidenceId only for a genuinely new event."
+        : false,
+      boundedResultBoundary: phase === "final" && packet.candidate.status === "pending_validation"
+        ? "当前只支持候选范围，系统验证尚未闭环。本次不会替换当前排盘时间，也不再要求用户继续提供人生事件；evidenceRequest 必须为 null。"
         : false,
       domainReasonsMayBeNaturallyParaphrased: true,
     },
@@ -560,8 +611,10 @@ function fallbackNarrative(packet: RectificationTechnicalPacket, phase: Rectific
   const candidate = packet.candidate;
   const nextDomain = packet.suggestedDomains[0]?.domain;
   const nextLabel = nextDomain ? domainLabels[nextDomain] : "重要经历";
-  const phaseLine = phase === "final"
+  const phaseLine = phase === "final" && candidate.status === "ready_for_confirmation"
     ? "当前证据已形成候选总结，但仍有残余不确定性；只有明确确认后才会替换当前排盘时间。"
+    : phase === "final"
+      ? "当前证据只能支持候选范围，系统验证尚未闭环；本次不会替换当前排盘时间，也不再强制追问更多人生事件。"
     : `先说一件已经发生的${nextLabel}事件好吗？尽量写明哪一年、哪一月以及发生了什么。`;
   return [
     `当前仍在核对 ${candidate.range.startTime}–${candidate.range.endTime} 的候选范围，还不能把其中某一分钟当作确定出生时间。`,
@@ -739,7 +792,12 @@ export async function generateRectificationNarrative(input: {
         parseModelOutput(generated.text, input.packet),
         input.phase,
       );
-      const validation = validateNarrativeAgainstPacket(output, input.packet, input.phase);
+      const validation = validateNarrativeAgainstPacket(
+        output,
+        input.packet,
+        input.phase,
+        input.context ?? {},
+      );
       if (validation.valid) {
         const narrative = input.phase === "final"
           ? appendFinalAnalysisTables(output.narrative, input.packet, input.context ?? {})

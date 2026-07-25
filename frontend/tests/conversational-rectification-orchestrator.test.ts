@@ -25,6 +25,7 @@ const laterActionId = "00000000-0000-4000-8000-000000000710";
 const secondAnswerActionId = "00000000-0000-4000-8000-000000000711";
 const thirdAnswerActionId = "00000000-0000-4000-8000-000000000712";
 const fourthAnswerActionId = "00000000-0000-4000-8000-000000000713";
+const fifthAnswerActionId = "00000000-0000-4000-8000-000000000715";
 const secondStartActionId = "00000000-0000-4000-8000-000000000714";
 
 const declaredBirthInput = {
@@ -215,6 +216,7 @@ function harness(options: {
   readonly completeFailures?: number;
   readonly releaseFailure?: boolean;
   readonly readyAfterEvidenceCount?: number;
+  readonly packetForEvidenceCount?: (count: number) => RectificationTechnicalPacket;
   readonly varyNarrative?: boolean;
   readonly invalidNarrativeFromGeneration?: number;
   readonly continueLatestEvent?: boolean;
@@ -445,9 +447,12 @@ function harness(options: {
       if (options.packetFailure
         && (options.packetFailureFromBuild === undefined
           || packetBuilds >= options.packetFailureFromBuild)) throw options.packetFailure;
-      return input.evidence.length >= (options.readyAfterEvidenceCount ?? 1)
-        ? { packet: packet(true), resultId }
-        : { packet: packet(false), resultId: null };
+      const selectedPacket = options.packetForEvidenceCount?.(input.evidence.length)
+        ?? packet(input.evidence.length >= (options.readyAfterEvidenceCount ?? 1));
+      return {
+        packet: selectedPacket,
+        resultId: selectedPacket.candidate.status === "ready_for_confirmation" ? resultId : null,
+      };
     },
     narrativeGenerator: validGenerator(
       events,
@@ -613,17 +618,17 @@ test("clear historical evidence is extracted, scored, narrated, recapped, and at
     caseId: startActionId,
     actionId: answerActionId,
     turnVersion: 0,
-    answer: "2018年6月毕业，2020年3月去外地工作，2022年8月结婚",
+    answer: "2018年6月毕业，2019年7月开始第一份工作，2020年3月去外地工作，2022年8月结婚",
   });
 
   assert.equal(value.counts().packetBuilds, 2);
   assert.equal(turn.status, "confirming");
   assert.equal(turn.candidate.status, "ready_for_confirmation");
   assert.equal(turn.turnVersion, 1);
-  assert.equal(turn.evidenceRecap.length, 3);
+  assert.equal(turn.evidenceRecap.length, 4);
   const saved = value.cases.get(startActionId)?.row.eventEvidence ?? [];
-  assert.equal(saved.length, 3);
-  assert.ok(saved.every((item) => item.rawText === "2018年6月毕业，2020年3月去外地工作，2022年8月结婚"));
+  assert.equal(saved.length, 4);
+  assert.ok(saved.every((item) => item.rawText === "2018年6月毕业，2019年7月开始第一份工作，2020年3月去外地工作，2022年8月结婚"));
   assert.ok(saved.every((item) => item.scoreable === true));
   assert.ok(value.events.includes("score-packet"));
 });
@@ -792,7 +797,7 @@ test("every non-confirmable correction rescans the declared range and withdraws 
       caseId: startActionId,
       actionId: answerActionId,
       turnVersion: 0,
-      answer: "2018年6月毕业，2019年7月开始第一份工作，2021年3月搬家",
+      answer: "2018年6月毕业，2019年7月开始第一份工作，2021年3月搬家，2022年8月结婚",
     });
     assert.equal(prior.status, "confirming", scenario.name);
     const wrongId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
@@ -837,7 +842,7 @@ test("a narrative fallback cannot discard a confirmation candidate produced by a
   await start(value, null);
   await value.service.answer(userId, {
     type: "answer", caseId: startActionId, actionId: answerActionId,
-    turnVersion: 0, answer: "2018年6月毕业，2019年7月开始第一份工作，2021年3月搬家",
+    turnVersion: 0, answer: "2018年6月毕业，2019年7月开始第一份工作，2021年3月搬家，2022年8月结婚",
   });
   const wrongId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
   assert.ok(wrongId);
@@ -867,7 +872,7 @@ test("a clear one-to-one correction can form a new confirmation candidate only a
   await start(value, null);
   await value.service.answer(userId, {
     type: "answer", caseId: startActionId, actionId: answerActionId,
-    turnVersion: 0, answer: "2018年6月毕业，2019年7月开始第一份工作，2021年3月搬家",
+    turnVersion: 0, answer: "2018年6月毕业，2019年7月开始第一份工作，2021年3月搬家，2022年8月结婚",
   });
   const wrongId = value.cases.get(startActionId)?.row.eventEvidence[0]?.id;
   assert.ok(wrongId);
@@ -1179,6 +1184,81 @@ test("a bare month-day answer refines the targeted month without another confirm
   assert.doesNotMatch(completed.narrative, /是指.*7 月 10|哪一天|哪一年、哪一月/);
 });
 
+async function preparedDateConfirmation() {
+  const value = harness({ readyAfterEvidenceCount: 99 });
+  await start(value, null);
+  await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2020年我去石油化工研究院实习，后来主动辞职",
+  });
+  const current = value.cases.get(startActionId)?.row;
+  const target = current?.eventEvidence.at(-1);
+  assert.ok(current);
+  assert.ok(target);
+  value.cases.set(startActionId, {
+    row: {
+      ...current,
+      latestTurn: {
+        ...current.latestTurn,
+        narrative: "这个10月是2020年10月吗？",
+        evidenceRequest: {
+          domains: ["career"],
+          datePrecision: "month_preferred",
+          freeTextAllowed: true,
+          prompt: "这个10月是2020年10月吗？",
+          followUp: {
+            kind: "event_date",
+            evidenceId: target.id,
+            answerMode: "yes_no",
+            proposedDate: { value: "2020-10", precision: "month" },
+          },
+        },
+      },
+    },
+  });
+  return { value, target, initialEvidenceCount: current.eventEvidence.length };
+}
+
+test("all supported affirmative tokens confirm the structured proposed date", async () => {
+  for (const answer of ["对", "没错", "嗯", "确认"]) {
+    const { value, target, initialEvidenceCount } = await preparedDateConfirmation();
+    await value.service.answer(userId, {
+      type: "answer",
+      caseId: startActionId,
+      actionId: secondAnswerActionId,
+      turnVersion: 1,
+      answer,
+    });
+
+    const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+    assert.equal(stored.length, initialEvidenceCount + 1, answer);
+    assert.equal(stored.at(-1)?.dateValue, "2020-10", answer);
+    assert.deepEqual(stored.at(-1)?.correctsEvidenceIds, [target.id], answer);
+  }
+});
+
+test("the alternate negative token rejects the proposal without creating evidence", async () => {
+  const { value, target, initialEvidenceCount } = await preparedDateConfirmation();
+  const completed = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "不对",
+  });
+
+  assert.equal(value.cases.get(startActionId)?.row.eventEvidence.length, initialEvidenceCount);
+  assert.deepEqual(completed.evidenceRequest?.followUp, {
+    kind: "event_date",
+    evidenceId: target.id,
+    answerMode: "free_text",
+    proposedDate: null,
+  });
+});
+
 test("an affirmative reply confirms the date proposed by the previous Agent turn", async () => {
   const value = harness({ readyAfterEvidenceCount: 99 });
   await start(value, null);
@@ -1206,13 +1286,19 @@ test("an affirmative reply confirms the date proposed by the previous Agent turn
           domains: ["career"],
           datePrecision: "month_preferred",
           freeTextAllowed: true,
-          followUp: { kind: "event_date", evidenceId: target.id },
+          prompt: "这个10月是2020年10月吗？",
+          followUp: {
+            kind: "event_date",
+            evidenceId: target.id,
+            answerMode: "yes_no",
+            proposedDate: { value: "2020-10", precision: "month" },
+          },
         },
       },
     },
   });
 
-  await value.service.answer(userId, {
+  const completed = await value.service.answer(userId, {
     type: "answer",
     caseId: startActionId,
     actionId: secondAnswerActionId,
@@ -1225,14 +1311,151 @@ test("an affirmative reply confirms the date proposed by the previous Agent turn
   assert.deepEqual(stored.at(-1)?.correctsEvidenceIds, [target.id]);
   assert.equal(stored.at(-1)?.dateValue, "2020-10");
   assert.doesNotMatch(stored.at(-1)?.eventSummary ?? "", /^是的$/);
+  assert.doesNotMatch(completed.narrative, /这个10月是2020年10月吗/);
+  assert.notEqual(completed.evidenceRequest?.followUp?.evidenceId, target.id);
 
   const prompt = JSON.parse(value.narrativePrompts.at(-1) ?? "{}") as {
-    conversationContext?: { recentConversation?: Array<{ role: string; text: string }> };
+    conversationContext?: {
+      recentConversation?: Array<{ role: string; text: string }>;
+      previousEvidencePrompt?: string;
+      previousFollowUp?: { answerMode?: string; proposedDate?: { value: string } };
+    };
   };
   assert.deepEqual(prompt.conversationContext?.recentConversation?.slice(-2), [
     { role: "assistant", text: "你说实习到10月份然后辞职，这个10月是2020年10月吗？" },
     { role: "user", text: "是的" },
   ]);
+  assert.equal(prompt.conversationContext?.previousEvidencePrompt, "这个10月是2020年10月吗？");
+  assert.equal(prompt.conversationContext?.previousFollowUp?.answerMode, "yes_no");
+  assert.equal(prompt.conversationContext?.previousFollowUp?.proposedDate?.value, "2020-10");
+
+  await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "是的",
+  });
+  assert.equal(
+    value.cases.get(startActionId)?.row.eventEvidence.length,
+    initialEvidenceCount + 1,
+    "replaying the same action does not duplicate the correction",
+  );
+});
+
+test("a rejected proposed date stays on the same event and switches to free text", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99 });
+  await start(value, null);
+  await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "我去石油化工研究院实习到10月，后来主动辞职",
+  });
+
+  const current = value.cases.get(startActionId)?.row;
+  const target = current?.eventEvidence.at(-1);
+  assert.ok(current);
+  assert.ok(target);
+  value.cases.set(startActionId, {
+    row: {
+      ...current,
+      latestTurn: {
+        ...current.latestTurn,
+        narrative: "这个10月是2020年10月吗？",
+        evidenceRequest: {
+          domains: ["career"],
+          datePrecision: "month_preferred",
+          freeTextAllowed: true,
+          prompt: "这个10月是2020年10月吗？",
+          followUp: {
+            kind: "event_date",
+            evidenceId: target.id,
+            answerMode: "yes_no",
+            proposedDate: { value: "2020-10", precision: "month" },
+          },
+        },
+      },
+    },
+  });
+
+  const resumed = await value.service.resume(userId, {
+    type: "resume",
+    caseId: startActionId,
+    actionId: resumeActionId,
+    turnVersion: 1,
+  });
+  assert.equal(resumed.evidenceRequest?.followUp?.proposedDate?.value, "2020-10");
+
+  const beforeCount = current.eventEvidence.length;
+  const completed = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "不是",
+  });
+
+  assert.equal(value.cases.get(startActionId)?.row.eventEvidence.length, beforeCount);
+  assert.deepEqual(completed.evidenceRequest?.followUp, {
+    kind: "event_date",
+    evidenceId: target.id,
+    answerMode: "free_text",
+    proposedDate: null,
+  });
+  assert.doesNotMatch(completed.narrative, /这个10月是2020年10月吗/);
+});
+
+test("an explicit correction after rejecting a proposed date uses the supplied date", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99 });
+  await start(value, null);
+  await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "我去石油化工研究院实习到10月，后来主动辞职",
+  });
+
+  const current = value.cases.get(startActionId)?.row;
+  const target = current?.eventEvidence.at(-1);
+  assert.ok(current);
+  assert.ok(target);
+  value.cases.set(startActionId, {
+    row: {
+      ...current,
+      latestTurn: {
+        ...current.latestTurn,
+        narrative: "这个10月是2020年10月吗？",
+        evidenceRequest: {
+          domains: ["career"],
+          datePrecision: "month_preferred",
+          freeTextAllowed: true,
+          prompt: "这个10月是2020年10月吗？",
+          followUp: {
+            kind: "event_date",
+            evidenceId: target.id,
+            answerMode: "yes_no",
+            proposedDate: { value: "2020-10", precision: "month" },
+          },
+        },
+      },
+    },
+  });
+
+  await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: secondAnswerActionId,
+    turnVersion: 1,
+    answer: "不是，是2021年10月",
+  });
+
+  const stored = value.cases.get(startActionId)?.row.eventEvidence ?? [];
+  assert.equal(stored.at(-1)?.dateValue, "2021-10");
+  assert.deepEqual(stored.at(-1)?.correctsEvidenceIds, [target.id]);
+  assert.doesNotMatch(stored.at(-1)?.eventSummary ?? "", /^不是/);
 });
 
 test("an authored event-detail follow-up survives progress decoration and keeps the prior date", async () => {
@@ -1411,13 +1634,14 @@ test("a rejected intermediate narrative returns a retryable error without saving
   assert.equal(value.mutations.filter((mutation) => mutation === "saveTurn").length, 0);
 });
 
-test("one and two supported events save and narrate before the third accumulated event ranks", async () => {
-  const value = harness({ readyAfterEvidenceCount: 3 });
+test("one through three supported events save and narrate before the fourth accumulated event ranks", async () => {
+  const value = harness({ readyAfterEvidenceCount: 4 });
   await start(value, null);
   const answers = [
     [answerActionId, "2019年7月毕业"],
     [secondAnswerActionId, "2020年8月搬家"],
     [thirdAnswerActionId, "2021年9月换工作"],
+    [fourthAnswerActionId, "2022年10月结婚"],
   ] as const;
 
   for (const [index, [receivedActionId, answer]] of answers.entries()) {
@@ -1431,13 +1655,13 @@ test("one and two supported events save and narrate before the third accumulated
     const stored = value.cases.get(startActionId)?.row;
     assert.equal(stored?.eventEvidence.length, index + 1);
     assert.equal(turn.evidenceRecap.length, index + 1);
-    assert.equal(turn.status, index < 2 ? "active" : "confirming");
+    assert.equal(turn.status, index < 3 ? "active" : "confirming");
     assert.ok(turn.narrative.length > 0);
     assert.doesNotMatch(turn.narrative, /当前累计|本轮已纳入|本轮区分重点|下一步：/);
   }
 
-  assert.equal(value.counts().packetBuilds, 4);
-  assert.equal(value.events.filter((event) => event === "narrative").length, 4);
+  assert.equal(value.counts().packetBuilds, 5);
+  assert.equal(value.events.filter((event) => event === "narrative").length, 5);
 });
 
 test("intermediate narrative receives the complete active event ledger", async () => {
@@ -1464,7 +1688,7 @@ test("intermediate narrative receives the complete active event ledger", async (
   assert.match(prompt, /eventLedger/);
 });
 
-test("a non-confirmable conversational case remains open after the current discriminating domains are covered", async () => {
+test("a plateaued non-confirmable conversational case returns a bounded candidate after current domains are covered", async () => {
   const value = harness({ readyAfterEvidenceCount: 99 });
   await start(value, "请继续回答原来的事业问题");
   const answers = [
@@ -1489,12 +1713,96 @@ test("a non-confirmable conversational case remains open after the current discr
     }
   }
 
-  assert.equal(latest?.status, "active");
+  assert.equal(latest?.status, "completed");
   assert.equal(latest?.candidate.status, "pending_validation");
-  assert.deepEqual(latest?.actions, ["answer", "pause", "abandon"]);
-  assert.ok(latest?.evidenceRequest);
-  assert.equal(value.cases.get(startActionId)?.row.status, "active");
+  assert.deepEqual(latest?.actions, ["continue_original_question"]);
+  assert.equal(latest?.evidenceRequest, null);
+  assert.equal(value.cases.get(startActionId)?.row.status, "completed");
   assert.equal(value.cases.get(startActionId)?.row.privateCandidate.representativeTime, "05:20");
+  assert.equal(value.cases.get(startActionId)?.row.privateCandidate.resultId, null);
+});
+
+test("an unanswered suggested domain keeps a plateaued candidate conversational", async () => {
+  const value = harness({
+    packetForEvidenceCount() {
+      const pending = packet(false);
+      return {
+        ...pending,
+        suggestedDomains: [{
+          domain: "finance",
+          layer: "D2",
+          reason: "D2 仍需要一条已发生的财务事件区分。",
+        }],
+      };
+    },
+  });
+  await start(value, null);
+  const answers = [
+    [answerActionId, "2019年7月毕业"],
+    [secondAnswerActionId, "2020年8月搬家"],
+    [thirdAnswerActionId, "2021年9月换工作"],
+    [fourthAnswerActionId, "2022年10月结婚"],
+  ] as const;
+  let latest = value.cases.get(startActionId)?.row.latestTurn;
+
+  for (const [index, [receivedActionId, answer]] of answers.entries()) {
+    latest = await value.service.answer(userId, {
+      type: "answer",
+      caseId: startActionId,
+      actionId: receivedActionId,
+      turnVersion: index,
+      answer,
+    });
+  }
+
+  assert.equal(latest?.status, "active");
+  assert.deepEqual(latest?.evidenceRequest?.domains, ["finance"]);
+  assert.deepEqual(latest?.actions, ["answer", "pause", "abandon"]);
+});
+
+test("system-only blockers return a bounded result without waiting for another plateau", async () => {
+  const value = harness({
+    packetForEvidenceCount(count) {
+      const pending = packet(false);
+      if (count === 0) return pending;
+      const range = count >= 4
+        ? { startTime: "05:00", endTime: "05:40" }
+        : pending.candidate.range;
+      return {
+        ...pending,
+        candidate: { ...pending.candidate, range },
+        sensitivityScope: {
+          ...pending.sensitivityScope,
+          rangeStart: range.startTime,
+          rangeEnd: range.endTime,
+        },
+        suggestedDomains: [],
+        expertWorkflow: {
+          boundary: "not_auto_rectified",
+          candidateWindows: [{ ...range, status: "pending_validation" }],
+          techniqueAuditTable: [],
+          confirmationAllowed: false,
+          hardBlockers: ["required_layers_incomplete"],
+          gates: {},
+        },
+      };
+    },
+  });
+  await start(value, null);
+  const turn = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: 0,
+    answer: "2019年7月毕业，2020年8月搬家，2021年9月换工作，2022年10月结婚",
+  });
+
+  assert.equal(turn.status, "completed");
+  assert.equal(turn.candidate.status, "pending_validation");
+  assert.equal(turn.evidenceRequest, null);
+  assert.deepEqual(turn.actions, []);
+  assert.equal(turn.candidate.rangeStart, "05:00");
+  assert.equal(turn.candidate.rangeEnd, "05:40");
 });
 
 test("family evidence remains stored and public without changing its domain", async () => {
@@ -1519,17 +1827,19 @@ test("family evidence remains stored and public without changing its domain", as
     dateLabel: "2020-07",
     domain: "family",
   }]);
+  assert.deepEqual(value.packetEvidenceCounts, [0, 0]);
   assert.equal(turn.status, "active");
 });
 
-test("two valid events plus pre-birth evidence wait until a later valid third event scores", async () => {
-  const value = harness({ readyAfterEvidenceCount: 3 });
+test("three valid events plus pre-birth evidence wait until a later valid fourth event confirms", async () => {
+  const value = harness({ readyAfterEvidenceCount: 4 });
   await start(value, null);
   const answers = [
     [answerActionId, "2019年7月毕业"],
     [secondAnswerActionId, "2020年8月搬家"],
     [thirdAnswerActionId, "1999年12月开始工作"],
     [fourthAnswerActionId, "2021年9月换工作"],
+    [fifthAnswerActionId, "2022年10月结婚"],
   ] as const;
 
   let latest = value.cases.get(startActionId)?.row.latestTurn;
@@ -1541,16 +1851,16 @@ test("two valid events plus pre-birth evidence wait until a later valid third ev
       turnVersion: index,
       answer,
     });
-    assert.equal(latest.status, index < 3 ? "active" : "confirming");
+    assert.equal(latest.status, index < 4 ? "active" : "confirming");
   }
 
   const stored = value.cases.get(startActionId)?.row;
   const preBirth = stored?.eventEvidence.find((item) => item.dateValue === "1999-12");
   assert.equal(preBirth?.scoreable, false);
   assert.equal(preBirth?.extractionStatus, "needs_clarification");
-  assert.equal(stored?.eventEvidence.length, 4);
-  assert.equal(latest?.evidenceRecap.length, 4);
-  assert.deepEqual(value.packetEvidenceCounts, [0, 1, 2, 2, 3]);
+  assert.equal(stored?.eventEvidence.length, 5);
+  assert.equal(latest?.evidenceRecap.length, 5);
+  assert.deepEqual(value.packetEvidenceCounts, [0, 1, 2, 2, 3, 4]);
 });
 
 test("vague, future, and unmatched answers stay conversational and never score", async () => {
@@ -1656,6 +1966,8 @@ test("regenerate rewrites only the current narrative and preserves evidence, sco
   const evidenceBefore = structuredClone(storedBefore.eventEvidence);
   const candidateBefore = structuredClone(storedBefore.privateCandidate);
   const countsBefore = value.counts();
+  const scoreableCountBefore = value.packetEvidenceCounts.at(-1);
+  const scoreableIdsBefore = value.packetEvidenceIds.at(-1);
 
   const regenerated = await value.service.regenerate(userId, {
     type: "regenerate",
@@ -1671,7 +1983,8 @@ test("regenerate rewrites only the current narrative and preserves evidence, sco
   assert.deepEqual(storedAfter.eventEvidence, evidenceBefore);
   assert.deepEqual(storedAfter.privateCandidate, candidateBefore);
   assert.equal(value.counts().reserveCount, countsBefore.reserveCount);
-  assert.equal(value.packetEvidenceCounts.at(-1), evidenceBefore.length);
+  assert.equal(value.packetEvidenceCounts.at(-1), scoreableCountBefore);
+  assert.deepEqual(value.packetEvidenceIds.at(-1), scoreableIdsBefore);
   assert.equal(value.mutations.filter((mutation) => mutation === "saveTurn").length, 2);
   assert.match(value.narrativePrompts.at(-1) ?? "", /2012年12月正式退学/);
 });
@@ -1745,7 +2058,7 @@ test("receipt-first delayed retries replay the original answer, pause, abandon, 
           caseId: startActionId,
           actionId: answerActionId,
           turnVersion: 0,
-          answer: "2018年6月毕业，2020年3月去外地工作，2022年8月结婚",
+          answer: "2018年6月毕业，2019年7月开始第一份工作，2020年3月去外地工作，2022年8月结婚",
         };
         return { command, first: await value.service.answer(userId, command) };
       },
@@ -1782,7 +2095,7 @@ test("receipt-first delayed retries replay the original answer, pause, abandon, 
           caseId: startActionId,
           actionId: answerActionId,
           turnVersion: 0,
-          answer: "2018年6月毕业，2020年3月去外地工作，2022年8月结婚",
+          answer: "2018年6月毕业，2019年7月开始第一份工作，2020年3月去外地工作，2022年8月结婚",
         });
         const command = {
           type: "confirm" as const,
@@ -1838,7 +2151,7 @@ test("confirm delegates to the atomic store call, preserves the old baseline unt
   await start(value, "请继续回答原来的事业问题");
   const ready = await value.service.answer(userId, {
     type: "answer", caseId: startActionId, actionId: answerActionId,
-    turnVersion: 0, answer: "2018年6月毕业，2020年3月去外地工作，2022年8月结婚",
+    turnVersion: 0, answer: "2018年6月毕业，2019年7月开始第一份工作，2020年3月去外地工作，2022年8月结婚",
   });
   assert.equal(value.cases.get(startActionId)?.row.baselineActiveTime, "04:58");
   const before = value.mutations.length;

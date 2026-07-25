@@ -129,6 +129,62 @@ test("accepts only the exact public turn shape", () => {
   }).success, false);
 });
 
+test("persists strict yes/no date confirmation state", () => {
+  const base = {
+    caseId,
+    journeyProtocol: "conversational-evidence-v3",
+    status: "active",
+    turnVersion: 1,
+    narrative: "这个10月是2020年10月吗？",
+    candidate: {
+      status: "pending_validation",
+      representativeTime: "05:21",
+      rangeStart: "05:10",
+      rangeEnd: "05:30",
+    },
+    technicalReceipt: {
+      calculationVersion: "v3.0",
+      stableLayers: ["D1"],
+      sensitiveLayers: ["D9"],
+      candidateDifferenceRefs: ["candidate-difference-1"],
+    },
+    evidenceRequest: {
+      domains: ["career"],
+      datePrecision: "month_preferred",
+      freeTextAllowed: true,
+      prompt: "这个10月是2020年10月吗？",
+      followUp: {
+        kind: "event_date",
+        evidenceId,
+        answerMode: "yes_no",
+        proposedDate: { value: "2020-10", precision: "month" },
+      },
+    },
+    evidenceRecap: [],
+    actions: ["answer", "pause", "abandon"],
+    pendingConsultationQuestion: null,
+  };
+
+  assert.equal(conversationalRectificationTurnSchema.safeParse(base).success, true);
+  assert.equal(conversationalRectificationTurnSchema.safeParse({
+    ...base,
+    evidenceRequest: {
+      ...base.evidenceRequest,
+      followUp: { ...base.evidenceRequest.followUp, proposedDate: null },
+    },
+  }).success, false);
+  assert.equal(conversationalRectificationTurnSchema.safeParse({
+    ...base,
+    evidenceRequest: {
+      ...base.evidenceRequest,
+      followUp: {
+        ...base.evidenceRequest.followUp,
+        proposedDate: { value: "2020", precision: "month" },
+      },
+    },
+  }).success, false);
+});
+
 function assertNoReachableText(value: unknown, forbidden: string, seen = new Set<unknown>()) {
   if (typeof value === "string") {
     assert.equal(value.includes(forbidden), false, `found raw text in ${value}`);

@@ -30,6 +30,13 @@ const followUpMigration = readFileSync(
   ),
   "utf8",
 );
+const structuredDateConfirmationMigration = readFileSync(
+  new URL(
+    "../supabase/migrations/20260725010000_structured_conversational_date_confirmation.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
 
 test("durable rectification SQL accepts every application evidence domain", () => {
   for (const validator of [
@@ -92,4 +99,18 @@ test("durable evidence requests accept bounded follow-up targeting", () => {
     /'new_event', 'event_date', 'event_detail'/,
   );
   assert.match(followUpMigration, /valid_uuid_text/);
+});
+
+test("durable evidence requests persist strict structured date confirmation", () => {
+  assert.match(
+    structuredDateConfirmationMigration,
+    /array\['domains', 'datePrecision', 'freeTextAllowed', 'prompt', 'followUp'\]/,
+  );
+  assert.match(
+    structuredDateConfirmationMigration,
+    /array\['kind', 'evidenceId', 'answerMode', 'proposedDate'\]/,
+  );
+  assert.match(structuredDateConfirmationMigration, /'free_text', 'yes_no'/);
+  assert.match(structuredDateConfirmationMigration, /yes\/no date proposals/i);
+  assert.match(structuredDateConfirmationMigration, /valid_uuid_text/);
 });

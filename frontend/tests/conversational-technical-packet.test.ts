@@ -332,6 +332,50 @@ test("does not claim scan-wide 05:10-05:30 differences inside a 05:16-05:24 cand
     && error.reason === "insufficient_samples");
 });
 
+test("accepts a single-minute winning segment when no further discriminating domain remains", () => {
+  const packet = buildRectificationTechnicalPacket({
+    scan,
+    candidateDifferences,
+    eventScore: {
+      ...eventScore,
+      confidence: "high",
+      canApply: true,
+      winningSegment: {
+        startTime: "05:16",
+        endTime: "05:16",
+        representativeTime: "05:16",
+        widthMinutes: 1,
+      },
+      eventCount: 4,
+      domainCount: 3,
+      marginPercent: 30,
+    },
+    consultation: {
+      source: "server_consultation_workflow",
+      calculationVersion: "rectification-technical-v1",
+      availableLayers: ["D1", "D9", "D10"],
+      layerReferences: {
+        D1: ["consult-d1-ascendant"],
+        D9: ["consult-d9-candidate-difference"],
+        D10: ["consult-d10-candidate-difference"],
+      },
+      timeLinkedScanSamples: [
+        { sampleIndex: 0, time: "05:10" },
+        { sampleIndex: 1, time: "05:16" },
+        { sampleIndex: 2, time: "05:17" },
+        { sampleIndex: 3, time: "05:30" },
+      ],
+      boundaryDistanceMinutes: 0,
+      futureWindows: [],
+    },
+  });
+
+  assert.deepEqual(packet.sensitivityScope.sampleTimes, ["05:16"]);
+  assert.equal(packet.suggestedDomains.length, 0);
+  assert.equal(packet.candidate.status, "ready_for_confirmation");
+  assert.equal(projectRectificationTechnicalPacket(packet).evidenceRequest, null);
+});
+
 test("uses sparse in-range differences without describing them as adjacent-minute switches", () => {
   const sparseScan = {
     ...scan,
@@ -422,7 +466,7 @@ test("public projection strips weights, partition identifiers, and private finge
     rangeEnd: "05:24",
     sampleTimes: ["05:16", "05:17"],
   });
-  assert.deepEqual(projected.evidenceRequest.domains, ["relationship", "career"]);
+  assert.deepEqual(projected.evidenceRequest?.domains, ["relationship", "career"]);
   assert.equal(projected.futureWindows[0]?.scoreable, false);
 });
 
