@@ -569,7 +569,7 @@ test("allows packet-grounded technical tables during an intermediate turn", () =
   assert.deepEqual(validateNarrativeAgainstPacket(output, packet, "intermediate"), { valid: true, issues: [] });
 });
 
-test("rejects a generic broad-year choice questionnaire without replacing the first Agent answer with a template", async () => {
+test("replaces a generic broad-year choice questionnaire with the safe fallback", async () => {
   const invalid = {
     ...richOutput(),
     narrative: [
@@ -588,14 +588,14 @@ test("rejects a generic broad-year choice questionnaire without replacing the fi
   assert.equal(direct.valid, false);
   assert.ok(direct.issues.some((issue) => issue.includes("broad-year choice questionnaire")));
 
-  await assert.rejects(
-    generateRectificationNarrative({
-      phase: "first",
-      packet: syntheticTechnicalPacket(),
-      generator: generator([invalid, invalid]),
-    }),
-    /RectificationNarrativeUnavailable/,
-  );
+  const result = await generateRectificationNarrative({
+    phase: "first",
+    packet: syntheticTechnicalPacket(),
+    generator: generator([invalid, invalid]),
+  });
+  assert.equal(result.fallbackUsed, true);
+  assert.equal(result.output.evidenceRequest, null);
+  assert.doesNotMatch(result.narrative, /2018–2020/);
 });
 
 test("rejects generic individual-year options even without a written range", () => {
@@ -1030,52 +1030,49 @@ test("records first-turn generation timeouts separately from schema failures", a
   const warnings: string[] = [];
   const originalWarn = console.warn;
   console.warn = (...values: unknown[]) => warnings.push(values.map(String).join(" "));
+  let result: Awaited<ReturnType<typeof generateRectificationNarrative>>;
   try {
-    await assert.rejects(
-      generateRectificationNarrative({
-        phase: "first",
-        packet: syntheticTechnicalPacket(),
-        generator: {
-          modelId: "test-model",
-          async generate() { throw new DOMException("timed out", "TimeoutError"); },
-        },
-      }),
-      /RectificationNarrativeUnavailable/,
-    );
+    result = await generateRectificationNarrative({
+      phase: "first",
+      packet: syntheticTechnicalPacket(),
+      generator: {
+        modelId: "test-model",
+        async generate() { throw new DOMException("timed out", "TimeoutError"); },
+      },
+    });
   } finally {
     console.warn = originalWarn;
   }
 
+  assert.equal(result.fallbackUsed, true);
   assert.match(warnings.at(-1) ?? "", /"issueCodes":\["timeout"\]/);
 });
 
-test("rejects the first turn instead of presenting a deterministic template as an agent answer", async () => {
+test("falls back safely when the first-turn model output is invalid", async () => {
   const packet = syntheticTechnicalPacket();
   const invalid = { ...richOutput(), sensitiveLayers: ["D60"] };
-  await assert.rejects(
-    generateRectificationNarrative({
-      phase: "first",
-      packet,
-      generator: generator([invalid, invalid]),
-    }),
-    /RectificationNarrativeUnavailable/,
-  );
+  const result = await generateRectificationNarrative({
+    phase: "first",
+    packet,
+    generator: generator([invalid, invalid]),
+  });
+  assert.equal(result.fallbackUsed, true);
+  assert.doesNotMatch(result.narrative, /D60/);
 });
 
-test("rejects an invalid intermediate narrative instead of showing a deterministic template", async () => {
+test("falls back safely when an intermediate narrative is invalid", async () => {
   const inventedReference = `invented-${"x".repeat(500)}`;
   const invalid = {
     ...richOutput(),
     narrative: `${richOutput().narrative}\n另见【${inventedReference}】。`,
   };
-  await assert.rejects(
-    generateRectificationNarrative({
-      phase: "intermediate",
-      packet: syntheticTechnicalPacket(),
-      generator: generator([invalid, invalid]),
-    }),
-    /RectificationNarrativeUnavailable/,
-  );
+  const result = await generateRectificationNarrative({
+    phase: "intermediate",
+    packet: syntheticTechnicalPacket(),
+    generator: generator([invalid, invalid]),
+  });
+  assert.equal(result.fallbackUsed, true);
+  assert.doesNotMatch(result.narrative, /invented-/);
 });
 
 test("builds distinct first, intermediate, and final grounded prompts", async () => {

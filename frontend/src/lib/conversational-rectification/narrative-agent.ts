@@ -784,17 +784,6 @@ export async function generateRectificationNarrative(input: {
       issues = [...issues, ...attemptIssues];
     }
   }
-  if (input.phase !== "final") {
-    logNarrativeGeneration({
-      phase: input.phase,
-      retryCount: 1,
-      fallbackUsed: false,
-      source: "failed",
-      issues: boundedReceiptIssues(issues),
-      startedAt,
-    });
-    throw new Error("RectificationNarrativeUnavailable");
-  }
   const output = fallbackOutput(input.packet, input.phase);
   const narrative = input.phase === "final"
     ? appendFinalAnalysisTables(output.narrative, input.packet, input.context ?? {})
