@@ -235,17 +235,31 @@ export type AccountBirthTimeApplicationPatch = Readonly<{
 }>;
 
 export function resolveAccountBirthTimeApplicationPatch(
-  current: AccountBirthTimeState,
+  current: AccountBirthTimeState | null,
   patch: AccountProfilePatch,
 ): AccountBirthTimeApplicationPatch {
-  const declarationChanged = declarationFields.some((field) => (
-    patch[field] !== undefined && patch[field] !== current[field]
-  ));
-  if (!declarationChanged) return {};
+  if (!current) {
+    return patch.birth_time_source ? {
+      active_birth_time: null,
+      birth_time: null,
+      birth_time_status: "reported",
+      rectification_case_id: null,
+    } : {};
+  }
 
   const confirmed = current.birth_time_status === "confirmed"
     || (current.birth_time_status === null && isBirthClockTime(current.birth_time ?? ""));
   if (confirmed) return {};
+
+  const declarationChanged = declarationFields.some((field) => (
+    patch[field] !== undefined && patch[field] !== current[field]
+  ));
+  const repairsMissingStatus = current.birth_time_status === null
+    && current.active_birth_time === null
+    && current.birth_time === null
+    && current.rectification_case_id === null
+    && Boolean(patch.birth_time_source);
+  if (!declarationChanged && !repairsMissingStatus) return {};
   return {
     active_birth_time: null,
     birth_time: null,

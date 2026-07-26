@@ -163,9 +163,7 @@ export async function PATCH(request: Request) {
     if (currentProfileError) {
       return NextResponse.json({ error: "暂时无法核对现有出生资料" }, { status: 500 });
     }
-    const applicationPatch = currentProfile
-      ? resolveAccountBirthTimeApplicationPatch(currentProfile, payload)
-      : {};
+    const applicationPatch = resolveAccountBirthTimeApplicationPatch(currentProfile, payload);
     const baseProfile = {
       id: userId,
       ...(payload.name !== undefined ? { name: payload.name } : {}),

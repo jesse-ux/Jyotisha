@@ -68,6 +68,7 @@ jobs:
             frontend/supabase/migrations/20260724030000_allow_assistant_only_rectification_regenerate.sql \
             frontend/supabase/migrations/20260725010000_structured_conversational_date_confirmation.sql \
             frontend/supabase/migrations/20260725020000_repair_structured_conversational_date_validator.sql \
+            frontend/supabase/migrations/20260726010000_backfill_reported_birth_time_status.sql \
             "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_DIR/"
 
       - name: Check or apply reviewed migrations
@@ -120,7 +121,8 @@ jobs:
             "$REMOTE_DIR/20260724020000_align_global_birthplace_rectification_contract.sql" \
             "$REMOTE_DIR/20260724030000_allow_assistant_only_rectification_regenerate.sql" \
             "$REMOTE_DIR/20260725010000_structured_conversational_date_confirmation.sql" \
-            "$REMOTE_DIR/20260725020000_repair_structured_conversational_date_validator.sql"
+            "$REMOTE_DIR/20260725020000_repair_structured_conversational_date_validator.sql" \
+            "$REMOTE_DIR/20260726010000_backfill_reported_birth_time_status.sql"
           do
             filename="$(basename "$sql_file")"
             checksum="$(sha256sum "$sql_file" | awk '{print $1}')"

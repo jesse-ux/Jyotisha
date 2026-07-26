@@ -12,6 +12,14 @@ import {
 const source = readFileSync(new URL("../src/app/api/account/route.ts", import.meta.url), "utf8");
 const patchSource = readFileSync(new URL("../src/lib/account-profile-patch.ts", import.meta.url), "utf8");
 const caseServiceSource = readFileSync(new URL("../src/lib/account-rectification-case.ts", import.meta.url), "utf8");
+const reportedStatusMigration = readFileSync(
+  new URL("../supabase/migrations/20260726010000_backfill_reported_birth_time_status.sql", import.meta.url),
+  "utf8",
+);
+const productionMigrationWorkflow = readFileSync(
+  new URL("../../.github/workflows/apply-production-rectification-migrations.yml", import.meta.url),
+  "utf8",
+);
 
 test("account API reads and returns the server-configured rectification price", () => {
   assert.match(source, /parseRectificationPriceCredits\(\s*process\.env\.RECTIFICATION_PRICE_CREDITS,?\s*\)/);
@@ -435,6 +443,47 @@ test("ordinary declaration edits clear stale candidate application but never ove
     birth_time_status: "reported",
     rectification_case_id: null,
   });
+  assert.deepEqual(resolveAccountBirthTimeApplicationPatch({
+    ...candidate,
+    active_birth_time: null,
+    birth_time: null,
+    birth_time_status: null,
+    rectification_case_id: null,
+    reported_birth_time: edited.reported_birth_time,
+  }, edited), {
+    active_birth_time: null,
+    birth_time: null,
+    birth_time_status: "reported",
+    rectification_case_id: null,
+  });
+  assert.deepEqual(resolveAccountBirthTimeApplicationPatch(null, edited), {
+    active_birth_time: null,
+    birth_time: null,
+    birth_time_status: "reported",
+    rectification_case_id: null,
+  });
+  assert.deepEqual(resolveAccountBirthTimeApplicationPatch({
+    ...candidate,
+    birth_time_status: "confirmed",
+  }, edited), {});
+  assert.deepEqual(resolveAccountBirthTimeApplicationPatch({
+    ...candidate,
+    active_birth_time: null,
+    birth_time: null,
+    birth_time_status: null,
+    reported_birth_time: edited.reported_birth_time,
+  }, edited), {});
+});
+
+test("reported birth-time status repair is forward-only and wired into production migration flow", () => {
+  assert.match(reportedStatusMigration, /birth_time_status is null/);
+  assert.match(reportedStatusMigration, /birth_time_status = 'reported'/);
+  assert.match(reportedStatusMigration, /active_birth_time is null/);
+  assert.match(reportedStatusMigration, /rectification_case_id is null/);
+  assert.equal(
+    productionMigrationWorkflow.match(/20260726010000_backfill_reported_birth_time_status\.sql/g)?.length,
+    2,
+  );
 });
 
 test("account PATCH uses the shared validator and never writes client birth_time over account truth", () => {
