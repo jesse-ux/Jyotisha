@@ -1459,3 +1459,18 @@
 - 防复发：叙事模型只能影响自然语言表达，不能成为事件持久化和确定性收敛的单点故障；降级输出必须来自已验证 packet。
 - 相关记录：BUG-067、BUG-075、BUG-077
 - 修复版本：本次修复提交
+
+## BUG-079 | 无可用路由领域时 Agent 追问导致 paused 会话返回 503
+
+- 状态：resolved
+- 首次发现：2026-07-26
+- 最近更新：2026-07-26
+- 影响面：生时校正开放叙事、暂停后恢复、历史事件保存、Narrative Agent 到公开 turn 的适配边界
+- 用户现象：完整 synthetic smoke 在暂停并恢复后提交下一条历史事件，技术评分和模型叙事都成功，但接口返回 `service_unavailable`，事件无法保存。
+- 触发条件：技术 packet 的 `suggestedDomains` 为空，而模型自然提出了一个可继续回答的问题。
+- 根因：Narrative Agent 会把模型领域替换成服务端允许的领域；允许集合为空时产生 `evidenceRequest.domains=[]`。叙事校验未拒绝空数组，但公开 turn 合同要求至少一个领域，导致 `turnFromNarrative()` 在持久化前把整轮转换为 503。
+- 修复：在 Narrative Agent 的共享适配边界统一处理 authored 与 legacy 输出；没有任何服务端可验证路由领域时保留自然语言正文，只把可选 `evidenceRequest` 归一化为 `null`。不放宽公开持久化 schema，也不信任模型自报领域。
+- 验证：回归覆盖无路由领域的 authored 输出，并覆盖 `pause → resume → answer` 完整编排路径；确认正文保留、`evidenceRequest=null`、事件正常保存且不返回 503。
+- 防复发：模型自然语言不得成为事件保存的硬依赖；私有路由元数据为空时应省略可选状态，而不是生成违反持久化合同的半合法对象。
+- 相关记录：BUG-075、BUG-078
+- 修复版本：本次修复提交

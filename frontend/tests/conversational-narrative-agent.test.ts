@@ -935,6 +935,28 @@ test("replaces legacy model-selected evidence domains instead of rejecting the a
   assert.deepEqual(result.output.evidenceRequest?.domains, ["relationship", "career"]);
 });
 
+test("keeps authored prose but drops follow-up state when no grounded routing domain exists", async () => {
+  const packet = { ...syntheticTechnicalPacket(), suggestedDomains: [] };
+  const result = await generateRectificationNarrative({
+    phase: "intermediate",
+    packet,
+    generator: generator([{
+      narrative: "这段经历已经记下。你愿意的话，可以继续讲当时发生了什么。",
+      evidenceRequest: {
+        domains: ["career"],
+        datePrecision: "month_preferred",
+        prompt: "当时发生了什么？",
+        followUp: { kind: "new_event", evidenceId: null },
+      },
+    }]),
+  });
+
+  assert.equal(result.attempts, 1);
+  assert.equal(result.fallbackUsed, false);
+  assert.equal(result.output.evidenceRequest, null);
+  assert.match(result.narrative, /继续讲/);
+});
+
 test("uses a fresh second provider request after the first attempt times out", async () => {
   let calls = 0;
   const signals: Array<AbortSignal | undefined> = [];

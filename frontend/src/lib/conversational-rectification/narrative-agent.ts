@@ -168,16 +168,20 @@ function groundedEvidenceDomains(
   return grounded.length > 0 ? grounded : suggested;
 }
 
+function groundedEvidenceRequest(
+  request: z.infer<typeof rectificationNarrativeAuthoredOutputSchema>["evidenceRequest"],
+  packet: RectificationTechnicalPacket,
+) {
+  if (request === null) return null;
+  const domains = groundedEvidenceDomains(request.domains, packet);
+  return domains.length > 0 ? { ...request, domains } : null;
+}
+
 function completeAuthoredOutput(
   output: z.infer<typeof rectificationNarrativeAuthoredOutputSchema>,
   packet: RectificationTechnicalPacket,
 ): RectificationNarrativeModelOutput {
-  const evidenceRequest = output.evidenceRequest === null ? null : {
-    datePrecision: output.evidenceRequest.datePrecision,
-    prompt: output.evidenceRequest.prompt,
-    followUp: output.evidenceRequest.followUp,
-    domains: groundedEvidenceDomains(output.evidenceRequest.domains, packet),
-  };
+  const evidenceRequest = groundedEvidenceRequest(output.evidenceRequest, packet);
   return {
     ...output,
     evidenceRequest,
@@ -206,14 +210,10 @@ function parseModelOutput(
   if (legacy.success) {
     return {
       ...legacy.data,
-      evidenceRequest: legacy.data.evidenceRequest === null ? null : {
-        ...legacy.data.evidenceRequest,
-        // The next conversational topic is authored by the model, but the
-        // scoring-domain allowlist remains server-owned. Do not let a useful
-        // answer fail merely because the model described that topic with a
-        // different internal domain label.
-        domains: groundedEvidenceDomains(legacy.data.evidenceRequest.domains, packet),
-      },
+      // The next conversational topic is authored by the model, but the
+      // scoring-domain allowlist remains server-owned. If no grounded routing
+      // domain exists, keep the prose and omit only the optional follow-up state.
+      evidenceRequest: groundedEvidenceRequest(legacy.data.evidenceRequest, packet),
     };
   }
   return completeAuthoredOutput(rectificationNarrativeAuthoredOutputSchema.parse(parsed), packet);

@@ -1641,22 +1641,22 @@ test("the next evidence request moves past a domain the user already answered", 
   assert.doesNotMatch(turn.narrative, /下一步[^\n]*重要关系/);
 });
 
-test("a rejected intermediate narrative returns a retryable error without saving a template turn", async () => {
+test("a rejected intermediate narrative falls back without discarding the event", async () => {
   const value = harness({ invalidNarrativeFromGeneration: 1 });
   await start(value, null);
 
-  await assert.rejects(value.service.answer(userId, {
+  const turn = await value.service.answer(userId, {
     type: "answer", caseId: startActionId, actionId: answerActionId,
     turnVersion: 0, answer: "2021年7月开始第一份长期工作",
-  }), (error: unknown) => error instanceof ConversationalRectificationError
-    && error.code === "service_unavailable");
+  });
 
   const stored = value.cases.get(startActionId)?.row;
-  assert.equal(stored?.turnVersion, 0);
+  assert.equal(turn.turnVersion, 1);
+  assert.match(turn.narrative, /按自己的节奏/);
   assert.equal(stored?.privateCandidate.resultId, null);
-  assert.equal(stored?.eventEvidence.length, 0);
-  assert.equal(stored?.validationReceipts.length, 1);
-  assert.equal(value.mutations.filter((mutation) => mutation === "saveTurn").length, 0);
+  assert.equal(stored?.eventEvidence.length, 1);
+  assert.equal(stored?.validationReceipts.length, 2);
+  assert.equal(value.mutations.filter((mutation) => mutation === "saveTurn").length, 1);
 });
 
 test("one through three supported events save and narrate before the fourth accumulated event ranks", async () => {
@@ -1783,6 +1783,39 @@ test("an unanswered suggested domain keeps a plateaued candidate conversational"
   assert.equal(latest?.status, "active");
   assert.deepEqual(latest?.evidenceRequest?.domains, ["finance"]);
   assert.deepEqual(latest?.actions, ["answer", "pause", "abandon"]);
+});
+
+test("answer persists after pause when the packet has no grounded follow-up domain", async () => {
+  const value = harness({
+    packetForEvidenceCount() {
+      return { ...packet(false), suggestedDomains: [] };
+    },
+  });
+  const started = await start(value, null);
+  const paused = await value.service.pause(userId, {
+    type: "pause",
+    caseId: startActionId,
+    actionId: pauseActionId,
+    turnVersion: started.turnVersion,
+  });
+  await value.service.resume(userId, {
+    type: "resume",
+    caseId: startActionId,
+    actionId: resumeActionId,
+    turnVersion: paused.turnVersion,
+  });
+
+  const turn = await value.service.answer(userId, {
+    type: "answer",
+    caseId: startActionId,
+    actionId: answerActionId,
+    turnVersion: paused.turnVersion,
+    answer: "2020年4月进入研究院实习，10月主动辞职",
+  });
+
+  assert.equal(turn.status, "active");
+  assert.equal(turn.evidenceRequest, null);
+  assert.match(turn.narrative, /记下了/);
 });
 
 test("system-only blockers return a bounded result without waiting for another plateau", async () => {
@@ -2034,7 +2067,7 @@ test("regenerate rewrites only the current narrative and preserves evidence, sco
   assert.match(value.narrativePrompts.at(-1) ?? "", /2012年12月正式退学/);
 });
 
-test("a failed regenerate preserves the prior turn, evidence, candidate, and billing", async () => {
+test("a failed regenerate saves a fallback turn without changing evidence, candidate, or billing", async () => {
   const value = harness({ readyAfterEvidenceCount: 99, invalidNarrativeFromGeneration: 2 });
   await start(value, null);
   const answered = await value.service.answer(userId, {
@@ -2046,28 +2079,29 @@ test("a failed regenerate preserves the prior turn, evidence, candidate, and bil
   });
   const storedBefore = value.cases.get(startActionId)?.row;
   assert.ok(storedBefore);
-  const snapshotBefore = structuredClone(storedBefore);
+  const evidenceBefore = structuredClone(storedBefore.eventEvidence);
+  const candidateBefore = structuredClone(storedBefore.privateCandidate);
   const countsBefore = value.counts();
   const saveTurnsBefore = value.mutations.filter((mutation) => mutation === "saveTurn").length;
 
-  await assert.rejects(value.service.regenerate(userId, {
+  const regenerated = await value.service.regenerate(userId, {
     type: "regenerate",
     caseId: startActionId,
     actionId: laterActionId,
     turnVersion: answered.turnVersion,
-  }), (error: unknown) => error instanceof ConversationalRectificationError
-    && error.code === "service_unavailable");
+  });
 
   const storedAfter = value.cases.get(startActionId)?.row;
-  assert.deepEqual(storedAfter, snapshotBefore);
-  assert.equal(storedAfter?.turnVersion, answered.turnVersion);
-  assert.equal(storedAfter?.latestTurn.narrative, answered.narrative);
+  assert.equal(regenerated.turnVersion, answered.turnVersion + 1);
+  assert.match(regenerated.narrative, /按自己的节奏/);
+  assert.deepEqual(storedAfter?.eventEvidence, evidenceBefore);
+  assert.deepEqual(storedAfter?.privateCandidate, candidateBefore);
   assert.equal(value.counts().reserveCount, countsBefore.reserveCount);
   assert.equal(value.counts().releaseCount, countsBefore.releaseCount);
   assert.equal(value.counts().packetBuilds, countsBefore.packetBuilds + 1);
   assert.equal(
     value.mutations.filter((mutation) => mutation === "saveTurn").length,
-    saveTurnsBefore,
+    saveTurnsBefore + 1,
   );
 });
 
