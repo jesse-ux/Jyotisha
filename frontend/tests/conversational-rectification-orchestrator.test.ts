@@ -1693,7 +1693,7 @@ test("a rejected intermediate narrative falls back without discarding the event"
 
   const stored = value.cases.get(startActionId)?.row;
   assert.equal(turn.turnVersion, 1);
-  assert.match(turn.narrative, /顺着这段经历继续说|自然讲下一件/);
+  assert.match(turn.narrative, /这件事之后.*发生了什么/);
   assert.equal(stored?.privateCandidate.resultId, null);
   assert.equal(stored?.eventEvidence.length, 1);
   assert.equal(stored?.validationReceipts.length, 2);
@@ -1989,7 +1989,7 @@ test("vague, future, and unmatched answers stay conversational and never score",
   }
 });
 
-test("a free Agent reply clears the previous structured question instead of inheriting it", async () => {
+test("a free Agent reply clears the previous structured question and adds an open guide", async () => {
   const value = harness({
     readyAfterEvidenceCount: 99,
     continueLatestEvent: true,
@@ -2010,7 +2010,7 @@ test("a free Agent reply clears the previous structured question instead of inhe
 
   assert.equal(second.evidenceRequest, null);
   assert.match(second.narrative, /顺着这段经历继续说|自然讲下一件/);
-  assert.doesNotMatch(second.narrative, /[？?]/);
+  assert.match(second.narrative, /这件事之后，紧接着发生了什么？/);
 });
 
 test("a non-scoring packet failure responds to the current turn instead of replaying the prior agent message", async () => {
@@ -2140,7 +2140,7 @@ test("a failed regenerate saves a fallback turn without changing evidence, candi
 
   const storedAfter = value.cases.get(startActionId)?.row;
   assert.equal(regenerated.turnVersion, answered.turnVersion + 1);
-  assert.match(regenerated.narrative, /顺着这段经历继续说|自然讲下一件/);
+  assert.match(regenerated.narrative, /这件事之后.*发生了什么/);
   assert.deepEqual(storedAfter?.eventEvidence, evidenceBefore);
   assert.deepEqual(storedAfter?.privateCandidate, candidateBefore);
   assert.equal(value.counts().reserveCount, countsBefore.reserveCount);

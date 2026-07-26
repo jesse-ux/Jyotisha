@@ -582,7 +582,7 @@ function promptFor(
       rules: [
         "优先回应用户话里的真实内容、感受、选择或转折，不要复述成档案摘要。",
         "除非用户主动询问校时进度或技术结果，不要说已记录、先记为、对校时有价值、参与候选时间核对、不会因单一事件确认分钟，也不要主动谈候选范围、分盘、评分、收敛或内部处理。",
-        "不必每轮提问。需要提问时只问自然推进对话真正需要的问题，不要机械补年月、结果或转折。",
+        "用户刚提供实际经历时，回应之后必须用一个贴着上下文的开放问题收尾，自然引导他继续往后讲；优先问这件事之后发生了什么、接下来去了哪里或做了什么，不要机械补年月、结果或转折。",
         "只返回 narrative 和 evidenceRequest。没有在 narrative 中逐字提出一个用户可见的明确问题时，evidenceRequest 必须为 null；若提出问题，evidenceRequest.prompt 必须与 narrative 中的问题文字完全一致。followUp 只表达 kind、answerMode 和 proposedDate，不要生成 evidenceId，目标事件由服务器绑定。",
       ],
       retryIssues: boundedReceiptIssues(retryIssues),
@@ -639,7 +639,7 @@ function promptFor(
 function fallbackNarrative(packet: RectificationTechnicalPacket, phase: RectificationNarrativePhase): string {
   const candidate = packet.candidate;
   if (phase === "intermediate") {
-    return "我听到了。你可以顺着这段经历继续说，也可以自然讲下一件想到的事。";
+    return "我听到了。你愿意接着说说这件事之后发生了什么吗？";
   }
   const phaseLine = phase === "final" && candidate.status === "ready_for_confirmation"
     ? "当前证据已形成候选总结，但仍有残余不确定性；只有明确确认后才会替换当前排盘时间。"
@@ -812,11 +812,21 @@ export async function generateRectificationNarrative(input: {
       ), { signal, attempt });
       const modelId = modelIdSchema.parse(generated.modelId ?? defaultModelId);
       const parsedOutput = parseModelOutput(generated.text, input.packet, input.context ?? {});
-      const output = input.phase === "intermediate"
+      const withoutHiddenFollowUp = input.phase === "intermediate"
         && parsedOutput.evidenceRequest
         && !/[?？]/u.test(parsedOutput.narrative)
         ? { ...parsedOutput, evidenceRequest: null }
         : parsedOutput;
+      const output = input.phase === "intermediate"
+        && input.context?.latestEvidence?.length
+        && !technicalDiscussionRequestPattern.test(input.context.latestUserText ?? "")
+        && !/[?？]/u.test(withoutHiddenFollowUp.narrative)
+        ? {
+            ...withoutHiddenFollowUp,
+            narrative: `${withoutHiddenFollowUp.narrative.trim()}\n\n这件事之后，紧接着发生了什么？`,
+            evidenceRequest: null,
+          }
+        : withoutHiddenFollowUp;
       const validation = validateNarrativeAgainstPacket(
         output,
         input.packet,

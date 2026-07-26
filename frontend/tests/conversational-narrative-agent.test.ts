@@ -455,15 +455,41 @@ test("passes the user's latest words to an ordinary intermediate reply", async (
       }],
     },
     generator: generator([{
-      narrative: "第一次长期离开家去工作，适应过程应该不轻松。你可以接着讲。",
+      narrative: "第一次长期离开家去工作，适应过程应该不轻松。后来最先发生了什么？",
       evidenceRequest: null,
     }], prompts),
   });
 
   assert.match(prompts[0] ?? "", /离开家乡去上海开始第一份长期工作/);
   assert.match(prompts[0] ?? "", /不要把自己写成记录员/);
+  assert.match(prompts[0] ?? "", /必须用一个贴着上下文的开放问题收尾/);
   assert.doesNotMatch(prompts[0] ?? "", /latestEvidence/);
   assert.doesNotMatch(prompts[0] ?? "", /候选范围.*05:16/);
+});
+
+test("adds a lightweight guide when an event reply only empathizes", async () => {
+  const prompts: string[] = [];
+  const result = await generateRectificationNarrative({
+    phase: "intermediate",
+    packet: syntheticTechnicalPacket(),
+    context: {
+      latestUserText: "实习到10月份，发现有人抢项目骗经费，我就辞职了",
+      latestEvidence: [{
+        dateLabel: "2020-10",
+        summary: "因价值观冲突辞职",
+        domain: "career",
+      }],
+    },
+    generator: generator([{
+      narrative: "这段经历确实很冲击，也能理解你为什么不愿意继续留下。",
+      evidenceRequest: null,
+    }], prompts),
+  });
+
+  assert.equal(result.attempts, 1);
+  assert.equal(result.fallbackUsed, false);
+  assert.match(result.narrative, /这件事之后，紧接着发生了什么？$/);
+  assert.equal(prompts.length, 1);
 });
 
 test("keeps internal event domains and suggested-domain routing out of the narrator context", async () => {
