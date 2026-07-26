@@ -235,7 +235,7 @@ test("keeps a natural intermediate acknowledgement without appending a question"
   assert.doesNotMatch(result.narrative, /[？?]/);
 });
 
-test("hides an uninvoked technique inventory during evidence collection", async () => {
+test("keeps technical packets and event bookkeeping out of ordinary narrative turns", async () => {
   const prompts: string[] = [];
   const packet = {
     ...syntheticTechnicalPacket(),
@@ -261,13 +261,54 @@ test("hides an uninvoked technique inventory during evidence collection", async 
   await generateRectificationNarrative({
     phase: "intermediate",
     packet,
-    generator: generator([richOutput()], prompts),
+    context: {
+      latestUserText: "2016 年离家去外地上大学",
+      recentConversation: [{ role: "user", text: "2016 年离家去外地上大学" }],
+      eventLedger: [{
+        id: "00000000-0000-4000-8000-000000000801",
+        rawText: "2016 年离家去外地上大学",
+        dateLabel: "2016",
+        summary: "离家去外地上大学",
+        domain: "education",
+        extractionStatus: "clear",
+        active: true,
+        correctsEvidenceIds: [],
+      }],
+    },
+    generator: generator([{
+      narrative: "第一次长期离开家，生活节奏应该一下子变了很多。你可以接着讲后来发生的事。",
+      evidenceRequest: null,
+    }], prompts),
   });
 
-  assert.match(prompts[0] ?? "", /expertWorkflow/);
+  assert.match(prompts[0] ?? "", /2016 年离家去外地上大学/);
+  assert.doesNotMatch(prompts[0] ?? "", /packet/);
+  assert.doesNotMatch(prompts[0] ?? "", /eventLedger/);
+  assert.doesNotMatch(prompts[0] ?? "", /expertWorkflow/);
   assert.doesNotMatch(prompts[0] ?? "", /KP cusp \/ sub-lord/);
   assert.doesNotMatch(prompts[0] ?? "", /minute_holdout_not_ready/);
-  assert.match(prompts[0] ?? "", /blockedOrNotEvaluatedTechniquesMustNeverBeClaimedAsUsed/);
+  assert.doesNotMatch(prompts[0] ?? "", /05:16|05:24|D9|D10/);
+});
+
+test("drops a hidden follow-up that the user cannot see", async () => {
+  const hidden = {
+    narrative: "第一次长期离开家，生活节奏应该一下子变了很多。你可以接着讲后来发生的事。",
+    evidenceRequest: {
+      datePrecision: "month_preferred" as const,
+      prompt: "2016 年离家去外地上大学大概是几月？",
+      followUp: { kind: "new_event" as const, evidenceId: null },
+    },
+  };
+  const result = await generateRectificationNarrative({
+    phase: "intermediate",
+    packet: syntheticTechnicalPacket(),
+    context: { latestUserText: "2016 年离家去外地上大学" },
+    generator: generator([hidden]),
+  });
+
+  assert.equal(result.attempts, 1);
+  assert.equal(result.fallbackUsed, false);
+  assert.equal(result.output.evidenceRequest, null);
 });
 
 test("appends the three auditable tables to every final Agent answer", async () => {
@@ -400,25 +441,29 @@ test("rejects a model-authored event table that exposes private numeric scoring"
   assert.match(result.narrative, /\| 时间 \| 事件 \| 领域 \| 验证状态 \| 结论 \|/);
 });
 
-test("passes the user's latest concrete event to an intermediate skill-guided reply", async () => {
+test("passes the user's latest words to an ordinary intermediate reply", async () => {
   const prompts: string[] = [];
   await generateRectificationNarrative({
     phase: "intermediate",
     packet: syntheticTechnicalPacket(),
     context: {
+      latestUserText: "2023年9月离开家乡去上海开始第一份长期工作",
       latestEvidence: [{
         dateLabel: "2023-09",
         summary: "离开家乡去上海开始第一份长期工作",
         domain: "career",
       }],
     },
-    generator: generator([richOutput()], prompts),
+    generator: generator([{
+      narrative: "第一次长期离开家去工作，适应过程应该不轻松。你可以接着讲。",
+      evidenceRequest: null,
+    }], prompts),
   });
 
   assert.match(prompts[0] ?? "", /离开家乡去上海开始第一份长期工作/);
-  assert.match(prompts[0] ?? "", /acknowledgeAndReflectBeforeAnyClarification/);
-  assert.match(prompts[0] ?? "", /questionsAreOptional/);
-  assert.match(prompts[0] ?? "", /doNotRepeatCandidateBoundaryUnlessItChangedOrTheUserAsked/);
+  assert.match(prompts[0] ?? "", /不要把自己写成记录员/);
+  assert.doesNotMatch(prompts[0] ?? "", /latestEvidence/);
+  assert.doesNotMatch(prompts[0] ?? "", /候选范围.*05:16/);
 });
 
 test("keeps internal event domains and suggested-domain routing out of the narrator context", async () => {
@@ -448,18 +493,15 @@ test("keeps internal event domains and suggested-domain routing out of the narra
   });
 
   const prompt = JSON.parse(prompts[0] ?? "{}") as {
-    conversationContext?: {
-      latestEvidence?: Array<Record<string, unknown>>;
-      eventLedger?: Array<Record<string, unknown>>;
-    };
+    conversation?: Record<string, unknown>;
     packet?: Record<string, unknown>;
   };
-  assert.equal(prompt.conversationContext?.latestEvidence?.[0]?.domain, undefined);
-  assert.equal(prompt.conversationContext?.eventLedger?.[0]?.domain, undefined);
+  assert.equal(prompt.conversation?.latestEvidence, undefined);
+  assert.equal(prompt.conversation?.eventLedger, undefined);
   assert.equal(prompt.packet?.suggestedDomains, undefined);
 });
 
-test("passes the active event ledger and unresolved facts to the intermediate agent", async () => {
+test("keeps the event ledger and unresolved facts out of the ordinary intermediate agent", async () => {
   const prompts: string[] = [];
   await generateRectificationNarrative({
     phase: "intermediate",
@@ -494,13 +536,8 @@ test("passes the active event ledger and unresolved facts to the intermediate ag
 
   const prompt = prompts[0] ?? "";
   assert.match(prompt, /23年关系结束后发生过一次交通事故/);
-  assert.match(prompt, /2024-08-08/);
-  assert.match(prompt, /一段重要关系结束/);
-  assert.match(prompt, /freeConversation/);
-  assert.match(prompt, /questionsAreOptional/);
-  assert.match(prompt, /acceptMultipleEventsInOneMessage/);
-  assert.match(prompt, /resolveDateContradictionsBeforeScoring/);
-  assert.match(prompt, /mergeSameEventDetailsWithoutDoubleCounting/);
+  assert.doesNotMatch(prompt, /2024-08-08/);
+  assert.doesNotMatch(prompt, /eventLedger|unresolvedEvidence|resolveDateContradictionsBeforeScoring/);
 });
 
 test("rejects invented representative times, layers, and references", () => {
@@ -564,6 +601,7 @@ test("allows packet-grounded technical tables during an intermediate turn", () =
       "| D9 | 在候选范围内呈分钟敏感差异 |",
       "下一步我想继续了解这段关系结束后的直接变化。",
     ].join("\n"),
+    evidenceRequest: null,
   } satisfies RectificationNarrativeModelOutput;
 
   assert.deepEqual(validateNarrativeAgainstPacket(output, packet, "intermediate"), { valid: true, issues: [] });
@@ -658,7 +696,7 @@ test("accepts a natural reply that mentions several known dates before asking a 
     evidenceRequest: {
       domains: ["career" as const],
       datePrecision: "month_preferred" as const,
-      prompt: "毕业后的第一份工作是什么时候开始的？",
+      prompt: "毕业后的第一份工作是直接入职，还是先休息了一段时间？",
     },
   } satisfies RectificationNarrativeModelOutput;
 
@@ -827,6 +865,7 @@ test("allows natural discussion of an event after it has contributed to scoring"
   assert.ok(output.evidenceRequest);
   const conversational = {
     ...output,
+    narrative: "我理解，这次离开不只是换工作。你当时为什么辞职，是主动还是被动，对生活有什么影响？",
     evidenceRequest: {
       ...output.evidenceRequest,
       prompt: "你当时为什么辞职，是主动还是被动，对生活有什么影响？",
@@ -924,6 +963,7 @@ test("replaces legacy model-selected evidence domains instead of rejecting the a
     packet,
     generator: generator([{
       ...output,
+      narrative: `${output.narrative}\n${output.evidenceRequest?.prompt ?? ""}`,
       evidenceRequest: {
         ...output.evidenceRequest,
         domains: ["finance"],

@@ -65,6 +65,7 @@ const labeledYearChoicesPattern = /A\s*[.、:：)]?[\s\S]{0,80}(?:19|20)\d{2}\s*
 const affirmativeAnswerPattern = /^\s*(?:是(?:的)?|对(?:的)?|没错|正确|确认|就是|嗯+|没问题)\s*[。.!！,，]?\s*$/u;
 const negativeAnswerPattern = /^\s*(?:不是|不对|错了|并不是|否)\s*[。.!！,，]?\s*$/u;
 const proposedDateQuestionPattern = /(?:19|20)\d{2}\s*年(?:\s*(?:1[0-2]|0?[1-9])\s*月)?(?:\s*(?:3[01]|[12]\d|0?[1-9])\s*(?:日|号))?[\s\S]{0,30}(?:吗|是否|是不是|确认|对不对|正确)/u;
+const technicalDiscussionRequestPattern = /(?:校时|生时(?:校正|纠正)|出生时间|候选(?:时间|范围|分钟)|收敛(?:结果|进度)?|技术(?:分析|结果)|分盘|\bD\d{1,3}\b|\b(?:UL|A7|A10|KP)\b)/iu;
 const domainLabels = {
   career: "事业",
   education: "学业",
@@ -98,6 +99,18 @@ export const rectificationNarrativeOutputSchema = z.object({
   }).strict().nullable(),
 }).strict();
 
+const authoredFollowUpSchema = z.object({
+  kind: z.enum(["new_event", "event_date", "event_detail"]),
+  // Event ids are server-owned. Ordinary conversation prompts deliberately do
+  // not expose the event ledger, so authored outputs may omit the target id.
+  evidenceId: z.string().uuid().nullable().optional(),
+  answerMode: z.enum(["free_text", "yes_no"]).optional(),
+  proposedDate: z.object({
+    value: z.string().regex(/^\d{4}(?:-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12]\d|3[01]))?)?$/),
+    precision: z.enum(["year", "month", "day"]),
+  }).strict().nullable().optional(),
+}).strict();
+
 export const rectificationNarrativeAuthoredOutputSchema = z.object({
   narrative: z.string().trim().min(1).max(12_000),
   evidenceRequest: z.object({
@@ -106,7 +119,7 @@ export const rectificationNarrativeAuthoredOutputSchema = z.object({
     domains: z.array(domainSchema).min(1).max(4).optional(),
     datePrecision: z.enum(["month_preferred", "year_accepted"]),
     prompt: z.string().trim().min(1).max(1_000),
-    followUp: rectificationFollowUpSchema.default({ kind: "new_event", evidenceId: null }),
+    followUp: authoredFollowUpSchema.default({ kind: "new_event", evidenceId: null }),
   }).strict().nullable(),
 }).strict();
 
@@ -177,11 +190,39 @@ function groundedEvidenceRequest(
   return domains.length > 0 ? { ...request, domains } : null;
 }
 
+function serverOwnedFollowUp(
+  followUp: z.infer<typeof authoredFollowUpSchema>,
+  context: RectificationNarrativeContext,
+): RectificationFollowUp {
+  if (followUp.kind === "new_event") return { kind: "new_event", evidenceId: null };
+  const active = context.eventLedger?.filter((item) => item.active) ?? [];
+  const allowedIds = new Set(active.map((item) => item.id));
+  const evidenceId = followUp.evidenceId && allowedIds.has(followUp.evidenceId)
+    ? followUp.evidenceId
+    : followUp.kind === "event_date"
+      ? context.unresolvedEvidence?.at(-1)?.id ?? active.at(-1)?.id
+      : active.at(-1)?.id;
+  if (!evidenceId) return { kind: "new_event", evidenceId: null };
+  if (followUp.kind === "event_date" && followUp.answerMode === "yes_no" && followUp.proposedDate) {
+    return rectificationFollowUpSchema.parse({
+      kind: followUp.kind,
+      evidenceId,
+      answerMode: "yes_no",
+      proposedDate: followUp.proposedDate,
+    });
+  }
+  return rectificationFollowUpSchema.parse({ kind: followUp.kind, evidenceId });
+}
+
 function completeAuthoredOutput(
   output: z.infer<typeof rectificationNarrativeAuthoredOutputSchema>,
   packet: RectificationTechnicalPacket,
+  context: RectificationNarrativeContext,
 ): RectificationNarrativeModelOutput {
-  const evidenceRequest = groundedEvidenceRequest(output.evidenceRequest, packet);
+  const groundedRequest = groundedEvidenceRequest(output.evidenceRequest, packet);
+  const evidenceRequest = groundedRequest
+    ? { ...groundedRequest, followUp: serverOwnedFollowUp(groundedRequest.followUp, context) }
+    : null;
   return {
     ...output,
     evidenceRequest,
@@ -200,6 +241,7 @@ function completeAuthoredOutput(
 function parseModelOutput(
   text: string,
   packet: RectificationTechnicalPacket,
+  context: RectificationNarrativeContext,
 ): RectificationNarrativeModelOutput {
   const normalized = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
   const start = normalized.indexOf("{");
@@ -208,15 +250,18 @@ function parseModelOutput(
   const parsed: unknown = JSON.parse(normalized.slice(start, end + 1));
   const legacy = rectificationNarrativeOutputSchema.safeParse(parsed);
   if (legacy.success) {
+    const groundedRequest = groundedEvidenceRequest(legacy.data.evidenceRequest, packet);
     return {
       ...legacy.data,
       // The next conversational topic is authored by the model, but the
       // scoring-domain allowlist remains server-owned. If no grounded routing
       // domain exists, keep the prose and omit only the optional follow-up state.
-      evidenceRequest: groundedEvidenceRequest(legacy.data.evidenceRequest, packet),
+      evidenceRequest: groundedRequest
+        ? { ...groundedRequest, followUp: serverOwnedFollowUp(groundedRequest.followUp, context) }
+        : null,
     };
   }
-  return completeAuthoredOutput(rectificationNarrativeAuthoredOutputSchema.parse(parsed), packet);
+  return completeAuthoredOutput(rectificationNarrativeAuthoredOutputSchema.parse(parsed), packet, context);
 }
 
 function narrativeTimes(value: string): string[] {
@@ -296,6 +341,13 @@ export function validateNarrativeAgainstPacket(
     }
   }
   if (output.evidenceRequest) {
+    if (phase === "intermediate" && !/[?？]/u.test(output.narrative)) {
+      issues.push("evidence request is not visibly asked in narrative");
+    }
+    if (phase === "intermediate"
+      && !normalizedQuestion(output.narrative).includes(normalizedQuestion(output.evidenceRequest.prompt))) {
+      issues.push("evidence request prompt is not present in narrative");
+    }
     for (const domain of output.evidenceRequest.domains) {
       if (!allowedDomains.has(domain)) issues.push(`evidence domain ${domain} is not packet-grounded`);
     }
@@ -518,6 +570,24 @@ function promptFor(
       retryIssues: boundedReceiptIssues(retryIssues),
     });
   }
+  if (phase === "intermediate" && !technicalDiscussionRequestPattern.test(context.latestUserText ?? "")) {
+    return JSON.stringify({
+      task: "像正常的人一样接住用户刚才的叙述并自由交谈。不要把自己写成记录员、问卷或校时流程播报器。用户可以继续叙述，也可以自然转到别的话题。",
+      phase,
+      conversation: {
+        recentConversation: context.recentConversation?.slice(-40),
+        latestUserText: context.latestUserText,
+        previousAssistantNarrative: context.previousAssistantNarrative,
+      },
+      rules: [
+        "优先回应用户话里的真实内容、感受、选择或转折，不要复述成档案摘要。",
+        "除非用户主动询问校时进度或技术结果，不要说已记录、先记为、对校时有价值、参与候选时间核对、不会因单一事件确认分钟，也不要主动谈候选范围、分盘、评分、收敛或内部处理。",
+        "不必每轮提问。需要提问时只问自然推进对话真正需要的问题，不要机械补年月、结果或转折。",
+        "只返回 narrative 和 evidenceRequest。没有在 narrative 中逐字提出一个用户可见的明确问题时，evidenceRequest 必须为 null；若提出问题，evidenceRequest.prompt 必须与 narrative 中的问题文字完全一致。followUp 只表达 kind、answerMode 和 proposedDate，不要生成 evidenceId，目标事件由服务器绑定。",
+      ],
+      retryIssues: boundedReceiptIssues(retryIssues),
+    });
+  }
   return JSON.stringify({
     task: "write_grounded_rectification_narrative",
     phase,
@@ -568,11 +638,12 @@ function promptFor(
 
 function fallbackNarrative(packet: RectificationTechnicalPacket, phase: RectificationNarrativePhase): string {
   const candidate = packet.candidate;
+  if (phase === "intermediate") {
+    return "我听到了。你可以顺着这段经历继续说，也可以自然讲下一件想到的事。";
+  }
   const phaseLine = phase === "final" && candidate.status === "ready_for_confirmation"
     ? "当前证据已形成候选总结，但仍有残余不确定性；只有明确确认后才会替换当前排盘时间。"
-    : phase === "final"
-      ? "当前证据只能支持候选范围，系统验证尚未闭环；本次不会替换当前排盘时间，也不再强制追问更多人生事件。"
-    : `我收到了这段叙述。你可以继续讲这段经历，也可以按自己的节奏说下一件想到的事。`;
+    : "当前证据只能支持候选范围，系统验证尚未闭环；本次不会替换当前排盘时间，也不再强制追问更多人生事件。";
   return [
     `当前仍在核对 ${candidate.range.startTime}–${candidate.range.endTime} 的候选范围，还不能把其中某一分钟当作确定出生时间。`,
     phaseLine,
@@ -740,7 +811,12 @@ export async function generateRectificationNarrative(input: {
         issues,
       ), { signal, attempt });
       const modelId = modelIdSchema.parse(generated.modelId ?? defaultModelId);
-      const output = parseModelOutput(generated.text, input.packet);
+      const parsedOutput = parseModelOutput(generated.text, input.packet, input.context ?? {});
+      const output = input.phase === "intermediate"
+        && parsedOutput.evidenceRequest
+        && !/[?？]/u.test(parsedOutput.narrative)
+        ? { ...parsedOutput, evidenceRequest: null }
+        : parsedOutput;
       const validation = validateNarrativeAgainstPacket(
         output,
         input.packet,

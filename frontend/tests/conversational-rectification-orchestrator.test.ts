@@ -126,6 +126,10 @@ function validGenerator(
       }
       const request = JSON.parse(prompt) as {
         phase: "first" | "intermediate" | "final";
+        conversation?: {
+          recentConversation?: Array<{ role: "assistant" | "user"; text: string }>;
+          latestUserText?: string;
+        };
         conversationContext?: {
           recentConversation?: Array<{ role: "assistant" | "user"; text: string }>;
           latestEvidence?: Array<{ dateLabel: string; summary: string }>;
@@ -140,45 +144,85 @@ function validGenerator(
             dateLabel: string;
           }>;
         };
-        packet: Omit<ReturnType<typeof packet>, "candidate"> & {
+        packet?: Omit<ReturnType<typeof packet>, "candidate"> & {
           candidate: ReturnType<typeof packet>["candidate"] & {
             rangeStart: string;
             rangeEnd: string;
           };
         };
       };
-      const value = request.packet;
-      const hasRelationshipEvidence = request.conversationContext?.eventLedger
-        ?.some((item) => item.active && /关系|恋爱|分手|结婚|离婚|伴侣/.test(item.summary)) === true;
-      const domains = hasRelationshipEvidence
-        ? ["career" as const]
-        : ["relationship" as const];
-      const nextDomain = domains[0] === "relationship" ? "重要关系" : "事业";
-      const latest = request.conversationContext?.latestEvidence?.at(-1);
+      const fallbackPacket = packet(false);
+      const value = request.packet ?? {
+        ...fallbackPacket,
+        candidate: {
+          ...fallbackPacket.candidate,
+          rangeStart: fallbackPacket.candidate.range.startTime,
+          rangeEnd: fallbackPacket.candidate.range.endTime,
+        },
+      };
+      const ordinaryConversation = request.phase === "intermediate" && request.conversation !== undefined;
+      const latestUserText = request.conversation?.latestUserText ?? request.conversationContext?.recentConversation?.at(-1)?.text ?? "";
+      const latest = request.conversationContext?.latestEvidence?.at(-1)
+        ?? (latestUserText ? { dateLabel: "", summary: latestUserText } : undefined);
       const latestActiveEvent = request.conversationContext?.eventLedger
         ?.filter((item) => item.active)
         .at(-1);
       const unresolved = request.conversationContext?.unresolvedEvidence?.at(-1);
+      const hasRelationshipEvidence = request.conversationContext?.eventLedger
+        ?.some((item) => item.active && /关系|恋爱|分手|结婚|离婚|伴侣/.test(item.summary)) === true;
+      const domains = hasRelationshipEvidence ? ["career" as const] : ["relationship" as const];
+      const nextDomain = domains[0] === "relationship" ? "重要关系" : "事业";
       const asksForLatestDetail = continueLatestEvent
         && request.phase === "intermediate"
-        && latestActiveEvent !== undefined;
+        && (ordinaryConversation ? latest !== undefined : latestActiveEvent !== undefined);
+      const asksForMissingDate = ordinaryConversation
+        && latest !== undefined
+        && !/(?:19|20)\d{2}|\d{1,2}\s*月|(?:同年|当年|那年|来年)/u.test(latestUserText)
+        && !/^(?:是|对|没错|确认|不是|不对)/u.test(latestUserText);
       const freeNarrative = request.phase !== "final"
         && freeNarrativeFromGeneration !== undefined
         && generation >= freeNarrativeFromGeneration;
+
+      if (ordinaryConversation) {
+        const question = asksForMissingDate
+          ? "这大约发生在哪一年、哪一月？"
+          : asksForLatestDetail ? detailQuestion : null;
+        const narrative = freeNarrative
+          ? "我明白。你可以顺着这段经历继续说，也可以自然讲下一件想到的事。"
+          : [
+            latest ? `你说的“${latest.summary}”，我理解了。` : "我在听。",
+            varyNarrative ? `这是第 ${generation} 次合成措辞。` : "",
+            question ?? "",
+          ].join("");
+        return { text: JSON.stringify({
+          narrative,
+          evidenceRequest: question ? {
+            domains,
+            datePrecision: "month_preferred",
+            prompt: question,
+            followUp: asksForMissingDate
+              ? { kind: "event_date" }
+              : mislabelLatestDetailAsNewEvent
+                ? { kind: "new_event", evidenceId: null }
+                : { kind: "event_detail" },
+          } : null,
+        }) };
+      }
+
       const narrative = freeNarrative
-        ? "我明白，这段经历已经记下。你可以继续按自己的节奏讲。"
+        ? "我明白。你可以顺着这段经历继续说，也可以自然讲下一件想到的事。"
         : [
-        request.phase === "intermediate" && latest
-          ? `记下了：${latest.dateLabel} · ${latest.summary}。`
-          : `当前仍在核对 ${value.candidate.rangeStart}–${value.candidate.rangeEnd} 的候选范围，不能视为已经确认的出生分钟。`,
-        varyNarrative ? `这是第 ${generation} 次合成措辞。` : "",
-        request.phase === "final"
-          ? "当前证据已形成候选总结。"
-          : unresolved?.dateLabel === "日期待补充"
-            ? `我先把“${unresolved.summary}”这件事补完整：它大约发生在哪一年、哪一月？`
-          : asksForLatestDetail
-            ? detailQuestion
-            : `先说一件已经发生的${nextDomain}经历好吗？请写明哪一年、哪一月以及发生了什么。`,
+          request.phase === "intermediate" && latest
+            ? `你刚才说到${latest.dateLabel ? `${latest.dateLabel} · ` : ""}${latest.summary}。`
+            : `当前仍在核对 ${value.candidate.rangeStart}–${value.candidate.rangeEnd} 的候选范围，不能视为已经确认的出生分钟。`,
+          varyNarrative ? `这是第 ${generation} 次合成措辞。` : "",
+          request.phase === "final"
+            ? "当前证据已形成候选总结。"
+            : unresolved?.dateLabel === "日期待补充"
+              ? `我先把“${unresolved.summary}”这件事补完整：它大约发生在哪一年、哪一月？`
+              : asksForLatestDetail
+                ? detailQuestion
+                : `先说一件已经发生的${nextDomain}经历好吗？请写明哪一年、哪一月以及发生了什么。`,
         ].join("");
       return { text: JSON.stringify({
         narrative,
@@ -197,15 +241,15 @@ function validGenerator(
           prompt: unresolved?.dateLabel === "日期待补充"
             ? `“${unresolved.summary}”大约发生在哪一年、哪一月？`
             : asksForLatestDetail
-            ? detailQuestion
-            : `请说一件已经发生的${nextDomain}经历，并写明哪一年、哪一月以及发生了什么。`,
+              ? detailQuestion
+              : `请说一件已经发生的${nextDomain}经历，并写明哪一年、哪一月以及发生了什么。`,
           followUp: unresolved?.dateLabel === "日期待补充"
             ? { kind: "event_date", evidenceId: unresolved.id }
             : asksForLatestDetail
-            ? mislabelLatestDetailAsNewEvent
-              ? { kind: "new_event", evidenceId: null }
-              : { kind: "event_detail", evidenceId: latestActiveEvent.id }
-            : { kind: "new_event", evidenceId: null },
+              ? mislabelLatestDetailAsNewEvent
+                ? { kind: "new_event", evidenceId: null }
+                : { kind: "event_detail", evidenceId: latestActiveEvent?.id ?? null }
+              : { kind: "new_event", evidenceId: null },
         },
       }) };
     },
@@ -1068,7 +1112,8 @@ test("a concrete event without a date is acknowledged and a date-only follow-up 
     summary: item.summary,
     dateLabel: item.dateLabel,
   })), [{ summary: "我离开家去北京开始工作", dateLabel: "2023-03" }]);
-  assert.match(completed.narrative, /记下了：2023-03 · 我离开家去北京开始工作/);
+  assert.match(completed.narrative, /2023年3月/);
+  assert.doesNotMatch(completed.narrative, /记下了|已记录|校时价值|候选时间/);
 });
 
 test("a descriptive date follow-up completes the targeted event instead of becoming a new event", async () => {
@@ -1340,19 +1385,16 @@ test("an affirmative reply confirms the date proposed by the previous Agent turn
   assert.notEqual(completed.evidenceRequest?.followUp?.evidenceId, target.id);
 
   const prompt = JSON.parse(value.narrativePrompts.at(-1) ?? "{}") as {
-    conversationContext?: {
+    conversation?: {
       recentConversation?: Array<{ role: string; text: string }>;
-      previousEvidencePrompt?: string;
-      previousFollowUp?: { answerMode?: string; proposedDate?: { value: string } };
     };
+    conversationContext?: unknown;
   };
-  assert.deepEqual(prompt.conversationContext?.recentConversation?.slice(-2), [
+  assert.deepEqual(prompt.conversation?.recentConversation?.slice(-2), [
     { role: "assistant", text: "你说实习到10月份然后辞职，这个10月是2020年10月吗？" },
     { role: "user", text: "是的" },
   ]);
-  assert.equal(prompt.conversationContext?.previousEvidencePrompt, "这个10月是2020年10月吗？");
-  assert.equal(prompt.conversationContext?.previousFollowUp?.answerMode, "yes_no");
-  assert.equal(prompt.conversationContext?.previousFollowUp?.proposedDate?.value, "2020-10");
+  assert.equal(prompt.conversationContext, undefined);
 
   await value.service.answer(userId, {
     type: "answer",
@@ -1624,7 +1666,7 @@ test("a dated independent event is not swallowed by a broad detail question misl
   assert.equal(next.evidenceRecap.some((item) => item.id === firstId), true);
 });
 
-test("the next evidence request moves past a domain the user already answered", async () => {
+test("a completed event does not force the Agent into the next scoring domain", async () => {
   const value = harness({ readyAfterEvidenceCount: 99 });
   await start(value, null);
 
@@ -1636,9 +1678,8 @@ test("the next evidence request moves past a domain the user already answered", 
     answer: "2020年5月结婚",
   });
 
-  assert.deepEqual(turn.evidenceRequest?.domains, ["career"]);
-  assert.match(turn.narrative, /事业/);
-  assert.doesNotMatch(turn.narrative, /下一步[^\n]*重要关系/);
+  assert.equal(turn.evidenceRequest, null);
+  assert.doesNotMatch(turn.narrative, /下一步|事业|重要关系|校时价值|候选时间/);
 });
 
 test("a rejected intermediate narrative falls back without discarding the event", async () => {
@@ -1652,7 +1693,7 @@ test("a rejected intermediate narrative falls back without discarding the event"
 
   const stored = value.cases.get(startActionId)?.row;
   assert.equal(turn.turnVersion, 1);
-  assert.match(turn.narrative, /按自己的节奏/);
+  assert.match(turn.narrative, /顺着这段经历继续说|自然讲下一件/);
   assert.equal(stored?.privateCandidate.resultId, null);
   assert.equal(stored?.eventEvidence.length, 1);
   assert.equal(stored?.validationReceipts.length, 2);
@@ -1689,7 +1730,7 @@ test("one through three supported events save and narrate before the fourth accu
   assert.equal(value.events.filter((event) => event === "narrative").length, 4);
 });
 
-test("intermediate narrative receives the complete active event ledger", async () => {
+test("intermediate narrative receives conversation text without the private event ledger", async () => {
   const value = harness({ readyAfterEvidenceCount: 99 });
   await start(value, null);
   await value.service.answer(userId, {
@@ -1710,7 +1751,7 @@ test("intermediate narrative receives the complete active event ledger", async (
   const prompt = value.narrativePrompts.at(-1) ?? "";
   assert.match(prompt, /2020年9月底主动离开研究单位/);
   assert.match(prompt, /2023年4月进入下一家公司/);
-  assert.match(prompt, /eventLedger/);
+  assert.doesNotMatch(prompt, /eventLedger|unresolvedEvidence|expertWorkflow|candidateWeights/);
 });
 
 test("a plateaued non-confirmable conversational case returns a bounded candidate after current domains are covered", async () => {
@@ -1734,7 +1775,7 @@ test("a plateaued non-confirmable conversational case returns a bounded candidat
     });
     if (index === 2) {
       assert.equal(latest.status, "active");
-      assert.deepEqual(latest.evidenceRequest?.domains, ["relationship"]);
+      assert.equal(latest.evidenceRequest, null);
     }
   }
 
@@ -1781,7 +1822,7 @@ test("an unanswered suggested domain keeps a plateaued candidate conversational"
   }
 
   assert.equal(latest?.status, "active");
-  assert.deepEqual(latest?.evidenceRequest?.domains, ["finance"]);
+  assert.equal(latest?.evidenceRequest, null);
   assert.deepEqual(latest?.actions, ["answer", "pause", "abandon"]);
 });
 
@@ -1815,7 +1856,8 @@ test("answer persists after pause when the packet has no grounded follow-up doma
 
   assert.equal(turn.status, "active");
   assert.equal(turn.evidenceRequest, null);
-  assert.match(turn.narrative, /记下了/);
+  assert.match(turn.narrative, /2020年4月进入研究院实习/);
+  assert.doesNotMatch(turn.narrative, /记下了|已记录|校时价值|候选时间/);
 });
 
 test("system-only blockers return a bounded result without waiting for another plateau", async () => {
@@ -1939,7 +1981,8 @@ test("vague, future, and unmatched answers stay conversational and never score",
     });
     assert.equal(value.counts().packetBuilds, 1);
     assert.equal(turn.status, "active");
-    assert.match(turn.narrative, /哪一年|哪一月|年月|已发生|已经发生|换个方向|未来/);
+    assert.ok(turn.narrative.length > 0);
+    assert.match(turn.narrative, new RegExp(answer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     assert.doesNotMatch(turn.narrative, /好的，我们不沿用不符合你的方向|已保存这段描述|我已保存你的原话|这条更正已保存/);
     assert.doesNotMatch(turn.narrative, /A[.、:]|B[.、:]|2006.?2011/);
     assert.equal(value.cases.get(startActionId)?.row.eventEvidence.at(-1)?.scoreable, false);
@@ -1947,7 +1990,11 @@ test("vague, future, and unmatched answers stay conversational and never score",
 });
 
 test("a free Agent reply clears the previous structured question instead of inheriting it", async () => {
-  const value = harness({ readyAfterEvidenceCount: 99, freeNarrativeFromGeneration: 2 });
+  const value = harness({
+    readyAfterEvidenceCount: 99,
+    continueLatestEvent: true,
+    freeNarrativeFromGeneration: 2,
+  });
   await start(value, null);
 
   const first = await value.service.answer(userId, {
@@ -1962,7 +2009,7 @@ test("a free Agent reply clears the previous structured question instead of inhe
   });
 
   assert.equal(second.evidenceRequest, null);
-  assert.match(second.narrative, /按自己的节奏/);
+  assert.match(second.narrative, /顺着这段经历继续说|自然讲下一件/);
   assert.doesNotMatch(second.narrative, /[？?]/);
 });
 
@@ -2093,7 +2140,7 @@ test("a failed regenerate saves a fallback turn without changing evidence, candi
 
   const storedAfter = value.cases.get(startActionId)?.row;
   assert.equal(regenerated.turnVersion, answered.turnVersion + 1);
-  assert.match(regenerated.narrative, /按自己的节奏/);
+  assert.match(regenerated.narrative, /顺着这段经历继续说|自然讲下一件/);
   assert.deepEqual(storedAfter?.eventEvidence, evidenceBefore);
   assert.deepEqual(storedAfter?.privateCandidate, candidateBefore);
   assert.equal(value.counts().reserveCount, countsBefore.reserveCount);
