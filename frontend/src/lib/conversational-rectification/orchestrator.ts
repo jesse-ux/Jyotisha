@@ -603,7 +603,7 @@ function openingRectificationState(input: {
     journeyProtocol: "conversational-evidence-v3",
     status: "active",
     turnVersion: 0,
-    narrative: `根据你填写的出生时间信息，当前先核对 ${range.startTime}–${range.endTime}。这只是待核对范围，还不能把其中某一分钟当作已确认出生时间。请先说一件时间最明确、影响比较大的真实经历，并尽量告诉我发生的年月。`,
+    narrative: `根据你填写的出生时间信息，当前先核对 ${range.startTime}–${range.endTime}。这只是待核对范围，还不能把其中某一分钟当作已确认出生时间。你可以按自己的节奏讲已经发生的人生经历，一次说一件或连续说多件都可以；记得的年月可以自然地带上，不确定也没关系。`,
     candidate: {
       status: "pending_validation",
       representativeTime,
@@ -616,13 +616,7 @@ function openingRectificationState(input: {
       sensitiveLayers: [],
       candidateDifferenceRefs: [],
     },
-    evidenceRequest: {
-      domains: ["career", "education", "relocation", "relationship"],
-      datePrecision: "month_preferred",
-      freeTextAllowed: true,
-      prompt: "请说一件已经发生、时间比较明确的重要经历，并告诉我大约是哪一年、哪一月？",
-      followUp: { kind: "new_event", evidenceId: null },
-    },
+    evidenceRequest: null,
     evidenceRecap: [],
     actions: ["answer", "pause", "abandon"],
     pendingConsultationQuestion: input.pendingConsultationQuestion,
@@ -659,45 +653,30 @@ function nonScoringTurn(input: {
   }>;
 }): { readonly turn: ConversationalRectificationTurn; readonly receipt: ValidationReceipt } {
   const allEvidence = [...input.current.eventEvidence, ...input.newEvidence];
-  const latestIncomplete = input.newEvidence
-    .filter((item) => item.extractionStatus === "needs_clarification")
-    .at(-1);
   const authoredNarrative = input.authoredNarrative;
   const latestSummary = input.newEvidence.at(-1)?.eventSummary;
   const fallbackSubject = latestSummary && latestSummary !== "事件内容待补充"
     ? latestSummary
     : input.latestUserText.trim().slice(0, 80);
   const narrative = authoredNarrative?.narrative
-    ?? `我收到了你这轮关于“${fallbackSubject || "这段经历"}”的补充，但这次分析暂时没有完成。内容会保留，你可以继续补充它的时间和经过，或直接说下一件已经发生的经历。`;
+    ?? `我收到了你这轮关于“${fallbackSubject || "这段经历"}”的补充，内容已经保留。你可以继续讲这段经历，也可以按自己的节奏说下一件想到的事。`;
   const status = input.correctionReset
     ? "active" as const
     : input.current.status === "confirming" ? "confirming" as const : "active" as const;
   const actions = actionsFor(status);
-  const clarificationFollowUp = latestIncomplete?.dateValue === null
-    && latestIncomplete.eventSummary !== "事件内容待补充"
-    ? { kind: "event_date" as const, evidenceId: latestIncomplete.id }
-    : latestIncomplete?.dateValue
-      && latestIncomplete.eventSummary === "事件内容待补充"
-      ? { kind: "event_detail" as const, evidenceId: latestIncomplete.id }
+  const authoredRequest = authoredNarrative?.output.evidenceRequest;
+  const priorRequest = input.current.latestTurn.evidenceRequest;
+  const evidenceRequest = authoredRequest
+    ? {
+        domains: authoredRequest.domains,
+        datePrecision: authoredRequest.datePrecision,
+        freeTextAllowed: true as const,
+        prompt: authoredRequest.prompt,
+        followUp: input.followUpOverride ?? authoredRequest.followUp,
+      }
+    : input.followUpOverride && priorRequest
+      ? { ...priorRequest, followUp: input.followUpOverride }
       : null;
-    const authoredRequest = authoredNarrative?.output.evidenceRequest;
-    const priorRequest = input.current.latestTurn.evidenceRequest;
-  const evidenceRequest = status === "confirming" && priorRequest === null
-    ? null
-    : authoredRequest
-      ? {
-          domains: authoredRequest.domains,
-          datePrecision: authoredRequest.datePrecision,
-          freeTextAllowed: true as const,
-          prompt: authoredRequest.prompt,
-          followUp: input.followUpOverride ?? authoredRequest.followUp,
-        }
-      : priorRequest
-        ? {
-            ...priorRequest,
-            followUp: input.followUpOverride ?? clarificationFollowUp ?? priorRequest.followUp,
-          }
-        : null;
   const parsed = conversationalRectificationTurnSchema.safeParse({
     ...input.current.latestTurn,
     status,

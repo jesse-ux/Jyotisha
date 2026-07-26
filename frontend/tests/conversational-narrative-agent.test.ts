@@ -144,23 +144,18 @@ test("preserves a complete model-authored first-turn narrative verbatim", async 
   assert.equal(result.output.evidenceRequest?.prompt, "那段关系大约是什么时候发生的？");
 });
 
-test("completes a first-turn introduction with the model-authored question", async () => {
+test("allows a first-turn acknowledgement without forcing a question", async () => {
+  const narrative = "我们先把你记得的出生范围当作起点。你可以按自己的节奏往下讲。";
   const result = await generateRectificationNarrative({
     phase: "first",
     packet: syntheticTechnicalPacket(),
-    generator: generator([{
-      narrative: "我们先把你记得的出生范围当作起点，再用真实经历逐步核对。",
-      evidenceRequest: {
-        domains: ["relationship"],
-        datePrecision: "month_preferred",
-        prompt: "先说一件时间比较明确的关系转折，好吗？",
-      },
-    }]),
+    generator: generator([{ narrative, evidenceRequest: null }]),
   });
 
   assert.equal(result.fallbackUsed, false);
-  assert.match(result.narrative, /真实经历逐步核对。[\s\S]*关系转折，好吗？/);
-  assert.equal((result.narrative.match(/[？?]/g) ?? []).length, 1);
+  assert.equal(result.narrative, narrative);
+  assert.equal(result.output.evidenceRequest, null);
+  assert.doesNotMatch(result.narrative, /[？?]/);
 });
 
 test("repairs a natural intermediate follow-up prompt without discarding the specific reply", async () => {
@@ -226,73 +221,18 @@ test("preserves the target event in an intermediate detail follow-up", async () 
   });
 });
 
-test("appends the model-authored question when an intermediate reply only acknowledges the event", async () => {
-  const output = {
-    ...richOutput(),
-    narrative: "已记录本科毕业后衔接读研，这是一段连续教育转折，暂时不重复计数。",
-    evidenceRequest: {
-      domains: ["career" as const],
-      datePrecision: "month_preferred" as const,
-      prompt: "毕业后的第一份工作是什么时候开始的？",
-    },
-  };
-
+test("keeps a natural intermediate acknowledgement without appending a question", async () => {
+  const narrative = "已记录本科毕业后衔接读研，这是一段连续教育转折，暂时不重复计数。你可以继续讲。";
   const result = await generateRectificationNarrative({
     phase: "intermediate",
     packet: syntheticTechnicalPacket(),
-    generator: generator([output]),
+    generator: generator([{ narrative, evidenceRequest: null }]),
   });
 
   assert.equal(result.fallbackUsed, false);
-  assert.match(result.narrative, /连续教育转折[\s\S]*第一份工作是什么时候开始的？/);
-  assert.equal((result.narrative.match(/[？?]/g) ?? []).length, 1);
-});
-
-test("repairs a narrative that stops at a dangling question introduction", async () => {
-  const output = {
-    ...richOutput(),
-    narrative: [
-      "谢谢你补充了当时的压力感受，这让这段经历更完整。",
-      "为了判断这段经历的具体节奏，我需要确认一个关键信息——",
-    ].join("\n\n"),
-    evidenceRequest: {
-      domains: ["career" as const],
-      datePrecision: "month_preferred" as const,
-      prompt: "你感到压力最强的时候，大约是哪一年、哪一个月？",
-    },
-  };
-
-  const result = await generateRectificationNarrative({
-    phase: "intermediate",
-    packet: syntheticTechnicalPacket(),
-    generator: generator([output]),
-  });
-
-  assert.equal(result.fallbackUsed, false);
-  assert.match(result.narrative, /关键信息——[\s\S]*压力最强的时候[\s\S]*哪一年、哪一个月/);
-  assert.equal((result.narrative.match(/[？?]/g) ?? []).length, 1);
-});
-
-test("turns a complete intermediate acknowledgement into a visible one-question turn", async () => {
-  const output = {
-    ...richOutput(),
-    narrative: "这次入职会作为一条事业事件记录，但还需要知道后续是否发生过离职、转岗或升职。",
-    evidenceRequest: {
-      domains: ["career" as const],
-      datePrecision: "month_preferred" as const,
-      prompt: "这份工作后来第一次发生明确变化是在什么时候？",
-    },
-  };
-
-  const result = await generateRectificationNarrative({
-    phase: "intermediate",
-    packet: syntheticTechnicalPacket(),
-    generator: generator([output]),
-  });
-
-  assert.equal(result.fallbackUsed, false);
-  assert.match(result.narrative, /离职、转岗或升职。[\s\S]*第一次发生明确变化是在什么时候？/);
-  assert.equal((result.narrative.match(/[？?]/g) ?? []).length, 1);
+  assert.equal(result.narrative, narrative);
+  assert.equal(result.output.evidenceRequest, null);
+  assert.doesNotMatch(result.narrative, /[？?]/);
 });
 
 test("hides an uninvoked technique inventory during evidence collection", async () => {
@@ -476,7 +416,8 @@ test("passes the user's latest concrete event to an intermediate skill-guided re
   });
 
   assert.match(prompts[0] ?? "", /离开家乡去上海开始第一份长期工作/);
-  assert.match(prompts[0] ?? "", /respondToLatestEvidenceBeforeAsking/);
+  assert.match(prompts[0] ?? "", /acknowledgeAndReflectBeforeAnyClarification/);
+  assert.match(prompts[0] ?? "", /questionsAreOptional/);
   assert.match(prompts[0] ?? "", /doNotRepeatCandidateBoundaryUnlessItChangedOrTheUserAsked/);
 });
 
@@ -555,7 +496,9 @@ test("passes the active event ledger and unresolved facts to the intermediate ag
   assert.match(prompt, /23年关系结束后发生过一次交通事故/);
   assert.match(prompt, /2024-08-08/);
   assert.match(prompt, /一段重要关系结束/);
-  assert.match(prompt, /continueCurrentEventWhenItRemainsInformative/);
+  assert.match(prompt, /freeConversation/);
+  assert.match(prompt, /questionsAreOptional/);
+  assert.match(prompt, /acceptMultipleEventsInOneMessage/);
   assert.match(prompt, /resolveDateContradictionsBeforeScoring/);
   assert.match(prompt, /mergeSameEventDetailsWithoutDoubleCounting/);
 });
@@ -868,7 +811,7 @@ test("rejects a follow-up that still targets evidence completed by an affirmativ
   assert.ok(result.issues.includes("resolved follow-up still targets completed evidence"));
 });
 
-test("rejects non-scoring detail questions for evidence already used by the scorer", () => {
+test("allows natural discussion of an event after it has contributed to scoring", () => {
   const evidenceId = "11111111-1111-4111-8111-111111111111";
   const packet: RectificationTechnicalPacket = {
     ...syntheticTechnicalPacket(),
@@ -882,7 +825,7 @@ test("rejects non-scoring detail questions for evidence already used by the scor
   };
   const output = richOutput();
   assert.ok(output.evidenceRequest);
-  const invalid = {
+  const conversational = {
     ...output,
     evidenceRequest: {
       ...output.evidenceRequest,
@@ -896,10 +839,10 @@ test("rejects non-scoring detail questions for evidence already used by the scor
     },
   } satisfies RectificationNarrativeModelOutput;
 
-  const result = validateNarrativeAgainstPacket(invalid, packet, "intermediate");
-
-  assert.equal(result.valid, false);
-  assert.ok(result.issues.includes("event detail follow-up targets already scored evidence"));
+  assert.deepEqual(validateNarrativeAgainstPacket(conversational, packet, "intermediate"), {
+    valid: true,
+    issues: [],
+  });
 });
 
 test("retries a grounded validation failure once with a compact packet", async () => {
@@ -1042,7 +985,7 @@ test("retries when a final narrative asks for more evidence", async () => {
   assert.equal(result.output.evidenceRequest, null);
 });
 
-test("retries a scored-event detail question mislabeled as new_event", async () => {
+test("does not force a retry when the Agent naturally discusses a scored event", async () => {
   const evidenceId = "00000000-0000-4000-8000-000000000709";
   const packet = {
     ...syntheticTechnicalPacket(),
@@ -1054,23 +997,10 @@ test("retries a scored-event detail question mislabeled as new_event", async () 
       ruleRefs: ["synthetic-education-rule"],
     }],
   };
-  const invalid = {
+  const output = {
     ...richOutput(),
-    evidenceRequest: {
-      domains: ["career" as const],
-      datePrecision: "month_preferred" as const,
-      prompt: "这几个月里，学业压力具体体现在哪些方面，主要原因是什么？",
-      followUp: { kind: "new_event" as const, evidenceId: null },
-    },
-  };
-  const valid = {
-    ...richOutput(),
-    evidenceRequest: {
-      domains: ["career" as const],
-      datePrecision: "month_preferred" as const,
-      prompt: "请再说一件已经发生的事业变化，并写明哪一年、哪一月。",
-      followUp: { kind: "new_event" as const, evidenceId: null },
-    },
+    narrative: "我理解，这几个月的学业压力不只是结果，也影响了你当时的选择。",
+    evidenceRequest: null,
   };
   const result = await generateRectificationNarrative({
     phase: "intermediate",
@@ -1087,12 +1017,13 @@ test("retries a scored-event detail question mislabeled as new_event", async () 
         correctsEvidenceIds: [],
       }],
     },
-    generator: generator([invalid, valid]),
+    generator: generator([output]),
   });
 
-  assert.equal(result.attempts, 2);
+  assert.equal(result.attempts, 1);
   assert.equal(result.fallbackUsed, false);
-  assert.equal(result.output.evidenceRequest?.prompt, valid.evidenceRequest.prompt);
+  assert.equal(result.output.evidenceRequest, null);
+  assert.equal(result.narrative, output.narrative);
 });
 
 test("records first-turn generation timeouts separately from schema failures", async () => {

@@ -106,6 +106,7 @@ function validGenerator(
   detailQuestion = "这份工作是正式工作，还是实习或兼职？",
   mislabelLatestDetailAsNewEvent = false,
   classifyEvidenceDomain?: (text: string) => "career" | "education" | "finance" | "health_pressure" | "relocation" | "relationship" | "family" | "other" | null,
+  freeNarrativeFromGeneration?: number,
 ) {
   let generation = 0;
   return {
@@ -161,7 +162,12 @@ function validGenerator(
       const asksForLatestDetail = continueLatestEvent
         && request.phase === "intermediate"
         && latestActiveEvent !== undefined;
-      const narrative = [
+      const freeNarrative = request.phase !== "final"
+        && freeNarrativeFromGeneration !== undefined
+        && generation >= freeNarrativeFromGeneration;
+      const narrative = freeNarrative
+        ? "我明白，这段经历已经记下。你可以继续按自己的节奏讲。"
+        : [
         request.phase === "intermediate" && latest
           ? `记下了：${latest.dateLabel} · ${latest.summary}。`
           : `当前仍在核对 ${value.candidate.rangeStart}–${value.candidate.rangeEnd} 的候选范围，不能视为已经确认的出生分钟。`,
@@ -173,7 +179,7 @@ function validGenerator(
           : asksForLatestDetail
             ? detailQuestion
             : `先说一件已经发生的${nextDomain}经历好吗？请写明哪一年、哪一月以及发生了什么。`,
-      ].join("");
+        ].join("");
       return { text: JSON.stringify({
         narrative,
         candidateStatus: value.candidate.status,
@@ -185,7 +191,7 @@ function validGenerator(
         sensitiveLayers: value.sensitiveLayers.map((item) => typeof item === "string" ? item : item.layer),
         referenceIds: [],
         domainReasons: [],
-        evidenceRequest: request.phase === "final" ? null : {
+        evidenceRequest: request.phase === "final" || freeNarrative ? null : {
           domains,
           datePrecision: "month_preferred",
           prompt: unresolved?.dateLabel === "日期待补充"
@@ -224,6 +230,7 @@ function harness(options: {
   readonly detailQuestion?: string;
   readonly mislabelLatestDetailAsNewEvent?: boolean;
   readonly classifyEvidenceDomain?: (text: string) => "career" | "education" | "finance" | "health_pressure" | "relocation" | "relationship" | "family" | "other" | null;
+  readonly freeNarrativeFromGeneration?: number;
 } = {}) {
   const events: string[] = [];
   const narrativePrompts: string[] = [];
@@ -465,6 +472,7 @@ function harness(options: {
       options.detailQuestion,
       options.mislabelLatestDetailAsNewEvent,
       options.classifyEvidenceDomain,
+      options.freeNarrativeFromGeneration,
     ),
     asOfDate: () => "2026-07-21",
   };
@@ -525,14 +533,15 @@ test("start creates a deterministic opening without scanning or narrative genera
   assert.equal(turn.candidate.rangeEnd, "05:50");
   assert.match(turn.narrative, /当前先核对 04:50–05:50/);
   assert.match(turn.narrative, /还不能把其中某一分钟当作已确认出生时间/);
-  assert.match(turn.narrative, /请先说一件/);
+  assert.match(turn.narrative, /按自己的节奏/);
+  assert.match(turn.narrative, /一次说一件或连续说多件/);
   assert.deepEqual(turn.technicalReceipt, {
     calculationVersion: "rectification-opening-v1",
     stableLayers: [],
     sensitiveLayers: [],
     candidateDifferenceRefs: [],
   });
-  assert.equal(turn.evidenceRequest?.followUp?.kind, "new_event");
+  assert.equal(turn.evidenceRequest, null);
   assert.equal(JSON.stringify(turn).includes("candidateWeights"), false);
   assert.equal(value.cases.get(startActionId)?.row.revisionOfCaseId, priorCaseId);
   assert.equal(value.cases.get(startActionId)?.row.baselineActiveTime, "04:58");
@@ -1904,6 +1913,26 @@ test("vague, future, and unmatched answers stay conversational and never score",
   }
 });
 
+test("a free Agent reply clears the previous structured question instead of inheriting it", async () => {
+  const value = harness({ readyAfterEvidenceCount: 99, freeNarrativeFromGeneration: 2 });
+  await start(value, null);
+
+  const first = await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: answerActionId,
+    turnVersion: 0, answer: "2020年4月进入研究院实习",
+  });
+  assert.ok(first.evidenceRequest);
+
+  const second = await value.service.answer(userId, {
+    type: "answer", caseId: startActionId, actionId: secondAnswerActionId,
+    turnVersion: 1, answer: "2020年10月主动辞职，之后准备考研",
+  });
+
+  assert.equal(second.evidenceRequest, null);
+  assert.match(second.narrative, /按自己的节奏/);
+  assert.doesNotMatch(second.narrative, /[？?]/);
+});
+
 test("a non-scoring packet failure responds to the current turn instead of replaying the prior agent message", async () => {
   const value = harness({
     packetFailure: new Error("synthetic packet outage"),
@@ -1917,8 +1946,8 @@ test("a non-scoring packet failure responds to the current turn instead of repla
   });
 
   assert.notEqual(turn.narrative, initial.narrative);
-  assert.match(turn.narrative, /化学专业|这轮|这次分析/);
-  assert.match(turn.narrative, /暂时没有完成/);
+  assert.match(turn.narrative, /化学专业|这轮|内容已经保留/);
+  assert.match(turn.narrative, /按自己的节奏/);
   assert.equal(value.cases.get(startActionId)?.row.validationReceipts.at(-1)?.fallbackUsed, true);
   assert.equal(value.cases.get(startActionId)?.row.eventEvidence.at(-1)?.rawText, "化学专业");
 });

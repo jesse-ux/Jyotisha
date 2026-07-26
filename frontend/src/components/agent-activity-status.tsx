@@ -1,4 +1,3 @@
-import { CircleCheck } from "lucide-react";
 import { ThinkingOrb, type OrbState } from "thinking-orbs";
 
 const labels = {
@@ -8,10 +7,9 @@ const labels = {
   listening: "正在聆听…",
   composing: "正在组织回答…",
   shaping: "正在生成结果…",
-  completed: "回答已完成",
-} as const satisfies Record<OrbState | "completed", string>;
+} as const satisfies Record<OrbState, string>;
 
-export type AgentActivityState = OrbState | "completed";
+export type AgentActivityState = OrbState;
 
 export function AgentActivityStatus({
   state,
@@ -21,10 +19,8 @@ export function AgentActivityStatus({
   label?: string;
 }>) {
   return (
-    <div className="agent-activity-status" role={state === "completed" ? undefined : "status"}>
-      {state === "completed"
-        ? <CircleCheck aria-hidden="true" size={20} strokeWidth={1.8} />
-        : <ThinkingOrb aria-hidden="true" state={state} size={20} />}
+    <div className="agent-activity-status" role="status">
+      <ThinkingOrb aria-hidden="true" state={state} size={20} />
       <span>{label}</span>
     </div>
   );

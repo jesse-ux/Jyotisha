@@ -65,7 +65,6 @@ const labeledYearChoicesPattern = /A\s*[.、:：)]?[\s\S]{0,80}(?:19|20)\d{2}\s*
 const affirmativeAnswerPattern = /^\s*(?:是(?:的)?|对(?:的)?|没错|正确|确认|就是|嗯+|没问题)\s*[。.!！,，]?\s*$/u;
 const negativeAnswerPattern = /^\s*(?:不是|不对|错了|并不是|否)\s*[。.!！,，]?\s*$/u;
 const proposedDateQuestionPattern = /(?:19|20)\d{2}\s*年(?:\s*(?:1[0-2]|0?[1-9])\s*月)?(?:\s*(?:3[01]|[12]\d|0?[1-9])\s*(?:日|号))?[\s\S]{0,30}(?:吗|是否|是不是|确认|对不对|正确)/u;
-const nonScoringDetailPattern = /为什么|原因|主动|被动|自愿|被迫|影响|感受|具体(?:体现|情况|经过)|哪些方面|正式工作|实习|兼职/u;
 const domainLabels = {
   career: "事业",
   education: "学业",
@@ -301,17 +300,6 @@ export function validateNarrativeAgainstPacket(
       if (!allowedDomains.has(domain)) issues.push(`evidence domain ${domain} is not packet-grounded`);
     }
     const followUp = output.evidenceRequest.followUp;
-    if (followUp?.kind === "event_detail"
-      && packet.scoredHistoricalEvidence.some((item) => item.evidenceId === followUp.evidenceId)) {
-      issues.push("event detail follow-up targets already scored evidence");
-    }
-    const latestActiveEvidenceId = context.eventLedger?.filter((item) => item.active).at(-1)?.id;
-    if (followUp?.kind === "new_event"
-      && latestActiveEvidenceId
-      && nonScoringDetailPattern.test(output.evidenceRequest.prompt)
-      && packet.scoredHistoricalEvidence.some((item) => item.evidenceId === latestActiveEvidenceId)) {
-      issues.push("new-event follow-up disguises detail about already scored evidence");
-    }
     if (proposedDateQuestionPattern.test(output.evidenceRequest.prompt)
       && (followUp?.kind !== "event_date"
         || followUp.answerMode !== "yes_no"
@@ -454,45 +442,6 @@ function boundedReceiptIssues(issues: readonly string[]): string[] {
     .map((issue) => issue.trim().slice(0, 240) || "narrative_mismatch");
 }
 
-function ensureSentence(value: string, sentence: string): string {
-  const trimmed = value.trim();
-  return trimmed ? `${trimmed}\n${sentence}` : sentence;
-}
-
-function endsWithIncompletePrompt(value: string): boolean {
-  return /(?:[-—–:：,，、]|\.\.\.|…|我需要(?:确认|了解|知道)|关键信息)\s*$/.test(value.trim());
-}
-
-function hasExplicitQuestion(value: string): boolean {
-  return /[？?]/.test(value);
-}
-
-function repairRequiredSafetyLanguage(
-  output: RectificationNarrativeModelOutput,
-  phase: RectificationNarrativePhase,
-): RectificationNarrativeModelOutput {
-  let narrative = output.narrative;
-  const evidenceRequest = output.evidenceRequest;
-  const modelEvidencePrompt = output.evidenceRequest?.prompt.trim() ?? "";
-
-  // Every collecting turn must end with one visible, model-authored question.
-  // evidenceRequest.prompt is generated in the same model call, so appending it
-  // repairs truncated or analysis-only prose without introducing a business
-  // template or changing the Agent's chosen conversational direction.
-  if (phase !== "final" && evidenceRequest && (
-    endsWithIncompletePrompt(narrative)
-    || !hasExplicitQuestion(narrative)
-  )) {
-    narrative = ensureSentence(narrative, modelEvidencePrompt || evidenceRequest.prompt);
-  }
-
-  return {
-    ...output,
-    narrative,
-    evidenceRequest,
-  };
-}
-
 type NarrativeDiagnosticIssueCode =
   | "candidate_status_mismatch"
   | "representative_time_mismatch"
@@ -560,11 +509,11 @@ function promptFor(
 ): string {
   if (phase === "first") {
     return JSON.stringify({
-      task: "用自然、有人味的中文开启生时校正；简短回应当前范围，再只问一个最有信息量的问题。不要使用固定模板。",
+      task: "用自然、有人味的中文开启生时校正。用户可以按自己的节奏自由叙述，一次说一件或多件经历；自然回应即可，不必每轮提问，也不要使用固定模板。",
       phase,
       conversationContext: narrativeConversationContext(context),
       packet: grounding(packet, phase),
-      output: "只返回 narrative，以及 evidenceRequest。evidenceRequest 可用 domains 作为不可见路由元数据，并包含 datePrecision、prompt、followUp；narrative 不得输出或讨论事件分类、领域标签，也不要重复输出候选状态、时间、分盘或引用字段。",
+      output: "只返回 narrative 和 evidenceRequest。没有提出需要下一轮短答承接的明确问题时，evidenceRequest 必须为 null；若提出明确问题，可用 domains 作为不可见路由元数据，并包含 datePrecision、prompt、followUp。narrative 不得输出或讨论事件分类、领域标签，也不要重复输出候选状态、时间、分盘或引用字段。",
       safety: "技术事实只能来自 packet；不能确认未经验证的分钟；不得展示内部权重、分数、事件分类或内部路由元数据。",
       retryIssues: boundedReceiptIssues(retryIssues),
     });
@@ -592,21 +541,21 @@ function promptFor(
       internalEventDomainsAndRoutingMustNeverBeShown: true,
     },
     conversationGuidance: {
-      preferOneHighInformationQuestion: phase !== "final",
-      everyNonFinalReplyMustEndWithExactlyOneVisibleQuestion: phase !== "final",
-      respondToLatestEvidenceBeforeAsking: phase === "intermediate",
+      freeConversation: phase !== "final",
+      questionsAreOptional: phase !== "final",
+      userControlsNarrativePace: phase !== "final",
+      acceptMultipleEventsInOneMessage: phase !== "final",
+      acknowledgeAndReflectBeforeAnyClarification: phase === "intermediate",
+      doNotTurnEveryMessageIntoAQuestionnaire: phase !== "final",
+      askOnlyWhenAClarificationWouldMateriallyHelpTheConversation: phase !== "final",
       neverMentionHowTheEventWasClassifiedOrLabeledInternally: phase === "intermediate",
       doNotVolunteerNotEvaluatedOrBlockedTechniqueInventory: phase === "intermediate",
       doNotRepeatCandidateBoundaryUnlessItChangedOrTheUserAsked: phase === "intermediate",
-      continueCurrentEventWhenItRemainsInformative: phase === "intermediate",
       resolveDateContradictionsBeforeScoring: phase === "intermediate",
       mergeSameEventDetailsWithoutDoubleCounting: phase === "intermediate",
-      onlyAskForDateEventIdentityOrInformationThatCanChangeTheScoringDomain: phase === "intermediate",
-      doNotAskWhyWhetherVoluntaryOrWhatImpactForAlreadyScoreableEvidence: phase === "intermediate",
       useEventLedgerToAvoidRepeatingAnsweredQuestions: phase === "intermediate",
-      askForDatesOnlyWhenNeededToIdentifyOrScoreTheEvent: phase !== "final",
-      persistFollowUpState: phase !== "final"
-        ? "Persist the exact question intent. Use event_detail or event_date with an existing evidenceId. For a yes/no date proposal, set answerMode=yes_no and proposedDate={value,precision}; otherwise use answerMode=free_text and no proposedDate. Use new_event with null evidenceId only for a genuinely new event."
+      optionalFollowUpState: phase !== "final"
+        ? "Only when narrative contains a clear question that expects a short next-turn answer, persist its exact intent. Use event_detail or event_date with an existing evidenceId. For a yes/no date proposal, set answerMode=yes_no and proposedDate={value,precision}; otherwise use answerMode=free_text and no proposedDate. Use new_event with null evidenceId only for a genuinely new event. Otherwise evidenceRequest must be null."
         : false,
       boundedResultBoundary: phase === "final" && packet.candidate.status === "pending_validation"
         ? "当前只支持候选范围，系统验证尚未闭环。本次不会替换当前排盘时间，也不再要求用户继续提供人生事件；evidenceRequest 必须为 null。"
@@ -619,13 +568,11 @@ function promptFor(
 
 function fallbackNarrative(packet: RectificationTechnicalPacket, phase: RectificationNarrativePhase): string {
   const candidate = packet.candidate;
-  const nextDomain = packet.suggestedDomains[0]?.domain;
-  const nextLabel = nextDomain ? domainLabels[nextDomain] : "重要经历";
   const phaseLine = phase === "final" && candidate.status === "ready_for_confirmation"
     ? "当前证据已形成候选总结，但仍有残余不确定性；只有明确确认后才会替换当前排盘时间。"
     : phase === "final"
       ? "当前证据只能支持候选范围，系统验证尚未闭环；本次不会替换当前排盘时间，也不再强制追问更多人生事件。"
-    : `先说一件已经发生的${nextLabel}事件好吗？尽量写明哪一年、哪一月以及发生了什么。`;
+    : `我收到了这段叙述。你可以继续讲这段经历，也可以按自己的节奏说下一件想到的事。`;
   return [
     `当前仍在核对 ${candidate.range.startTime}–${candidate.range.endTime} 的候选范围，还不能把其中某一分钟当作确定出生时间。`,
     phaseLine,
@@ -647,12 +594,7 @@ function fallbackOutput(
     sensitiveLayers: packet.sensitiveLayers.map((item) => item.layer),
     referenceIds: [],
     domainReasons: packet.suggestedDomains.map((item) => ({ ...item })),
-    evidenceRequest: phase === "final" ? null : {
-      domains: packet.suggestedDomains.slice(0, 4).map((item) => item.domain),
-      datePrecision: "month_preferred",
-      prompt: "请提供已经发生的真实事件，并尽量写明哪一年、哪一月以及发生了什么。",
-      followUp: { kind: "new_event", evidenceId: null },
-    },
+    evidenceRequest: null,
   };
 }
 
@@ -798,10 +740,7 @@ export async function generateRectificationNarrative(input: {
         issues,
       ), { signal, attempt });
       const modelId = modelIdSchema.parse(generated.modelId ?? defaultModelId);
-      const output = repairRequiredSafetyLanguage(
-        parseModelOutput(generated.text, input.packet),
-        input.phase,
-      );
+      const output = parseModelOutput(generated.text, input.packet);
       const validation = validateNarrativeAgainstPacket(
         output,
         input.packet,

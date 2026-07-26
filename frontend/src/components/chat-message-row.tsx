@@ -51,14 +51,12 @@ export function ChatMessageRow({ message }: { readonly message: ChatMessageView 
         <div className="message-bubble">
           {message.role === "assistant" ? (
             <>
-              <AgentActivityStatus
-                state={message.state === "thinking"
-                  ? "working"
-                  : message.state === "streaming"
-                    ? "composing"
-                    : "completed"}
-                label={message.state === "thinking" ? "正在核对星盘信息…" : undefined}
-              />
+              {message.state !== "settled" && (
+                <AgentActivityStatus
+                  state={message.state === "thinking" ? "working" : "composing"}
+                  label={message.state === "thinking" ? "正在核对星盘信息…" : undefined}
+                />
+              )}
               {message.text && <ChatMessageContent text={message.text} />}
             </>
           ) : <p>{message.text}</p>}
