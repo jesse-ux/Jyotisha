@@ -249,12 +249,30 @@ test("rectification adapter normalizes an event-scored candidate result", () => 
       legacy_server_metadata: { source: "existing-engine" },
     }],
     algorithm_version: "birth-time-event-scoring-v1",
+    technique_contract: {
+      calculation_status: "evaluated",
+      used_divisional_charts: ["D10"],
+      used_arudha: [],
+      dasha_tracks: ["vimshottari"],
+      missing_layers: [],
+      auxiliary_layers: [],
+      hard_blockers: ["neighbor_stability"],
+      confirmation_allowed: false,
+      decision: "continue_rectification",
+      gates: {
+        neighbor_stability: {
+          status: "diagnostic_fail",
+          reason: "diagnostic_only_unique_lead_at_plus_minus_1_2_5_minutes",
+        },
+      },
+    },
   });
 
   assert.equal(result.resultId, "1d8ee348-61a3-433d-8907-ff6d281b9992");
   assert.equal(result.winningSegment?.representativeTime, "14:24");
   assert.equal(result.canApply, false, "an old or incomplete engine receipt cannot open minute confirmation");
   assert.deepEqual(result.evidence[0]?.ruleIds, ["vim_md_domain_house"]);
+  assert.equal(result.techniqueReceipt?.gates?.neighbor_stability?.status, "fail");
   assert.equal("legacy_server_metadata" in (result.evidence[0] ?? {}), false);
 });
 

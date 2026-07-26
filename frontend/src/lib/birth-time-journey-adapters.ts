@@ -141,7 +141,7 @@ const candidateResultApiSchema = z.object({
     confirmation_allowed: z.boolean().optional(),
     decision: z.enum(["continue_rectification", "confirm_minute"]).optional(),
     gates: z.record(z.string(), z.object({
-      status: z.enum(["pass", "fail", "blocked", "not_evaluated"]),
+      status: z.enum(["pass", "fail", "diagnostic_fail", "blocked", "not_evaluated"]),
       reason: z.string(),
     }).strict()).optional(),
   }).optional(),
@@ -299,7 +299,12 @@ function adaptCandidateResult(parsed: z.infer<typeof candidateResultApiSchema>):
       canonicalInputHash: parsed.technique_contract.canonical_input_hash,
       confirmationAllowed: parsed.technique_contract.confirmation_allowed,
       decision: parsed.technique_contract.decision,
-      gates: parsed.technique_contract.gates,
+      gates: parsed.technique_contract.gates
+        ? Object.fromEntries(Object.entries(parsed.technique_contract.gates).map(([name, gate]) => [
+            name,
+            { ...gate, status: gate.status === "diagnostic_fail" ? "fail" : gate.status },
+          ]))
+        : undefined,
     } } : {}),
   });
 }

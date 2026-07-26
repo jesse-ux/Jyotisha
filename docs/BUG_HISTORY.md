@@ -1429,3 +1429,18 @@
 - 相关记录：BUG-018、BUG-073
 - 复发自：BUG-018
 - 修复版本：待提交（本地可测）
+
+## BUG-077 | Python 诊断门状态导致历史事件评分误报 503
+
+- 状态：resolved
+- 首次发现：2026-07-26
+- 最近更新：2026-07-26
+- 影响面：生时校正历史事件评分、Python 技术合同到 Web 候选结果的适配边界
+- 用户现象：用户提交第一条可评分历史事件后，请求返回 503，日志显示 `stage=score_events error=ZodError`，开放叙事无法继续收敛。
+- 触发条件：Python `technique_contract.gates` 返回诊断专用状态 `diagnostic_fail`。
+- 根因：Python 引擎合法使用 `diagnostic_fail` 表示诊断未通过但不构成技术异常；Web wire schema 只接受 `pass | fail | blocked | not_evaluated`，因此在业务判断前拒绝整份候选结果。
+- 修复：Web wire schema 接受 `diagnostic_fail`，并在共享适配边界将其规范化为内部既有的 `fail`；不扩大持久化合同，不修改 Python 引擎。
+- 验证：适配器回归覆盖含 `diagnostic_fail` 的技术合同并断言内部状态为 `fail`；聚焦测试、目标 ESLint 与 `git diff --check` 通过。
+- 防复发：跨语言 wire schema 必须覆盖 Python 真源可返回的枚举；诊断状态在适配边界归一化，内部领域模型继续保持最小稳定集合。
+- 相关记录：BUG-067、BUG-075
+- 修复版本：本次修复提交
