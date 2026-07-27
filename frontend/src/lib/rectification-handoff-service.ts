@@ -5,6 +5,10 @@ import { storedCaseRowSchema } from "./conversational-rectification/persistence-
 
 const uuidSchema = z.string().uuid();
 const fingerprintSchema = z.string().regex(/^[0-9a-f]{64}$/);
+const acceptedRangeSchema = z.object({
+  start: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+  end: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+}).strict();
 
 const handoffProjectionSchema = z.object({
   caseId: uuidSchema,
@@ -29,9 +33,14 @@ const settlementProjectionSchema = z.object({
   credits: z.number().int().nonnegative().nullable(),
 }).strict();
 
+const rectificationV4ExecutionProjectionSchema = executionProjectionSchema.extend({
+  acceptedRange: acceptedRangeSchema,
+}).strict();
+
 export type RectificationHandoffProjection = z.infer<typeof handoffProjectionSchema>;
 export type RectificationHandoffExecution = z.infer<typeof executionProjectionSchema>;
 export type RectificationHandoffSettlement = z.infer<typeof settlementProjectionSchema>;
+export type RectificationV4HandoffExecution = z.infer<typeof rectificationV4ExecutionProjectionSchema>;
 
 export type RectificationHandoffRpcClient = Readonly<{
   rpc(
@@ -60,13 +69,13 @@ function rpcMessage(error: unknown): string {
 
 function mappedError(error: unknown): RectificationHandoffServiceError {
   const message = rpcMessage(error);
-  if (message === "conversational_case_not_found") {
+  if (["conversational_case_not_found", "rectification_v4_case_not_found"].includes(message)) {
     return new RectificationHandoffServiceError("not_found");
   }
-  if (message === "conversational_stale_turn") {
+  if (["conversational_stale_turn", "stale_rectification_v4_case"].includes(message)) {
     return new RectificationHandoffServiceError("stale");
   }
-  if (message === "conversational_action_conflict") {
+  if (["conversational_action_conflict", "rectification_v4_handoff_conflict"].includes(message)) {
     return new RectificationHandoffServiceError("conflict");
   }
   return new RectificationHandoffServiceError("unavailable");
@@ -207,3 +216,127 @@ export function createRectificationHandoffService(client: RectificationHandoffRp
 }
 
 export type RectificationHandoffService = ReturnType<typeof createRectificationHandoffService>;
+
+const rectificationV4HandoffProjectionSchema = z.object({
+  protocol: z.literal("rectification-evidence-v4"),
+  caseId: uuidSchema,
+  caseVersion: z.number().int().nonnegative(),
+  question: z.string().trim().min(1).max(500),
+  questionFingerprint: fingerprintSchema,
+  requestId: uuidSchema,
+  status: z.enum(["pending", "claimed", "in_progress", "consumed"]),
+  acceptedRange: acceptedRangeSchema.nullable(),
+}).strict();
+
+export type RectificationV4HandoffProjection = z.infer<typeof rectificationV4HandoffProjectionSchema>;
+
+export function createRectificationV4HandoffService(client: RectificationHandoffRpcClient) {
+  return Object.freeze({
+    async attach(input: Readonly<{
+      userId: string;
+      caseId: string;
+      caseVersion: number;
+      actionId: string;
+      question: string;
+    }>): Promise<RectificationV4HandoffProjection> {
+      const question = input.question.trim();
+      const parsed = rectificationV4HandoffProjectionSchema.safeParse(await rpc(
+        client,
+        "attach_birth_time_rectification_v4_question",
+        {
+          p_user_id: input.userId,
+          p_case_id: input.caseId,
+          p_expected_version: input.caseVersion,
+          p_action_id: input.actionId,
+          p_question: question,
+          p_question_fingerprint: rectificationQuestionFingerprint(question),
+        },
+      ));
+      if (!parsed.success) throw new RectificationHandoffServiceError("unavailable");
+      return parsed.data;
+    },
+
+    async load(input: Readonly<{ userId: string; caseId?: string }>) {
+      const value = await rpc(client, "load_birth_time_rectification_v4_handoff", {
+        p_user_id: input.userId,
+        p_case_id: input.caseId ?? null,
+      });
+      if (value === null) return null;
+      const parsed = rectificationV4HandoffProjectionSchema.safeParse(value);
+      if (!parsed.success) throw new RectificationHandoffServiceError("unavailable");
+      return parsed.data;
+    },
+
+    async claim(input: Readonly<{
+      userId: string;
+      caseId: string;
+      caseVersion: number;
+      actionId: string;
+      question: string;
+    }>): Promise<RectificationV4HandoffProjection> {
+      const question = input.question.trim();
+      const parsed = rectificationV4HandoffProjectionSchema.safeParse(await rpc(
+        client,
+        "claim_birth_time_rectification_v4_handoff",
+        {
+          p_user_id: input.userId,
+          p_case_id: input.caseId,
+          p_expected_version: input.caseVersion,
+          p_action_id: input.actionId,
+          p_question_fingerprint: rectificationQuestionFingerprint(question),
+        },
+      ));
+      if (!parsed.success) throw new RectificationHandoffServiceError("unavailable");
+      return parsed.data;
+    },
+
+    async beginExecution(input: Readonly<{
+      userId: string;
+      caseId: string;
+      caseVersion: number;
+      claimActionId: string;
+      requestId: string;
+      question: string;
+    }>): Promise<RectificationV4HandoffExecution> {
+      const question = input.question.trim();
+      const parsed = rectificationV4ExecutionProjectionSchema.safeParse(await rpc(
+        client,
+        "begin_birth_time_rectification_v4_handoff_execution",
+        {
+          p_user_id: input.userId,
+          p_case_id: input.caseId,
+          p_expected_version: input.caseVersion,
+          p_claim_action_id: input.claimActionId,
+          p_request_id: input.requestId,
+          p_question_fingerprint: rectificationQuestionFingerprint(question),
+        },
+      ));
+      if (!parsed.success) throw new RectificationHandoffServiceError("unavailable");
+      return parsed.data;
+    },
+
+    async settle(input: Readonly<{
+      userId: string;
+      caseId: string;
+      claimActionId: string;
+      requestId: string;
+      emitted: boolean;
+    }>): Promise<RectificationHandoffSettlement> {
+      const parsed = settlementProjectionSchema.safeParse(await rpc(
+        client,
+        "settle_birth_time_rectification_v4_handoff",
+        {
+          p_user_id: input.userId,
+          p_case_id: input.caseId,
+          p_claim_action_id: input.claimActionId,
+          p_request_id: input.requestId,
+          p_emitted: input.emitted,
+        },
+      ));
+      if (!parsed.success) throw new RectificationHandoffServiceError("unavailable");
+      return parsed.data;
+    },
+  });
+}
+
+export type RectificationV4HandoffService = ReturnType<typeof createRectificationV4HandoffService>;

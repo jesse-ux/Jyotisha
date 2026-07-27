@@ -1629,6 +1629,7 @@ API_COMMAND_MAP = {
     'active-rectification-questions': '/api/active_rectification_questions',
     'active-rectification-score': '/api/active_rectification_score',
     'active-rectification-events': '/api/active_rectification_events',
+    'active-rectification-events-v4': '/api/active_rectification_events_v4',
     'case-validation': '/api/case_validation',
     'divisional-yoga': '/api/divisional_yoga',
     'deep-varga-avastha': '/api/deep_varga_avastha',
@@ -1663,6 +1664,7 @@ TECHNIQUE_EXAMPLE_ENDPOINTS = {
     '/api/active_rectification_questions',
     '/api/active_rectification_score',
     '/api/active_rectification_events',
+    '/api/active_rectification_events_v4',
     '/api/relationship',
     '/api/remedies',
     '/api/sade_sati',
@@ -2108,6 +2110,9 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(result)
             elif path == '/api/active_rectification_events':
                 result = self._compute_active_rectification_events(body)
+                self._json(result)
+            elif path == '/api/active_rectification_events_v4':
+                result = self._compute_active_rectification_events_v4(body)
                 self._json(result)
             elif path == '/api/dynamic_rectification_opportunities':
                 result = self._compute_dynamic_rectification_opportunities(body)
@@ -7522,6 +7527,101 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             'tz': self._get_float(body, 'tz', 0, -14, 14),
         }
 
+    def _compute_active_rectification_events_v4(self, body):
+        if not isinstance(body, dict):
+            raise BadRequest('request body must be an object')
+
+        def required_text(name, pattern=None):
+            value = body.get(name)
+            if not isinstance(value, str) or not value.strip():
+                raise BadRequest(f'{name} must be a string')
+            value = value.strip()
+            if pattern and not re.fullmatch(pattern, value):
+                raise BadRequest(f'{name} has invalid format')
+            return value
+
+        birth_date = required_text('birth_date', r'\d{4}-\d{2}-\d{2}')
+        start_time = required_text('start_time', r'(?:[01]\d|2[0-3]):[0-5]\d')
+        end_time = required_text('end_time', r'(?:[01]\d|2[0-3]):[0-5]\d')
+        try:
+            birth_day = datetime.strptime(birth_date, '%Y-%m-%d').date()
+        except ValueError as exc:
+            raise BadRequest('birth_date must be a valid calendar date') from exc
+        if start_time > end_time:
+            raise BadRequest('start_time must not exceed end_time')
+
+        def bounded_number(name, minimum, maximum):
+            value = body.get(name)
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+                raise BadRequest(f'{name} must be a finite number')
+            value = float(value)
+            if not minimum <= value <= maximum:
+                raise BadRequest(f'{name} must be between {minimum} and {maximum}')
+            return value
+
+        events = body.get('events')
+        if not isinstance(events, list) or not 1 <= len(events) <= 100:
+            raise BadRequest('events must contain between 1 and 100 items')
+        allowed_kinds = {
+            'education': {'education_milestone'},
+            'relocation': {'relocation'},
+            'relationship': {'relationship_start', 'relationship_end'},
+            'career': {'career_change'},
+            'finance': {'finance_change'},
+            'health_pressure': {'health_event'},
+        }
+        allowed_precision = {'day', 'month', 'quarter', 'year', 'range'}
+        cleaned_events = []
+        today = datetime.now().date()
+        for index, event in enumerate(events):
+            if not isinstance(event, dict):
+                raise BadRequest(f'events[{index}] must be an object')
+            try:
+                event_id = str(uuid.UUID(str(event.get('id') or '')))
+            except (ValueError, AttributeError) as exc:
+                raise BadRequest(f'events[{index}].id must be a UUID') from exc
+            domain = event.get('domain')
+            event_kind = event.get('event_kind')
+            precision = event.get('precision')
+            if domain not in allowed_kinds:
+                raise BadRequest(f'events[{index}].domain is not scoreable')
+            if event_kind not in allowed_kinds[domain]:
+                raise BadRequest(f'events[{index}].event_kind does not match domain')
+            if precision not in allowed_precision:
+                raise BadRequest(f'events[{index}].precision is invalid')
+            try:
+                start_day = datetime.strptime(str(event.get('date_start') or ''), '%Y-%m-%d').date()
+                end_day = datetime.strptime(str(event.get('date_end') or ''), '%Y-%m-%d').date()
+            except ValueError as exc:
+                raise BadRequest(f'events[{index}] dates must be valid YYYY-MM-DD values') from exc
+            if start_day > end_day:
+                raise BadRequest(f'events[{index}].date_start must not exceed date_end')
+            if start_day < birth_day or end_day > today:
+                raise BadRequest(f'events[{index}] dates must be between birth_date and today')
+            summary = event.get('summary', '')
+            if not isinstance(summary, str) or len(summary) > 1000:
+                raise BadRequest(f'events[{index}].summary must be a string up to 1000 characters')
+            cleaned_events.append({
+                'id': event_id,
+                'domain': domain,
+                'event_kind': event_kind,
+                'date_start': start_day.isoformat(),
+                'date_end': end_day.isoformat(),
+                'precision': precision,
+                'summary': summary.strip(),
+            })
+        module = _load_local_module('active_rectification_events_v4')
+        result = module.score_life_events_v4({
+            'birth_date': birth_date,
+            'start_time': start_time,
+            'end_time': end_time,
+            'lat': bounded_number('lat', -90, 90),
+            'lon': bounded_number('lon', -180, 180),
+            'tz': bounded_number('tz', -14, 14),
+            'events': cleaned_events,
+        })
+        return {'success': True, 'endpoint': 'active_rectification_events_v4', **result}
+
     def _compute_dynamic_rectification_opportunities(self, body):
         self._require_dynamic_rectification_token()
         allowed_fields = {
@@ -8384,6 +8484,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/active_rectification_questions': self._compute_active_rectification_questions,
             '/api/active_rectification_score': self._compute_active_rectification_score,
             '/api/active_rectification_events': self._compute_active_rectification_events,
+            '/api/active_rectification_events_v4': self._compute_active_rectification_events_v4,
             '/api/relationship': self._compute_relationship,
             '/api/remedies': self._compute_remedies,
             '/api/sade_sati': self._compute_sade_sati,
@@ -8509,6 +8610,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/prashna': 'Compute Prashna chart and answer evidence',
             '/api/rectification_gate': 'Evaluate birth-time precision gate',
             '/api/active_rectification_events': 'Score dated life events against actual birth-time candidates',
+            '/api/active_rectification_events_v4': 'Score immutable dated event ranges for asynchronous V4 rectification',
             '/api/relationship': 'Compute relationship and spouse-status evidence',
             '/api/remedies': 'Generate low-risk remedies from doshas/strength/dasha',
             '/api/sade_sati': 'Compute Sade Sati status and phase',

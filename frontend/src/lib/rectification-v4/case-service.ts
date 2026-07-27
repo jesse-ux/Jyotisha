@@ -1,0 +1,117 @@
+import { randomUUID } from "node:crypto";
+import type {
+  CalculationSpec,
+  LifeEventRevision,
+  RectificationV4ApiResponse,
+  RectificationV4Case,
+} from "./contracts.ts";
+import { rectificationV4Protocol } from "./contracts.ts";
+import { calculationSpecHash, evidenceSetHash } from "./fingerprints.ts";
+import { openingQuestion } from "./question-planner.ts";
+import type { RectificationV4Store } from "./store.ts";
+
+export function createRectificationV4CaseService(store: RectificationV4Store, options: { readonly now?: () => Date } = {}) {
+  const now = options.now ?? (() => new Date());
+
+  async function response(userId: string, caseValue: RectificationV4Case, jobId?: string): Promise<RectificationV4ApiResponse> {
+    return {
+      case: caseValue,
+      job: jobId ? await store.loadJob(userId, jobId) : null,
+      events: [...await store.loadEvents(userId, caseValue.id)],
+    };
+  }
+
+  return {
+    async createCase(input: { readonly userId: string; readonly actionId: string; readonly calculationSpec: CalculationSpec }) {
+      const timestamp = now().toISOString();
+      const caseValue: RectificationV4Case = {
+        id: randomUUID(),
+        userId: input.userId,
+        protocol: rectificationV4Protocol,
+        version: 0,
+        status: "awaiting_answer",
+        phase: "collecting_evidence",
+        calculationSpec: input.calculationSpec,
+        calculationSpecHash: calculationSpecHash(input.calculationSpec),
+        evidenceSetHash: evidenceSetHash([]),
+        currentQuestion: openingQuestion(),
+        latestSnapshot: null,
+        acceptedRange: null,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      };
+      return response(input.userId, await store.createCase({ case: caseValue, actionId: input.actionId }));
+    },
+
+    async loadCase(userId: string, caseId: string) {
+      const found = await store.loadCase(userId, caseId);
+      return found ? response(userId, found) : null;
+    },
+
+    async loadActive(userId: string) {
+      const found = await store.findActiveCase(userId);
+      return found ? response(userId, found) : null;
+    },
+
+    async loadJob(userId: string, jobId: string) {
+      return store.loadJob(userId, jobId);
+    },
+
+    async answer(input: { readonly userId: string; readonly caseId: string; readonly actionId: string; readonly expectedCaseVersion: number; readonly answer: string }) {
+      const current = await store.loadCase(input.userId, input.caseId);
+      if (!current?.currentQuestion) return null;
+      const saved = await store.submitAnswer({
+        ...input,
+        question: current.currentQuestion,
+        jobId: randomUUID(),
+        turnId: randomUUID(),
+        now: now().toISOString(),
+      });
+      return response(input.userId, saved.case, saved.job.id);
+    },
+
+    async reviseEvent(input: {
+      readonly userId: string;
+      readonly caseId: string;
+      readonly actionId: string;
+      readonly expectedCaseVersion: number;
+      readonly revision: LifeEventRevision;
+    }) {
+      const saved = await store.reviseEvent({ ...input, jobId: randomUUID(), now: now().toISOString() });
+      return response(input.userId, saved.case, saved.job.id);
+    },
+
+    async transition(input: {
+      readonly userId: string;
+      readonly caseId: string;
+      readonly actionId: string;
+      readonly expectedCaseVersion: number;
+      readonly kind: "pause" | "resume" | "abandon";
+    }) {
+      const status = input.kind === "pause" ? "paused" : input.kind === "abandon" ? "abandoned" : "awaiting_answer";
+      const phase = input.kind === "abandon" ? "complete" : "collecting_evidence";
+      return response(input.userId, await store.transitionCase({ ...input, status, phase, now: now().toISOString() }));
+    },
+
+    async acceptRange(input: {
+      readonly userId: string;
+      readonly caseId: string;
+      readonly actionId: string;
+      readonly expectedCaseVersion: number;
+      readonly startTime: string;
+      readonly endTime: string;
+    }) {
+      const current = await store.loadCase(input.userId, input.caseId);
+      const primary = current?.latestSnapshot?.clusters[0];
+      if (!current || !current.latestSnapshot?.canAcceptRange || !primary
+        || primary.startTime !== input.startTime || primary.endTime !== input.endTime) return null;
+      return response(input.userId, await store.transitionCase({
+        ...input,
+        status: "range_ready",
+        phase: "complete",
+        acceptedRange: { start: input.startTime, end: input.endTime },
+        now: now().toISOString(),
+      }));
+    },
+  };
+}

@@ -206,3 +206,29 @@ export function resolveAccountRectificationCase(
   }
   return null;
 }
+
+
+const unfinishedV4Statuses = new Set<AccountRectificationCaseState["status"]>([
+  "awaiting_answer", "processing", "range_ready", "paused",
+]);
+
+/** V4 cases already carry the calculation spec; creation atomically replaces a stale spec. */
+export function resolveAccountRectificationV4Case(rows: readonly unknown[]): AccountRectificationCaseState | null {
+  for (const value of rows) {
+    const row = record(value);
+    if (!row || typeof row.id !== "string" || typeof row.version !== "number"
+      || !Number.isSafeInteger(row.version) || row.version < 0
+      || typeof row.status !== "string"
+      || !unfinishedV4Statuses.has(row.status as AccountRectificationCaseState["status"])
+      || row.accepted_range_start !== null) continue;
+    return Object.freeze({
+      caseId: row.id,
+      journeyProtocol: "rectification-evidence-v4" as const,
+      status: row.status as AccountRectificationCaseState["status"],
+      turnVersion: row.version,
+      isRevision: false,
+      preservesActiveTime: true,
+    });
+  }
+  return null;
+}

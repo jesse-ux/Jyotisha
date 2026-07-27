@@ -26,7 +26,6 @@ import type {
   LoadedConversationalRectificationCase,
   StoredConversationalRectificationCase,
 } from "../src/lib/conversational-rectification/store.ts";
-import { createRectificationQuestionHandoffCoordinator } from "../src/lib/rectification-question-handoff.ts";
 import type { ConversationalRectificationTelemetryPayload } from "../src/lib/birth-time-journey-telemetry.ts";
 import { createConversationalRectificationTelemetry } from "../src/lib/birth-time-journey-telemetry.ts";
 import { conversationalRectificationCreationPolicy } from "../src/lib/conversational-rectification/creation-policy.ts";
@@ -35,6 +34,8 @@ const userId = "00000000-0000-4000-8000-000000009001";
 const caseId = "00000000-0000-4000-8000-000000009002";
 const originalQuestion = "我下一次适合换工作的时间是什么时候？";
 const deploymentSha = "0123456789abcdef0123456789abcdef01234567";
+const openingNarrative = "根据你填写的出生时间信息，当前先核对 05:00–06:00。这只是待核对范围，还不能把其中某一分钟当作已确认出生时间。你可以按自己的节奏讲已经发生的人生经历，一次说一件或连续说多件都可以；记得的年月可以自然地带上，不确定也没关系。";
+const intermediateFallbackNarrative = "我听到了。你愿意接着说说这件事之后发生了什么吗？";
 
 const declaredBirthInput = {
   source: "approximate" as const,
@@ -169,6 +170,7 @@ function createSyntheticBackend(options: {
   legacy?: boolean;
   allowNewCaseCreation?: boolean;
   packetFailure?: boolean;
+  createFailure?: boolean;
   initialReady?: boolean;
   packetEvidenceCalls?: string[][];
 } = {}) {
@@ -250,6 +252,7 @@ function createSyntheticBackend(options: {
       return row?.userId === input.userId ? structuredClone(row) : null;
     },
     async createCaseWithFirstTurn(input) {
+      if (options.createFailure) throw new Error("synthetic create failure");
       return save({
         userId: input.userId,
         caseId: input.caseId,
@@ -430,7 +433,7 @@ async function post(
   return payload as ConversationalRectificationTurn;
 }
 
-test("authenticated synthetic flow covers soft entry, rich evidence, resume, atomic confirmation, and handoff", async () => {
+test("authenticated synthetic flow covers soft entry, rich evidence, resume, and safety gates", async () => {
   assert.equal(isDeclaredBirthProfileComplete(onboardingDraft), true, "onboarding may finish without rectification");
 
   let consent = createBirthTimeConsultationConsentState();
@@ -460,16 +463,11 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
   assert.equal(turn.status, "active");
   assert.equal(
     turn.narrative,
-    "当前仍在核对 05:00–06:00 的候选范围，不能视为已经确认的出生分钟。先说一件已经发生的重要经历好吗？请注明哪一年、哪一月以及发生了什么。",
-    "the first visible reply must remain the narrator's authored answer rather than receive a deterministic prefix or suffix",
+    openingNarrative,
+    "the first visible reply must use the deterministic fast opening",
   );
   assert.doesNotMatch(turn.narrative, /\bD\d+\b/);
-  assert.deepEqual(
-    turn.evidenceRequest?.domains,
-    ["career"],
-    "the narrator chooses the next useful domain instead of receiving a program-authored domain list",
-  );
-  assert.equal(turn.evidenceRequest?.freeTextAllowed, true);
+  assert.equal(turn.evidenceRequest, null);
   assert.equal(JSON.stringify(turn).includes("candidateWeights"), false);
   assert.equal(JSON.stringify(turn).includes("private-synthetic-partition"), false);
   assert.deepEqual(backend.billing(), { reserveCount: 1, chargeCount: 1, releaseCount: 0, state: "charged" });
@@ -483,7 +481,7 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
   assert.equal(turn.status, "active");
   assert.equal(
     turn.narrative,
-    "当前仍在核对 05:00–06:00 的候选范围，不能视为已经确认的出生分钟。先说一件已经发生的重要经历好吗？请注明哪一年、哪一月以及发生了什么。",
+    intermediateFallbackNarrative,
     "a direction change must show the model reply instead of a program-authored redirect template",
   );
   assert.doesNotMatch(turn.narrative, /不沿用不符合|自由描述另一件已经发生/);
@@ -495,7 +493,7 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
   });
   assert.equal(
     turn.narrative,
-    "当前仍在核对 05:00–06:00 的候选范围，不能视为已经确认的出生分钟。先说一件已经发生的重要经历好吗？请注明哪一年、哪一月以及发生了什么。",
+    intermediateFallbackNarrative,
   );
   assert.doesNotMatch(turn.narrative, /我先按你的原话记下|我已保存你的原话|还差时间定位/);
   assert.equal(turn.evidenceRecap.at(-1)?.dateLabel, "日期待补充");
@@ -507,7 +505,7 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
   });
   assert.equal(
     turn.narrative,
-    "当前仍在核对 05:00–06:00 的候选范围，不能视为已经确认的出生分钟。先说一件已经发生的重要经历好吗？请注明哪一年、哪一月以及发生了什么。",
+    intermediateFallbackNarrative,
     "future evidence must remain non-scoreable without replacing the model's visible answer",
   );
   assert.doesNotMatch(turn.narrative, /未来事件只能作为背景|不能用于校正评分/);
@@ -551,63 +549,19 @@ test("authenticated synthetic flow covers soft entry, rich evidence, resume, ato
     turnVersion: turn.turnVersion, domain: "relocation", answer: "2018年9月搬到外地生活",
   });
   historicalEvidenceIds.push(turn.evidenceRecap.at(-1)!.id);
-  assert.equal(turn.status, "confirming");
-  assert.equal(turn.candidate.representativeTime, "05:18");
-  assert.equal(backend.activeTime(), "04:58");
+  assert.equal(turn.status, "active");
+  assert.equal(turn.candidate.status, "pending_validation");
+  assert.doesNotMatch(turn.actions.join(","), /confirm/);
+  assert.equal(backend.activeTime(), "04:58", "evidence collection must not replace the active minute");
   assert.equal(packetEvidenceCalls.some((ids) => ids.includes(futureEvidenceId)), false);
   assert.deepEqual(packetEvidenceCalls.at(-1), historicalEvidenceIds);
-
-  const wrong = await handler(new Request("https://example.invalid/api/birth-time-conversation", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      type: "confirm", caseId, actionId: "00000000-0000-4000-8000-000000009010",
-      turnVersion: turn.turnVersion, time: "05:17",
-    }),
-  }));
-  assert.equal(wrong.status, 409);
-  assert.equal(backend.activeTime(), "04:58", "a failed confirmation must be atomic");
-  assert.equal(telemetry.at(-1)?.phase, "confirming");
-  assert.equal(telemetry.at(-1)?.billingState, "unchanged");
-
-  turn = await post(secondDevice, {
-    type: "confirm", caseId, actionId: "00000000-0000-4000-8000-000000009011",
-    turnVersion: turn.turnVersion, time: "05:18",
-  });
-  assert.equal(turn.status, "completed");
-  assert.deepEqual(turn.actions, ["continue_original_question"]);
-  assert.equal(backend.activeTime(), "05:18");
   assert.equal(backend.billing().chargeCount, 1);
-
-  let ordinaryReservations = 0;
-  let ordinaryAnswers = 0;
-  const handoff = createRectificationQuestionHandoffCoordinator<"timing">();
-  const continued = await handoff.continueOriginalQuestion(
-    turn.pendingConsultationQuestion ?? "",
-    { sessionId: "new-device-chat", theme: "timing" },
-    async (context) => {
-      ordinaryReservations += 1;
-      ordinaryAnswers += 1;
-      assert.equal(context.question, originalQuestion);
-      assert.equal(backend.activeTime(), "05:18");
-      return true;
-    },
-  );
-  assert.equal(continued, true);
-  assert.equal(ordinaryReservations, 1);
-  assert.equal(ordinaryAnswers, 1);
-
-  const chats = new Set(["new-device-chat"]);
-  chats.delete("new-device-chat");
-  assert.equal(chats.size, 0);
-  const caseAfterChatDeletion = backend.cases.get(caseId);
-  assert.equal(caseAfterChatDeletion?.status, "completed", "chat deletion must not cascade to the account case");
 
   const allowedTelemetryKeys = [
     "protocol", "phase", "actionKind", "resultCategory", "latencyBucket",
     "billingState", "errorCategory", "deploymentSha",
   ].sort();
-  assert.ok(telemetry.length >= 10);
+  assert.ok(telemetry.length >= 8);
   for (const payload of telemetry) {
     assert.deepEqual(Object.keys(payload).sort(), allowedTelemetryKeys);
     assert.equal(payload.protocol, "conversational-evidence-v3");
@@ -664,7 +618,7 @@ test("v3 telemetry drops invalid payloads without affecting the product request"
 });
 
 test("telemetry reports released reservations and authentication rejects before service creation", async () => {
-  const backend = createSyntheticBackend({ packetFailure: true });
+  const backend = createSyntheticBackend({ createFailure: true });
   const telemetry: ConversationalRectificationTelemetryPayload[] = [];
   const handler = createBirthTimeConversationPostHandler({
     authenticate: async () => ({ userId, context: {} }),
@@ -933,13 +887,9 @@ test("rollback flag stops only new cases while existing v3 resume stays readable
     type: "answer", caseId, actionId: "00000000-0000-4000-8000-000000009055",
     turnVersion: existingTurn.turnVersion, domain: "relocation", answer: "2018年9月搬到外地生活",
   });
-  assert.equal(existingTurn.status, "confirming");
-  existingTurn = await post(handler, {
-    type: "confirm", caseId, actionId: "00000000-0000-4000-8000-000000009056",
-    turnVersion: existingTurn.turnVersion, time: "05:18",
-  });
-  assert.equal(existingTurn.status, "completed");
-  assert.equal(backend.activeTime(), "05:18");
+  assert.equal(existingTurn.status, "active");
+  assert.equal(existingTurn.caseId, caseId);
+  assert.equal(backend.activeTime(), "04:58");
 });
 
 test("a throwing injected telemetry sink cannot turn a committed request into failure", async () => {

@@ -78,47 +78,46 @@ test("ordinary product drafts keep the public question and clear hidden routing 
   assert.match(source, /setDraft\(pending\.question\);[\s\S]*?setDraftTheme\(pending\.theme\);[\s\S]*?setDraftEntrypoint\(pending\.entrypoint\);/);
 });
 
-test("homepage birth-time card opens the v3 surface instead of ordinary consultation", () => {
+test("homepage birth-time card opens the v4 evidence surface instead of ordinary consultation", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 
   assert.match(source, /function openBirthTimeRectification/);
+  const component = readFileSync(new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url), "utf8");
   assert.match(source, /<ConversationalBirthTimeRectification/);
-  assert.match(source, /sendConversationalRectificationCommand/);
-  assert.match(source, /rectificationPriceCredits/);
-  assert.doesNotMatch(source, /\/api\/birth-rectification/);
-  assert.doesNotMatch(source, /\/api\/birth-time-journey/);
+  assert.match(component, /<RectificationV4Panel/);
+  assert.match(source, /pendingConsultationQuestion=\{rectificationPendingQuestion\}/);
+  assert.doesNotMatch(source.slice(
+    source.indexOf("async function openBirthTimeRectification"),
+    source.indexOf("function handleConversationalRectificationTurn"),
+  ), /sendConversationalRectificationCommand/);
   assert.doesNotMatch(source, /chooseSuggestedQuestion\([\s\S]{0,180}"birth_time_rectification"/);
   assert.doesNotMatch(source, /draftBirthTimeRectificationQuestion/);
 });
 
-test("homepage birth-time card starts the first rectification turn without a second confirmation card", () => {
-  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  const start = source.indexOf("async function openBirthTimeRectification");
-  const end = source.indexOf("function handleConversationalRectificationTurn", start);
-  const handler = source.slice(start, end);
+test("homepage opens the v4 panel without invoking the retired v3 start command", () => {
+  const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const hook = readFileSync(new URL("../src/hooks/use-rectification-v4.ts", import.meta.url), "utf8");
+  const start = page.indexOf("async function openBirthTimeRectification");
+  const end = page.indexOf("function handleConversationalRectificationTurn", start);
+  const handler = page.slice(start, end);
 
-  assert.match(handler, /sendConversationalRectificationCommand\(\{[\s\S]*?type:\s*"start"/);
-  assert.match(
-    handler,
-    /sendConversationalRectificationCommand\(\{[\s\S]*?type:\s*"start"[\s\S]*?modelId:\s*rectificationSession\.modelId/,
-  );
+  assert.doesNotMatch(handler, /sendConversationalRectificationCommand/);
+  const component = readFileSync(new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url), "utf8");
+  assert.match(page, /<ConversationalBirthTimeRectification/);
+  assert.match(component, /<RectificationV4Panel/);
+  assert.match(hook, /await loadRectificationV4Handoff\(\)/);
+  assert.match(hook, /await createRectificationV4\(\)/);
 });
 
-test("a stale start snapshot refreshes and resumes the existing unfinished case after a 409", () => {
-  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  const start = source.indexOf("async function openBirthTimeRectification");
-  const end = source.indexOf("function handleConversationalRectificationTurn", start);
-  const handler = source.slice(start, end);
+test("a stale v4 mutation refreshes the same case after a 409", () => {
+  const hook = readFileSync(new URL("../src/hooks/use-rectification-v4.ts", import.meta.url), "utf8");
 
-  assert.match(handler, /error instanceof ConversationalRectificationRequestError/);
-  assert.match(handler, /error\.status !== 409/);
-  assert.match(handler, /const latest = await fetchAccount\(\)/);
-  assert.match(handler, /if \(!latest\.rectificationCase\) throw error/);
-  assert.match(handler, /type: "resume"[\s\S]*?latest\.rectificationCase\.caseId/);
-  assert.match(handler, /latest\.rectificationCase\.turnVersion/);
+  assert.match(hook, /caught instanceof RectificationV4RequestError && caught\.status === 409 && data/);
+  assert.match(hook, /await refresh\(data\.case\.id\)/);
+  assert.match(hook, /loadRectificationV4\(caseId\)/);
 });
 
-test("homepage birth-time card opens its dedicated session before the first turn resolves", () => {
+test("homepage birth-time card opens its dedicated session before v4 data loads", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   const start = source.indexOf("async function openBirthTimeRectification");
   const end = source.indexOf("function handleConversationalRectificationTurn", start);
@@ -134,36 +133,29 @@ test("homepage birth-time card opens its dedicated session before the first turn
   assert.match(handler, /rectificationOpenInFlight\.current/);
   assert.match(handler, /rectificationOpenInFlight\.current = true;[\s\S]*?finally \{[\s\S]*?rectificationOpenInFlight\.current = false;/);
   assert.match(handler, /setRectificationReturnSessionId\(sourceSession\.id\)/);
-  assert.match(handler, /type: "start",[\s\S]*?onNarrativeDelta\(text\)[\s\S]*?setRectificationOpeningAssistantText/);
-  assert.match(handler, /type: "resume",[\s\S]*?onNarrativeDelta\(text\)[\s\S]*?setRectificationOpeningAssistantText/);
+  assert.doesNotMatch(handler, /onNarrativeDelta|sendConversationalRectificationCommand/);
   assert.match(source, /const rectificationSurfaceOpen = activeRectificationSession\s*&& activeSession\.id === rectificationSessionId/);
-  assert.match(source, /rectificationSurfaceOpen && \(!visibleRectificationTurn && rectificationError \? \([\s\S]*?<ConversationalBirthTimeRectification[\s\S]*?initialTurn=\{visibleRectificationTurn\}[\s\S]*?openingAssistantText=\{rectificationOpeningAssistantText\}/);
+  assert.match(source, /rectificationSurfaceOpen && \([\s\S]*?<ConversationalBirthTimeRectification[\s\S]*?pendingConsultationQuestion=\{rectificationPendingQuestion\}/);
 });
 
-test("the first rectification turn becomes interactive before session persistence finishes", () => {
-  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  const start = source.indexOf("async function openBirthTimeRectification");
-  const end = source.indexOf("function handleConversationalRectificationTurn", start);
-  const handler = source.slice(start, end);
-  const turnVisible = handler.indexOf("setRectificationInitialTurn(turn)");
-  const backgroundPersist = handler.indexOf("void rectificationPersistence.current.enqueue(");
+test("the v4 panel owns case recovery while the page persists only the dedicated session shell", () => {
+  const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const hook = readFileSync(new URL("../src/hooks/use-rectification-v4.ts", import.meta.url), "utf8");
+  const start = page.indexOf("async function openBirthTimeRectification");
+  const end = page.indexOf("function handleConversationalRectificationTurn", start);
+  const handler = page.slice(start, end);
 
-  assert.ok(turnVisible >= 0);
-  assert.ok(backgroundPersist > turnVisible);
-  assert.match(handler, /void rectificationPersistence\.current\.enqueue\([\s\S]*?\(\) => persistSession\([\s\S]*?\.catch\(\(\) => \{[\s\S]*?校正已经开始，但会话关联暂时未同步到云端。/);
+  assert.match(handler, /persistSession\(rectificationSession, "create"\)/);
+  assert.match(hook, /const existingHandoff = await loadRectificationV4Handoff\(\)/);
+  assert.match(hook, /existingHandoff[\s\S]*?loadRectificationV4\(existingHandoff\.caseId\)[\s\S]*?createRectificationV4\(\)/);
 });
 
-test("a direct homepage start skips the durable handoff read when no question was handed off", () => {
-  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  const start = source.indexOf("async function openBirthTimeRectification");
-  const end = source.indexOf("function handleConversationalRectificationTurn", start);
-  const handler = source.slice(start, end);
+test("a direct homepage start restores any active v4 case before creating another", () => {
+  const hook = readFileSync(new URL("../src/hooks/use-rectification-v4.ts", import.meta.url), "utf8");
 
-  assert.match(handler, /const localHandoff = rectificationQuestionHandoff\.current\.peek\(\)/);
-  assert.match(
-    handler,
-    /const durable = requestedQuestion !== null \|\| localHandoff !== null\s*\? await durableRectificationQuestionHandoff\.current\.load\(\)\s*:\s*null/,
-  );
+  assert.match(hook, /const existingHandoff = await loadRectificationV4Handoff\(\)/);
+  assert.match(hook, /existingHandoff\s*\? await loadRectificationV4\(existingHandoff\.caseId\)\s*:\s*await createRectificationV4\(\)/);
+  assert.doesNotMatch(hook, /sendConversationalRectificationCommand/);
 });
 
 test("rectification cards render only inside the active rectification session", () => {
@@ -186,32 +178,31 @@ test("selecting a rectification session resumes it without an intermediate confi
   assert.match(selectSession, /resumeRectificationSession\.current\(nextSession\)/);
   assert.match(source, /resumeRectificationSession\.current\(activeSession\)/);
   assert.doesNotMatch(source, /RectificationLoadingState|重试恢复/);
-  assert.match(source, /setComposerNotice\(message\)/);
+  assert.match(source, /<ConversationalBirthTimeRectification/);
 });
 
-test("homepage reuses the session bound to an unfinished rectification case", () => {
-  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  const start = source.indexOf("async function openBirthTimeRectification");
-  const end = source.indexOf("function handleConversationalRectificationTurn", start);
-  const handler = source.slice(start, end);
+test("homepage reuses the dedicated rectification session while v4 restores the active case", () => {
+  const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const hook = readFileSync(new URL("../src/hooks/use-rectification-v4.ts", import.meta.url), "utf8");
+  const start = page.indexOf("async function openBirthTimeRectification");
+  const end = page.indexOf("function handleConversationalRectificationTurn", start);
+  const handler = page.slice(start, end);
 
-  assert.match(handler, /const accountResumeCase = action === "resume" \? account\.rectificationCase : null/);
-  assert.match(handler, /session\.rectificationCaseId === accountResumeCase\.caseId/);
-  assert.match(handler, /resumableSession \?\? createSession/);
+  assert.match(handler, /sessions\.find\(\(session\) => session\.sessionType === "birth_time_rectification"\)/);
+  assert.match(handler, /existing \?\? createSession/);
+  assert.match(hook, /loadRectificationV4Handoff|createRectificationV4/);
 });
 
-test("a bound rectification session resumes its own case while a homepage restart stays dedicated", () => {
-  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  const start = source.indexOf("async function openBirthTimeRectification");
-  const end = source.indexOf("function handleConversationalRectificationTurn", start);
-  const handler = source.slice(start, end);
+test("a bound rectification session and a homepage restart share the v4 active-case loader", () => {
+  const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const hook = readFileSync(new URL("../src/hooks/use-rectification-v4.ts", import.meta.url), "utf8");
+  const start = page.indexOf("async function openBirthTimeRectification");
+  const end = page.indexOf("function handleConversationalRectificationTurn", start);
+  const handler = page.slice(start, end);
 
-  assert.match(handler, /const sourceBoundCaseId = sourceSession\.sessionType === "birth_time_rectification"/);
-  assert.match(handler, /const resumeTarget = sourceBoundCaseId/);
-  assert.match(handler, /caseId: sourceBoundCaseId/);
-  assert.match(handler, /if \(!resumeTarget\) \{[\s\S]*?type: "start"/);
-  assert.match(handler, /const rectificationSession = canReuseSourceRectificationSession[\s\S]*?: resumableSession \?\? createSession/);
-  assert.match(handler, /type: "resume",[\s\S]*?caseId: current\.caseId/);
+  assert.match(handler, /sourceSession\.sessionType === "birth_time_rectification"[\s\S]*?sourceSession[\s\S]*?sessions\.find/);
+  assert.match(hook, /loadRectificationV4Handoff\(\)/);
+  assert.match(hook, /loadRectificationV4\(existingHandoff\.caseId\)/);
 });
 
 test("historical completed rectification does not replace the account's unfinished case", () => {
@@ -244,7 +235,8 @@ test("completed handoffs return only after the user clicks and target the source
   assert.doesNotMatch(source, /automaticRectificationContinuation/);
   assert.match(source, /const returnSession = \(localHandoff/);
   assert.match(source, /session\.sessionType === "consultation"/);
-  assert.match(source, /onContinueOriginalQuestion=\{\(question\) => void continueRectificationOriginalQuestion\(question\)\}/);
+  assert.match(source, /onContinueOriginalQuestion=\{\(continuation\) => void continueRectificationOriginalQuestion\(continuation\)\}/);
+  assert.match(source, /claimRectificationV4Handoff\(\{[\s\S]*?caseId: continuation\.caseId,[\s\S]*?caseVersion: continuation\.caseVersion,[\s\S]*?question/);
   assert.match(source, /sessionId: returnSession\.id/);
   assert.match(source, /setActiveSessionId\(context\.sessionId\)/);
   assert.match(source, /clearBirthTimeConsultationConsent\([\s\S]*?context\.sessionId/);

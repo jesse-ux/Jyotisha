@@ -1503,3 +1503,17 @@
 - 防复发：开放叙事不等于被动倾听；事件轮默认负责自然推进，但不得恢复固定问卷模板。
 - 相关记录：BUG-075、BUG-080
 - 修复版本：本次修复提交
+
+## BUG-082 | 生时校正缺少独立证据状态机并把分钟峰值误导为产品答案
+
+- 状态：resolved
+- 首次发现：2026-07-26
+- 最近更新：2026-07-26
+- 影响面：生时校正建案、事件采集、日期修订、候选评分、暂停恢复、范围保存、原咨询问题 handoff 与扣费幂等
+- 用户现象：专业 Agent 可以持续收集跨领域事件、逐步补充日期并做稳定性复核，但 Web 流程把对话、抽取、评分和叙事绑在单次请求中；容易重复追问同一事件、出现等待状态无下一题、在低置信度下突出单个峰值分钟，并且刷新或多设备继续时缺少独立业务真源。
+- 根因：旧 `conversational-evidence-v3` 同时承担聊天体验和校时状态机；人生事件没有稳定的 `eventId + revision` 修订链，问题没有持久化目标事件，分钟扫描结果也没有强制经过范围聚类、日期敏感性、逐项排除和邻近分钟门控。聊天会话、计算任务和咨询 handoff 的生命周期耦合，无法独立恢复和仲裁并发。
+- 修复：新增 `rectification-evidence-v4` 独立领域模型、Case/Turn/Event Revision/Snapshot/Job/Handoff 持久化状态机和后台 Worker。先完成教育、迁移、关系、事业、财务、健康压力、家庭七领域覆盖，再对非日精度事件按 `targetEventId` 追加同一事件 revision；已追问或跳过的事件不循环。候选分钟先聚类，再通过事件数、领域数、范围宽度、邻近分钟、leave-one-out、日期敏感性和计算口径 hash 门；公开合同固定 `canConfirmExactMinute=false`，只允许用户主动保存候选范围，不更新 `profiles.active_birth_time`。Handoff 和扣费由 PostgreSQL lease、幂等 action 与 settlement receipt 保护。
+- 验证：前端 V4/domain/service/migration/replay/handoff/consultation continuation 33 个测试通过；Python 2 个测试通过；目标 ESLint 与 Webpack 生产构建通过。隔离 PostgreSQL 12 项不变量通过；真实 PostgreSQL + Python E2E 完成七领域与定向日期修订后进入 `range_ready`，主要范围为 `05:26–05:30`，无空问题死状态，原 `active_birth_time` 不变且未主动保存前 `acceptedRange` 为空。静态浏览器验收确认日期修订输入框、范围保存按钮、非确认分钟文案和 390px 无横向溢出；真实登录态 UI 因隔离服务未连接认证配置，本轮未声称已验收。
+- 防复发：生时校正业务真源必须是 V4 Case 和 append-only 事件台账，不得从聊天正文反向恢复；任何公开结果只能显示通过稳定性门的范围，单分钟峰值不得成为可保存结果；证据不足必须生成下一题或明确暂停，不能进入 `awaiting_answer + currentQuestion=null`；V4 路径不得写 `profiles.active_birth_time`。
+- 相关记录：BUG-067、BUG-069、BUG-072、BUG-074、BUG-075、BUG-080、BUG-081
+- 修复版本：待提交（本地可测）

@@ -15,6 +15,7 @@ import {
 import { BirthTimeIntakeFields } from "@/components/birth-time-intake";
 import { AppLoadingIndicator } from "@/components/app-loading-indicator";
 import { ConversationalBirthTimeRectification } from "@/components/conversational-birth-time-rectification";
+import type { RectificationV4Continuation } from "@/components/rectification-v4-panel";
 import { ChatMessageContent } from "@/components/chat-message-content";
 import { AgentAvatar, ChatMessageRow } from "@/components/chat-message-row";
 import { ModelSelector } from "@/components/model-selector";
@@ -53,16 +54,10 @@ import {
   type RectificationCardAction,
 } from "@/lib/birth-time-consultation-consent";
 import type { ConsultationBirthTimeMode } from "@/lib/consultation-birth-time-mode";
-import {
-  ConversationalRectificationRequestError,
-  conversationalRectificationHistoryForTurn,
-  sendConversationalRectificationCommand,
-} from "@/lib/conversational-rectification/client";
 import type { ConversationalRectificationTurn } from "@/lib/conversational-rectification/contracts";
+import { claimRectificationV4Handoff } from "@/lib/rectification-v4/client";
 import {
-  createDurableRectificationQuestionHandoffClient,
   createRectificationQuestionHandoffCoordinator,
-  DurableRectificationHandoffError,
 } from "@/lib/rectification-question-handoff";
 import { useBirthTimeGuidedJourney } from "@/hooks/use-birth-time-guided-journey";
 import type { ConversationalRectificationMessage } from "@/hooks/use-conversational-rectification";
@@ -210,8 +205,15 @@ type DailyStarlanguageApiResponse = {
 };
 type SessionReadResult = { readonly sessions: ChatSession[]; readonly fallbackSessionIds: string[] };
 type ConsultationRectificationHandoff = Readonly<{
+  protocol?: "conversational-evidence-v3";
   caseId: string;
   turnVersion: number;
+  claimActionId: string;
+  requestId: string;
+}> | Readonly<{
+  protocol: "rectification-evidence-v4";
+  caseId: string;
+  caseVersion: number;
   claimActionId: string;
   requestId: string;
 }>;
@@ -969,9 +971,6 @@ export default function Home() {
   const activeOnboardingRequestIdentity = useRef("");
   const accountRefreshGuard = useRef(createLatestAccountRequestGuard());
   const rectificationQuestionHandoff = useRef(createRectificationQuestionHandoffCoordinator<Theme>());
-  const durableRectificationQuestionHandoff = useRef(
-    createDurableRectificationQuestionHandoffClient(),
-  );
   const resumeRectificationSession = useRef<(session: ChatSession) => void>(() => undefined);
   const rectificationOpenInFlight = useRef(false);
   const rectificationContinuationInFlight = useRef(false);
@@ -1025,7 +1024,7 @@ export default function Home() {
       || !account
       || !modelCatalog
       || activeSession?.sessionType !== "birth_time_rectification"
-      || visibleRectificationTurn
+      || activeSession.id === rectificationSessionId
       || rectificationLoading
       || rectificationMutationPending
       || rectificationContinuationPending
@@ -1042,7 +1041,7 @@ export default function Home() {
     rectificationError,
     rectificationLoading,
     rectificationMutationPending,
-    visibleRectificationTurn,
+    rectificationSessionId,
   ]);
 
   useEffect(() => {
@@ -2061,217 +2060,39 @@ export default function Home() {
     sourceSessionOverride: ChatSession | null = null,
   ) {
     if (!account || !modelCatalog || creatingSession || rectificationLoading || rectificationOpenInFlight.current
-      || rectificationMutationPending
-      || rectificationContinuationInFlight.current) return;
+      || rectificationMutationPending || rectificationContinuationInFlight.current) return;
     const sourceSession = sourceSessionOverride ?? activeSession;
     if (!sourceSession) return;
-    const action = resolveRectificationCardAction({
-      rectificationCase: account.rectificationCase,
-      hasConfirmedBirthTime: account.hasConfirmedBirthTime,
-    });
-    const sourceBoundCaseId = sourceSession.sessionType === "birth_time_rectification"
-      ? sourceSession.rectificationCaseId
-      : null;
-    const accountResumeCase = action === "resume" ? account.rectificationCase : null;
-    const resumeTarget = sourceBoundCaseId
-      ? {
-          caseId: sourceBoundCaseId,
-          turnVersion: accountResumeCase?.caseId === sourceBoundCaseId
-            ? accountResumeCase.turnVersion
-            : 0,
-        }
-      : accountResumeCase;
-    const resumableSession = !sourceBoundCaseId && accountResumeCase
-      ? sessions.find((session) => session.sessionType === "birth_time_rectification"
-        && session.rectificationCaseId === accountResumeCase.caseId)
-        ?? sessions.find((session) => session.sessionType === "birth_time_rectification"
-          && session.rectificationCaseId === null)
-        ?? null
-      : null;
-    const canReuseSourceRectificationSession = sourceSession.sessionType === "birth_time_rectification"
-      && (sourceBoundCaseId !== null || accountResumeCase !== null);
-    const rectificationSession = canReuseSourceRectificationSession
+    const existing = sourceSession.sessionType === "birth_time_rectification"
       ? sourceSession
-      : resumableSession ?? createSession(modelCatalog.defaultModelId, "birth_time_rectification");
-    const reusingRectificationSession = canReuseSourceRectificationSession
-      || resumableSession !== null;
-    const localHandoff = rectificationQuestionHandoff.current.peek();
-    const requestedQuestion = pendingConsultationQuestion
-      ?? (reusingRectificationSession
-        ? null
-        : localHandoff?.question)
-      ?? null;
+      : sessions.find((session) => session.sessionType === "birth_time_rectification") ?? null;
+    const rectificationSession = existing ?? createSession(modelCatalog.defaultModelId, "birth_time_rectification");
+    const requestedQuestion = pendingConsultationQuestion ?? rectificationQuestionHandoff.current.peek()?.question ?? null;
+
     rectificationOpenInFlight.current = true;
+    setRectificationLoading(true);
+    setRectificationError("");
+    setRectificationInitialTurn(null);
+    setRectificationOpeningAssistantText("");
+    setRectificationPendingQuestion(requestedQuestion);
     setDraft("");
     setDraftTheme(null);
     setDraftEntrypoint(null);
-    setRectificationPendingQuestion(requestedQuestion);
-    setRectificationInitialTurn(null);
-    setRectificationOpeningAssistantText("");
-    setRectificationError("");
-    setRectificationLoading(true);
-    if (!reusingRectificationSession) {
-      setSessions((current) => [
-        rectificationSession,
-        ...current.filter((session) => session.id !== rectificationSession.id),
-      ]);
-    }
-    if (sourceSession && sourceSession.id !== rectificationSession.id) {
-      setRectificationReturnSessionId(sourceSession.id);
-    }
+    if (sourceSession.id !== rectificationSession.id) setRectificationReturnSessionId(sourceSession.id);
     setRectificationSessionId(rectificationSession.id);
     activeSessionIdRef.current = rectificationSession.id;
     setActiveSessionId(rectificationSession.id);
-    try {
-      let turn: ConversationalRectificationTurn;
-      if (!resumeTarget) {
-        const durable = requestedQuestion !== null || localHandoff !== null
-          ? await durableRectificationQuestionHandoff.current.load()
-          : null;
-        if (durable && durable.status !== "consumed") {
-          turn = durable.turn;
-        } else {
-          try {
-            turn = await sendConversationalRectificationCommand({
-              type: "start",
-              actionId: globalThis.crypto.randomUUID(),
-              modelId: rectificationSession.modelId,
-              pendingConsultationQuestion: requestedQuestion,
-            }, {
-              onNarrativeDelta(text) {
-                setRectificationOpeningAssistantText((current) => current + text);
-              },
-            });
-          } catch (error) {
-            // A stale account snapshot can make an existing unfinished case look
-            // like a fresh start. The database rejects that second case with a
-            // 409 to protect billing; refresh and resume the durable case instead.
-            if (!(error instanceof ConversationalRectificationRequestError)
-              || error.status !== 409) throw error;
-            const latest = await fetchAccount();
-            if (!latest.rectificationCase) throw error;
-            setAccount(latest);
-            turn = await sendConversationalRectificationCommand({
-              type: "resume",
-              caseId: latest.rectificationCase.caseId,
-              actionId: globalThis.crypto.randomUUID(),
-              turnVersion: latest.rectificationCase.turnVersion,
-            }, {
-              onNarrativeDelta(text) {
-                setRectificationOpeningAssistantText((current) => current + text);
-              },
-            });
-          }
-        }
-      } else {
-        let current = resumeTarget;
-        const canAttachQuestion = pendingConsultationQuestion
-          && accountResumeCase?.caseId === current.caseId;
-        if (canAttachQuestion) {
-          try {
-            turn = await durableRectificationQuestionHandoff.current.attach({
-              caseId: current.caseId,
-              turnVersion: current.turnVersion,
-              question: pendingConsultationQuestion,
-            });
-          } catch (error) {
-            if (!(error instanceof DurableRectificationHandoffError)
-              || error.status !== 409) throw error;
-            const latest = await fetchAccount();
-            if (!latest.rectificationCase
-              || latest.rectificationCase.caseId !== current.caseId) throw error;
-            current = latest.rectificationCase;
-            setAccount(latest);
-            turn = await durableRectificationQuestionHandoff.current.attach({
-              caseId: current.caseId,
-              turnVersion: current.turnVersion,
-              question: pendingConsultationQuestion,
-            });
-          }
-        } else {
-          try {
-            turn = await sendConversationalRectificationCommand({
-              type: "resume",
-              caseId: current.caseId,
-              actionId: globalThis.crypto.randomUUID(),
-              turnVersion: current.turnVersion,
-            }, {
-              onNarrativeDelta(text) {
-                setRectificationOpeningAssistantText((value) => value + text);
-              },
-            });
-          } catch (error) {
-            if (!(error instanceof ConversationalRectificationRequestError)
-              || error.status !== 409) throw error;
-            const latest = await fetchAccount();
-            if (!latest.rectificationCase
-              || latest.rectificationCase.caseId !== current.caseId) throw error;
-            current = latest.rectificationCase;
-            setAccount(latest);
-            turn = await sendConversationalRectificationCommand({
-              type: "resume",
-              caseId: current.caseId,
-              actionId: globalThis.crypto.randomUUID(),
-              turnVersion: current.turnVersion,
-            }, {
-              onNarrativeDelta(text) {
-                setRectificationOpeningAssistantText((value) => value + text);
-              },
-            });
-          }
-        }
-      }
 
-      const recoveredConversation = conversationalRectificationHistoryForTurn(turn);
-      const firstSessionMessages = recoveredConversation.length > 0
-        ? recoveredConversation.map(({ role, text }) => ({ role, text }))
-        : !reusingRectificationSession && rectificationSession.messages.length === 0
-          ? [{ role: "assistant" as const, text: turn.narrative.trim() }]
-          : rectificationSession.messages;
-      const boundSession = {
-        ...rectificationSession,
-        messages: firstSessionMessages,
-        rectificationCaseId: turn.caseId,
-        updatedAt: rectificationSession.rectificationCaseId === turn.caseId
-          && firstSessionMessages === rectificationSession.messages
-          ? rectificationSession.updatedAt
-          : timestamp(),
-      };
-      setRectificationInitialTurn(turn);
-      setRectificationOpeningAssistantText("");
-      synchronizeRectificationQuestion(turn, sourceSession);
-      setComposerNotice("");
-      if (!reusingRectificationSession) {
-        setSessions((current) => [boundSession, ...current.filter((session) => session.id !== boundSession.id)]);
-        void rectificationPersistence.current.enqueue(
-          boundSession.id,
-          () => persistSession(boundSession, "create"),
-        ).catch(() => {
-          setComposerNotice("校正已经开始，但会话关联暂时未同步到云端。");
-        });
-      } else if (boundSession !== rectificationSession) {
-        updateSession(rectificationSession.id, () => boundSession);
-        void rectificationPersistence.current.enqueue(
-          boundSession.id,
-          () => persistSession(boundSession),
-        ).catch(() => {
-          setComposerNotice("校正已经开始，但会话关联暂时未同步到云端。");
-        });
+    try {
+      if (!existing) {
+        setSessions((current) => [rectificationSession, ...current.filter((session) => session.id !== rectificationSession.id)]);
+        await rectificationPersistence.current.enqueue(
+          rectificationSession.id,
+          () => persistSession(rectificationSession, "create"),
+        );
       }
-    } catch (caught) {
-      const message = caught instanceof Error
-        ? caught.message
-        : "生时校正暂时无法继续，请稍后重试。";
-      setRectificationError(message);
-      setComposerNotice(message);
-      if (!reusingRectificationSession) {
-        setSessions((current) => current.filter((session) => session.id !== rectificationSession.id));
-        setRectificationSessionId(null);
-        if (sourceSession) {
-          activeSessionIdRef.current = sourceSession.id;
-          setActiveSessionId(sourceSession.id);
-        }
-      }
+    } catch {
+      setComposerNotice("生时校正已打开，但会话列表暂时未同步到云端。");
     } finally {
       rectificationOpenInFlight.current = false;
       setRectificationLoading(false);
@@ -2711,7 +2532,8 @@ export default function Home() {
           modelId: currentSession.modelId,
           name: profile.name,
           consultationMode: consultationRoute.mode,
-          ...(consultationRoute.mode === "general_no_birth_time" ? {} : {
+          ...(consultationRoute.mode === "general_no_birth_time"
+            || rectificationHandoff?.protocol === "rectification-evidence-v4" ? {} : {
             entrypoint: entrypoint ?? undefined,
             year,
             month,
@@ -2865,13 +2687,10 @@ export default function Home() {
   }
 
 
-  async function continueRectificationOriginalQuestion(question: string) {
+  async function continueRectificationOriginalQuestion(continuation: RectificationV4Continuation) {
+    const question = continuation.question;
     if (rectificationContinuationInFlight.current || rectificationMutationPending
       || rectificationLoading || !activeSession || !account) return;
-    const confirmedTurn = rectificationInitialTurn;
-    if (!confirmedTurn || confirmedTurn.status !== "completed"
-      || confirmedTurn.pendingConsultationQuestion !== question
-      || !confirmedTurn.actions.includes("continue_original_question")) return;
     if (account.credits <= 0) {
       openAccountDialog("redeem", creditTrigger.current);
       return;
@@ -2898,9 +2717,9 @@ export default function Home() {
     setRectificationContinuationPending(true);
     setRectificationError("");
     try {
-      const durableClaim = await durableRectificationQuestionHandoff.current.claim({
-        caseId: confirmedTurn.caseId,
-        turnVersion: confirmedTurn.turnVersion,
+      const durableClaim = await claimRectificationV4Handoff({
+        caseId: continuation.caseId,
+        caseVersion: continuation.caseVersion,
         question,
       });
       if (durableClaim.status === "in_progress") {
@@ -2935,8 +2754,9 @@ export default function Home() {
             null,
             context.sessionId,
             {
+              protocol: "rectification-evidence-v4",
               caseId: durableClaim.caseId,
-              turnVersion: durableClaim.turnVersion,
+              caseVersion: durableClaim.caseVersion,
               claimActionId: durableClaim.claimActionId,
               requestId: durableClaim.requestId,
             },
@@ -2945,9 +2765,7 @@ export default function Home() {
       );
       if (completed) {
         setRectificationPendingQuestion(null);
-        setComposerNotice(confirmedTurn.candidate.status === "confirmed"
-          ? "已使用新确认时间继续回答原问题。"
-          : "已保留候选范围，并按未确认出生分钟的边界继续回答原问题。");
+        setComposerNotice("已按候选范围边界继续回答原问题。");
       } else {
         setComposerNotice("原问题仍保留，可再次点击继续回答。");
       }
@@ -3249,7 +3067,7 @@ export default function Home() {
                       <button
                         className="product-entrypoint-hitarea"
                         type="button"
-                        aria-label={`${rectificationCardLabel}，固定费用 ${account.rectificationPriceCredits} 点`}
+                        aria-label={rectificationCardLabel}
                         disabled={productEntrypointsDisabled || rectificationLoading || rectificationMutationPending}
                         onClick={() => void openBirthTimeRectification()}
                       />
@@ -3261,9 +3079,7 @@ export default function Home() {
                           : "不确定准确出生时间时，可通过已经发生的人生事件逐步缩小范围。"}</p>
                       </div>
                       <div className="product-entrypoint-footer">
-                        <small>{rectificationCardAction === "resume"
-                          ? "继续同一案例，不重复收费。"
-                          : `固定费用 ${account.rectificationPriceCredits} 点；首轮有效分析后收取。`}</small>
+                        <small>进度会自动保存；结果只作为候选范围，不会改写已填报出生时间。</small>
                         <span className="product-entrypoint-action" aria-hidden="true">{rectificationCardLabel} <ArrowUpRight className="starter-arrow" /></span>
                       </div>
                     </article>
@@ -3330,7 +3146,7 @@ export default function Home() {
               continuationPending={rectificationContinuationPending}
               onPendingChange={setRectificationMutationPending}
               onTurn={handleConversationalRectificationTurn}
-              onContinueOriginalQuestion={(question) => void continueRectificationOriginalQuestion(question)}
+              onContinueOriginalQuestion={(continuation) => void continueRectificationOriginalQuestion(continuation)}
             />
           ))}
         </div>

@@ -4,5 +4,23 @@ services:
       - default
       - app
 
+  rectification-v4-worker:
+    image: ${WEB_IMAGE:-jyotisha-web:local}
+    restart: unless-stopped
+    env_file:
+      - ${APP_ENV_FILE:-../.env.staging}
+    environment:
+      GITHUB_SHA: ${GITHUB_SHA}
+      JYOTISH_API_BASE: http://api:5200
+    working_dir: /app/frontend
+    command: ["npm", "run", "worker:rectification-v4"]
+    depends_on:
+      api:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - app
+
 networks:
   app:

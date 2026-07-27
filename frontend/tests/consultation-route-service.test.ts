@@ -275,3 +275,51 @@ test("consult route constructs workflow input from the route service rather than
   const toolInput = route.slice(route.indexOf("const toolInput = consultationInputSchema.parse"));
   assert.doesNotMatch(toolInput.slice(0, toolInput.indexOf("const workflowContext")), /\.\.\.parsed\.data/);
 });
+
+test("v4 continuation builds chart boundaries from the durable range without a reported minute", async () => {
+  const order: string[] = [];
+  const prepared = await prepareConsultationRoute({
+    userId: "user-v4",
+    mode: "general_no_birth_time",
+    candidateRange: { start: "05:13", end: "05:15" },
+    loadProfile: async () => {
+      order.push("profile");
+      return {
+        ...profile,
+        reported_birth_time: null,
+        active_birth_time: null,
+        birth_time_source: "period_only",
+        birth_time_status: "reported",
+      };
+    },
+    async resolveTimezoneOffset(value, selectedTime) {
+      order.push(`timezone:${selectedTime}`);
+      return value;
+    },
+    async reserve() {
+      order.push("reserve");
+      return "reserved";
+    },
+  });
+
+  assert.deepEqual(order, ["profile", "timezone:05:13", "reserve"]);
+  assert.equal(prepared.consultationMode, "unverified_birth_time");
+  assert.equal(prepared.serverChart?.toolInput.hour, 5);
+  assert.equal(prepared.serverChart?.toolInput.minute, 13);
+  assert.equal(prepared.serverChart?.truth.selectedTimeKind, "candidate_range_boundary");
+});
+
+test("v4 continuation request has an independent schema and omits client chart minutes", () => {
+  const route = readFileSync(new URL("../src/app/api/consult/route.ts", import.meta.url), "utf8");
+  const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const schemaStart = route.indexOf("const v4ContinuationRequestSchema");
+  const schemaEnd = route.indexOf("const chartChatRequestSchema");
+  const schema = route.slice(schemaStart, schemaEnd);
+
+  assert.ok(schemaStart >= 0 && schemaEnd > schemaStart);
+  assert.match(schema, /rectificationHandoff:\s*rectificationV4HandoffSchema/);
+  assert.doesNotMatch(schema, /consultationInputSchema/);
+  assert.doesNotMatch(schema, /\bhour\b|\bminute\b|\blat\b|\blon\b|\btz\b/);
+  assert.match(page, /rectificationHandoff\?\.protocol === "rectification-evidence-v4" \? \{\} : \{/);
+  assert.match(route, /candidateRange:\s*handoffExecution\.acceptedRange/);
+});
