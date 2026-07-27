@@ -988,3 +988,4 @@
 - 发布前：再次 fetch 后 main/staging 仍同为 f402e6f79c7c8c65de9137770b3041c6eb55da42，main 未受保护；允许范围审计通过，依赖/lockfile/migration/deploy/workflow diff=0。
 - 阻塞：执行环境无受控 staging 测试邮箱/收件箱，真实收信验收写入 BLOCKED.md；不使用他人邮箱，代码与部署继续。
 - 2026-07-27 UI 跟进：注册与忘记密码子流程不再显示“验证码登录 / 密码登录 / 注册账号 / 忘记密码”顶层导航，仅保留“返回登录”；聚焦测试 4/4、ESLint、diff check 通过。
+- 2026-07-27 staging 测试账户：确认 luna@copse.life 原为 0 用户/0 credential/0 会话；仅在 staging 通过 Better Auth createUser 创建，复核 user=1、credential=1、password_hashed=true，密码登录 HTTP 200 且 Set-Cookie=true；未直接写密码 SQL、未触发 production、临时文件已清理。
