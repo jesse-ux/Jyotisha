@@ -1517,3 +1517,19 @@
 - 防复发：生时校正业务真源必须是 V4 Case 和 append-only 事件台账，不得从聊天正文反向恢复；任何公开结果只能显示通过稳定性门的范围，单分钟峰值不得成为可保存结果；证据不足必须生成下一题或明确暂停，不能进入 `awaiting_answer + currentQuestion=null`；V4 路径不得写 `profiles.active_birth_time`。
 - 相关记录：BUG-067、BUG-069、BUG-072、BUG-074、BUG-075、BUG-080、BUG-081
 - 修复版本：待提交（本地可测）
+
+
+## BUG-083 | staging 质量门使用无可用 Linux sandbox 的浏览器运行时导致验收失败
+
+- 状态：resolved
+- 首次发现：2026-07-27
+- 最近更新：2026-07-27
+- 影响面：生时校正 V4 的 390px 真实浏览器验收、staging 镜像发布与后续部署
+- 用户现象：PR 质量门已通过且相同提交的其余 1031 个测试成功，但推送到 `staging` 后唯一的真实 Chromium 测试未能取得 DevTools 端口，导致不可变镜像未发布、部署未继续。
+- 触发条件：`backend-quality-gate.yml` 未显式供应带系统 sandbox 的浏览器，或安装 Playwright 默认的 `chromium-headless-shell` 后直接用原始二进制启动。
+- 根因：真实浏览器测试刻意保留 Chromium sandbox，但 Playwright 默认下载的 `chromium-headless-shell` 是原始构建；当前 GitHub Linux Runner 无法为该原始二进制建立所需 sandbox，进程以 `SIGTRAP` 退出。仅依赖 Runner 偶然预装的 Chrome 也不具备可重复性。
+- 修复：通过 Playwright 官方 `chrome` 安装通道供应系统级 stable Chrome 及其依赖，再执行真实浏览器合同；避免选择无系统 sandbox 包装的 headless shell，不跳过验收，也不增加 `--no-sandbox`。
+- 验证：workflow 合同回归断言 Playwright stable Chrome 必须被安装；聚焦部署合同测试、完整前端测试、目标 ESLint、生产构建与 `git diff --check` 通过；staging 质量门和部署结果另行记录。
+- 防复发：保留浏览器 sandbox 的 CI 必须使用具备系统 sandbox 包装的浏览器安装通道，不能直接启动无相应宿主配置的原始 headless shell，也不能依赖 hosted runner 的偶然预装状态。
+- 相关记录：BUG-082
+- 修复版本：本次修复提交
