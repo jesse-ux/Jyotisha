@@ -224,6 +224,17 @@ test("staging deploy consumes only the isolated staging environment and tested r
   assert.match(syncController, /--exclude='\/backups\/'/);
 });
 
+test("staging rectification worker can reach both the API and PostgreSQL", () => {
+  const compose = readFileSync(
+    new URL("../../deploy/docker-compose.staging.yml", import.meta.url),
+    "utf8",
+  );
+  const worker = serviceBlock(compose, "rectification-v4-worker");
+
+  assert.match(worker, /JYOTISH_API_BASE: http:\/\/api:5200/);
+  assert.match(worker, /networks:\n\s+- default\n\s+- app/);
+});
+
 test("staging env validator rejects selector drift, duplicates, and unsafe permissions", () => {
   const validator = fileURLToPath(
     new URL("../../deploy/validate-staging-env.sh", import.meta.url),

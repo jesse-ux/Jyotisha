@@ -20,6 +20,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
+      - default
       - app
 
 networks:
