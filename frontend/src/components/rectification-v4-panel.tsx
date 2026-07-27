@@ -186,12 +186,14 @@ export function RectificationV4Panel(props: RectificationV4PanelProps) {
   }
 
   return (
-    <section className="rectification-chat" aria-label="生时校正对话" aria-busy={processing || controller.pending}>
-      <div className="message-list" aria-live="polite">
-        {messages.map((message) => <ChatMessageRow key={message.renderKey} message={message} />)}
-        {controller.error && <p className="error-message" role="alert">{controller.error}</p>}
-        <div ref={conversationEnd} />
-      </div>
+    <>
+      <section className="conversation" aria-label="生时校正对话" aria-busy={processing || controller.pending}>
+        <div className="message-list" aria-live="polite">
+          {messages.map((message) => <ChatMessageRow key={message.renderKey} message={message} />)}
+          {controller.error && <p className="error-message" role="alert">{controller.error}</p>}
+          <div ref={conversationEnd} />
+        </div>
+      </section>
 
       {showControls && (
         <div className="composer-wrap">
@@ -247,6 +249,6 @@ export function RectificationV4Panel(props: RectificationV4PanelProps) {
           </div>
         </div>
       )}
-    </section>
+    </>
   );
 }
