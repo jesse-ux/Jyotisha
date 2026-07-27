@@ -174,6 +174,16 @@ test("login UI preserves accessible OTP, password, registration, and reset input
   for (const label of ["验证码登录", "密码登录", "注册账号", "忘记密码"]) {
     assert.match(component, new RegExp(label));
   }
+  assert.match(
+    component,
+    /canUsePassword && \(mode === "otp" \|\| mode === "password"\)/,
+  );
+  assert.match(
+    component,
+    /canUsePassword && \(mode === "register" \|\| mode === "forgot"\)/,
+  );
+  assert.match(component, /\{showLoginNavigation && \(/);
+  assert.match(component, />\s*返回登录\s*</);
   for (const autocomplete of [
     "email",
     "current-password",

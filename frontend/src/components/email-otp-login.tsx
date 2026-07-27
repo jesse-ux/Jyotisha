@@ -51,6 +51,10 @@ export function EmailOtpLogin({
   const [notice, setNotice] = useState("");
 
   const canUsePassword = provider === "self-hosted" && passwordEnabled;
+  const showLoginNavigation =
+    canUsePassword && (mode === "otp" || mode === "password");
+  const showBackToLogin =
+    canUsePassword && (mode === "register" || mode === "forgot");
 
   function chooseMode(nextMode: AuthMode, nextNotice = "") {
     setMode(nextMode);
@@ -257,7 +261,7 @@ export function EmailOtpLogin({
           <h1 id="login-title">{title}</h1>
           <p className="page-intro">{intro}</p>
 
-          {canUsePassword && (
+          {showLoginNavigation && (
             <nav className="auth-mode-nav" aria-label="登录方式">
               <div className="auth-mode-tabs">
                 <button
@@ -283,6 +287,14 @@ export function EmailOtpLogin({
                   忘记密码
                 </button>
               </div>
+            </nav>
+          )}
+
+          {showBackToLogin && (
+            <nav className="auth-links" aria-label="返回登录">
+              <button type="button" onClick={() => chooseMode("otp")}>
+                返回登录
+              </button>
             </nav>
           )}
 
