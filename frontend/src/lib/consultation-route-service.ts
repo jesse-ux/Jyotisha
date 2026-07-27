@@ -38,7 +38,7 @@ export type ServerChartConsultation = Readonly<{
     birthDate: string;
     reportedBirthTime: string | null;
     activeBirthTime: string | null;
-    selectedTimeKind: "reported" | "active";
+    selectedTimeKind: "reported" | "active" | "candidate_range_boundary";
     birthTimeSource: string;
     birthTimeStatus: string;
     placeLabel: string;
@@ -62,6 +62,7 @@ export type ServerChartConsultation = Readonly<{
 type PrepareConsultationRouteInput<Reservation> = Readonly<{
   userId: string;
   mode: ConsultationBirthTimeMode;
+  candidateRange?: Readonly<{ start: string; end: string }>;
   loadProfile: (userId: string) => Promise<unknown>;
   resolveTimezoneOffset?: (profile: unknown, selectedTime?: string) => Promise<unknown>;
   reserve: () => Promise<Reservation>;
@@ -157,6 +158,7 @@ function legacyChinaPlaceLabel(profile: RecordValue): string | null {
 function serverChartFromProfile(
   value: unknown,
   mode: Exclude<ConsultationBirthTimeMode, "general_no_birth_time">,
+  candidateBoundary?: string,
 ): ServerChartConsultation {
   const profile = record(value);
   if (!profile) throw new ConsultationProfileTruthError("profile_incomplete");
@@ -195,8 +197,14 @@ function serverChartFromProfile(
   if (!placeLabel) throw new ConsultationProfileTruthError("profile_incomplete");
 
   let selectedTime: string;
-  let selectedTimeKind: "reported" | "active";
-  if (mode === "verified_chart") {
+  let selectedTimeKind: "reported" | "active" | "candidate_range_boundary";
+  if (candidateBoundary !== undefined) {
+    if (!isBirthClockTime(candidateBoundary)) {
+      throw new ConsultationProfileTruthError("profile_inconsistent");
+    }
+    selectedTime = candidateBoundary;
+    selectedTimeKind = "candidate_range_boundary";
+  } else if (mode === "verified_chart") {
     if (birthTimeStatus !== "confirmed") {
       throw new ConsultationProfileTruthError("mode_changed");
     }
@@ -263,20 +271,26 @@ export async function prepareConsultationRoute<Reservation>(
   try {
     profile = await input.loadProfile(input.userId);
   } catch (error) {
-    if (input.mode === "general_no_birth_time") profile = null;
+    if (input.mode === "general_no_birth_time" && !input.candidateRange) profile = null;
     else if (error instanceof ConsultationProfileTruthError) throw error;
     else throw new ConsultationProfileTruthError("profile_unavailable");
   }
 
-  const consultationMode = input.mode === "general_no_birth_time"
-    ? persistedChartMode(profile) ?? input.mode
-    : input.mode;
+  const consultationMode = input.candidateRange
+    ? "unverified_birth_time"
+    : input.mode === "general_no_birth_time"
+      ? persistedChartMode(profile) ?? input.mode
+      : input.mode;
   let serverChart: ServerChartConsultation | null = null;
   if (consultationMode !== "general_no_birth_time") {
     const profileValue = record(profile);
-    const selectedTime = consultationMode === "verified_chart"
+    if (input.candidateRange && (!isBirthClockTime(input.candidateRange.start)
+      || !isBirthClockTime(input.candidateRange.end))) {
+      throw new ConsultationProfileTruthError("profile_inconsistent");
+    }
+    const selectedTime = input.candidateRange?.start ?? (consultationMode === "verified_chart"
       ? nullableClock(profileValue ?? {}, "active_birth_time")
-      : nullableClock(profileValue ?? {}, "reported_birth_time");
+      : nullableClock(profileValue ?? {}, "reported_birth_time"));
     try {
       profile = await (input.resolveTimezoneOffset ?? ((value, time) => (
         resolveMissingBirthTimezoneOffset(value, { preferredTime: time })
@@ -284,7 +298,11 @@ export async function prepareConsultationRoute<Reservation>(
     } catch {
       throw new ConsultationProfileTruthError("profile_unavailable");
     }
-    serverChart = serverChartFromProfile(profile, consultationMode);
+    serverChart = serverChartFromProfile(
+      profile,
+      consultationMode,
+      input.candidateRange?.start,
+    );
   }
   const reservation = await input.reserve();
   return Object.freeze({ consultationMode, serverChart, reservation });

@@ -30,6 +30,10 @@ const syncScript = new URL(
   "../../deploy/sync-staging-tree.sh",
   import.meta.url,
 );
+const stagingCompose = new URL(
+  "../../deploy/docker-compose.staging.yml",
+  import.meta.url,
+);
 
 function read(url: URL): string {
   return readFileSync(url, "utf8");
@@ -270,7 +274,7 @@ test("first immutable deployment rolls back to validated local image IDs", () =>
       "if [ \"$1\" = compose ]; then",
       "  if [[ \" $* \" == *\" up -d --no-build --remove-orphans \"* ]]; then",
       `    printf '%s|%s|%s|%s\\n' \"\${API_IMAGE:-}\" \"\${WEB_IMAGE:-}\" \"\${GITHUB_SHA:-}\" \"$*\" >>'${rollbackLog}'`,
-      "    [[ \"$*\" == *\" api web caddy\" ]] && exit 0",
+      "    [[ \"$*\" == *\" api web rectification-v4-worker caddy\" ]] && exit 0",
       "    exit 42",
       "  fi",
       "  exit 0",
@@ -308,7 +312,7 @@ test("first immutable deployment rolls back to validated local image IDs", () =>
       attempts[1],
       new RegExp(`^${previousApiId}\\|${previousWebId}\\|${previousSha}\\|`),
     );
-    assert.match(attempts[1], /api web caddy$/);
+    assert.match(attempts[1], /api web rectification-v4-worker caddy$/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -328,8 +332,17 @@ test("normal deployment checks migrations but never applies them", () => {
   assert.doesNotMatch(runner, /--profile migration run --rm migrator/);
   assert.doesNotMatch(runner, /npm\s+run\s+db:migrate(?!:check)/);
   assert.doesNotMatch(runner, /pull api web postgres/);
+  assert.match(runner, /verify_container_image rectification-v4-worker \"\$WEB_IMAGE\"/);
   assert.match(runner, /adminRoot\.status !== 302/);
   assert.match(runner, /adminRoot\.headers\.get\("location"\) !== "\/admin\/codes"/);
+});
+
+test("staging runs the rectification V4 worker from the immutable web image", () => {
+  const compose = read(stagingCompose);
+  assert.match(compose, /rectification-v4-worker:/);
+  assert.match(compose, /image: \$\{WEB_IMAGE:-jyotisha-web:local\}/);
+  assert.match(compose, /command: \["npm", "run", "worker:rectification-v4"\]/);
+  assert.ok(compose.includes("JYOTISH_API_BASE: http://api:5200"));
 });
 
 test("manual migration uses only PostgreSQL and the digest-pinned migrator", () => {

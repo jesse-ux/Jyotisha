@@ -146,6 +146,8 @@ export function toAgentConsultationContext(data: JsonRecord) {
       enabled_vargas: rectification.enabled_vargas,
       lagna_boundary: rectification.lagna_boundary,
     },
+    candidate_range: record(data.candidate_range),
+    range_boundary_contexts: record(data.range_boundary_contexts),
     thematic_evidence: selectedTheme,
     vedastro_gateway: record(data.vedastro_gateway),
     external_engine_evidence: {
@@ -206,6 +208,7 @@ function groundedJyotishInstructions(workflowContext: JsonRecord) {
   return `${jyotishInstructions}
 
 The server-computed Jyotish workflow below is the only source for this chart claim. Use it directly, preserve its truth boundaries, and do not run a second consultation workflow.
+When candidate_range and range_boundary_contexts are present, both boundary contexts are authoritative server calculations. Answer only claims supported by both boundaries. Never select a midpoint, peak, or representative minute; never present the range as a confirmed birth time; never give month-level, day-level, or exact event timing from this range.
 <server-computed-jyotish-workflow>
 ${JSON.stringify(toAgentConsultationContext(workflowContext))}
 </server-computed-jyotish-workflow>`;

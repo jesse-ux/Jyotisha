@@ -1,0 +1,225 @@
+import type {
+  LifeEventRevision,
+  RectificationV4Case,
+  RectificationV4Job,
+} from "./contracts.ts";
+import type {
+  ClaimedRectificationV4Job,
+  CompleteRectificationV4JobInput,
+  RectificationV4Store,
+  RectificationV4Turn,
+} from "./store.ts";
+import { RectificationV4StoreError } from "./store.ts";
+import { evidenceSetHash } from "./fingerprints.ts";
+
+export function createRectificationV4MemoryStore(): RectificationV4Store & {
+  readonly cases: Map<string, RectificationV4Case>;
+  readonly jobs: Map<string, RectificationV4Job & { workerId: string | null; turnId: string }>;
+} {
+  const cases = new Map<string, RectificationV4Case>();
+  const events = new Map<string, LifeEventRevision[]>();
+  const turns = new Map<string, RectificationV4Turn>();
+  const jobs = new Map<string, RectificationV4Job & { workerId: string | null; turnId: string }>();
+  const actionResults = new Map<string, { caseId: string; jobId: string | null }>();
+
+  function owned(userId: string, caseId: string): RectificationV4Case {
+    const value = cases.get(caseId);
+    if (!value || value.userId !== userId) throw new RectificationV4StoreError("not_found");
+    return value;
+  }
+
+  return {
+    cases,
+    jobs,
+    async findActiveCase(userId) {
+      return [...cases.values()].find((value) => value.userId === userId
+        && value.status !== "abandoned" && value.acceptedRange === null) ?? null;
+    },
+    async loadCase(userId, caseId) {
+      const value = cases.get(caseId);
+      return value?.userId === userId ? value : null;
+    },
+    async loadEvents(userId, caseId) {
+      owned(userId, caseId);
+      return events.get(caseId) ?? [];
+    },
+    async createCase(input) {
+      const replay = actionResults.get(`${input.case.userId}:${input.actionId}`);
+      if (replay) return owned(input.case.userId, replay.caseId);
+      const active = [...cases.values()].find((value) => value.userId === input.case.userId
+        && value.status !== "abandoned" && value.acceptedRange === null);
+      if (active?.calculationSpecHash === input.case.calculationSpecHash) {
+        actionResults.set(`${input.case.userId}:${input.actionId}`, { caseId: active.id, jobId: null });
+        return active;
+      }
+      if (active) {
+        cases.set(active.id, { ...active, status: "abandoned", phase: "complete", currentQuestion: null, updatedAt: input.case.createdAt });
+        for (const [jobId, job] of jobs) {
+          if (job.caseId === active.id && ["pending", "processing"].includes(job.status)) {
+            jobs.set(jobId, { ...job, status: "stale", updatedAt: input.case.createdAt });
+          }
+        }
+      }
+      cases.set(input.case.id, input.case);
+      events.set(input.case.id, []);
+      actionResults.set(`${input.case.userId}:${input.actionId}`, { caseId: input.case.id, jobId: null });
+      return input.case;
+    },
+    async submitAnswer(input) {
+      const key = `${input.userId}:${input.actionId}`;
+      const replay = actionResults.get(key);
+      if (replay?.jobId) return { case: owned(input.userId, replay.caseId), job: jobs.get(replay.jobId)! };
+      const current = owned(input.userId, input.caseId);
+      if (current.version !== input.expectedCaseVersion) throw new RectificationV4StoreError("stale_version");
+      if (!["awaiting_answer", "range_ready"].includes(current.status)) throw new RectificationV4StoreError("invalid_state");
+      const version = current.version + 1;
+      const updated: RectificationV4Case = {
+        ...current, version, status: "processing", phase: "extracting_evidence", currentQuestion: null, updatedAt: input.now,
+      };
+      const turn: RectificationV4Turn = {
+        id: input.turnId,
+        caseId: input.caseId,
+        caseVersion: version,
+        questionId: input.question.id,
+        questionDomain: input.question.domain,
+        questionTargetEventId: input.question.targetEventId,
+        question: input.question.prompt,
+        answer: input.answer,
+        actionId: input.actionId,
+        createdAt: input.now,
+      };
+      const job: RectificationV4Job & { workerId: string | null; turnId: string } = {
+        id: input.jobId,
+        caseId: input.caseId,
+        status: "pending",
+        phase: "extracting_evidence",
+        expectedCaseVersion: version,
+        evidenceSetHash: current.evidenceSetHash,
+        calculationSpecHash: current.calculationSpecHash,
+        errorCode: null,
+        createdAt: input.now,
+        updatedAt: input.now,
+        workerId: null,
+        turnId: turn.id,
+      };
+      cases.set(current.id, updated);
+      turns.set(turn.id, turn);
+      jobs.set(job.id, job);
+      actionResults.set(key, { caseId: current.id, jobId: job.id });
+      return { case: updated, job };
+    },
+    async reviseEvent(input) {
+      const key = `${input.userId}:${input.actionId}`;
+      const replay = actionResults.get(key);
+      if (replay?.jobId) return { case: owned(input.userId, replay.caseId), job: jobs.get(replay.jobId)! };
+      const current = owned(input.userId, input.caseId);
+      if (current.version !== input.expectedCaseVersion) throw new RectificationV4StoreError("stale_version");
+      const nextEvents = [...(events.get(current.id) ?? []), input.revision];
+      events.set(current.id, nextEvents);
+      const version = current.version + 1;
+      const updated = {
+        ...current, version, status: "processing" as const, phase: "scoring_candidates" as const,
+        evidenceSetHash: evidenceSetHash(nextEvents), currentQuestion: null, updatedAt: input.now,
+      };
+      const turn: RectificationV4Turn = {
+        id: input.revision.id, caseId: current.id, caseVersion: version, questionId: null, questionDomain: null,
+        questionTargetEventId: null, question: "修订事件", answer: "", actionId: input.actionId, createdAt: input.now,
+      };
+      const job = {
+        id: input.jobId, caseId: current.id, status: "pending" as const, phase: "scoring_candidates" as const,
+        expectedCaseVersion: version, evidenceSetHash: updated.evidenceSetHash,
+        calculationSpecHash: current.calculationSpecHash, errorCode: null, createdAt: input.now, updatedAt: input.now,
+        workerId: null, turnId: turn.id,
+      };
+      cases.set(current.id, updated);
+      turns.set(turn.id, turn);
+      jobs.set(job.id, job);
+      actionResults.set(key, { caseId: current.id, jobId: job.id });
+      return { case: updated, job };
+    },
+    async transitionCase(input) {
+      const key = `${input.userId}:${input.actionId}`;
+      const replay = actionResults.get(key);
+      if (replay) return owned(input.userId, replay.caseId);
+      const current = owned(input.userId, input.caseId);
+      if (current.version !== input.expectedCaseVersion) throw new RectificationV4StoreError("stale_version");
+      const updated = {
+        ...current,
+        version: current.version + 1,
+        status: input.status,
+        phase: input.phase,
+        acceptedRange: input.acceptedRange === undefined ? current.acceptedRange : input.acceptedRange,
+        updatedAt: input.now,
+      };
+      cases.set(current.id, updated);
+      actionResults.set(key, { caseId: current.id, jobId: null });
+      return updated;
+    },
+    async loadJob(userId, jobId) {
+      const job = jobs.get(jobId);
+      if (!job) return null;
+      owned(userId, job.caseId);
+      return job;
+    },
+    async updateJobPhase(input) {
+      const job = jobs.get(input.jobId);
+      if (!job || job.workerId !== input.workerId || job.status !== "processing") throw new RectificationV4StoreError("lease_lost");
+      jobs.set(job.id, { ...job, phase: input.phase, updatedAt: input.now });
+      const current = cases.get(job.caseId)!;
+      cases.set(current.id, { ...current, phase: input.phase, updatedAt: input.now });
+    },
+    async claimNextJob(workerId, now): Promise<ClaimedRectificationV4Job | null> {
+      const job = [...jobs.values()].find((value) => value.status === "pending");
+      if (!job) return null;
+      const claimed = { ...job, status: "processing" as const, workerId, updatedAt: now };
+      jobs.set(job.id, claimed);
+      const caseValue = cases.get(job.caseId)!;
+      return {
+        job: claimed,
+        case: caseValue,
+        turn: turns.get(job.turnId)!,
+        events: events.get(job.caseId) ?? [],
+        attemptedRefinementEventIds: [...new Set(
+          [...turns.values()]
+            .filter((turn) => turn.caseId === job.caseId && turn.questionTargetEventId)
+            .map((turn) => turn.questionTargetEventId!),
+        )],
+      };
+    },
+    async completeJob(input: CompleteRectificationV4JobInput, now) {
+      const job = jobs.get(input.jobId);
+      if (!job || job.workerId !== input.workerId || job.status !== "processing") throw new RectificationV4StoreError("lease_lost");
+      const current = cases.get(job.caseId)!;
+      if (current.version !== input.expectedCaseVersion
+        || current.evidenceSetHash !== input.inputEvidenceSetHash
+        || current.calculationSpecHash !== input.calculationSpecHash) throw new RectificationV4StoreError("stale_job");
+      const nextEvents = [...(events.get(current.id) ?? []), ...input.newEventRevisions];
+      events.set(current.id, nextEvents);
+      const updated: RectificationV4Case = {
+        ...current,
+        version: current.version + 1,
+        evidenceSetHash: input.outputEvidenceSetHash,
+        latestSnapshot: input.snapshot,
+        currentQuestion: input.nextQuestion,
+        status: input.status,
+        phase: input.phase,
+        updatedAt: now,
+      };
+      cases.set(current.id, updated);
+      jobs.set(job.id, { ...job, status: "completed", phase: input.phase, updatedAt: now });
+      return updated;
+    },
+    async failJob(input) {
+      const job = jobs.get(input.jobId);
+      if (!job || job.workerId !== input.workerId) throw new RectificationV4StoreError("lease_lost");
+      jobs.set(job.id, { ...job, status: "failed", errorCode: input.errorCode, updatedAt: input.now });
+      const current = cases.get(job.caseId);
+      if (current?.version === input.expectedCaseVersion) {
+        cases.set(current.id, {
+          ...current, status: "awaiting_answer", phase: "collecting_evidence",
+          currentQuestion: input.restoreQuestion, updatedAt: input.now,
+        });
+      }
+    },
+  };
+}

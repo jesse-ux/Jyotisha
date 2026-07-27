@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import {
   parseRectificationPriceCredits,
 } from "@/lib/birth-time-consultation-consent";
-import { resolveAccountRectificationCase } from "@/lib/account-rectification-case";
+import { resolveAccountRectificationCase, resolveAccountRectificationV4Case } from "@/lib/account-rectification-case";
 import {
   accountProfilePatchSchema,
   applyAccountProfileConcurrencyGuards,
@@ -26,6 +26,14 @@ function isMissingProfileColumn(error: { code?: string; message?: string } | nul
     || message.includes("column");
 }
 
+function isMissingRectificationV4Relation(error: { code?: string; message?: string } | null) {
+  const message = error?.message?.toLowerCase() ?? "";
+  return error?.code === "42P01"
+    || error?.code === "PGRST205"
+    || message.includes('relation "public.birth_time_rectification_v4_cases" does not exist')
+    || (message.includes("schema cache") && message.includes("birth_time_rectification_v4_cases"));
+}
+
 export async function GET() {
   try {
     const supabase = await createServerSupabaseClient();
@@ -40,6 +48,19 @@ export async function GET() {
       process.env.RECTIFICATION_PRICE_CREDITS,
     );
     const admin = createAdminSupabaseClient();
+    const { data: rectificationV4CaseData, error: rectificationV4CaseError } = await admin
+      .from("birth_time_rectification_v4_cases")
+      .select("id,status,version,accepted_range_start,updated_at")
+      .eq("user_id", user.id)
+      .neq("status", "abandoned")
+      .is("accepted_range_start", null)
+      .order("updated_at", { ascending: false })
+      .limit(1);
+    if (rectificationV4CaseError && !isMissingRectificationV4Relation(rectificationV4CaseError)) {
+      return NextResponse.json({ error: "暂时无法读取生时校正状态" }, { status: 500 });
+    }
+    const rectificationV4CaseRows = rectificationV4CaseError ? [] : rectificationV4CaseData;
+
     const { data: rectificationCaseRows, error: rectificationCaseError } = await admin
       .from("birth_time_rectification_cases")
       .select("id,journey_protocol,status,turn_version,revision_of_case_id,baseline_active_time,declared_birth_input,updated_at")
@@ -82,7 +103,9 @@ export async function GET() {
     if (profileError || !profile) {
       return NextResponse.json({ error: "暂时无法读取账户余额" }, { status: 500 });
     }
-    const rectificationCase = resolveAccountRectificationCase(
+    const rectificationCase = resolveAccountRectificationV4Case(
+      Array.isArray(rectificationV4CaseRows) ? rectificationV4CaseRows : [],
+    ) ?? resolveAccountRectificationCase(
       profile,
       Array.isArray(rectificationCaseRows) ? rectificationCaseRows : [],
     );

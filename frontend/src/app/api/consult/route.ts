@@ -5,6 +5,7 @@ import {
   getGeneralJyotishAgent,
   getJyotishAgent,
   runConsultationWorkflow,
+  toAgentConsultationContext,
 } from "@/mastra";
 import {
   languageModelConfigurationMessage,
@@ -33,8 +34,9 @@ import {
 } from "@/lib/consultation-route-service";
 import {
   createRectificationHandoffService,
+  createRectificationV4HandoffService,
   type RectificationHandoffExecution,
-  type RectificationHandoffService,
+  type RectificationV4HandoffExecution,
 } from "@/lib/rectification-handoff-service";
 import { z } from "zod";
 
@@ -56,11 +58,29 @@ const chatRequestMetadataSchema = z.object({
     .default([]),
 });
 
-const rectificationHandoffSchema = z.object({
+const rectificationV3HandoffSchema = z.object({
+  protocol: z.literal("conversational-evidence-v3").optional(),
   caseId: z.string().uuid(),
   turnVersion: z.number().int().nonnegative(),
   claimActionId: z.string().uuid(),
   requestId: z.string().uuid(),
+}).strict();
+
+const rectificationV4HandoffSchema = z.object({
+  protocol: z.literal("rectification-evidence-v4"),
+  caseId: z.string().uuid(),
+  caseVersion: z.number().int().nonnegative(),
+  claimActionId: z.string().uuid(),
+  requestId: z.string().uuid(),
+}).strict();
+
+const v4ContinuationRequestSchema = z.object({
+  ...chatRequestMetadataSchema.shape,
+  consultationMode: consultationBirthTimeModeSchema,
+  question: z.string().trim().min(1).max(500),
+  theme: z.enum(["career", "marriage", "wealth", "timing", "general"]),
+  entrypoint: z.undefined().optional(),
+  rectificationHandoff: rectificationV4HandoffSchema,
 }).strict();
 
 const chartChatRequestSchema = consultationInputSchema.extend({
@@ -69,7 +89,7 @@ const chartChatRequestSchema = consultationInputSchema.extend({
     .optional()
     .default("verified_chart"),
   entrypoint: consultationEntrypointSchema.optional(),
-  rectificationHandoff: rectificationHandoffSchema.optional(),
+  rectificationHandoff: rectificationV3HandoffSchema.optional(),
 }).strict();
 
 const generalChatRequestSchema = z.object({
@@ -80,7 +100,11 @@ const generalChatRequestSchema = z.object({
   entrypoint: z.undefined().optional(),
 }).strict();
 
-const chatRequestSchema = z.union([generalChatRequestSchema, chartChatRequestSchema]);
+const chatRequestSchema = z.union([
+  v4ContinuationRequestSchema,
+  generalChatRequestSchema,
+  chartChatRequestSchema,
+]);
 
 function currentTimeContext(now = new Date()) {
   const chinaTime = new Date(now.getTime() + 8 * 60 * 60 * 1000)
@@ -92,6 +116,54 @@ function currentTimeContext(now = new Date()) {
 
 function chinaCalendarDate(now: Date) {
   return new Date(now.getTime() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+function rangeBoundaryWorkflowContext(
+  start: Awaited<ReturnType<typeof runConsultationWorkflow>>,
+  end: Awaited<ReturnType<typeof runConsultationWorkflow>>,
+  acceptedRange: Readonly<{ start: string; end: string }>,
+) {
+  const startConsumer = start.consumer_context;
+  const endConsumer = end.consumer_context;
+  return {
+    ...start,
+    success: start.success && end.success,
+    consumer_context: {
+      ...startConsumer,
+      core_status: startConsumer.core_status === "blocked" || endConsumer.core_status === "blocked"
+        ? "blocked"
+        : startConsumer.core_status === "degraded" || endConsumer.core_status === "degraded"
+          ? "degraded"
+          : "ready",
+      available_layers: startConsumer.available_layers.filter((layer) =>
+        endConsumer.available_layers.includes(layer)),
+      missing_route_layers: [...new Set([
+        ...startConsumer.missing_route_layers,
+        ...endConsumer.missing_route_layers,
+      ])],
+      hard_blockers: [...new Set([
+        ...startConsumer.hard_blockers,
+        ...endConsumer.hard_blockers,
+      ])],
+      answer_policy: {
+        ...startConsumer.answer_policy,
+        can_answer_direction: startConsumer.answer_policy.can_answer_direction
+          && endConsumer.answer_policy.can_answer_direction,
+        can_answer_precise_timing: false,
+        birth_time_confidence: "accepted_candidate_range",
+        candidate_is_confirmed: false,
+        require_boundary_agreement: true,
+      },
+    },
+    candidate_range: {
+      ...acceptedRange,
+      claim_status: "candidate_range_not_birth_time_truth",
+    },
+    range_boundary_contexts: {
+      start: toAgentConsultationContext(start),
+      end: toAgentConsultationContext(end),
+    },
+  };
 }
 
 async function recordModelUsage(
@@ -182,25 +254,21 @@ export async function POST(request: Request) {
   const handoff = "rectificationHandoff" in parsed.data
     ? parsed.data.rectificationHandoff
     : undefined;
-  let handoffService: RectificationHandoffService | null = null;
-  let handoffExecution: RectificationHandoffExecution | null = null;
+  const v4Handoff = handoff?.protocol === "rectification-evidence-v4";
+  let handoffExecution: RectificationHandoffExecution | RectificationV4HandoffExecution | null = null;
+  let settleHandoffRequest: ((emitted: boolean) => Promise<void>) | null = null;
   let handoffSettlement: Promise<void> | null = null;
 
   async function settleHandoff(emitted: boolean) {
-    if (!handoff || !handoffService || !handoffExecution
+    if (!settleHandoffRequest || !handoffExecution
       || handoffExecution.status !== "ready") return;
-    handoffSettlement ??= handoffService.settle({
-      userId,
-      caseId: handoff.caseId,
-      claimActionId: handoff.claimActionId,
-      requestId: handoff.requestId,
-      emitted,
-    }).then(() => undefined);
+    handoffSettlement ??= settleHandoffRequest(emitted);
     await handoffSettlement;
   }
 
   if (handoff) {
-    if (!["verified_chart", "unverified_birth_time"].includes(parsed.data.consultationMode)
+    if ((!v4Handoff
+      && !["verified_chart", "unverified_birth_time"].includes(parsed.data.consultationMode))
       || parsed.data.entrypoint !== undefined
       || requestId !== handoff.requestId) {
       return NextResponse.json(
@@ -212,15 +280,41 @@ export async function POST(request: Request) {
       );
     }
     try {
-      handoffService = createRectificationHandoffService(accounting);
-      handoffExecution = await handoffService.beginExecution({
-        userId,
-        caseId: handoff.caseId,
-        turnVersion: handoff.turnVersion,
-        claimActionId: handoff.claimActionId,
-        requestId: handoff.requestId,
-        question: parsed.data.question,
-      });
+      if (handoff.protocol === "rectification-evidence-v4") {
+        const service = createRectificationV4HandoffService(accounting);
+        handoffExecution = await service.beginExecution({
+          userId,
+          caseId: handoff.caseId,
+          caseVersion: handoff.caseVersion,
+          claimActionId: handoff.claimActionId,
+          requestId: handoff.requestId,
+          question: parsed.data.question,
+        });
+        settleHandoffRequest = (emitted) => service.settle({
+          userId,
+          caseId: handoff.caseId,
+          claimActionId: handoff.claimActionId,
+          requestId: handoff.requestId,
+          emitted,
+        }).then(() => undefined);
+      } else {
+        const service = createRectificationHandoffService(accounting);
+        handoffExecution = await service.beginExecution({
+          userId,
+          caseId: handoff.caseId,
+          turnVersion: handoff.turnVersion,
+          claimActionId: handoff.claimActionId,
+          requestId: handoff.requestId,
+          question: parsed.data.question,
+        });
+        settleHandoffRequest = (emitted) => service.settle({
+          userId,
+          caseId: handoff.caseId,
+          claimActionId: handoff.claimActionId,
+          requestId: handoff.requestId,
+          emitted,
+        }).then(() => undefined);
+      }
     } catch {
       return NextResponse.json(
         {
@@ -275,6 +369,10 @@ export async function POST(request: Request) {
     prepared = await prepareConsultationRoute({
       userId,
       mode: parsed.data.consultationMode,
+      ...(v4Handoff && handoffExecution?.status === "ready"
+        && "acceptedRange" in handoffExecution
+        ? { candidateRange: handoffExecution.acceptedRange }
+        : {}),
       async loadProfile(profileUserId) {
         const { data, error } = await supabase
           .from("profiles")
@@ -439,7 +537,9 @@ export async function POST(request: Request) {
   try {
     const { history } = parsed.data;
     const name = prepared.serverChart?.name ?? parsed.data.name;
-    const consultationMode: ConsultationBirthTimeMode = prepared.consultationMode;
+    const consultationMode: ConsultationBirthTimeMode = v4Handoff
+      ? "unverified_birth_time"
+      : prepared.consultationMode;
     if (!shouldRunBirthChartWorkflow(consultationMode)) {
       const result = await getGeneralJyotishAgent(selectedModel).stream([
         {
@@ -484,6 +584,78 @@ export async function POST(request: Request) {
     }
 
     if (!prepared.serverChart) throw new Error("server_chart_truth_missing");
+    if (v4Handoff) {
+      if (!handoffExecution || handoffExecution.status !== "ready"
+        || !("acceptedRange" in handoffExecution)) {
+        throw new Error("rectification_v4_range_missing");
+      }
+      const acceptedRange = handoffExecution.acceptedRange;
+      const boundaryInput = (time: string) => {
+        const [hour, minute] = time.split(":").map(Number);
+        return consultationInputSchema.parse({
+          ...prepared.serverChart?.toolInput,
+          hour,
+          minute,
+          entryMode: "direct_chart",
+          question: resolvedQuestion.modelQuestion,
+          theme: parsed.data.theme,
+        });
+      };
+      const [startWorkflow, endWorkflow] = await Promise.all([
+        runConsultationWorkflow(boundaryInput(acceptedRange.start)),
+        runConsultationWorkflow(boundaryInput(acceptedRange.end)),
+      ]);
+      const workflowContext = rangeBoundaryWorkflowContext(
+        startWorkflow,
+        endWorkflow,
+        acceptedRange,
+      );
+      const workflowReceipt = consultationWorkflowReceipt(workflowContext);
+      const result = await getJyotishAgent(selectedModel, workflowContext).stream([
+        ...history.map((message) => message.role === "user"
+          ? { role: "user" as const, content: message.text }
+          : { role: "assistant" as const, content: message.text }),
+        {
+          role: "user",
+          content: [
+            currentTimeContext(requestTime),
+            name ? `用户称呼：${name}` : "",
+            resolvedQuestion.modelQuestion,
+            `本次只能使用已保存候选范围 ${acceptedRange.start}–${acceptedRange.end} 的两个边界共同支持的结论。`,
+            "不得选择中点、峰值或单一代表分钟，不得把候选范围说成已确认出生时间。",
+          ].filter(Boolean).join("\n"),
+        },
+      ]);
+      const completeAndRecordUsage = async () => {
+        await complete();
+        void recordModelUsage(
+          accounting,
+          userId,
+          requestId,
+          modelSelection.usageModelId,
+          result.totalUsage,
+        );
+      };
+      const settleInterrupted = (emitted: boolean) =>
+        settle(emitted ? completeAndRecordUsage : cancel);
+      return streamTextResponse(result.textStream, {
+        transformText: createBirthTimeModeOutputGuard("unverified_birth_time", false),
+        mode: "mastra",
+        requestId,
+        headers: {
+          "x-jyotish-workflow-route": workflowReceipt.route,
+          "x-jyotish-workflow-status": workflowReceipt.status,
+          "x-jyotish-technique-truth": workflowReceipt.techniqueTruth,
+          "x-jyotish-precise-timing": "blocked",
+          "x-jyotish-missing-layers": workflowReceipt.missingLayers,
+          "x-jyotish-birth-time-mode": "unverified_birth_time",
+        },
+        onFirstOutput: () => settle(completeAndRecordUsage),
+        onComplete: () => settle(completeAndRecordUsage),
+        onError: (_error, emitted) => settleInterrupted(emitted),
+        onCancel: settleInterrupted,
+      });
+    }
     const toolInput = consultationInputSchema.parse({
       ...prepared.serverChart.toolInput,
       // Unverified use is still a normal chart calculation with a hard answer

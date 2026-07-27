@@ -263,79 +263,48 @@ test("an active correction target remains cancellable without rendering evidence
   assert.doesNotMatch(markup, /（已修订）|已记录的真实经历/);
 });
 
-test("pending markup and responsive CSS expose accessibility contracts", () => {
-  const pendingController = controller({
-    pending: true,
-    draft: "保留中的文字",
-    getSnapshot: () => ({
-      turn,
-      draft: "保留中的文字",
-      selectedDomain: "career",
-      correctionTarget: null,
-      pending: true,
-      error: "",
-    }),
-  });
-  const markup = renderToStaticMarkup(React.createElement(
-    ConversationalRectificationSurface,
-    surfaceProps(pendingController),
-  ));
+test("v4 markup and responsive CSS expose accessibility and uncertainty contracts", () => {
   const css = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
   const component = readFileSync(
+    new URL("../src/components/rectification-v4-panel.tsx", import.meta.url),
+    "utf8",
+  );
+  const wrapper = readFileSync(
     new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url),
     "utf8",
   );
-  const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
 
-  assert.match(markup, /aria-busy="true"/);
-  assert.match(markup, /Jyotisha 正在核对经历/);
-  assert.doesNotMatch(markup, /正在核对这段经历|Enter 发送|已发送，2\.5 秒/);
-  assert.match(markup, /Jyotisha 正在分析/);
-  assert.match(markup, /<textarea[^>]+disabled=""[^>]*>保留中的文字<\/textarea>/);
-  assert.match(markup, /aria-label="生时校正对话"/);
-  assert.match(markup, /role="alert"|aria-live="polite"/);
-  assert.match(css, /\.conversation\.is-rectification[^}]*padding-bottom:\s*0/);
-  assert.match(css, /\.rectification-chat[^}]*height:\s*100%[^}]*display:\s*flex/);
-  assert.match(css, /\.rectification-message-list[^}]*flex:\s*1[^}]*overflow-y:\s*auto/);
-  assert.match(component, /conversationEnd\.current\?\.scrollIntoView/);
-  assert.match(component, /<div ref=\{conversationEnd\} \/>/);
-  assert.match(css, /\.composer:focus-within[^}]*border-color:/);
-  assert.match(css, /\.composer textarea[^}]*border:\s*0/);
-  assert.match(css, /\.rectification-composer-wrap[^}]*position:\s*static/);
-  assert.match(page, /rectificationSurfaceOpen \? "is-rectification"/);
-  assert.doesNotMatch(css, /\.conversational-domain-picker|\.conversational-event-date/);
-  assert.doesNotMatch(css, /button\[aria-label\$="下一步建议"\]/);
-  assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
-  assert.doesNotMatch(component, /确认放弃且不应用候选|本轮技术回执/);
-  assert.match(component, /controller\.answer\(undefined, text\)/);
+  assert.match(component, /<section className="rectification-v4-panel" aria-busy=\{processing \|\| controller\.pending\}>/);
+  assert.match(component, /id="rectification-v4-answer"/);
+  assert.match(component, /disabled=\{controller\.pending\}/);
+  assert.match(component, /aria-label="提交这段经历"/);
   assert.match(component, /event\.key === "Enter" && !event\.shiftKey/);
-  assert.match(component, /onPendingChange/);
-  assert.match(component, /onPendingChange:\s*props\.onPendingChange/);
-  assert.match(component, /onContinueOriginalQuestion\?\./);
-  assert.match(markup, /aria-label="赞"/);
-  assert.match(markup, /aria-label="踩"/);
-  assert.match(markup, /aria-label="复制回答"/);
-  assert.match(markup, /aria-label="重跑回答"/);
-  assert.match(component, /navigator\.clipboard\.writeText/);
-  assert.match(component, /setRegeneratingMessageKey\(messageKey\)/);
-  assert.match(component, /regeneratingMessageKey === message\.renderKey[\s\S]*?state: "thinking"/);
-  assert.match(component, /controller\.pending && canAnswer && regeneratingMessageKey === null/);
-  assert.match(component, /await controller\.regenerate\(\)/);
-  assert.match(component, /message\.renderKey !== latestAssistantKey/);
-  assert.match(css, /\.rectification-message-actions/);
+  assert.match(component, /候选范围，不是已确认的出生分钟/);
+  assert.match(component, /不会把峰值分钟当作真实出生时间/);
+  assert.match(component, /保存这个范围/);
+  assert.match(component, /protocol: "rectification-evidence-v4"[\s\S]*?caseId: caseValue\.id,[\s\S]*?caseVersion: caseValue\.version,[\s\S]*?acceptedRange: accepted/);
+  assert.match(wrapper, /<RectificationV4Panel[\s\S]*?onPendingChange=\{props\.onPendingChange\}/);
+  assert.match(css, /\.rectification-v4-panel \{[^}]*width: min\(860px, 100%\)[^}]*overflow-y: auto/);
+  assert.match(css, /\.rectification-v4-composer textarea \{[^}]*min-height: 112px/);
+  assert.match(css, /@media\s*\(max-width:\s*680px\)[\s\S]*?\.rectification-v4-ranges, \.rectification-v4-evidence-grid \{ grid-template-columns: 1fr; \}/);
+  assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
 });
 
-test("the page persists and rehydrates the full rectification transcript", () => {
-  const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  const component = readFileSync(
+test("the v4 panel rehydrates the active case and event revisions instead of session transcript state", () => {
+  const wrapper = readFileSync(
     new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url),
     "utf8",
   );
+  const hook = readFileSync(new URL("../src/hooks/use-rectification-v4.ts", import.meta.url), "utf8");
+  const client = readFileSync(new URL("../src/lib/rectification-v4/client.ts", import.meta.url), "utf8");
+  const v4Export = wrapper.slice(wrapper.indexOf("export function ConversationalBirthTimeRectification"));
 
-  assert.match(page, /firstSessionMessages[\s\S]*?role: "assistant"[\s\S]*?turn\.narrative\.trim\(\)/);
-  assert.match(page, /messages:\s*durableRectificationMessages\(messages\)/);
-  assert.match(page, /initialMessages=\{activeSession\?\.messages \?\? \[\]\}/);
-  assert.match(component, /initialMessages:\s*props\.initialMessages/);
+  assert.match(v4Export, /return \([\s\S]*?<RectificationV4Panel/);
+  assert.doesNotMatch(v4Export, /initialTurn|initialMessages|useConversationalRectification/);
+  assert.match(hook, /await loadRectificationV4Handoff\(\)/);
+  assert.match(hook, /await loadRectificationV4\(existingHandoff\.caseId\)/);
+  assert.match(hook, /await createRectificationV4\(\)/);
+  assert.match(client, /rectificationV4ApiResponseSchema/);
 });
 
 type CdpResponse = Readonly<{
@@ -686,107 +655,117 @@ test("Chromium harness keeps the browser sandbox and bounds every external wait"
   assert.match(source, /fetchJsonWithDeadline/);
 });
 
-test("real Chromium at 390px verifies layout, keyboard focus, streamlined controls, and live hook inputs", {
+test("real Chromium at 390px verifies the v4 range surface, keyboard focus, and no horizontal overflow", {
   timeout: 30_000,
 }, async () => {
   const frontendRoot = fileURLToPath(new URL("..", import.meta.url));
-  const directory = mkdtempSync(join(tmpdir(), "rectification-browser-"));
+  const directory = mkdtempSync(join(tmpdir(), "rectification-v4-browser-"));
   const entryPath = join(directory, "fixture.tsx");
   const bundlePath = join(directory, "fixture.js");
   const htmlPath = join(directory, "fixture.html");
   const userDataDirectory = join(directory, "chrome-profile");
-  const componentPath = join(frontendRoot, "src/components/conversational-birth-time-rectification.tsx");
-  const hookPath = join(frontendRoot, "src/hooks/use-conversational-rectification.ts");
+  const componentPath = join(frontendRoot, "src/components/rectification-v4-panel.tsx");
   const css = readFileSync(join(frontendRoot, "src/app/globals.css"), "utf8")
     .replace(/^@import[^;]+;\s*/gm, "");
   const fixture = `
-    import React, { useEffect, useState } from "react";
+    import React from "react";
     import { createRoot } from "react-dom/client";
-    import { ConversationalRectificationSurface } from ${JSON.stringify(componentPath)};
-    import { useConversationalRectification } from ${JSON.stringify(hookPath)};
+    import { RectificationV4Panel } from ${JSON.stringify(componentPath)};
 
-    const caseA = "00000000-0000-4000-8000-000000000821";
-    const caseB = "00000000-0000-4000-8000-000000000829";
-    const longWord = "D9SENSITIVEREFERENCE".repeat(70);
-    const makeTurn = (caseId, turnVersion, status = "active") => ({
-      caseId,
-      journeyProtocol: "conversational-evidence-v3",
-      status,
-      turnVersion,
-      narrative: "## 当前判断\\n\\n**05:18** 只是待验证候选。" + longWord,
-      candidate: {
-        status: "pending_validation",
-        representativeTime: "05:18",
-        rangeStart: "05:10",
-        rangeEnd: "05:26",
+    const eventId = "00000000-0000-4000-8000-000000000822";
+    const now = "2026-07-27T00:00:00.000Z";
+    const data = {
+      case: {
+        id: "00000000-0000-4000-8000-000000000821",
+        userId: "00000000-0000-4000-8000-000000000823",
+        protocol: "rectification-evidence-v4",
+        version: 4,
+        status: "range_ready",
+        phase: "complete",
+        calculationSpec: {
+          version: "rectification-calculation-spec-v4",
+          birthDate: "1990-01-01",
+          candidateRange: { start: "05:00", end: "06:00" },
+          latitude: 25.03,
+          longitude: 121.56,
+          timezoneOffsetHours: 8,
+          ayanamsa: "lahiri",
+          nodeMode: "mean",
+          minuteStep: 1,
+        },
+        calculationSpecHash: "a".repeat(64),
+        evidenceSetHash: "b".repeat(64),
+        currentQuestion: {
+          id: "00000000-0000-4000-8000-000000000824",
+          domain: "career",
+          targetEventId: eventId,
+          prompt: "如果要修订这段经历，请直接写出正确年月和发生了什么。",
+          recallCost: "low",
+          reason: "核对日期敏感性",
+        },
+        latestSnapshot: {
+          id: "00000000-0000-4000-8000-000000000825",
+          caseId: "00000000-0000-4000-8000-000000000821",
+          caseVersion: 4,
+          evidenceSetHash: "b".repeat(64),
+          calculationSpecHash: "a".repeat(64),
+          algorithmVersion: "rectification-v4-range-scoring-1",
+          candidates: [{
+            time: "05:18",
+            score: 9.5,
+            supportingEventIds: [eventId],
+            conflictingEventIds: [],
+          }],
+          clusters: [{
+            rank: 1,
+            startTime: "05:16",
+            endTime: "05:20",
+            representativeTime: "05:18",
+            widthMinutes: 5,
+            peakScore: 9.5,
+            scoreMass: 9.5,
+          }],
+          robustness: {
+            neighborSupportMinutes: 5,
+            leaveOneOutRetentionRate: 0.8,
+            dateSensitivityRetentionRate: 0.9,
+            calculationSpecHashMatched: true,
+          },
+          canConfirmExactMinute: false,
+          canAcceptRange: true,
+          gateReasons: [],
+          createdAt: now,
+        },
+        acceptedRange: null,
+        createdAt: now,
+        updatedAt: now,
       },
-      technicalReceipt: {
-        calculationVersion: "rectification-technical-v1",
-        stableLayers: ["D1"],
-        sensitiveLayers: ["D9", "D10"],
-        candidateDifferenceRefs: ["consult-d9", "consult-d10"],
-      },
-      evidenceRequest: status === "abandoned" ? null : {
-        domains: ["career", "education", "relocation"],
-        datePrecision: "month_preferred",
-        freeTextAllowed: true,
-      },
-      evidenceRecap: status === "abandoned" ? [] : [{
-        id: "00000000-0000-4000-8000-000000000822",
-        summary: "开始第一份长期工作",
-        dateLabel: "2021-07",
-        isCorrection: false,
+      job: null,
+      events: [{
+        id: "00000000-0000-4000-8000-000000000826",
+        eventId,
+        revision: 2,
+        domain: "career",
+        eventKind: "career_change",
+        summary: "2021 年开始第一份长期工作",
+        rawText: "2021 年 7 月开始第一份长期工作",
+        dateRange: { start: "2021-07-01", end: "2021-07-31", precision: "month", label: "2021-07" },
+        scoreability: "scoreable",
+        supersedesRevisionId: null,
+        createdAt: now,
       }],
-      actions: status === "abandoned" ? [] : status === "paused"
-        ? ["answer", "abandon"]
-        : ["answer", "pause", "abandon"],
-      pendingConsultationQuestion: null,
-    });
-    const turns = {
-      activeA1: makeTurn(caseA, 1),
-      activeA3: makeTurn(caseA, 3),
-      activeB1: makeTurn(caseB, 1),
-      abandonedB2: makeTurn(caseB, 2, "abandoned"),
     };
-    const events = [];
 
-    function Harness() {
-      const [initialTurn, setInitialTurn] = useState(null);
-      const [transportLabel, setTransportLabel] = useState("first");
-      const [callbackLabel, setCallbackLabel] = useState("first");
-      const send = async (command) => {
-        events.push("send:" + transportLabel + ":" + command.type);
-        await new Promise((resolveSend) => setTimeout(resolveSend, 20));
-        if (command.type === "pause") {
-          return makeTurn(command.caseId, command.turnVersion + 1, "paused");
-        }
-        if (command.type === "abandon") {
-          return makeTurn(command.caseId, command.turnVersion + 1, "abandoned");
-        }
-        return makeTurn(command.caseId ?? caseA, (command.turnVersion ?? 0) + 1);
-      };
-      const controller = useConversationalRectification({
-        initialTurn,
-        send,
-        onTurn: (next) => events.push("turn:" + callbackLabel + ":" + next.status),
-      });
-      useEffect(() => {
-        globalThis.__rectificationHarness = {
-          events,
-          setCallbackLabel,
-          setTransportLabel,
-          setTurn(name) { setInitialTurn(name === "none" ? null : turns[name]); },
-        };
-        globalThis.__rectificationReady = true;
-      });
-      return <ConversationalRectificationSurface
-        controller={controller}
-        models={[{ id: "deepseek-chat", label: "DeepSeek", description: "", creditCost: 1, isDefault: true }]}
-        selectedModelId="deepseek-chat"
-        onSelectModel={() => undefined}
-      />;
-    }
-    createRoot(document.getElementById("root")).render(<Harness />);
+    globalThis.fetch = async (input, init) => {
+      const path = String(input);
+      if (path === "/api/rectification/v4/handoff" && !init?.method) return new Response(null, { status: 204 });
+      if (path === "/api/rectification/v4/cases" && init?.method === "POST") {
+        return Response.json(data);
+      }
+      throw new Error("unexpected fetch " + path);
+    };
+    createRoot(document.getElementById("root")).render(<RectificationV4Panel />);
+    globalThis.__rectificationReady = true;
   `;
   let browser: ChildProcess | null = null;
   let cdp: CdpSession | null = null;
@@ -819,73 +798,40 @@ test("real Chromium at 390px verifies layout, keyboard focus, streamlined contro
       () => cdp?.evaluate<boolean>("globalThis.__rectificationReady === true") ?? Promise.resolve(false),
       "React fixture readiness",
     );
-    await cdp.evaluate("globalThis.__rectificationHarness.setTurn('activeA1')");
     await waitFor(
-      () => cdp?.evaluate<boolean>(`document.body.textContent.includes('2021-07 · 开始第一份长期工作')
-        && !document.body.textContent.includes('已记录这段经历')`) ?? Promise.resolve(false),
-      "streamlined async initial turn",
+      () => cdp?.evaluate<boolean>(`document.body.textContent.includes('05:16–05:20')
+        && document.body.textContent.includes('保存这个范围')
+        && document.getElementById('rectification-v4-answer') !== null`) ?? Promise.resolve(false),
+      "v4 range surface",
     );
 
     const layout = await cdp.evaluate<{
       viewport: number;
       scrollWidth: number;
-      surfaceWidth: number;
-      shortestButton: number;
-      selectCount: number;
-      domainChoiceCount: number;
+      panelWidth: number;
+      rangeColumns: string;
+      exactMinuteClaimVisible: boolean;
     }>(`(() => {
-      const buttons = [...document.querySelectorAll('.rectification-chat button')]
-        .filter((button) => button.getBoundingClientRect().height > 0);
+      const panel = document.querySelector('.rectification-v4-panel');
       return {
         viewport: document.documentElement.clientWidth,
         scrollWidth: document.documentElement.scrollWidth,
-        surfaceWidth: document.querySelector('.rectification-chat').getBoundingClientRect().width,
-        shortestButton: Math.min(...buttons.map((button) => button.getBoundingClientRect().height)),
-        selectCount: document.querySelectorAll('.rectification-chat select').length,
-        domainChoiceCount: document.querySelectorAll('[data-evidence-domain]').length,
+        panelWidth: panel.getBoundingClientRect().width,
+        rangeColumns: getComputedStyle(document.querySelector('.rectification-v4-ranges')).gridTemplateColumns,
+        exactMinuteClaimVisible: document.body.textContent.includes('已确认出生分钟'),
       };
     })()`);
     assert.equal(layout.viewport, 390);
     assert.ok(layout.scrollWidth <= 390, `page overflowed: ${layout.scrollWidth}px`);
-    assert.ok(layout.surfaceWidth <= 366, `surface overflowed padded viewport: ${layout.surfaceWidth}px`);
-    assert.ok(layout.shortestButton >= 44, `shortest button was ${layout.shortestButton}px`);
-    assert.equal(layout.selectCount, 0, "language-first flow should not render date selects");
-    assert.equal(layout.domainChoiceCount, 0, "language-first flow should not render domain buttons");
+    assert.ok(layout.panelWidth <= 366, `panel overflowed padded viewport: ${layout.panelWidth}px`);
+    assert.equal(layout.rangeColumns.trim().split(/\s+/).length, 1);
+    assert.equal(layout.exactMinuteClaimVisible, false);
 
-    const mistakenAnswer = "2020年9月离职写错了";
-    await cdp.evaluate(`(() => {
-      const textarea = document.getElementById('conversational-rectification-answer');
-      const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set;
-      setter.call(textarea, ${JSON.stringify(mistakenAnswer)});
-      textarea.dispatchEvent(new Event('input', { bubbles: true }));
-      document.querySelector('[aria-label="发送"]').click();
-    })()`);
-    await waitFor(
-      () => cdp?.evaluate<boolean>(`document.querySelector('[aria-label="撤回发送，本次不计入校正"]') !== null`) ?? Promise.resolve(false),
-      "rectification undo window",
+    await cdp.evaluate("document.getElementById('rectification-v4-answer').focus()");
+    assert.equal(
+      await cdp.evaluate<boolean>("document.activeElement?.id === 'rectification-v4-answer'"),
+      true,
     );
-    await cdp.evaluate("document.querySelector('[aria-label=\"撤回发送，本次不计入校正\"]').click()");
-    await waitFor(
-      () => cdp?.evaluate<boolean>(`document.getElementById('conversational-rectification-answer').value === ${JSON.stringify(mistakenAnswer)}`) ?? Promise.resolve(false),
-      "mistaken answer restored to draft",
-    );
-    await new Promise((resolve) => setTimeout(resolve, 2_700));
-    assert.equal(await cdp.evaluate<boolean>("globalThis.__rectificationHarness.events.some((event) => event.endsWith(':answer'))"), false);
-
-    await cdp.evaluate("globalThis.__rectificationHarness.setTurn('activeA3')");
-    await waitFor(
-      () => cdp?.evaluate<boolean>(`(() => {
-        const text = document.body.textContent;
-        return !text.includes('当前候选')
-          && !text.includes('候选时间')
-          && !text.includes('本轮技术回执')
-          && !text.includes('暂停，稍后继续')
-          && !text.includes('放弃本次校正')
-          && !document.querySelector('[role=alertdialog]');
-      })()`) ?? Promise.resolve(false),
-      "streamlined rectification controls",
-    );
-
   } finally {
     try {
       cdp?.close();

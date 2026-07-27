@@ -8,7 +8,10 @@ import { ModelSelector } from "./model-selector.tsx";
 import { Button } from "./ui/button.tsx";
 import { Textarea } from "./ui/textarea.tsx";
 import {
-  useConversationalRectification,
+  RectificationV4Panel,
+  type RectificationV4Continuation,
+} from "./rectification-v4-panel.tsx";
+import {
   type ConversationalRectificationMessage,
   type ConversationalRectificationStoredMessage,
   type ConversationalRectificationController,
@@ -319,31 +322,15 @@ type ConversationalBirthTimeRectificationProps = Readonly<{
     messages: readonly ConversationalRectificationMessage[],
   ) => void;
   onPendingChange?: (pending: boolean) => void;
-  onContinueOriginalQuestion?: (question: string) => void;
+  onContinueOriginalQuestion?: (continuation: RectificationV4Continuation) => void;
 }>;
 
 export function ConversationalBirthTimeRectification(props: ConversationalBirthTimeRectificationProps) {
-  const pendingChange = useRef(props.onPendingChange);
-  useEffect(() => {
-    pendingChange.current = props.onPendingChange;
-  }, [props.onPendingChange]);
-  useEffect(() => () => pendingChange.current?.(false), []);
-  const controller = useConversationalRectification({
-    initialTurn: props.initialTurn,
-    initialMessages: props.initialMessages,
-    modelId: props.selectedModelId,
-    onTurn: props.onTurn,
-    onPendingChange: props.onPendingChange,
-  });
   return (
-    <ConversationalRectificationSurface
-      controller={controller}
-      openingAssistantText={props.openingAssistantText}
-      models={props.models}
-      selectedModelId={props.selectedModelId}
-      onSelectModel={props.onSelectModel}
+    <RectificationV4Panel
       pendingConsultationQuestion={props.pendingConsultationQuestion}
       continuationPending={props.continuationPending}
+      onPendingChange={props.onPendingChange}
       onContinueOriginalQuestion={props.onContinueOriginalQuestion}
     />
   );

@@ -12,8 +12,8 @@ export type BirthTimeConsultationConsentState = Readonly<
 
 export type AccountRectificationCaseState = Readonly<{
   caseId: string;
-  journeyProtocol: "conversational-evidence-v3";
-  status: "starting" | "active" | "paused" | "confirming" | "completed" | "abandoned";
+  journeyProtocol: "conversational-evidence-v3" | "rectification-evidence-v4";
+  status: "starting" | "active" | "awaiting_answer" | "processing" | "range_ready" | "paused" | "confirming" | "completed" | "abandoned";
   turnVersion: number;
   isRevision: boolean;
   preservesActiveTime: boolean;
@@ -32,6 +32,9 @@ const unfinishedRectificationStatuses = new Set<AccountRectificationCaseState["s
   "active",
   "paused",
   "confirming",
+  "awaiting_answer",
+  "processing",
+  "range_ready",
 ]);
 
 export function createBirthTimeConsultationConsentState(): BirthTimeConsultationConsentState {

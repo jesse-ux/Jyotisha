@@ -156,7 +156,8 @@ rollback() {
     echo "staging verification failed; restoring prior application images" >&2
     API_IMAGE="$previous_api_target" WEB_IMAGE="$previous_web_target" \
       GITHUB_SHA="$current_sha" \
-      "${compose[@]}" up -d --no-build --remove-orphans api web caddy || true
+      "${compose[@]}" up -d --no-build --remove-orphans \
+        api web rectification-v4-worker caddy || true
   fi
   exit "$status"
 }
@@ -179,6 +180,7 @@ verify_container_image() {
 }
 verify_container_image api "$API_IMAGE"
 verify_container_image web "$WEB_IMAGE"
+verify_container_image rectification-v4-worker "$WEB_IMAGE"
 
 "${compose[@]}" exec -T \
   -e EXPECTED_SHA="$DEPLOY_SHA" -e STAGING_URL="$STAGING_URL" \
