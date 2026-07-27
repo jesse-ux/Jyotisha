@@ -83,8 +83,15 @@ export function createRectificationV4Worker(input: {
           };
         }
         await input.store.updateJobPhase({ workerId, jobId: claimed.job.id, phase: "planning_question", now: now().toISOString() });
-        const nextQuestion = snapshot?.canAcceptRange ? null : input.questionAuthor
-          ? await input.questionAuthor({
+        let nextQuestion: RectificationV4Question | null = null;
+        if (!snapshot?.canAcceptRange) {
+          const plannedQuestion = planNextQuestion({
+            events,
+            attemptedRefinementEventIds: claimed.attemptedRefinementEventIds,
+            latestAnswer: claimed.turn.answer,
+          });
+          const authoredQuestion = input.questionAuthor
+            ? await input.questionAuthor({
               modelId: claimed.turn.modelId,
               candidateRange: claimed.case.calculationSpec.candidateRange,
               snapshot,
@@ -92,11 +99,13 @@ export function createRectificationV4Worker(input: {
               events,
               attemptedRefinementEventIds: claimed.attemptedRefinementEventIds,
             })
-          : planNextQuestion({
-              events,
-              attemptedRefinementEventIds: claimed.attemptedRefinementEventIds,
-              latestAnswer: claimed.turn.answer,
-            });
+            : plannedQuestion;
+          nextQuestion = plannedQuestion.targetEventId !== null
+            && (authoredQuestion.targetEventId !== plannedQuestion.targetEventId
+              || authoredQuestion.domain !== plannedQuestion.domain)
+            ? plannedQuestion
+            : authoredQuestion;
+        }
         await input.store.completeJob({
           workerId,
           jobId: claimed.job.id,

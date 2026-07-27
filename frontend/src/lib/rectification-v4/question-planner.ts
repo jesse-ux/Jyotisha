@@ -21,7 +21,7 @@ export function planNextQuestion(input: {
 }): RectificationV4Question {
   const attempted = new Set(input.attemptedRefinementEventIds ?? []);
   const target = scoreableEvents(input.events ?? [])
-    .filter((event) => event.dateRange.precision !== "day" && !attempted.has(event.eventId))
+    .filter((event) => !["day", "month"].includes(event.dateRange.precision) && !attempted.has(event.eventId))
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt) || left.eventId.localeCompare(right.eventId))[0];
   if (target) return refinementQuestion(target, input.id);
 

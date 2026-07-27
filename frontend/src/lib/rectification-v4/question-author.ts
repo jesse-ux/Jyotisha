@@ -59,16 +59,20 @@ export async function authorRectificationV4Question(input: Readonly<{
   events: readonly LifeEventRevision[];
   attemptedRefinementEventIds: readonly string[];
 }>): Promise<RectificationV4Question> {
-  const fallback = () => planNextQuestion({
+  const plannedQuestion = planNextQuestion({
     events: input.events,
     attemptedRefinementEventIds: input.attemptedRefinementEventIds,
     latestAnswer: input.turns.at(-1)?.answer,
   });
+  const fallback = () => plannedQuestion;
   const agent = agentFor(input.modelId);
   if (!agent) return fallback();
 
   const events = latestByEvent(input.events);
   const allowedTargets = new Map(events.map((event) => [event.eventId, event]));
+  const requiredContinuation = plannedQuestion.targetEventId
+    ? allowedTargets.get(plannedQuestion.targetEventId) ?? null
+    : null;
   const recentTurns = input.turns.slice(-6).flatMap((turn) => [
     { role: "assistant", text: turn.question },
     ...(turn.answer ? [{ role: "user", text: turn.answer }] : []),
@@ -78,7 +82,8 @@ export async function authorRectificationV4Question(input: Readonly<{
     constraints: [
       "First acknowledge or connect to the latest user experience; do not say merely that an answer is complete or recorded.",
       "Ask zero or one question, never a checklist, form, domain menu, or fixed sequence.",
-      "Prefer continuing the current event when a date/detail clarification can change scoring; otherwise choose the highest-information missing life dimension.",
+      "When requiredContinuation is present, continue that exact event and ask naturally for a more precise month or date; do not switch to another event or domain.",
+      "When requiredContinuation is absent, choose the highest-information next question from context rather than following a domain order.",
       "The visible prompt must not mention internal domains, ids, scores, weights, gates, processing phases, or that a model selected a route.",
       "targetEventId must be null or one of allowedTargetEventIds.",
     ],
@@ -96,6 +101,14 @@ export async function authorRectificationV4Question(input: Readonly<{
       scoreability: event.scoreability,
     })),
     attemptedRefinementEventIds: input.attemptedRefinementEventIds,
+    requiredContinuation: requiredContinuation
+      ? {
+          eventId: requiredContinuation.eventId,
+          summary: requiredContinuation.summary,
+          currentDate: requiredContinuation.dateRange.label,
+          precision: requiredContinuation.dateRange.precision,
+        }
+      : null,
     allowedTargetEventIds: [...allowedTargets.keys()],
     allowedDomains: evidenceDomainSchema.options,
   });
