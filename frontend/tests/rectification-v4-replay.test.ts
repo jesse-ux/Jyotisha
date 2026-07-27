@@ -50,6 +50,14 @@ test("fixture replay returns ranges only and never mutates the profile birth min
   const worker = createRectificationV4Worker({
     store,
     now,
+    questionAuthor: async () => ({
+      id: randomUUID(),
+      domain: "other",
+      targetEventId: null,
+      prompt: "请继续讲另一件时间比较清楚的人生变化。",
+      recallCost: "low",
+      reason: "Replay keeps narration open instead of depending on a fixed domain order.",
+    }),
     engine: {
       async score({ calculationSpec, events }) {
         const ids = events.map((event) => event.eventId);
@@ -98,7 +106,6 @@ test("fixture replay returns ranges only and never mutates the profile birth min
     loaded.case.version,
     "2020年5月开始恋爱，2022年3月分手",
   );
-
   const snapshot = loaded.case.latestSnapshot;
   assert.ok(snapshot);
   assert.equal(snapshot.canConfirmExactMinute, false);

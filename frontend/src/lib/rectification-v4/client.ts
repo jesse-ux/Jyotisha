@@ -57,9 +57,9 @@ export async function loadRectificationV4(caseId: string): Promise<Rectification
   return json(await fetch(`/api/rectification/v4/cases/${caseId}`, { cache: "no-store" }), rectificationV4ApiResponseSchema);
 }
 
-export function answerRectificationV4(caseId: string, expectedCaseVersion: number, answer: string) {
+export function answerRectificationV4(caseId: string, expectedCaseVersion: number, answer: string, modelId?: string | null) {
   return post(`/api/rectification/v4/cases/${caseId}/answers`, {
-    actionId: globalThis.crypto.randomUUID(), expectedCaseVersion, answer,
+    actionId: globalThis.crypto.randomUUID(), expectedCaseVersion, answer, modelId: modelId || null,
   });
 }
 

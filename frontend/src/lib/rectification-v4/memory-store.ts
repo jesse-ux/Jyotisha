@@ -43,6 +43,12 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
       owned(userId, caseId);
       return events.get(caseId) ?? [];
     },
+    async loadTurns(userId, caseId) {
+      owned(userId, caseId);
+      return [...turns.values()]
+        .filter((turn) => turn.caseId === caseId)
+        .sort((left, right) => left.caseVersion - right.caseVersion || left.createdAt.localeCompare(right.createdAt));
+    },
     async createCase(input) {
       const replay = actionResults.get(`${input.case.userId}:${input.actionId}`);
       if (replay) return owned(input.case.userId, replay.caseId);
@@ -85,6 +91,7 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
         questionTargetEventId: input.question.targetEventId,
         question: input.question.prompt,
         answer: input.answer,
+        modelId: input.modelId,
         actionId: input.actionId,
         createdAt: input.now,
       };
@@ -123,7 +130,7 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
       };
       const turn: RectificationV4Turn = {
         id: input.revision.id, caseId: current.id, caseVersion: version, questionId: null, questionDomain: null,
-        questionTargetEventId: null, question: "修订事件", answer: "", actionId: input.actionId, createdAt: input.now,
+        questionTargetEventId: null, question: "修订事件", answer: "", modelId: null, actionId: input.actionId, createdAt: input.now,
       };
       const job = {
         id: input.jobId, caseId: current.id, status: "pending" as const, phase: "scoring_candidates" as const,
@@ -174,10 +181,14 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
       const claimed = { ...job, status: "processing" as const, workerId, updatedAt: now };
       jobs.set(job.id, claimed);
       const caseValue = cases.get(job.caseId)!;
+      const caseTurns = [...turns.values()]
+        .filter((turn) => turn.caseId === job.caseId)
+        .sort((left, right) => left.caseVersion - right.caseVersion || left.createdAt.localeCompare(right.createdAt));
       return {
         job: claimed,
         case: caseValue,
         turn: turns.get(job.turnId)!,
+        turns: caseTurns,
         events: events.get(job.caseId) ?? [],
         attemptedRefinementEventIds: [...new Set(
           [...turns.values()]

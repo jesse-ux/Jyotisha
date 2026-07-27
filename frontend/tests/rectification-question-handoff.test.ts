@@ -1,19 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import React from "react";
-import { renderToStaticMarkup } from "react-dom/server";
-
-import { ConversationalRectificationSurface } from "../src/components/conversational-birth-time-rectification.tsx";
-import { createConversationalRectificationController } from "../src/hooks/use-conversational-rectification.ts";
-import type { ConversationalRectificationController } from "../src/hooks/use-conversational-rectification.ts";
 import { prepareConsultationRoute } from "../src/lib/consultation-route-service.ts";
 import type { ConversationalRectificationTurn } from "../src/lib/conversational-rectification/contracts.ts";
 import {
   createDurableRectificationQuestionHandoffClient,
   createRectificationQuestionHandoffCoordinator,
 } from "../src/lib/rectification-question-handoff.ts";
-
-Object.assign(globalThis, { React });
 
 const pendingQuestion = "未来半年是否适合换工作？";
 
@@ -42,108 +34,6 @@ function confirmedTurn(): ConversationalRectificationTurn {
     pendingConsultationQuestion: pendingQuestion,
   };
 }
-
-function controllerFor(turn: ConversationalRectificationTurn): ConversationalRectificationController {
-  const snapshot = {
-    turn,
-    draft: "",
-    selectedDomain: null,
-    correctionTarget: null,
-    pending: false,
-    error: "",
-  } as const;
-  return {
-    ...snapshot,
-    getSnapshot: () => snapshot,
-    subscribe: () => () => undefined,
-    synchronizeInitialTurn: () => undefined,
-    setDraft: () => undefined,
-    selectDomain: () => undefined,
-    beginEvidenceCorrection: () => undefined,
-    cancelEvidenceCorrection: () => undefined,
-    start: async () => turn,
-    resume: async () => turn,
-    answer: async () => turn,
-    regenerate: async () => turn,
-    pause: async () => turn,
-    abandon: async () => turn,
-    confirm: async () => turn,
-  };
-}
-
-function surfaceProps(
-  controller: ConversationalRectificationController,
-  overrides: Record<string, unknown> = {},
-) {
-  return {
-    controller,
-    models: [{ id: "deepseek-chat", label: "DeepSeek", description: "", creditCost: 1, isDefault: true }] as const,
-    selectedModelId: "deepseek-chat",
-    onSelectModel: () => undefined,
-    ...overrides,
-  };
-}
-
-test("confirmed surface requires an explicit click before continuing the original question", () => {
-  let continuationCalls = 0;
-  const markup = renderToStaticMarkup(React.createElement(
-    ConversationalRectificationSurface,
-    surfaceProps(controllerFor(confirmedTurn()), {
-      onContinueOriginalQuestion: () => { continuationCalls += 1; },
-    }),
-  ));
-
-  assert.doesNotMatch(markup, /原问题：未来半年是否适合换工作？/);
-  assert.match(markup, />返回原问题</);
-  assert.equal(continuationCalls, 0);
-});
-
-test("continuation action is visibly locked while ordinary consultation is pending", () => {
-  const markup = renderToStaticMarkup(React.createElement(
-    ConversationalRectificationSurface,
-    surfaceProps(controllerFor(confirmedTurn()), {
-      continuationPending: true,
-      onContinueOriginalQuestion: () => undefined,
-    }),
-  ));
-
-  assert.match(markup, /<button[^>]+disabled=""[^>]*>正在继续回答…<\/button>/);
-});
-
-test("choosing rectify-first captures the visible question and passes it only to v3 start", async () => {
-  const coordinator = createRectificationQuestionHandoffCoordinator<"career" | "general">();
-  const commands: unknown[] = [];
-  const handoff = coordinator.capture({
-    question: `  ${pendingQuestion}  `,
-    sessionId: "session-original",
-    theme: "career",
-  });
-  const firstTurn: ConversationalRectificationTurn = {
-    ...confirmedTurn(),
-    status: "active" as const,
-    turnVersion: 0,
-    candidate: {
-      ...confirmedTurn().candidate,
-      status: "pending_validation" as const,
-    },
-    actions: ["answer", "pause", "abandon"],
-  };
-  const rectification = createConversationalRectificationController({
-    async send(command) {
-      commands.push(command);
-      return firstTurn;
-    },
-    createActionId: () => "00000000-0000-4000-8000-000000001011",
-  });
-
-  await rectification.start(handoff.question);
-
-  assert.deepEqual(commands, [{
-    type: "start",
-    actionId: "00000000-0000-4000-8000-000000001011",
-    pendingConsultationQuestion: pendingQuestion,
-  }]);
-});
 
 test("pause, refresh, and a new device recover the durable question without losing local session and theme", () => {
   const paused = {
@@ -419,22 +309,4 @@ test("refresh restores only the server-owned pending question and replacement wi
   assert.equal(replaced.pendingConsultationQuestion, "新问题");
   assert.equal(refreshed?.question, "新问题");
   assert.equal(refreshed?.turn.pendingConsultationQuestion, "新问题");
-});
-
-test("confirmed surface never revives an old local question after durable consumption", () => {
-  const consumed = {
-    ...confirmedTurn(),
-    pendingConsultationQuestion: null,
-    actions: [],
-  };
-  const markup = renderToStaticMarkup(React.createElement(
-    ConversationalRectificationSurface,
-    surfaceProps(controllerFor(consumed), {
-      pendingConsultationQuestion: "浏览器里的旧问题",
-      onContinueOriginalQuestion: () => undefined,
-    }),
-  ));
-
-  assert.doesNotMatch(markup, /使用新确认时间继续回答原问题/);
-  assert.doesNotMatch(markup, /浏览器里的旧问题/);
 });

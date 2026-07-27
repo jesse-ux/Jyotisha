@@ -133,8 +133,8 @@ export function useRectificationV4(input: {
     pending,
     error,
     clearError: () => setError(""),
-    answer: (answer: string) => data
-      ? mutate(() => answerRectificationV4(data.case.id, data.case.version, answer))
+    answer: (answer: string, modelId?: string | null) => data
+      ? mutate(() => answerRectificationV4(data.case.id, data.case.version, answer, modelId))
       : Promise.resolve(null),
     pause: () => data
       ? mutate(() => transitionRectificationV4(data.case.id, data.case.version, "pause"))

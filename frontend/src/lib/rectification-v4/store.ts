@@ -5,25 +5,15 @@ import type {
   RectificationV4Job,
   RectificationV4Phase,
   RectificationV4Question,
+  RectificationV4Turn,
 } from "./contracts.ts";
-
-export type RectificationV4Turn = Readonly<{
-  id: string;
-  caseId: string;
-  caseVersion: number;
-  questionId: string | null;
-  questionDomain: LifeEventRevision["domain"] | null;
-  questionTargetEventId: string | null;
-  question: string;
-  answer: string;
-  actionId: string;
-  createdAt: string;
-}>;
+export type { RectificationV4Turn } from "./contracts.ts";
 
 export type ClaimedRectificationV4Job = Readonly<{
   job: RectificationV4Job;
   case: RectificationV4Case;
   turn: RectificationV4Turn;
+  turns: readonly RectificationV4Turn[];
   events: readonly LifeEventRevision[];
   attemptedRefinementEventIds: readonly string[];
 }>;
@@ -46,6 +36,7 @@ export interface RectificationV4Store {
   findActiveCase(userId: string): Promise<RectificationV4Case | null>;
   loadCase(userId: string, caseId: string): Promise<RectificationV4Case | null>;
   loadEvents(userId: string, caseId: string): Promise<readonly LifeEventRevision[]>;
+  loadTurns(userId: string, caseId: string): Promise<readonly RectificationV4Turn[]>;
   createCase(input: { readonly case: RectificationV4Case; readonly actionId: string }): Promise<RectificationV4Case>;
   submitAnswer(input: {
     readonly userId: string;
@@ -53,6 +44,7 @@ export interface RectificationV4Store {
     readonly actionId: string;
     readonly expectedCaseVersion: number;
     readonly answer: string;
+    readonly modelId: string | null;
     readonly question: RectificationV4Question;
     readonly jobId: string;
     readonly turnId: string;

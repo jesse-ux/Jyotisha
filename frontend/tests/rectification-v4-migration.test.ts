@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 
 const sql = readFileSync(new URL("../supabase/migrations/20260726020000_birth_time_rectification_v4.sql", import.meta.url), "utf8");
+const conversationalSql = readFileSync(new URL("../supabase/migrations/20260727010000_rectification_v4_conversational_turns.sql", import.meta.url), "utf8");
 
 test("v4 migration creates canonical append-only storage and leased jobs", () => {
   for (const table of [
@@ -17,6 +18,13 @@ test("v4 migration creates canonical append-only storage and leased jobs", () =>
   assert.match(sql, /question_target_event_id uuid/);
   assert.match(sql, /foreign key \(case_id, question_target_event_id\)/);
   assert.match(sql, /domain not in \('family', 'other'\) or scoreability = 'context_only'/);
+});
+
+test("v4 conversational migration persists the selected model with each turn", () => {
+  assert.match(conversationalSql, /add column model_id text/i);
+  assert.match(conversationalSql, /p_model_id text/i);
+  assert.match(conversationalSql, /question, answer, model_id, action_id/i);
+  assert.match(conversationalSql, /grant execute on function public\.submit_birth_time_rectification_v4_answer/i);
 });
 
 test("v4 handoff SQL enforces range acceptance, leases, idempotent settlement, and no profile time write", () => {

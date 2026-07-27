@@ -68,15 +68,15 @@ test("visible rectification copy does not replace a tailored Agent answer with a
   assert.match(narrative, /事业转折/);
 });
 
-test("the rectification chat renders the controller's alternating message history", () => {
+test("the v4 rectification chat renders persisted turns as alternating message history", () => {
   const source = readFileSync(
-    new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url),
+    new URL("../src/components/rectification-v4-panel.tsx", import.meta.url),
     "utf8",
   );
 
-  assert.match(source, /controller\.messages/);
-  assert.match(source, /controller\.messages[\s\S]*?\.map\(\(message\)/);
-  const messageHistoryIndex = source.indexOf("controller.messages");
-  assert.doesNotMatch(source, /rectification-progress-details|turn\.evidenceRecap\.map/);
-  assert.ok(messageHistoryIndex >= 0);
+  assert.match(source, /for \(const turn of data\.turns\)/);
+  assert.match(source, /role: "assistant"[\s\S]*?text: turn\.question/);
+  assert.match(source, /role: "user"[\s\S]*?text: turn\.answer/);
+  assert.match(source, /messages\.map\(\(message\) => <ChatMessageRow/);
+  assert.doesNotMatch(source, /rectification-progress-details|evidenceRecap\.map/);
 });

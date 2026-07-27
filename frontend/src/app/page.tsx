@@ -54,13 +54,11 @@ import {
   type RectificationCardAction,
 } from "@/lib/birth-time-consultation-consent";
 import type { ConsultationBirthTimeMode } from "@/lib/consultation-birth-time-mode";
-import type { ConversationalRectificationTurn } from "@/lib/conversational-rectification/contracts";
 import { claimRectificationV4Handoff } from "@/lib/rectification-v4/client";
 import {
   createRectificationQuestionHandoffCoordinator,
 } from "@/lib/rectification-question-handoff";
 import { useBirthTimeGuidedJourney } from "@/hooks/use-birth-time-guided-journey";
-import type { ConversationalRectificationMessage } from "@/hooks/use-conversational-rectification";
 import {
   requestBirthTimeAssessment,
   type JourneyClientResponse,
@@ -169,13 +167,6 @@ type ChatSession = {
   rectificationCaseId: string | null;
 };
 
-function durableRectificationMessages(
-  messages: readonly ConversationalRectificationMessage[],
-): Message[] {
-  const durable = messages.map(({ role, text }) => ({ role, text }));
-  if (durable.length <= 500) return durable;
-  return [durable[0]!, ...durable.slice(-(500 - 1))];
-}
 type RequestError = { sessionId: string; message: string };
 type StreamingReply = { sessionId: string; text: string };
 type BirthPlace = {
@@ -956,8 +947,6 @@ export default function Home() {
   );
   const [rectificationSessionId, setRectificationSessionId] = useState<string | null>(null);
   const [rectificationReturnSessionId, setRectificationReturnSessionId] = useState<string | null>(null);
-  const [rectificationInitialTurn, setRectificationInitialTurn] = useState<ConversationalRectificationTurn | null>(null);
-  const [rectificationOpeningAssistantText, setRectificationOpeningAssistantText] = useState("");
   const [rectificationPendingQuestion, setRectificationPendingQuestion] = useState<string | null>(null);
   const [rectificationLoading, setRectificationLoading] = useState(false);
   const [rectificationMutationPending, setRectificationMutationPending] = useState(false);
@@ -1015,9 +1004,6 @@ export default function Home() {
 
   const activeSession = sessions.find((session) => session.id === activeSessionId) ?? sessions[0];
   const activeRectificationSession = activeSession?.sessionType === "birth_time_rectification";
-  const visibleRectificationTurn = activeSession?.id === rectificationSessionId
-    ? rectificationInitialTurn
-    : null;
   const rectificationSurfaceOpen = activeRectificationSession
     && activeSession.id === rectificationSessionId;
   const visibleSessions = sessions
@@ -1612,7 +1598,7 @@ export default function Home() {
     setComposerNotice("");
     if (nextSession?.sessionType === "birth_time_rectification") {
       setRectificationError("");
-      if (nextSession.id !== rectificationSessionId || !rectificationInitialTurn) {
+      if (nextSession.id !== rectificationSessionId) {
         resumeRectificationSession.current(nextSession);
       }
     }
@@ -2041,20 +2027,6 @@ export default function Home() {
     );
   }
 
-  function synchronizeRectificationQuestion(
-    turn: ConversationalRectificationTurn,
-    fallbackSession: ChatSession | undefined = activeSession,
-  ) {
-    if (!turn.pendingConsultationQuestion) return;
-    if (!rectificationQuestionHandoff.current.peek() && fallbackSession) {
-      rectificationQuestionHandoff.current.synchronizeDurableQuestion(
-        turn.pendingConsultationQuestion,
-        { sessionId: fallbackSession.id, theme: fallbackSession.theme },
-      );
-    }
-    setRectificationPendingQuestion(turn.pendingConsultationQuestion);
-  }
-
   async function openBirthTimeRectification(
     pendingConsultationQuestion: string | null = null,
     sourceSessionOverride: ChatSession | null = null,
@@ -2072,8 +2044,6 @@ export default function Home() {
     rectificationOpenInFlight.current = true;
     setRectificationLoading(true);
     setRectificationError("");
-    setRectificationInitialTurn(null);
-    setRectificationOpeningAssistantText("");
     setRectificationPendingQuestion(requestedQuestion);
     setDraft("");
     setDraftTheme(null);
@@ -2102,78 +2072,6 @@ export default function Home() {
   resumeRectificationSession.current = (session) => {
     void openBirthTimeRectification(null, session);
   };
-
-  function handleConversationalRectificationTurn(
-    turn: ConversationalRectificationTurn,
-    messages: readonly ConversationalRectificationMessage[],
-  ) {
-    const requestIdentity = accountRefreshGuard.current.begin();
-    setRectificationInitialTurn(turn);
-    synchronizeRectificationQuestion(turn);
-    if (activeSession?.sessionType === "birth_time_rectification") {
-      const boundSession = {
-        ...activeSession,
-        messages: durableRectificationMessages(messages),
-        rectificationCaseId: turn.caseId,
-        updatedAt: timestamp(),
-      };
-      updateSession(activeSession.id, () => boundSession);
-      void rectificationPersistence.current.enqueue(
-        boundSession.id,
-        () => persistSession(boundSession),
-      ).catch(() => {
-        setComposerNotice("校正进度已经保留，但会话关联暂时未同步到云端。");
-      });
-    }
-    setAccount((current) => current ? {
-      ...current,
-      hasConfirmedBirthTime: current.hasConfirmedBirthTime
-        || (turn.status === "completed" && turn.candidate.status === "confirmed"),
-      rectificationCase: ["active", "paused", "confirming"].includes(turn.status)
-        ? {
-            caseId: turn.caseId,
-            journeyProtocol: "conversational-evidence-v3",
-            status: turn.status,
-            turnVersion: turn.turnVersion,
-            isRevision: current.rectificationCase?.caseId === turn.caseId
-              ? current.rectificationCase.isRevision
-              : current.hasConfirmedBirthTime,
-            preservesActiveTime: current.rectificationCase?.caseId === turn.caseId
-              ? current.rectificationCase.preservesActiveTime
-              : current.hasConfirmedBirthTime,
-          }
-        : current.rectificationCase?.caseId === turn.caseId
-          ? null
-          : current.rectificationCase,
-    } : current);
-    if (turn.status === "completed"
-      && turn.candidate.status === "confirmed"
-      && turn.candidate.representativeTime) {
-      setProfile((current) => ({
-        ...current,
-        time: turn.candidate.representativeTime ?? current.time,
-        birthTimeStatus: "confirmed",
-        rectificationCaseId: turn.caseId,
-      }));
-      setProfileDraft((current) => ({
-        ...current,
-        time: turn.candidate.representativeTime ?? current.time,
-        birthTimeStatus: "confirmed",
-        rectificationCaseId: turn.caseId,
-      }));
-    }
-    void fetchAccount()
-      .then((latest) => {
-        if (!accountRefreshGuard.current.isCurrent(requestIdentity)) return;
-        setAccount((current) => {
-          if (turn.status === "completed" || turn.status === "abandoned") return latest;
-          if (latest.rectificationCase?.caseId !== turn.caseId
-            || latest.rectificationCase.turnVersion < turn.turnVersion) return current;
-          return latest;
-        });
-      })
-      .catch(() => undefined);
-  }
 
   async function draftSynastryQuestionFromChart(record: ChartLibraryRecord, relationshipType: SynastryRelationshipType) {
     if (record.role !== "other") return;
@@ -2943,7 +2841,7 @@ export default function Home() {
           </button>
           </header>
 
-        <div className={`conversation ${activeSession?.messages.length ? "" : "is-empty"} ${rectificationSurfaceOpen ? "is-rectification" : ""}`}>
+        <div className={`conversation ${rectificationSurfaceOpen || activeSession?.messages.length ? "" : "is-empty"}`}>
           {!rectificationSurfaceOpen && (!activeSession?.messages.length ? (
             <div className="welcome">
               {!profileComplete ? (
@@ -3127,28 +3025,17 @@ export default function Home() {
               <div ref={conversationEnd} />
             </div>
           ))}
-          {rectificationSurfaceOpen && (!visibleRectificationTurn && rectificationError ? (
-            <div className="conversational-rectification-start-error" role="alert">
-              <p>{rectificationError}</p>
-              <button type="button" disabled={rectificationLoading} onClick={() => void openBirthTimeRectification(null, activeSession ?? null)}>
-                {rectificationLoading ? "正在重试…" : "重新建立校正记录"}
-              </button>
-            </div>
-          ) : (
+          {rectificationSurfaceOpen && (
             <ConversationalBirthTimeRectification
-              initialTurn={visibleRectificationTurn}
-              initialMessages={activeSession?.messages ?? []}
-              openingAssistantText={rectificationOpeningAssistantText}
               models={modelCatalog?.models ?? []}
               selectedModelId={activeSession?.modelId ?? ""}
               onSelectModel={(modelId) => void selectSessionModel(modelId)}
               pendingConsultationQuestion={rectificationPendingQuestion}
               continuationPending={rectificationContinuationPending}
               onPendingChange={setRectificationMutationPending}
-              onTurn={handleConversationalRectificationTurn}
               onContinueOriginalQuestion={(continuation) => void continueRectificationOriginalQuestion(continuation)}
             />
-          ))}
+          )}
         </div>
 
         {!rectificationSurfaceOpen && <div className={`composer-wrap ${starterHomeVisible ? "composer-wrap-starter" : ""}`}>

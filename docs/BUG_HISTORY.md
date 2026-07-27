@@ -1548,3 +1548,18 @@
 - 防复发：需要同时访问内部 API 与 staging PostgreSQL 的服务必须在 Compose 合同中显式加入两个现有私有网络。
 - 相关记录：BUG-082
 - 修复版本：本次修复提交
+
+## BUG-085 | 生时校正回退为独立面板和固定领域问卷
+
+- 状态：investigating
+- 首次发现：2026-07-27
+- 最近更新：2026-07-27
+- 影响面：生时校正 V4 聊天界面、历史恢复、模型选择、下一问规划与 staging 验收
+- 用户现象：进入生时校正后看到独立的校正面板、证据区域和固定问题；交互不像普通 session，领域也不再根据用户刚讲的经历动态选择。
+- 触发条件：V4 页面入口渲染旧式 `RectificationV4Panel` 视觉结构，页面给会话容器添加 `is-rectification`，同时问题规划器按硬编码领域顺序和模板生成下一问。
+- 根因：组件 wrapper 无条件绕过原普通聊天 Surface；普通 session CSS 又显式排除 `is-rectification`；`question-planner.ts` 把教育、迁移、关系、事业、财务、健康压力和家庭写成固定顺序与固定文案，测试还把这些实现细节当成产品合同。
+- 修复：V4 复用普通 session 的消息列表、输入框和模型选择器，并从持久化 turns 恢复完整对话；回答时原子保存所选模型 ID，Worker 将完整 turns、事件台账、日期精度、已追问事件与候选范围交给模型动态生成下一问。确定性 planner 只保留日期修订和开放叙述降级，不再轮询领域或输出固定问卷；候选范围仍不得表述为已确认出生分钟。
+- 验证：聚焦 V4/domain/service/replay/handoff/migration、普通 session UI 合同和 consultation entrypoint 共 59 个测试通过；staging 构建、迁移和登录态 smoke 完成后更新为 resolved 并填写精确提交与部署 SHA。
+- 防复发：可见生时校正必须复用普通聊天 Surface；测试应锁定自然语言消息、turn 恢复、模型 ID 传递和无固定领域控件，不得锁定领域顺序或问题模板。模型只负责选择和表达下一条高信息量问题，证据修订、评分、稳定性门、范围接受、handoff 与扣费继续由确定性后端负责。
+- 相关记录：BUG-020、BUG-075、BUG-080、BUG-081、BUG-082、BUG-083、BUG-084
+- 修复版本：待提交（staging 验收中）

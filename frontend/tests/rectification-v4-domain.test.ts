@@ -6,7 +6,7 @@ import { dateRangeFromDeclared, sampledDates } from "../src/lib/rectification-v4
 import { evaluateDecisionGate } from "../src/lib/rectification-v4/decision-gate.ts";
 import { appendEventRevision, latestEventRevisions } from "../src/lib/rectification-v4/evidence-ledger.ts";
 import { extractV4EventRevisions } from "../src/lib/rectification-v4/extraction.ts";
-import { planNextQuestion } from "../src/lib/rectification-v4/question-planner.ts";
+import { openingQuestion, planNextQuestion } from "../src/lib/rectification-v4/question-planner.ts";
 
 const now = new Date("2026-07-26T00:00:00.000Z");
 
@@ -73,42 +73,44 @@ test("decision gate can accept a stable range but never an exact minute", () => 
   assert.equal(result.canConfirmExactMinute, false);
 });
 
-test("question planner asks one deterministic low-recall question at a time", () => {
-  const question = planNextQuestion({
-    askedDomains: ["education"], coveredDomains: ["education"],
-    candidateSplitByDomain: { relocation: 0.8, relationship: 0.2 }, id: randomUUID(),
-  });
-  assert.equal(question.domain, "relocation");
+test("opening question invites free narration without a fixed domain", () => {
+  const question = openingQuestion({ start: "04:50", end: "05:10" }, randomUUID());
+
+  assert.equal(question.domain, "other");
   assert.equal(question.targetEventId, null);
-  assert.equal(question.prompt.includes("搬家"), true);
+  assert.match(question.prompt, /04:50–05:10/);
+  assert.match(question.prompt, /不是已确认的出生分钟/);
+  assert.match(question.prompt, /不需要按固定领域回答/);
+  assert.doesNotMatch(question.prompt, /毕业|搬家|恋爱|工作|财务|健康/);
 });
 
-test("question planner refines imprecise scoreable events after domain coverage", () => {
+test("fallback planner refines an imprecise event, then returns to open narration", () => {
   const eventId = randomUUID();
   const event = appendEventRevision([], {
     eventId, domain: "education", eventKind: "education_milestone", summary: "高中毕业",
     rawText: "2016年高中毕业", dateRange: dateRangeFromDeclared("2016", "year"),
   }, { id: randomUUID(), now });
   const question = planNextQuestion({
-    askedDomains: ["education", "relocation", "relationship", "career", "finance", "health_pressure", "family"],
-    coveredDomains: ["education", "relocation", "relationship", "career", "finance", "health_pressure", "family"],
     events: [event],
     attemptedRefinementEventIds: [],
+    latestAnswer: "2016年高中毕业",
     id: randomUUID(),
   });
   assert.equal(question.targetEventId, eventId);
-  assert.equal(question.prompt.includes("高中毕业"), true);
+  assert.equal(question.domain, "education");
+  assert.match(question.prompt, /高中毕业/);
+  assert.match(question.prompt, /月份或日期/);
 
   const fallback = planNextQuestion({
-    askedDomains: ["education", "relocation", "relationship", "career", "finance", "health_pressure", "family"],
-    coveredDomains: ["education", "relocation", "relationship", "career", "finance", "health_pressure", "family"],
     events: [event],
     attemptedRefinementEventIds: [eventId],
+    latestAnswer: "2016年高中毕业",
     id: randomUUID(),
   });
   assert.equal(fallback.targetEventId, null);
   assert.equal(fallback.domain, "other");
-  assert.equal(fallback.prompt.includes("暂停"), true);
+  assert.match(fallback.prompt, /继续讲另一件/);
+  assert.doesNotMatch(fallback.prompt, /搬家|恋爱|事业|财务|健康/);
 });
 
 test("targeted date answer appends a revision without duplicating the scoreable event", () => {

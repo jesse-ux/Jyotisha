@@ -4,16 +4,17 @@ import {
   lifeEventRevisionSchema,
   rectificationV4CaseSchema,
   rectificationV4JobSchema,
+  rectificationV4TurnSchema,
   type CandidateSnapshot,
   type LifeEventRevision,
   type RectificationV4Case,
   type RectificationV4Job,
+  type RectificationV4Turn,
 } from "./contracts.ts";
 import type {
   ClaimedRectificationV4Job,
   CompleteRectificationV4JobInput,
   RectificationV4Store,
-  RectificationV4Turn,
 } from "./store.ts";
 import { RectificationV4StoreError } from "./store.ts";
 import { evidenceSetHash } from "./fingerprints.ts";
@@ -114,7 +115,7 @@ function jobValue(row: Row): RectificationV4Job {
 }
 
 function turnValue(row: Row): RectificationV4Turn {
-  return {
+  return rectificationV4TurnSchema.parse({
     id: String(row.id),
     caseId: String(row.case_id),
     caseVersion: Number(row.case_version),
@@ -123,9 +124,10 @@ function turnValue(row: Row): RectificationV4Turn {
     questionTargetEventId: row.question_target_event_id ? String(row.question_target_event_id) : null,
     question: String(row.question),
     answer: String(row.answer),
+    modelId: row.model_id ? String(row.model_id) : null,
     actionId: String(row.action_id),
     createdAt: timestamp(row.created_at),
-  };
+  });
 }
 
 export function createRectificationV4SupabaseStore(supabase: SupabaseClient): RectificationV4Store {
@@ -160,6 +162,15 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
     return ((data ?? []) as Row[]).map(eventRevision);
   }
 
+  async function loadTurnsByCase(userId: string, caseId: string): Promise<readonly RectificationV4Turn[]> {
+    if (!await loadCaseById(userId, caseId)) throw new RectificationV4StoreError("not_found");
+    const { data, error } = await supabase.from("birth_time_rectification_v4_turns")
+      .select("*").eq("case_id", caseId).eq("user_id", userId)
+      .order("case_version", { ascending: true });
+    if (error) throw storeError(error);
+    return ((data ?? []) as Row[]).map(turnValue);
+  }
+
   async function rpc(name: string, args: Row): Promise<unknown> {
     const { data, error } = await supabase.rpc(name, args);
     if (error) throw storeError(error);
@@ -176,6 +187,7 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
     },
     loadCase: loadCaseById,
     loadEvents: loadEventsByCase,
+    loadTurns: loadTurnsByCase,
     async createCase(input) {
       const id = String(await rpc("create_birth_time_rectification_v4_case", {
         p_user_id: input.case.userId,
@@ -205,6 +217,7 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
         p_question_target_event_id: input.question.targetEventId,
         p_question: input.question.prompt,
         p_answer: input.answer,
+        p_model_id: input.modelId,
         p_job_id: input.jobId,
         p_now: input.now,
       }));
@@ -266,23 +279,21 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
       if (!jobRow) throw new RectificationV4StoreError("not_found");
       const userId = String(jobRow.user_id);
       const caseId = String(jobRow.case_id);
-      const [caseResult, turnRow, events, turnRows] = await Promise.all([
+      const [caseResult, turnRow, events, turns] = await Promise.all([
         loadCaseById(userId, caseId),
         rowById("birth_time_rectification_v4_turns", String(jobRow.turn_id)),
         loadEventsByCase(userId, caseId),
-        supabase.from("birth_time_rectification_v4_turns")
-          .select("question_target_event_id").eq("case_id", caseId),
+        loadTurnsByCase(userId, caseId),
       ]);
       if (!caseResult || !turnRow) throw new RectificationV4StoreError("not_found");
-      if (turnRows.error) throw storeError(turnRows.error);
       return {
         job: jobValue(jobRow),
         case: caseResult,
         turn: turnValue(turnRow),
+        turns,
         events,
         attemptedRefinementEventIds: [...new Set(
-          ((turnRows.data ?? []) as Row[])
-            .flatMap((row) => row.question_target_event_id ? [String(row.question_target_event_id)] : []),
+          turns.flatMap((turn) => turn.questionTargetEventId ? [turn.questionTargetEventId] : []),
         )],
       };
     },
