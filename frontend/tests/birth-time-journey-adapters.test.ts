@@ -30,6 +30,19 @@ test("birth time profile adapter parses an exact hospital declaration", () => {
   }
 });
 
+test("birth time profile adapter normalizes PostgreSQL date values", () => {
+  const assessment = parseBirthTimeProfile({
+    birth_date: new Date("1993-04-17T00:00:00.000Z"),
+    reported_birth_time: "08:16:00",
+    birth_time_source: "hospital_record",
+    uncertainty_before_minutes: 2,
+    uncertainty_after_minutes: 2,
+    ...coordinates,
+  });
+
+  assert.equal(assessment.date, "1993-04-17");
+});
+
 test("birth time profile adapter parses a period without inventing a time", () => {
   const assessment = parseBirthTimeProfile({
     birth_date: "1993-04-17",
