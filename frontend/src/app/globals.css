@@ -840,9 +840,6 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
   .conversational-composer-footer button, .conversational-confirmation button, .conversational-original-question button { width: 100%; }
 }
 
-/* Rectification reuses the ordinary session message list and composer. */
-.rectification-chat { display: contents; }
-
 /* Starter workbench */
 .welcome {
   width: min(1040px, 100%);

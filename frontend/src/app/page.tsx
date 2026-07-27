@@ -2841,8 +2841,9 @@ export default function Home() {
           </button>
           </header>
 
-        <div className={`conversation ${rectificationSurfaceOpen || activeSession?.messages.length ? "" : "is-empty"}`}>
-          {!rectificationSurfaceOpen && (!activeSession?.messages.length ? (
+        {!rectificationSurfaceOpen && (
+          <div className={`conversation ${activeSession?.messages.length ? "" : "is-empty"}`}>
+            {!activeSession?.messages.length ? (
             <div className="welcome">
               {!profileComplete ? (
                 <>
@@ -3024,19 +3025,21 @@ export default function Home() {
               {activeError && <p className="error-message">{activeError}</p>}
               <div ref={conversationEnd} />
             </div>
-          ))}
-          {rectificationSurfaceOpen && (
-            <ConversationalBirthTimeRectification
-              models={modelCatalog?.models ?? []}
-              selectedModelId={activeSession?.modelId ?? ""}
-              onSelectModel={(modelId) => void selectSessionModel(modelId)}
-              pendingConsultationQuestion={rectificationPendingQuestion}
-              continuationPending={rectificationContinuationPending}
-              onPendingChange={setRectificationMutationPending}
-              onContinueOriginalQuestion={(continuation) => void continueRectificationOriginalQuestion(continuation)}
-            />
-          )}
-        </div>
+            )}
+          </div>
+        )}
+
+        {rectificationSurfaceOpen && (
+          <ConversationalBirthTimeRectification
+            models={modelCatalog?.models ?? []}
+            selectedModelId={activeSession?.modelId ?? ""}
+            onSelectModel={(modelId) => void selectSessionModel(modelId)}
+            pendingConsultationQuestion={rectificationPendingQuestion}
+            continuationPending={rectificationContinuationPending}
+            onPendingChange={setRectificationMutationPending}
+            onContinueOriginalQuestion={(continuation) => void continueRectificationOriginalQuestion(continuation)}
+          />
+        )}
 
         {!rectificationSurfaceOpen && <div className={`composer-wrap ${starterHomeVisible ? "composer-wrap-starter" : ""}`}>
           {activeSuggestions.length > 0 && (

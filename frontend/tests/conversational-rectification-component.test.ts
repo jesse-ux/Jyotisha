@@ -68,6 +68,10 @@ test("v4 rectification reuses the ordinary session message list, composer, and m
   const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   const css = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
 
+  assert.match(
+    component,
+    /<>\s*<section className="conversation"[\s\S]*?<\/section>\s*\{showControls && \(\s*<div className="composer-wrap"/,
+  );
   assert.match(component, /className="message-list"/);
   assert.match(component, /<ChatMessageRow/);
   assert.match(component, /className="composer-wrap"/);
@@ -76,9 +80,11 @@ test("v4 rectification reuses the ordinary session message list, composer, and m
   assert.match(component, /<ModelSelector/);
   assert.match(component, /controller\.answer\(answer, props\.selectedModelId \|\| null\)/);
   assert.match(wrapper, /<RectificationV4Panel \{\.\.\.props\} \/>/);
-  assert.match(page, /rectificationSurfaceOpen \|\| activeSession\?\.messages\.length/);
+  assert.match(page, /\{!rectificationSurfaceOpen && \(\s*<div className=\{`conversation/);
+  assert.match(page, /\{rectificationSurfaceOpen && \(\s*<ConversationalBirthTimeRectification/);
   assert.doesNotMatch(page, /is-rectification/);
-  assert.match(css, /\.rectification-chat \{ display: contents; \}/);
+  assert.doesNotMatch(component, /rectification-chat/);
+  assert.doesNotMatch(css, /\.rectification-chat/);
 });
 
 test("turn history and the context-aware next question render as one chat timeline", () => {
