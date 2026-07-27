@@ -186,21 +186,21 @@
 - 复发自：无
 - 修复版本：待提交（本地可测）
 
-## BUG-010 | 浏览器直连 Supabase 写会话泄露 `TypeError: Load failed`
+## BUG-010 | 浏览器直连 Supabase 导致自托管 PostgreSQL staging 误报未配置
 
 - 状态：resolved
 - 首次发现：2026-07-22
-- 最近更新：2026-07-22
-- 影响面：回答完成后的聊天记录持久化、移动 Safari 错误提示
-- 用户现象：回答已经生成，但页面反复显示“云端同步失败：TypeError: Load failed”，并要求复制保存后重试。
-- 触发条件：浏览器直接向 Supabase `chat_sessions` 发起跨域写入时发生传输失败。
-- 根因：会话读取和多数业务写入已经使用同源 Next.js API，但会话创建与更新仍由浏览器客户端直写 Supabase；异常原文又被拼进回答错误区域。
-- 修复：新增同源 `POST /api/sessions` 与 `PATCH /api/sessions/[id]`，服务端校验登录、所有权和写入负载；客户端对可重试失败短重试一次，并把最终失败降级为输入区状态提示，不再把浏览器异常原文渲染成回答错误。
-- 验证：`frontend/tests/chat-session-write.test.ts` 覆盖同源路由、所有者约束、短重试和 `Load failed` 脱敏；相关咨询与资料回归测试通过。
-- 防复发：会话写入契约禁止页面直接调用 `supabase.from("chat_sessions")`；网络异常必须映射为稳定用户文案。
+- 最近更新：2026-07-27
+- 影响面：聊天首页启动、会话模型选择、退出登录；自托管 PostgreSQL staging。
+- 用户现象：数据库和身份服务正常，首页却显示“Supabase 尚未配置”。
+- 触发条件：`AUTH_PROVIDER=self-hosted` 且不提供浏览器 Supabase 公钥。
+- 根因：页面启动、会话模型更新和退出登录仍直接创建浏览器 Supabase client；仅服务端 API 已切换到同源 PostgreSQL 路径。
+- 修复：`/api/account` 返回当前用户完整 profile；首页通过 `/api/account`、`/api/sessions` 和 `/api/sessions/:id` 读写，退出使用 self-hosted identity client。
+- 验证：`frontend/tests/chat-session-write.test.ts`、`frontend/tests/session-model-persistence.test.ts`、`frontend/tests/account-api.test.ts`、ESLint、`next build`。
+- 防复发：首页不得引用 `createBrowserSupabaseClient`；会话与 profile 只能经同源 API 访问。
 - 相关记录：BUG-001、BUG-003
-- 复发自：无
-- 修复版本：待提交（本地可测）
+- 复发自：BUG-010
+- 修复版本：待发布 staging
 
 ## BUG-011 | 对话消息暴露内部证据审计状态
 

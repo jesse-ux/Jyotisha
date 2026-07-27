@@ -63,3 +63,16 @@ test("session API owns create and update while answer UI keeps sync failures out
   assert.match(itemRoute, /export async function PATCH/);
   assert.match(itemRoute, /\.eq\("user_id", user\.id\)/);
 });
+
+
+test("homepage bootstrap reads profiles and sessions through same-origin APIs", () => {
+  const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const accountRoute = readFileSync(new URL("../src/app/api/account/route.ts", import.meta.url), "utf8");
+
+  assert.doesNotMatch(page, /createBrowserSupabaseClient/);
+  assert.match(page, /fetch\("\/api\/account"/);
+  assert.match(page, /fetch\("\/api\/sessions"/);
+  assert.match(page, /writeChatSession\(initialSession\.id,[\s\S]*?"create"\)/);
+  assert.match(page, /fetch\(`\/api\/sessions\/\$\{encodeURIComponent\(sessionId\)\}`/);
+  assert.match(accountRoute, /rectificationCase,\s*profile,/);
+});

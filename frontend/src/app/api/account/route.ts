@@ -78,14 +78,14 @@ export async function GET() {
     // an older case. A concurrently created case simply appears on refresh.
     let { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("credits,active_birth_time,birth_time_status,birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset,birth_place_label,birth_place_type,birth_place_provider,birth_place_provider_id,timezone_id,timezone_source")
+      .select("credits,active_birth_time,birth_time_status,birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset,birth_place_label,birth_place_type,birth_place_provider,birth_place_provider_id,timezone_id,timezone_source,name,birth_time,rectification_case_id")
       .eq("id", userId)
       .single();
 
     if (profileError && isMissingProfileColumn(profileError)) {
       const fallback = await supabase
         .from("profiles")
-        .select("credits,active_birth_time,birth_time_status,birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset")
+        .select("credits,active_birth_time,birth_time_status,birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,country_code,province_code,city_code,district_code,latitude,longitude,timezone_offset,name,birth_time,rectification_case_id")
         .eq("id", userId)
         .single();
       profile = fallback.data ? {
@@ -118,6 +118,7 @@ export async function GET() {
       hasConfirmedBirthTime: profile.birth_time_status === "confirmed"
         && typeof profile.active_birth_time === "string",
       rectificationCase,
+      profile,
       birthLocation: {
         label: profile.birth_place_label ?? null,
         placeType: profile.birth_place_type ?? null,

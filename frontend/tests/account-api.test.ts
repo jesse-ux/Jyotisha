@@ -50,7 +50,7 @@ test("account GET falls back when global birthplace columns are not migrated yet
   const getSource = source.slice(source.indexOf("export async function GET"), source.indexOf("export async function PATCH"));
 
   assert.match(getSource, /profileError && isMissingProfileColumn\(profileError\)/);
-  assert.match(getSource, /select\("credits,active_birth_time[^"]*timezone_offset"\)/);
+  assert.match(getSource, /select\("credits,active_birth_time[^"]*timezone_offset(?:,[^"]*)?"\)/);
   assert.match(getSource, /birth_place_label: undefined/);
   assert.match(getSource, /timezone_id: undefined/);
 });
