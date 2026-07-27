@@ -116,11 +116,50 @@ test("worker extracts dated events, keeps one question and never confirms an exa
   const done = await service.loadCase(userId, created.case.id);
   assert.equal(done?.case.status, "awaiting_answer");
   assert.equal(done?.events.length, 2);
-  assert.equal(done?.case.currentQuestion?.domain, "education");
-  assert.equal(done?.events.some((event) => event.eventId === done.case.currentQuestion?.targetEventId), true);
-  assert.match(done?.case.currentQuestion?.prompt ?? "", /月份或日期/);
+  assert.equal(done?.case.currentQuestion?.domain, "other");
+  assert.equal(done?.case.currentQuestion?.targetEventId, null);
+  assert.match(done?.case.currentQuestion?.prompt ?? "", /继续讲另一件/);
   assert.equal(done?.case.latestSnapshot, null);
   assert.equal(queued?.job?.status, "pending");
+});
+
+test("worker rejects a model-authored domain jump while the latest event still needs a month", async () => {
+  const store = createRectificationV4MemoryStore();
+  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const userId = randomUUID();
+  const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+  await service.answer({
+    userId,
+    caseId: created.case.id,
+    actionId: randomUUID(),
+    expectedCaseVersion: created.case.version,
+    answer: "2016年离家去外地上大学",
+    modelId: "gpt-5.5",
+  });
+  const worker = createRectificationV4Worker({
+    store,
+    now: fixedNow,
+    engine: { async score() { throw new Error("engine must not run before enough events"); } },
+    questionAuthor: async () => ({
+      id: randomUUID(),
+      domain: "relocation",
+      targetEventId: null,
+      prompt: "请说一次影响较大的搬家或长期迁居，并给出尽可能准确的年月。",
+      recallCost: "low",
+      reason: "模型错误地跳到了另一个领域。",
+    }),
+  });
+
+  assert.equal(await worker.runOnce(), true);
+  const done = await service.loadCase(userId, created.case.id);
+  const event = done?.events.find((item) => item.summary === "离家去外地上大学");
+
+  assert.ok(event);
+  assert.equal(done?.case.currentQuestion?.targetEventId, event.eventId);
+  assert.equal(done?.case.currentQuestion?.domain, "education");
+  assert.match(done?.case.currentQuestion?.prompt ?? "", /离家去外地上大学/);
+  assert.match(done?.case.currentQuestion?.prompt ?? "", /月份或日期/);
+  assert.doesNotMatch(done?.case.currentQuestion?.prompt ?? "", /搬家或长期迁居/);
 });
 
 test("completed job rejects stale case or calculation hashes", async () => {

@@ -113,6 +113,23 @@ test("fallback planner refines an imprecise event, then returns to open narratio
   assert.doesNotMatch(fallback.prompt, /搬家|恋爱|事业|财务|健康/);
 });
 
+test("month-precise evidence is sufficient for the model to choose the next topic", () => {
+  const event = appendEventRevision([], {
+    eventId: randomUUID(), domain: "education", eventKind: "education_milestone", summary: "去外地上大学",
+    rawText: "2016年9月去外地上大学", dateRange: dateRangeFromDeclared("2016-09", "month"),
+  }, { id: randomUUID(), now });
+
+  const question = planNextQuestion({
+    events: [event],
+    attemptedRefinementEventIds: [],
+    latestAnswer: "2016年9月去外地上大学",
+    id: randomUUID(),
+  });
+
+  assert.equal(question.targetEventId, null);
+  assert.equal(question.domain, "other");
+});
+
 test("targeted date answer appends a revision without duplicating the scoreable event", () => {
   const eventId = randomUUID();
   const original = appendEventRevision([], {

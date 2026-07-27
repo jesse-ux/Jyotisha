@@ -91,11 +91,11 @@ test("fixture replay returns ranges only and never mutates the profile birth min
     userId,
     created.case.id,
     created.case.version,
-    "2015年高中毕业后复读一年，2016年再次高中毕业",
+    "2015年7月高中毕业后复读一年，2016年6月再次高中毕业",
   );
   assert.deepEqual(loaded.events.map((event) => [event.dateRange.start, event.dateRange.end]), [
-    ["2015-01-01", "2015-12-31"],
-    ["2016-01-01", "2016-12-31"],
+    ["2015-07-01", "2015-07-31"],
+    ["2016-06-01", "2016-06-30"],
   ]);
   loaded = await answerAndRun(service, worker, userId, created.case.id, loaded.case.version, "2018年8月搬家到北京");
   loaded = await answerAndRun(
