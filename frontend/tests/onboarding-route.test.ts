@@ -100,6 +100,19 @@ test("slow Agent generation is aborted and a terminal fallback is cached before 
   });
 });
 
+test("PostgreSQL Date birth_date is normalized before onboarding validation", async () => {
+  const repository = new StatefulOnboardingProfileRepository(completeProfileRow({
+    birth_date: new Date(1990, 5, 15),
+  }));
+  const post = createPost(repository, async () => generatedText(payloadA));
+
+  const response = await post();
+  const body = await responseBody(response);
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(body, { ...payloadA, source: "agent" });
+});
+
 test("period-only birth declaration can generate the home starter questions without a concrete minute", async () => {
   const repository = new StatefulOnboardingProfileRepository({
     ...completeProfileRow({

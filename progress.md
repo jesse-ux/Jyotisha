@@ -991,3 +991,9 @@
 - 2026-07-27 staging 测试账户：确认 luna@copse.life 原为 0 用户/0 credential/0 会话；仅在 staging 通过 Better Auth createUser 创建，复核 user=1、credential=1、password_hashed=true，密码登录 HTTP 200 且 Set-Cookie=true；未直接写密码 SQL、未触发 production、临时文件已清理。
 - 2026-07-27 admin 跟进：按最新要求将 self-hosted admin 改为仅邮箱密码登录，OTP 插件不挂载 admin；普通账号仍由服务端持久化 admin 角色门禁拒绝。聚焦单测 11/11、identity 36/36、集成 1/1、staging 契约 20/20、ESLint、build、diff check 全绿，skipped/todo=0；本地 admin Host `/login`=200、密码表单存在、OTP/注册/忘记密码入口不存在。反向关闭 admin password 后集成测试按预期在 admin 登录 400!=200 变红，恢复后 1/1 全绿。
 - 2026-07-27 staging 管理员授权：经用户明确授权，仅在 staging 将 luna@copse.life 从 user 提升为 user,admin；事务输出 BEGIN/DO/COMMIT，复核 user_count=1、keeps_user_role=true、has_admin_role=true，production 未操作。
+- 2026-07-27 onboarding staging 回归诊断：21:34（Asia/Taipei）三次 POST `/api/onboarding` 均触发 `TypeError: dateString.match is not a function`；已证明 self-hosted `pg` 将 `profiles.birth_date` 返回为 `Date`，而 onboarding 按字符串传入 date-fns。
+- 用户在获知根因文件超出原 allowlist 后明确要求“需要修复、请继续”，据此仅扩展 `frontend/src/lib/onboarding-post.ts` 与对应 onboarding 回归测试；仍只发布 staging，不触发 production。
+- 修复顺序：先增加 PostgreSQL Date 红灯测试，再复用已有 `Date -> yyyy-MM-dd` 正规化方式，跑全套验收后同一 SHA 进入 main/staging；最大风险是全局日期语义漂移，因此不改共享 pg parser。
+- onboarding PostgreSQL Date 回归测试已完成红→绿：修复前 8/9，新增用例报 `TypeError: dateString.match is not a function`；边界正规化后 9/9、skipped/todo=0。实现复用 `formatBirthDate`，同时用于完整性校验和 onboarding 缓存身份，不改共享 pg parser。
+- 修复验证完成：单元/路由 45/45、PostgreSQL 认证集成 1/1、staging 契约 20/20；ESLint、`npm run build`、`git diff --check` 全绿，skipped/todo=0。onboarding 测试另在 UTC、Asia/Taipei、America/Los_Angeles 三时区各 9/9，避免 date-only 时区偏移。
+- 变更边界复核仅有 `frontend/src/lib/onboarding-post.ts`、`frontend/tests/onboarding-route.test.ts`、`PROGRESS.md`；package/lockfile/migration/deploy/workflow 均无 diff。

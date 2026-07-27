@@ -9,6 +9,7 @@ import {
   parseOnboardingText,
 } from "./onboarding-payload.ts";
 import {
+  formatBirthDate,
   isDeclaredBirthProfileComplete,
   type BirthTimeSource,
   type BirthTimeStatus,
@@ -17,7 +18,7 @@ import {
 export type OnboardingProfileRow = {
   readonly id: string;
   readonly name: string | null;
-  readonly birth_date: string | null;
+  readonly birth_date: string | Date | null;
   readonly birth_time: string | null;
   readonly reported_birth_time: string | null;
   readonly active_birth_time: string | null;
@@ -84,6 +85,10 @@ type OnboardingPostDependencies = {
 
 const DEFAULT_GENERATION_TIMEOUT_MS = 18_000;
 
+function normalizeBirthDate(value: string | Date | null): string {
+  return value instanceof Date ? formatBirthDate(value) : value ?? "";
+}
+
 function hasCompleteBirthProfile(profile: OnboardingProfileRow): boolean {
   const persistedTime = profile.active_birth_time || profile.birth_time || "";
   const knownSources: readonly BirthTimeSource[] = [
@@ -98,7 +103,7 @@ function hasCompleteBirthProfile(profile: OnboardingProfileRow): boolean {
     ?? (persistedTime ? "confirmed" : "");
   const clock = (value: string | null) => value ? value.slice(0, 5) : "";
   const birthDraft = {
-    date: profile.birth_date ?? "",
+    date: normalizeBirthDate(profile.birth_date),
     time: clock(persistedTime),
     reportedTime: clock(profile.reported_birth_time)
       || (source === "legacy_import" ? clock(persistedTime) : ""),
@@ -168,7 +173,7 @@ export function createOnboardingPost(dependencies: OnboardingPostDependencies): 
 
     const identity = createOnboardingCacheIdentity({
       name: profile.name,
-      birthDate: profile.birth_date,
+      birthDate: normalizeBirthDate(profile.birth_date),
       birthTime: profile.birth_time,
       reportedBirthTime: profile.reported_birth_time,
       activeBirthTime: profile.active_birth_time,
