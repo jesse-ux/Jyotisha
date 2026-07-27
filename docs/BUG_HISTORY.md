@@ -1533,3 +1533,18 @@
 - 防复发：保留浏览器 sandbox 的 CI 必须使用具备系统 sandbox 包装的浏览器安装通道，不能直接启动无相应宿主配置的原始 headless shell，也不能依赖 hosted runner 的偶然预装状态。
 - 相关记录：BUG-082
 - 修复版本：本次修复提交
+
+## BUG-084 | staging V4 Worker 与候选引擎位于不同 Docker 网络
+
+- 状态：resolved
+- 首次发现：2026-07-27
+- 最近更新：2026-07-27
+- 影响面：生时校正 V4 后台评分、第三条及后续可评分事件、staging 登录态验收
+- 用户现象：Case 创建和前两条事件成功，第三条事件触发候选引擎后 Worker Job 失败并返回 `fetch failed`。
+- 触发条件：staging Worker 同时需要访问 PostgreSQL `app` 网络和 API 所在的 Compose `default` 网络。
+- 根因：`rectification-v4-worker` 只加入 `app` 网络；`api` 只在 `default` 网络。Worker 虽正确配置 `JYOTISH_API_BASE=http://api:5200`，但 Docker DNS 无法跨网络解析和连接 `api`。
+- 修复：让 staging Worker 同时加入 `default` 与 `app` 网络，不改变 production compose，也不暴露 API 端口。
+- 验证：部署合同测试固定 Worker 的内部 API 地址和双网络配置；聚焦测试、Compose 渲染、目标 ESLint、`git diff --check` 及 staging 登录态 smoke 另行记录。
+- 防复发：需要同时访问内部 API 与 staging PostgreSQL 的服务必须在 Compose 合同中显式加入两个现有私有网络。
+- 相关记录：BUG-082
+- 修复版本：本次修复提交
