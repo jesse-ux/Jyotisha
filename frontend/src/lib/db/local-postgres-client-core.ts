@@ -12,6 +12,7 @@ type QueryResult = Readonly<{
 
 type Filter =
   | Readonly<{ kind: "eq"; column: string; value: unknown }>
+  | Readonly<{ kind: "neq"; column: string; value: unknown }>
   | Readonly<{ kind: "in"; column: string; value: readonly unknown[] }>
   | Readonly<{ kind: "is"; column: string; value: unknown }>
   | Readonly<{ kind: "notContains"; column: string; value: unknown }>;
@@ -169,6 +170,12 @@ class LocalPostgresQueryBuilder implements PromiseLike<QueryResult> {
     return this;
   }
 
+  neq(column: string, value: unknown) {
+    identifier(column);
+    this.filters.push({ kind: "neq", column, value });
+    return this;
+  }
+
   in(column: string, value: readonly unknown[]) {
     identifier(column);
     this.filters.push({ kind: "in", column, value });
@@ -250,7 +257,7 @@ class LocalPostgresQueryBuilder implements PromiseLike<QueryResult> {
         return `not (${column} @> $${parameters.length})`;
       }
       parameters.push(databaseValue(types.get(filter.column), filter.value));
-      return `${column} = $${parameters.length}`;
+      return `${column} ${filter.kind === "neq" ? "<>" : "="} $${parameters.length}`;
     });
     return ` where ${parts.join(" and ")}`;
   }

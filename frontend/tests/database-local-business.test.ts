@@ -150,6 +150,12 @@ test("local PostgreSQL applies the reviewed business schema and serves authentic
       email: "local-user@example.com",
       credits: 0,
     });
+    const nonAbandonedProfiles = await local.from("profiles")
+      .select("id")
+      .neq("email", "not-local-user@example.com")
+      .single();
+    assert.equal(nonAbandonedProfiles.error, null);
+    assert.deepEqual(nonAbandonedProfiles.data, { id: userId });
     const admin = createLocalPostgresDataClient(
       fixture.connectionUrl("admin_runtime", "admin-runtime-test-password"),
       null,
