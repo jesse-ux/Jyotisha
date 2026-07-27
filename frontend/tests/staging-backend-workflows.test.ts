@@ -70,7 +70,7 @@ test("quality gate validates relevant changes once and publishes a digest manife
   assert.match(workflow, /workflow_dispatch:/);
   assert.equal((workflow.match(/npm test --prefix frontend/g) ?? []).length, 1);
   assert.match(workflow, /python -m pip install playwright/);
-  assert.match(workflow, /python -m playwright install --with-deps chromium/);
+  assert.match(workflow, /python -m playwright install --with-deps chrome/);
   assert.doesNotMatch(workflow, /npm run test:db --prefix frontend/);
   assert.match(workflow, /id: api_build[\s\S]*steps\.api_build\.outputs\.digest/);
   assert.match(workflow, /id: web_build[\s\S]*steps\.web_build\.outputs\.digest/);
