@@ -13,7 +13,7 @@ import type {
 } from "./birth-time-journey-service.ts";
 
 const profileSchema = z.object({
-  birth_date: z.string(),
+  birth_date: z.union([z.string(), z.date().transform((value) => value.toISOString().slice(0, 10))]),
   reported_birth_time: z.string().nullable().optional(),
   birth_time_source: z.enum([
     "hospital_record",
