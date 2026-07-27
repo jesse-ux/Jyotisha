@@ -1,113 +1,143 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+
+import { requireAdminSession } from "@/lib/admin/auth";
+import { mapCode, runCodeRpc, type RedemptionCodeRecord } from "@/lib/admin/codes";
+import { pageOffset, queryAdminRows } from "@/lib/admin/database";
 import {
-  createAdminSupabaseClient,
-  isAdminEmail,
-} from "@/lib/supabase/admin";
+  adminErrorResponse,
+  invalidQueryResponse,
+  parseListQuery,
+  requestId,
+} from "@/lib/admin/http";
 import {
   generateRedeemCode,
   hashRedeemCode,
   maskRedeemCode,
 } from "@/lib/supabase/codes";
-import {
-  isSupabaseConfigurationError,
-  SupabaseConfigurationError,
-} from "@/lib/supabase/config";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
 const createCodesSchema = z.object({
   credits: z.number().int().positive().max(1_000_000),
   count: z.number().int().min(1).max(100),
-  expiresAt: z.string().datetime({ offset: true }).optional(),
-  note: z.string().trim().max(500).optional(),
+  expiresAt: z.string().datetime({ offset: true }).nullable().optional(),
+  note: z.string().trim().max(500).nullable().optional(),
 });
 
-async function requireAdmin() {
-  if (!process.env.ADMIN_EMAILS?.trim()) {
-    throw new SupabaseConfigurationError(["ADMIN_EMAILS"]);
-  }
+type CodeRow = {
+  id: string;
+  code_mask: string;
+  credits: number;
+  expires_at: Date | null;
+  note: string | null;
+  created_at: Date;
+  redeemed_by: string | null;
+  redeemed_email: string | null;
+  redeemed_at: Date | null;
+  revoked_by: string | null;
+  revoked_at: Date | null;
+  total_count: string;
+};
 
-  const supabase = await createServerSupabaseClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-  if (error || !user) return { response: NextResponse.json({ error: "请先登录" }, { status: 401 }) };
-  if (!isAdminEmail(user.email)) {
-    return { response: NextResponse.json({ error: "无管理员权限" }, { status: 403 }) };
-  }
-  return { user };
+const sortColumns = new Map([
+  ["createdAt", "c.created_at"],
+  ["expiresAt", "c.expires_at"],
+  ["credits", "c.credits"],
+  ["status", "status"],
+]);
+
+function serializedCodeRow(row: CodeRow) {
+  return mapCode({
+    ...row,
+    expires_at: row.expires_at?.toISOString() ?? null,
+    created_at: row.created_at.toISOString(),
+    redeemed_at: row.redeemed_at?.toISOString() ?? null,
+    revoked_at: row.revoked_at?.toISOString() ?? null,
+  });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const auth = await requireAdmin();
-    if ("response" in auth) return auth.response;
-
-    const admin = createAdminSupabaseClient();
-    const { data, error } = await admin
-      .from("redemption_codes")
-      .select("id,code_mask,credits,expires_at,note,created_at,redeemed_by,redeemed_email,redeemed_at")
-      .order("created_at", { ascending: false })
-      .limit(100);
-
-    if (error) {
-      return NextResponse.json({ error: "暂时无法读取兑换码列表" }, { status: 500 });
+    await requireAdminSession();
+    const parsed = parseListQuery(request);
+    if (!parsed.success) return invalidQueryResponse(parsed.error.flatten());
+    const { page, pageSize, sort, order, q, status } = parsed.data;
+    const values: unknown[] = [];
+    const conditions: string[] = [];
+    if (q) {
+      values.push(`%${q}%`);
+      conditions.push(`(c.code_mask ilike $${values.length} or c.note ilike $${values.length})`);
     }
-
+    if (status && ["available", "expired", "redeemed", "revoked"].includes(status)) {
+      const clauses = {
+        available: "c.redeemed_at is null and c.revoked_at is null and (c.expires_at is null or c.expires_at > now())",
+        expired: "c.redeemed_at is null and c.revoked_at is null and c.expires_at <= now()",
+        redeemed: "c.redeemed_at is not null",
+        revoked: "c.revoked_at is not null",
+      };
+      conditions.push(clauses[status as keyof typeof clauses]);
+    }
+    values.push(pageSize, pageOffset(page, pageSize));
+    const sortColumn = sortColumns.get(sort ?? "createdAt") ?? "c.created_at";
+    const rows = await queryAdminRows<CodeRow>(`
+      select c.id, c.code_mask, c.credits, c.expires_at, c.note,
+        c.created_at, c.redeemed_by, c.redeemed_email, c.redeemed_at,
+        c.revoked_by, c.revoked_at,
+        case
+          when c.redeemed_at is not null then 'redeemed'
+          when c.revoked_at is not null then 'revoked'
+          when c.expires_at is not null and c.expires_at <= now() then 'expired'
+          else 'available'
+        end as status,
+        count(*) over()::text as total_count
+      from public.redemption_codes c
+      ${conditions.length ? `where ${conditions.join(" and ")}` : ""}
+      order by ${sortColumn} ${order === "asc" ? "asc" : "desc"}, c.id asc
+      limit $${values.length - 1} offset $${values.length}
+    `, values);
     return NextResponse.json({
-      codes: data.map((code) => ({
-        id: code.id,
-        mask: code.code_mask,
-        credits: code.credits,
-        expiresAt: code.expires_at,
-        note: code.note,
-        createdAt: code.created_at,
-        redeemedBy: code.redeemed_by,
-        redeemedEmail: code.redeemed_email,
-        redeemedAt: code.redeemed_at,
-      })),
+      data: rows.map(serializedCodeRow),
+      total: Number(rows[0]?.total_count ?? 0),
     });
   } catch (error) {
-    if (isSupabaseConfigurationError(error)) {
-      return NextResponse.json({ error: "Supabase 或管理员白名单尚未配置", code: "SUPABASE_NOT_CONFIGURED" }, { status: 503 });
-    }
-    return NextResponse.json({ error: "兑换码管理服务暂时不可用" }, { status: 500 });
+    return adminErrorResponse(error);
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const auth = await requireAdmin();
-    if ("response" in auth) return auth.response;
-
+    const session = await requireAdminSession("write");
     const parsed = createCodesSchema.safeParse(await request.json().catch(() => null));
-    if (!parsed.success) {
-      return NextResponse.json({ error: "兑换码参数不正确" }, { status: 400 });
-    }
-
-    const { credits, count, expiresAt, note } = parsed.data;
-    const codes = Array.from({ length: count }, generateRedeemCode);
-    const admin = createAdminSupabaseClient();
-    const { error } = await admin.from("redemption_codes").insert(codes.map((code) => ({
-      code_hash: hashRedeemCode(code),
-      code_mask: maskRedeemCode(code),
-      credits,
-      expires_at: expiresAt ?? null,
-      note: note || null,
-      created_by: auth.user.id,
-    })));
-
-    if (error) {
-      return NextResponse.json({ error: "生成兑换码失败，请重试" }, { status: 500 });
-    }
-
+    if (!parsed.success) return invalidQueryResponse(parsed.error.flatten());
+    const plainCodes = Array.from({ length: parsed.data.count }, generateRedeemCode);
+    const records = plainCodes.map((code) => ({
+      codeHash: hashRedeemCode(code),
+      codeMask: maskRedeemCode(code),
+      credits: parsed.data.credits,
+      expiresAt: parsed.data.expiresAt ?? null,
+      note: parsed.data.note || null,
+    }));
+    const operationRequestId = requestId(request);
+    const stored = await runCodeRpc(
+      "admin_create_redemption_codes",
+      session,
+      operationRequestId,
+      { p_codes: records },
+    );
+    const byMask = new Map<string, RedemptionCodeRecord>(
+      stored.map((record) => [record.mask, record]),
+    );
     return NextResponse.json({
-      codes: codes.map((code) => ({ code, credits, expiresAt: expiresAt ?? null, note: note || null })),
+      data: {
+        id: operationRequestId,
+        generated: plainCodes.map((code) => ({
+          ...(byMask.get(maskRedeemCode(code)) ?? {}),
+          code,
+        })),
+      },
     }, { status: 201 });
   } catch (error) {
-    if (isSupabaseConfigurationError(error)) {
-      return NextResponse.json({ error: "Supabase 或管理员白名单尚未配置", code: "SUPABASE_NOT_CONFIGURED" }, { status: 503 });
-    }
-    return NextResponse.json({ error: "兑换码管理服务暂时不可用" }, { status: 500 });
+    return adminErrorResponse(error);
   }
 }

@@ -17,12 +17,17 @@
     "worker:rectification-v4": "tsx scripts/rectification-v4-worker.mts"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.3.2",
     "@base-ui/react": "^1.6.0",
     "@gsap/react": "^2.1.2",
     "@mastra/core": "^1.50.1",
+    "@refinedev/antd": "^6.0.3",
+    "@refinedev/core": "^5.0.12",
+    "@refinedev/nextjs-router": "^7.0.5",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.5",
     "@tailwindcss/postcss": "^4.3.2",
+    "antd": "^5.29.3",
     "better-auth": "1.6.23",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

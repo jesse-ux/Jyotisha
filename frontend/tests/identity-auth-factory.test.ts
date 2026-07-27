@@ -228,3 +228,23 @@ test("database admin authorizer requires a current persisted admin role", async 
   assert.match(queries[0].sql, /from identity\.users/);
   assert.deepEqual(queries[0].values, ["admin"]);
 });
+
+test("admin surface authorizer allows persisted admin and viewer roles", async () => {
+  const { createDatabaseAdminSurfaceAuthorizer } = await import("../src/modules/identity/auth.ts");
+  const rowsByUser = new Map<string, Record<string, unknown>>([
+    ["admin", { role: "admin", banned: false, ban_expires: null }],
+    ["viewer", { role: "user,viewer", banned: false, ban_expires: null }],
+    ["user", { role: "user", banned: false, ban_expires: null }],
+  ]);
+  const pool = {
+    async query(_sql: string, values: unknown[]) {
+      const row = rowsByUser.get(String(values[0]));
+      return { rows: row ? [row] : [] };
+    },
+  } as unknown as Pool;
+  const authorize = createDatabaseAdminSurfaceAuthorizer(pool);
+
+  assert.equal(await authorize("admin"), true);
+  assert.equal(await authorize("viewer"), true);
+  assert.equal(await authorize("user"), false);
+});

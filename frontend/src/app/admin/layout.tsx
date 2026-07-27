@@ -1,18 +1,11 @@
-import { ReactNode } from "react";
-import { redirect } from "next/navigation";
-import { isAdminEmail } from "@/lib/supabase/admin";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import "@refinedev/antd/dist/reset.css";
+import "antd/dist/reset.css";
+import type { ReactNode } from "react";
+
+import { AdminApp } from "@/components/admin/admin-app";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminLayout({ children }: { children: ReactNode }) {
-  if (process.env.NODE_ENV === "development" && process.env.ENABLE_ADMIN_PREVIEW === "1") return children;
-
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) redirect("/login");
-  if (!isAdminEmail(user.email)) redirect("/");
-
-  return children;
+export default function AdminLayout({ children }: { children: ReactNode }) {
+  return <AdminApp>{children}</AdminApp>;
 }

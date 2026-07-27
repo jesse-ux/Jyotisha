@@ -1,200 +1,167 @@
 "use client";
 
-import Link from "next/link";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { useCreate, useDelete, useGetIdentity, usePermissions, useUpdate } from "@refinedev/core";
+import { Button, DatePicker, Form, Input, InputNumber, Modal, Space, Tag, Typography, type TableColumnsType } from "antd";
+import dayjs from "dayjs";
+import { useState } from "react";
+
+import { formatAdminDate, ResourceTable } from "@/components/admin/resource-table";
+import type { AdminIdentity } from "@/lib/admin/providers";
 
 type CodeRecord = {
   id: string;
+  code?: string;
   mask: string;
   credits: number;
   expiresAt: string | null;
-  redeemedBy: string | null;
-  redeemedEmail: string | null;
-  redeemedAt: string | null;
   note: string | null;
   createdAt: string;
+  redeemedEmail: string | null;
+  redeemedAt: string | null;
+  revokedAt: string | null;
+  status: "available" | "expired" | "redeemed" | "revoked";
 };
-type GeneratedCode = { code: string; credits: number; expiresAt: string | null };
 
-const previewCodes: CodeRecord[] = [
-  { id: "preview-1", mask: "JYOT-••••-7Q9K", credits: 12, expiresAt: "2026-12-31T15:59:00.000Z", redeemedBy: null, redeemedEmail: null, redeemedAt: null, note: "秋季体验", createdAt: "2026-07-16T02:20:00.000Z" },
-  { id: "preview-2", mask: "JYOT-••••-2M8A", credits: 6, expiresAt: null, redeemedBy: "preview-user", redeemedEmail: "linyao@example.com", redeemedAt: "2026-07-15T08:30:00.000Z", note: "访谈用户", createdAt: "2026-07-14T03:10:00.000Z" },
-  { id: "preview-3", mask: "JYOT-••••-4D1R", credits: 20, expiresAt: "2026-07-01T15:59:00.000Z", redeemedBy: null, redeemedEmail: null, redeemedAt: null, note: null, createdAt: "2026-06-10T06:45:00.000Z" },
-];
+type CreateValues = {
+  credits: number;
+  count: number;
+  expiresAt?: ReturnType<typeof dayjs>;
+  note?: string;
+};
+type EditValues = { note?: string; expiresAt?: ReturnType<typeof dayjs> | null };
 
-const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
-  dateStyle: "medium",
-  timeStyle: "short",
-  timeZone: "Asia/Taipei",
-});
+const statusColors: Record<CodeRecord["status"], string> = {
+  available: "green",
+  expired: "orange",
+  redeemed: "blue",
+  revoked: "red",
+};
 
-function apiMessage(payload: unknown, fallback: string) {
-  if (!payload || typeof payload !== "object") return fallback;
-  const data = payload as Record<string, unknown>;
-  return [data.message, data.error].find((value) => typeof value === "string") as string || fallback;
-}
+export default function CodesPage() {
+  const { data: role } = usePermissions<"admin" | "viewer">({});
+  const { data: identity } = useGetIdentity<AdminIdentity>();
+  const { mutate: createCodes, mutation: createMutation } = useCreate<{ id: string; generated: CodeRecord[] }>();
+  const { mutate: updateCode, mutation: updateMutation } = useUpdate<CodeRecord>();
+  const { mutate: revokeCode, mutation: revokeMutation } = useDelete<CodeRecord>();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editRecord, setEditRecord] = useState<CodeRecord | null>(null);
+  const [generated, setGenerated] = useState<CodeRecord[]>([]);
+  const [createForm] = Form.useForm<CreateValues>();
+  const [editForm] = Form.useForm<EditValues>();
+  const writable = role === "admin";
 
-function redirectForAuth(response: Response) {
-  if (response.status === 401) window.location.assign("/login");
-  if (response.status === 403) window.location.assign("/");
-}
-
-function codeStatus(code: CodeRecord) {
-  if (code.redeemedAt) return "已兑换";
-  if (code.expiresAt && new Date(code.expiresAt).getTime() <= Date.now()) return "已过期";
-  return "可用";
-}
-
-function formatDate(value: string | null) {
-  return value ? dateFormatter.format(new Date(value)) : "—";
-}
-
-export default function AdminCodesPage() {
-  const [codes, setCodes] = useState<CodeRecord[]>([]);
-  const [generated, setGenerated] = useState<GeneratedCode[]>([]);
-  const [credits, setCredits] = useState(10);
-  const [count, setCount] = useState(1);
-  const [expiresAt, setExpiresAt] = useState("");
-  const [note, setNote] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
-  const previewMode = useRef(false);
-  const [error, setError] = useState("");
-  const [copyNotice, setCopyNotice] = useState("");
-
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development" && new URLSearchParams(window.location.search).get("preview") === "admin") {
-      const previewFrame = window.requestAnimationFrame(() => {
-        previewMode.current = true;
-        setCodes(previewCodes);
-        setLoading(false);
-      });
-      return () => window.cancelAnimationFrame(previewFrame);
-    }
-
-    const controller = new AbortController();
-    void fetch("/api/admin/codes", { signal: controller.signal, cache: "no-store" })
-      .then(async (response) => {
-        redirectForAuth(response);
-        const payload = await response.json().catch(() => null);
-        if (!response.ok) throw new Error(apiMessage(payload, "暂时无法读取兑换码"));
-        setCodes((payload as { codes: CodeRecord[] }).codes);
-      })
-      .catch((caught) => {
-        if ((caught as Error).name !== "AbortError") setError(caught instanceof Error ? caught.message : "暂时无法读取兑换码");
-      })
-      .finally(() => setLoading(false));
-    return () => controller.abort();
-  }, []);
-
-  async function reloadCodes() {
-    const response = await fetch("/api/admin/codes", { cache: "no-store" });
-    redirectForAuth(response);
-    const payload = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(apiMessage(payload, "暂时无法刷新兑换码"));
-    setCodes((payload as { codes: CodeRecord[] }).codes);
+  function submitCreate(values: CreateValues) {
+    createCodes({
+      resource: "codes",
+      values: {
+        credits: values.credits,
+        count: values.count,
+        expiresAt: values.expiresAt?.toISOString() ?? null,
+        note: values.note?.trim() || null,
+      },
+      successNotification: false,
+    }, {
+      onSuccess(result) {
+        setGenerated(result.data.generated);
+        setCreateOpen(false);
+        createForm.resetFields();
+      },
+    });
   }
 
-  async function createCodes(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (creating) return;
-    setCreating(true);
-    setError("");
-    setGenerated([]);
-    setCopyNotice("");
-    if (process.env.NODE_ENV === "development" && previewMode.current) {
-      setGenerated(Array.from({ length: count }, (_, index) => ({
-        code: `PREVIEW-${String(index + 1).padStart(2, "0")}-JYOTISH`,
-        credits,
-        expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
-      })));
-      setCreating(false);
-      return;
-    }
-    try {
-      const response = await fetch("/api/admin/codes", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          credits,
-          count,
-          ...(expiresAt ? { expiresAt: new Date(expiresAt).toISOString() } : {}),
-          ...(note.trim() ? { note: note.trim() } : {}),
-        }),
-      });
-      redirectForAuth(response);
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(apiMessage(payload, "生成兑换码失败"));
-      setGenerated((payload as { codes: GeneratedCode[] }).codes);
-      await reloadCodes();
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "生成兑换码失败");
-    } finally {
-      setCreating(false);
-    }
+  function submitEdit(values: EditValues) {
+    if (!editRecord) return;
+    updateCode({
+      resource: "codes",
+      id: editRecord.id,
+      values: {
+        note: values.note?.trim() || null,
+        expiresAt: values.expiresAt?.toISOString() ?? null,
+      },
+    }, { onSuccess: () => setEditRecord(null) });
   }
 
-  async function copy(text: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopyNotice("已复制到剪贴板");
-    } catch {
-      setCopyNotice("无法自动复制，请手动选择兑换码");
-    }
+  function confirmRevoke(record: CodeRecord) {
+    Modal.confirm({
+      title: "撤销此兑换码？",
+      content: `${record.mask} 撤销后不可兑换，且不能恢复。`,
+      okText: "确认撤销",
+      okButtonProps: { danger: true },
+      cancelText: "取消",
+      onOk: () => new Promise<void>((resolve, reject) => {
+        revokeCode({ resource: "codes", id: record.id }, {
+          onSuccess: () => resolve(),
+          onError: () => reject(new Error("撤销失败")),
+        });
+      }),
+    });
   }
+
+  const columns: TableColumnsType<CodeRecord> = [
+    { title: "兑换码", dataIndex: "mask" },
+    { title: "点数", dataIndex: "credits", sorter: true },
+    { title: "状态", dataIndex: "status", sorter: true, render: (value) => <Tag color={statusColors[value as CodeRecord["status"]]}>{value}</Tag> },
+    { title: "到期时间", dataIndex: "expiresAt", sorter: true, render: formatAdminDate },
+    { title: "备注", dataIndex: "note", render: (value) => value || "—" },
+    { title: "兑换账户", dataIndex: "redeemedEmail", render: (value) => value || "—" },
+    { title: "兑换时间", dataIndex: "redeemedAt", render: formatAdminDate },
+    { title: "撤销时间", dataIndex: "revokedAt", render: formatAdminDate },
+    { title: "创建时间", dataIndex: "createdAt", sorter: true, render: formatAdminDate },
+    {
+      title: "操作",
+      fixed: "right",
+      render: (_, record) => writable && record.status !== "redeemed" && record.status !== "revoked" ? (
+        <Space>
+          <Button size="small" onClick={() => {
+            setEditRecord(record);
+            editForm.setFieldsValue({
+              note: record.note ?? undefined,
+              expiresAt: record.expiresAt ? dayjs(record.expiresAt) : null,
+            });
+          }}>编辑</Button>
+          <Button danger size="small" loading={revokeMutation.isPending} onClick={() => confirmRevoke(record)}>撤销</Button>
+        </Space>
+      ) : "—",
+    },
+  ];
 
   return (
-    <main className="standalone-page admin-page">
-      <header className="admin-header">
-        <h1>兑换码管理</h1>
-        <Link className="button-secondary" href="/">返回对话</Link>
-      </header>
+    <>
+      <ResourceTable<CodeRecord>
+        resource="codes"
+        title={`兑换码${identity ? ` · ${identity.email} (${identity.role})` : ""}`}
+        columns={columns}
+        statusOptions={[
+          { label: "可用", value: "available" },
+          { label: "已过期", value: "expired" },
+          { label: "已兑换", value: "redeemed" },
+          { label: "已撤销", value: "revoked" },
+        ]}
+        extra={writable ? <Button type="primary" onClick={() => setCreateOpen(true)}>批量生成</Button> : <Tag>viewer 只读</Tag>}
+      />
 
-      <div className="admin-scroll">
-        <section className="admin-section" aria-labelledby="create-codes-title">
-          <div className="section-title"><div><h2 id="create-codes-title">生成兑换码</h2><p>完整兑换码只在本次生成结果中显示，<span className="phrase-nowrap">请立即复制保存。</span></p></div></div>
-          <form className="code-form" onSubmit={createCodes}>
-            <label><span>每个点数</span><input type="number" min={1} required value={credits} onChange={(event) => setCredits(Number(event.target.value))} /></label>
-            <label><span>生成数量</span><input type="number" min={1} max={100} required value={count} onChange={(event) => setCount(Number(event.target.value))} /></label>
-            <label><span>有效期 <em>可选</em></span><input type="datetime-local" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} /></label>
-            <label className="note-field"><span>备注 <em>可选</em></span><input maxLength={200} value={note} onChange={(event) => setNote(event.target.value)} placeholder="例如：7 月活动" /></label>
-            <button className="button-primary" type="submit" disabled={creating || credits < 1 || count < 1 || count > 100}>{creating ? "生成中" : "生成"}</button>
-          </form>
-          {error && <p className="form-error" role="alert">{error}</p>}
-        </section>
+      <Modal title="批量生成兑换码" open={createOpen} onCancel={() => setCreateOpen(false)} footer={null} destroyOnHidden>
+        <Form form={createForm} layout="vertical" initialValues={{ credits: 10, count: 1 }} onFinish={submitCreate}>
+          <Form.Item name="credits" label="每个点数" rules={[{ required: true }]}><InputNumber min={1} max={1_000_000} style={{ width: "100%" }} /></Form.Item>
+          <Form.Item name="count" label="数量" rules={[{ required: true }]}><InputNumber min={1} max={100} style={{ width: "100%" }} /></Form.Item>
+          <Form.Item name="expiresAt" label="到期时间"><DatePicker showTime style={{ width: "100%" }} /></Form.Item>
+          <Form.Item name="note" label="备注"><Input maxLength={500} /></Form.Item>
+          <Button block type="primary" htmlType="submit" loading={createMutation.isPending}>生成</Button>
+        </Form>
+      </Modal>
 
-        {generated.length > 0 && (
-          <section className="admin-section generated-section" aria-labelledby="generated-title">
-            <div className="section-title">
-              <div><h2 id="generated-title">本次生成的完整码</h2><p>离开或刷新页面后将不再显示。</p></div>
-              <button className="button-secondary" type="button" onClick={() => void copy(generated.map((item) => item.code).join("\n"))}>复制全部</button>
-            </div>
-            <div className="generated-list">
-              {generated.map((item) => (
-                <div key={item.code}><code>{item.code}</code><span>{item.credits} 点</span><button type="button" onClick={() => void copy(item.code)}>复制</button></div>
-              ))}
-            </div>
-            {copyNotice && <p className="form-success" role="status">{copyNotice}</p>}
-          </section>
-        )}
+      <Modal title="完整兑换码（仅显示本次）" open={generated.length > 0} onCancel={() => setGenerated([])} footer={<Button onClick={() => setGenerated([])}>我已保存</Button>}>
+        <Typography.Paragraph type="warning">关闭后无法再次查看完整兑换码，请立即安全保存。</Typography.Paragraph>
+        {generated.map((record) => <Typography.Paragraph copyable key={record.code}><Typography.Text code>{record.code}</Typography.Text></Typography.Paragraph>)}
+      </Modal>
 
-        <section className="admin-section" aria-labelledby="codes-list-title">
-          <div className="section-title"><div><h2 id="codes-list-title">兑换码状态</h2><p>{loading ? "正在读取…" : `${codes.length} 条记录`}</p></div></div>
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead><tr><th>兑换码</th><th>点数</th><th>状态</th><th>有效期</th><th>兑换账户</th><th>兑换时间</th><th>备注</th><th>创建时间</th></tr></thead>
-              <tbody>
-                {codes.map((code) => (
-                  <tr key={code.id}>
-                    <td><code>{code.mask}</code></td><td>{code.credits}</td><td><span className={`code-status status-${codeStatus(code)}`}>{codeStatus(code)}</span></td><td>{formatDate(code.expiresAt)}</td><td>{code.redeemedEmail || code.redeemedBy || "—"}</td><td>{formatDate(code.redeemedAt)}</td><td>{code.note || "—"}</td><td>{formatDate(code.createdAt)}</td>
-                  </tr>
-                ))}
-                {!loading && codes.length === 0 && <tr><td colSpan={8} className="empty-cell">尚未生成兑换码</td></tr>}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      </div>
-    </main>
+      <Modal title="编辑未兑换码" open={Boolean(editRecord)} onCancel={() => setEditRecord(null)} footer={null} destroyOnHidden>
+        <Form form={editForm} layout="vertical" onFinish={submitEdit}>
+          <Form.Item name="expiresAt" label="到期时间"><DatePicker showTime style={{ width: "100%" }} /></Form.Item>
+          <Form.Item name="note" label="备注"><Input maxLength={500} /></Form.Item>
+          <Button block type="primary" htmlType="submit" loading={updateMutation.isPending}>保存</Button>
+        </Form>
+      </Modal>
+    </>
   );
 }

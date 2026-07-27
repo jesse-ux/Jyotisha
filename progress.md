@@ -997,3 +997,21 @@
 - onboarding PostgreSQL Date 回归测试已完成红→绿：修复前 8/9，新增用例报 `TypeError: dateString.match is not a function`；边界正规化后 9/9、skipped/todo=0。实现复用 `formatBirthDate`，同时用于完整性校验和 onboarding 缓存身份，不改共享 pg parser。
 - 修复验证完成：单元/路由 45/45、PostgreSQL 认证集成 1/1、staging 契约 20/20；ESLint、`npm run build`、`git diff --check` 全绿，skipped/todo=0。onboarding 测试另在 UTC、Asia/Taipei、America/Los_Angeles 三时区各 9/9，避免 date-only 时区偏移。
 - 变更边界复核仅有 `frontend/src/lib/onboarding-post.ts`、`frontend/tests/onboarding-route.test.ts`、`PROGRESS.md`；package/lockfile/migration/deploy/workflow 均无 diff。
+
+## 2026-07-27 - Refine staging 后台
+
+- 目标：仅 staging 将 `/admin` 替换为 Refine；兑换码可审计管理，用户资料/积分流水/咨询/审计只读。
+- 起点：指定 worktree 已不存在，按任务 0 回退规则新建 `/private/tmp/jyotisha-refine-admin` 与 `codex/refine-admin-staging`。
+- 基线：`HEAD=origin/staging=ab2944f7fad7e449ab69259323aadc5f4097773a`，worktree 干净，未改 main。
+- 顺序：权限/session 接缝 → 原子数据库迁移 → 5 资源 API → Refine UI → 红绿/全量验证 → staging 交付。
+- 真源：Better Auth `identity.users.role`；staging 质量门/迁移/部署分别为既有三条 GitHub workflow。
+- 最大风险：viewer 当前被 admin session hook 拒绝、审计与业务原子性、双数据库客户端兼容、staging 外部凭据与两角色账号。
+- 建议替换说明：无；Refine data provider 将仅访问同源 `/api/admin/*`。
+- 完成 identity 接缝：后台 session 允许持久化 `admin`/`viewer`，API 每次从 Better Auth session role 鉴权；后台范围已无 `ADMIN_EMAILS`。
+- 完成迁移：撤销字段、撤销兑换拒绝、append-only 脱敏审计及 create/update/revoke 原子 RPC；审计插入失败会回滚同一事务。
+- 完成 5 个服务端资源：codes 可写且其余资源显式 405 只读；全部带服务端鉴权、Zod 查询校验、分页/排序/筛选。
+- 完成 Refine Core + Ant Design 单 provider UI：5 资源导航、表格、筛选、分页、loading/error/empty、admin 写控件与 viewer 隐藏。
+- 聚焦验证：admin/identity 16/16 通过，skipped=todo=0；Next build 已通过。PostgreSQL 反向测试因本机无 docker/postgres runtime 阻塞，已保留可执行测试并记 BLOCKED。
+- 独立安全复核后修复：为 admin_runtime 增加列级 grants + 明确 RLS 只读 policies，避免后台列表静默为空；移除迁移内层 BEGIN/COMMIT，保持 runner+ledger 原子性；RPC 由 identity.users 校验操作者；补 revoked 成对约束与 NULL JSON 防护。
+- 本地全量 `npm test`：1043 tests，1031 pass，12 fail，skipped/todo=0；11 项因 docker ENOENT（包含本功能反向测试），1 项因缺 Playwright headless Chromium，均已写入 BLOCKED。
+- 最终静态验证：ESLint 0 error（3 个既有 warning）、Next build 成功、`git diff --check` 通过。

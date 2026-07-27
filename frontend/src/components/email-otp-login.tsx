@@ -132,7 +132,7 @@ export function EmailOtpLogin({
           });
         if (otpError) throw otpError;
       }
-      window.location.assign("/");
+      window.location.assign(window.location.hostname.startsWith("admin.") && window.location.hostname.includes("staging") ? "/admin" : "/");
     } catch (caught) {
       if (!(caught instanceof Error)) throw caught;
       setError(authMessage(caught));
@@ -149,7 +149,7 @@ export function EmailOtpLogin({
     setNotice("");
     try {
       await selfHostedAuthActions.signInWithPassword(email, password);
-      window.location.assign("/");
+      window.location.assign(window.location.hostname.startsWith("admin.") && window.location.hostname.includes("staging") ? "/admin" : "/");
     } catch (caught) {
       if (!(caught instanceof Error)) throw caught;
       setError(authMessage(caught));
@@ -169,7 +169,7 @@ export function EmailOtpLogin({
     setError("");
     try {
       await selfHostedAuthActions.setPassword(password);
-      window.location.assign("/");
+      window.location.assign(window.location.hostname.startsWith("admin.") && window.location.hostname.includes("staging") ? "/admin" : "/");
     } catch (caught) {
       if (!(caught instanceof Error)) throw caught;
       const message = authMessage(caught);

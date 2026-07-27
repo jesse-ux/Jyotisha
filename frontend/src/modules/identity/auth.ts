@@ -16,6 +16,8 @@ interface AdminRoleRow {
   ban_expires: Date | null;
 }
 
+export type IdentityAdminSurfaceRole = "admin" | "viewer";
+
 export function createIdentityPool(databaseUrl: string): Pool {
   return new Pool({
     connectionString: databaseUrl,
@@ -27,8 +29,9 @@ export function createIdentityPool(databaseUrl: string): Pool {
   });
 }
 
-export function createDatabaseAdminAuthorizer(
+function createDatabaseRoleAuthorizer(
   pool: Pool,
+  allowedRoles: ReadonlySet<string>,
 ): AdminUserAuthorizer {
   return async (userId) => {
     const result = await pool.query<AdminRoleRow>(
@@ -52,8 +55,20 @@ export function createDatabaseAdminAuthorizer(
     return user.role
       .split(",")
       .map((role) => role.trim())
-      .includes("admin");
+      .some((role) => allowedRoles.has(role));
   };
+}
+
+export function createDatabaseAdminAuthorizer(
+  pool: Pool,
+): AdminUserAuthorizer {
+  return createDatabaseRoleAuthorizer(pool, new Set(["admin"]));
+}
+
+export function createDatabaseAdminSurfaceAuthorizer(
+  pool: Pool,
+): AdminUserAuthorizer {
+  return createDatabaseRoleAuthorizer(pool, new Set(["admin", "viewer"]));
 }
 
 export interface IdentityAuthServices {
@@ -80,7 +95,7 @@ export function createIdentityAuthServices(
       from: config.resendFrom,
     });
   const authorizeAdminUser =
-    dependencies.authorizeAdminUser ?? createDatabaseAdminAuthorizer(pool);
+    dependencies.authorizeAdminUser ?? createDatabaseAdminSurfaceAuthorizer(pool);
 
   return {
     pool,

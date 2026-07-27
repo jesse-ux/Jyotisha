@@ -12,6 +12,7 @@ const redeemErrors: Record<string, { status: number; message: string }> = {
   unauthorized: { status: 401, message: "请先登录" },
   invalid_code: { status: 404, message: "兑换码不存在" },
   expired_code: { status: 410, message: "兑换码已过期" },
+  revoked_code: { status: 410, message: "兑换码已撤销" },
   already_redeemed: { status: 409, message: "兑换码已被使用" },
   profile_missing: { status: 500, message: "账户资料不存在，请稍后重试" },
 };
