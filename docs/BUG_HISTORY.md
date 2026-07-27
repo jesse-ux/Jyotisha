@@ -1517,3 +1517,19 @@
 - 防复发：生时校正业务真源必须是 V4 Case 和 append-only 事件台账，不得从聊天正文反向恢复；任何公开结果只能显示通过稳定性门的范围，单分钟峰值不得成为可保存结果；证据不足必须生成下一题或明确暂停，不能进入 `awaiting_answer + currentQuestion=null`；V4 路径不得写 `profiles.active_birth_time`。
 - 相关记录：BUG-067、BUG-069、BUG-072、BUG-074、BUG-075、BUG-080、BUG-081
 - 修复版本：待提交（本地可测）
+
+
+## BUG-083 | staging 质量门未固定 Chromium 运行时导致真实浏览器验收偶发失败
+
+- 状态：resolved
+- 首次发现：2026-07-27
+- 最近更新：2026-07-27
+- 影响面：生时校正 V4 的 390px 真实浏览器验收、staging 镜像发布与后续部署
+- 用户现象：PR 质量门已通过且相同提交的其余 1031 个测试成功，但推送到 `staging` 后唯一的真实 Chromium 测试未能取得 DevTools 端口，导致不可变镜像未发布、部署未继续。
+- 触发条件：`backend-quality-gate.yml` 在未安装 Playwright Chromium 的 GitHub Runner 上执行真实浏览器合同，只能依赖 Runner 当时预装的系统 Chrome。
+- 根因：staging 质量门新增了真实 Chromium 测试，却没有像既有 `release-quality-gate.yml` 一样显式安装受控的 Playwright Chromium 与系统依赖；同一 SHA 因 Runner 自带浏览器状态不同出现一次通过、一次启动超时。
+- 修复：复用既有 release gate 的浏览器准备步骤，在 staging 质量门安装 Playwright 和其固定 Chromium 运行时后再执行前端测试；不跳过真实浏览器验收，不增加 `--no-sandbox`。
+- 验证：workflow 合同回归断言 Playwright Chromium 必须被安装；聚焦部署合同测试、完整前端测试、目标 ESLint、生产构建与 `git diff --check` 通过；staging 质量门和部署结果另行记录。
+- 防复发：任何 CI 中的真实浏览器合同都必须由 workflow 显式供应浏览器版本与系统依赖，不能依赖 hosted runner 的偶然预装状态。
+- 相关记录：BUG-082
+- 修复版本：本次修复提交
