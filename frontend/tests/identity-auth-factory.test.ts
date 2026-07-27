@@ -114,7 +114,10 @@ test("user and admin auth surfaces have host-only isolated cookies", () => {
     maxPasswordLength: 128,
     revokeSessionsOnPasswordReset: true,
   });
-  assert.equal(adminOptions.emailAndPassword, undefined);
+  assert.deepEqual(
+    adminOptions.emailAndPassword,
+    userOptions.emailAndPassword,
+  );
   for (const options of [userOptions, adminOptions]) {
     const attributes = options.advanced?.defaultCookieAttributes;
     assert.equal(attributes?.secure, true);
@@ -126,7 +129,7 @@ test("user and admin auth surfaces have host-only isolated cookies", () => {
   }
 });
 
-test("admin surface disables sign-up and rejects non-admin session creation", async () => {
+test("admin surface is password-only and rejects non-admin session creation", async () => {
   const checkedUserIds: string[] = [];
   const options = buildAuthOptions({
     surface: "admin",
@@ -141,7 +144,9 @@ test("admin surface disables sign-up and rejects non-admin session creation", as
   const emailPlugin = options.plugins?.find(
     (plugin) => plugin.id === "email-otp",
   );
-  assert.ok(emailPlugin);
+  assert.equal(emailPlugin, undefined);
+  assert.equal(options.emailAndPassword?.enabled, true);
+  assert.equal(options.emailAndPassword?.disableSignUp, true);
 
   const before = options.databaseHooks?.session?.create?.before;
   assert.ok(before);
@@ -163,12 +168,6 @@ test("admin surface disables sign-up and rejects non-admin session creation", as
   );
   assert.deepEqual(checkedUserIds, ["ordinary-user-id", "admin-user-id"]);
 
-  const otpOptions = createEmailOtpOptions(
-    new FakeEmailOtpSender(),
-    config.adminSecret,
-    true,
-  );
-  assert.equal(otpOptions.disableSignUp, true);
 });
 
 test("admin surface requires a server-side persisted-role authorizer", () => {

@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { createSelfHostedAuthActions } from "../src/modules/identity/client.ts";
 
-test("login page selects the auth provider and limits passwords to the user surface", () => {
+test("login page uses password-only mode on the self-hosted admin surface", () => {
   const page = readFileSync(
     new URL("../src/app/login/page.tsx", import.meta.url),
     "utf8",
@@ -18,9 +18,11 @@ test("login page selects the auth provider and limits passwords to the user surf
   assert.match(page, /surface === "admin"/);
   assert.match(
     page,
-    /passwordEnabled = provider === "self-hosted" && surface === "user"/,
+    /passwordEnabled = provider === "self-hosted"/,
   );
+  assert.match(page, /passwordOnly = surface === "admin"/);
   assert.match(page, /passwordEnabled=\{passwordEnabled\}/);
+  assert.match(page, /passwordOnly=\{passwordOnly\}/);
   assert.doesNotMatch(page, /NEXT_PUBLIC_AUTH_PROVIDER/);
 });
 
@@ -176,12 +178,13 @@ test("login UI preserves accessible OTP, password, registration, and reset input
   }
   assert.match(
     component,
-    /canUsePassword && \(mode === "otp" \|\| mode === "password"\)/,
+    /canUsePassword && !passwordOnly && \(mode === "otp" \|\| mode === "password"\)/,
   );
   assert.match(
     component,
-    /canUsePassword && \(mode === "register" \|\| mode === "forgot"\)/,
+    /canUsePassword && !passwordOnly && \(mode === "register" \|\| mode === "forgot"\)/,
   );
+  assert.match(component, /useState<AuthMode>\(passwordOnly \? "password" : "otp"\)/);
   assert.match(component, /\{showLoginNavigation && \(/);
   assert.match(component, />\s*返回登录\s*</);
   for (const autocomplete of [

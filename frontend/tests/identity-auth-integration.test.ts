@@ -61,7 +61,7 @@ const envKeys = [
   "RESEND_FROM_EMAIL",
 ] as const;
 
-test("Better Auth supports OTP registration/login, first password, password login, and OTP reset while admin stays OTP-only", async () => {
+test("Better Auth supports user OTP/password flows and password-only admin login", async () => {
   const fixture = startPostgresFixture();
   const migration = spawnSync(process.execPath, [runnerPath], {
     encoding: "utf8",
@@ -300,6 +300,15 @@ test("Better Auth supports OTP registration/login, first password, password logi
       /^(?:__Secure-)?jyotisha-user\.session_token=/,
     );
 
+    const nonAdminPasswordLogin = await handlers.POST(
+      request(adminHost, "/api/auth/sign-in/email", {
+        email: newEmail,
+        password: resetPassword,
+      }),
+    );
+    assert.notEqual(nonAdminPasswordLogin.status, 200);
+    assert.equal(nonAdminPasswordLogin.headers.has("set-cookie"), false);
+
     fixture.psqlAs(
       "identity_runtime",
       "identity-runtime-test-password",
@@ -311,33 +320,28 @@ test("Better Auth supports OTP registration/login, first password, password logi
         password: resetPassword,
       }),
     );
-    assert.notEqual(adminPasswordLogin.status, 200);
-    assert.equal(adminPasswordLogin.headers.has("set-cookie"), false);
+    assert.equal(adminPasswordLogin.status, 200);
+    assert.match(
+      sessionCookie(adminPasswordLogin),
+      /^(?:__Secure-)?jyotisha-admin\.session_token=/,
+    );
 
+    const sentMessageCount = sender.messages.length;
     const adminSend = await handlers.POST(
       request(adminHost, "/api/auth/email-otp/send-verification-otp", {
         email: newEmail,
         type: "sign-in",
       }),
     );
-    assert.equal(adminSend.status, 200);
-    const adminMessage = sender.messages.at(-1);
-    assert.equal(adminMessage?.type, "sign-in");
-    const adminSignIn = await handlers.POST(
-      request(adminHost, "/api/auth/sign-in/email-otp", {
-        email: newEmail,
-        otp: adminMessage?.otp,
-      }),
-    );
-    assert.equal(adminSignIn.status, 200);
-    assert.match(sessionCookie(adminSignIn), /^(?:__Secure-)?jyotisha-admin\.session_token=/);
+    assert.notEqual(adminSend.status, 200);
+    assert.equal(sender.messages.length, sentMessageCount);
 
     const adminPasswordRoute = await setAccountPassword(
       request(
         adminHost,
         "/api/account/password",
         { newPassword: "admin-must-not-set-password" },
-        sessionCookie(adminSignIn),
+        sessionCookie(adminPasswordLogin),
       ),
     );
     assert.equal(adminPasswordRoute.status, 401);

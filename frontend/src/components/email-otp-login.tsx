@@ -36,11 +36,13 @@ function passwordError(password: string, confirmation: string): string {
 export function EmailOtpLogin({
   provider,
   passwordEnabled = false,
+  passwordOnly = false,
 }: {
   provider: AuthProvider;
   passwordEnabled?: boolean;
+  passwordOnly?: boolean;
 }) {
-  const [mode, setMode] = useState<AuthMode>("otp");
+  const [mode, setMode] = useState<AuthMode>(passwordOnly ? "password" : "otp");
   const [step, setStep] = useState<AuthStep>("email");
   const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
@@ -52,9 +54,9 @@ export function EmailOtpLogin({
 
   const canUsePassword = provider === "self-hosted" && passwordEnabled;
   const showLoginNavigation =
-    canUsePassword && (mode === "otp" || mode === "password");
+    canUsePassword && !passwordOnly && (mode === "otp" || mode === "password");
   const showBackToLogin =
-    canUsePassword && (mode === "register" || mode === "forgot");
+    canUsePassword && !passwordOnly && (mode === "register" || mode === "forgot");
 
   function chooseMode(nextMode: AuthMode, nextNotice = "") {
     setMode(nextMode);

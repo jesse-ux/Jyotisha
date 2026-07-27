@@ -14,6 +14,7 @@ export default async function LoginPage() {
   const config = readIdentityConfig(process.env);
   let provider = config.provider;
   let passwordEnabled = false;
+  let passwordOnly = false;
   if (isSelfHostedIdentityEnabled(process.env)) {
     const selfHosted = readSelfHostedIdentityConfig(process.env);
     const surface = resolveIdentitySurface(
@@ -21,9 +22,14 @@ export default async function LoginPage() {
       selfHosted,
     );
     if (surface === "admin") provider = "self-hosted";
-    passwordEnabled = provider === "self-hosted" && surface === "user";
+    passwordEnabled = provider === "self-hosted";
+    passwordOnly = surface === "admin";
   }
   return (
-    <EmailOtpLogin provider={provider} passwordEnabled={passwordEnabled} />
+    <EmailOtpLogin
+      provider={provider}
+      passwordEnabled={passwordEnabled}
+      passwordOnly={passwordOnly}
+    />
   );
 }
