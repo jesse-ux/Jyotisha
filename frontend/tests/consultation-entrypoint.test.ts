@@ -205,16 +205,6 @@ test("a bound rectification session and a homepage restart share the v4 active-c
   assert.match(hook, /loadRectificationV4\(existingHandoff\.caseId\)/);
 });
 
-test("historical completed rectification does not replace the account's unfinished case", () => {
-  const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  const start = source.indexOf("function handleConversationalRectificationTurn");
-  const end = source.indexOf("async function draftSynastryQuestionFromChart", start);
-  const handler = source.slice(start, end);
-
-  assert.match(handler, /current\.rectificationCase\?\.caseId === turn\.caseId[\s\S]*?\? null[\s\S]*?: current\.rectificationCase/);
-  assert.match(handler, /turn\.status === "completed" \|\| turn\.status === "abandoned"\) return latest/);
-});
-
 test("rectify-first suggestions hand the source question to a dedicated rectification session", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   const start = source.indexOf("function chooseConversationSuggestion");

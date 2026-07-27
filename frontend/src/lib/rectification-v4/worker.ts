@@ -1,5 +1,10 @@
 import { randomUUID } from "node:crypto";
-import type { CandidateSnapshot, EvidenceDomain } from "./contracts.ts";
+import type {
+  CandidateSnapshot,
+  LifeEventRevision,
+  RectificationV4Case,
+  RectificationV4Question,
+} from "./contracts.ts";
 import { rectificationV4AlgorithmVersion } from "./contracts.ts";
 import type { RectificationV4CandidateEngine } from "./candidate-engine.ts";
 import { buildCandidateClusters } from "./candidate-clusters.ts";
@@ -8,13 +13,21 @@ import { evidenceSetHash } from "./fingerprints.ts";
 import { extractV4EventRevisions } from "./extraction.ts";
 import { latestEventRevisions, scoreableEvents } from "./evidence-ledger.ts";
 import { planNextQuestion } from "./question-planner.ts";
-import type { RectificationV4Store } from "./store.ts";
+import type { ClaimedRectificationV4Job, RectificationV4Store } from "./store.ts";
 
 export function createRectificationV4Worker(input: {
   readonly store: RectificationV4Store;
   readonly engine: RectificationV4CandidateEngine;
   readonly workerId?: string;
   readonly now?: () => Date;
+  readonly questionAuthor?: (context: Readonly<{
+    modelId: string | null;
+    candidateRange: RectificationV4Case["calculationSpec"]["candidateRange"];
+    snapshot: CandidateSnapshot | null;
+    turns: ClaimedRectificationV4Job["turns"];
+    events: readonly LifeEventRevision[];
+    attemptedRefinementEventIds: readonly string[];
+  }>) => Promise<RectificationV4Question>;
 }) {
   const workerId = input.workerId ?? randomUUID();
   const now = input.now ?? (() => new Date());
@@ -70,14 +83,20 @@ export function createRectificationV4Worker(input: {
           };
         }
         await input.store.updateJobPhase({ workerId, jobId: claimed.job.id, phase: "planning_question", now: now().toISOString() });
-        const covered = events.map((event) => event.domain);
-        const asked = [...covered, ...(claimed.turn.questionDomain ? [claimed.turn.questionDomain] : [])];
-        const nextQuestion = snapshot?.canAcceptRange ? null : planNextQuestion({
-          askedDomains: [...new Set(asked)] as EvidenceDomain[],
-          coveredDomains: [...new Set(covered)] as EvidenceDomain[],
-          events,
-          attemptedRefinementEventIds: claimed.attemptedRefinementEventIds,
-        });
+        const nextQuestion = snapshot?.canAcceptRange ? null : input.questionAuthor
+          ? await input.questionAuthor({
+              modelId: claimed.turn.modelId,
+              candidateRange: claimed.case.calculationSpec.candidateRange,
+              snapshot,
+              turns: claimed.turns,
+              events,
+              attemptedRefinementEventIds: claimed.attemptedRefinementEventIds,
+            })
+          : planNextQuestion({
+              events,
+              attemptedRefinementEventIds: claimed.attemptedRefinementEventIds,
+              latestAnswer: claimed.turn.answer,
+            });
         await input.store.completeJob({
           workerId,
           jobId: claimed.job.id,

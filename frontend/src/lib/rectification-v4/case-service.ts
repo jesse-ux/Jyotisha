@@ -14,10 +14,15 @@ export function createRectificationV4CaseService(store: RectificationV4Store, op
   const now = options.now ?? (() => new Date());
 
   async function response(userId: string, caseValue: RectificationV4Case, jobId?: string): Promise<RectificationV4ApiResponse> {
+    const [events, turns] = await Promise.all([
+      store.loadEvents(userId, caseValue.id),
+      store.loadTurns(userId, caseValue.id),
+    ]);
     return {
       case: caseValue,
       job: jobId ? await store.loadJob(userId, jobId) : null,
-      events: [...await store.loadEvents(userId, caseValue.id)],
+      events: [...events],
+      turns: [...turns],
     };
   }
 
@@ -34,7 +39,7 @@ export function createRectificationV4CaseService(store: RectificationV4Store, op
         calculationSpec: input.calculationSpec,
         calculationSpecHash: calculationSpecHash(input.calculationSpec),
         evidenceSetHash: evidenceSetHash([]),
-        currentQuestion: openingQuestion(),
+        currentQuestion: openingQuestion(input.calculationSpec.candidateRange),
         latestSnapshot: null,
         acceptedRange: null,
         createdAt: timestamp,
@@ -57,11 +62,12 @@ export function createRectificationV4CaseService(store: RectificationV4Store, op
       return store.loadJob(userId, jobId);
     },
 
-    async answer(input: { readonly userId: string; readonly caseId: string; readonly actionId: string; readonly expectedCaseVersion: number; readonly answer: string }) {
+    async answer(input: { readonly userId: string; readonly caseId: string; readonly actionId: string; readonly expectedCaseVersion: number; readonly answer: string; readonly modelId?: string | null }) {
       const current = await store.loadCase(input.userId, input.caseId);
       if (!current?.currentQuestion) return null;
       const saved = await store.submitAnswer({
         ...input,
+        modelId: input.modelId ?? null,
         question: current.currentQuestion,
         jobId: randomUUID(),
         turnId: randomUUID(),

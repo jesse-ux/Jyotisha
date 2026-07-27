@@ -150,6 +150,21 @@ export const rectificationV4QuestionSchema = z.object({
 }).strict();
 export type RectificationV4Question = z.infer<typeof rectificationV4QuestionSchema>;
 
+export const rectificationV4TurnSchema = z.object({
+  id: z.string().uuid(),
+  caseId: z.string().uuid(),
+  caseVersion: z.number().int().positive(),
+  questionId: z.string().uuid().nullable(),
+  questionDomain: evidenceDomainSchema.nullable(),
+  questionTargetEventId: z.string().uuid().nullable(),
+  question: z.string().trim().min(1).max(1_000),
+  answer: z.string().max(4_000),
+  modelId: z.string().trim().min(1).max(120).nullable(),
+  actionId: z.string().uuid(),
+  createdAt: z.string().datetime({ offset: true }),
+}).strict();
+export type RectificationV4Turn = z.infer<typeof rectificationV4TurnSchema>;
+
 export const rectificationV4CaseSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
@@ -177,6 +192,7 @@ export const answerRequestSchema = z.object({
   actionId: z.string().uuid(),
   expectedCaseVersion: z.number().int().nonnegative(),
   answer: z.string().trim().min(1).max(4_000),
+  modelId: z.string().trim().min(1).max(120).nullable().optional(),
 }).strict();
 
 export const reviseEventRequestSchema = z.object({
@@ -218,6 +234,7 @@ export const rectificationV4ApiResponseSchema = z.object({
   case: rectificationV4CaseSchema,
   job: rectificationV4JobSchema.nullable(),
   events: z.array(lifeEventRevisionSchema),
+  turns: z.array(rectificationV4TurnSchema),
 }).strict();
 export type RectificationV4ApiResponse = z.infer<typeof rectificationV4ApiResponseSchema>;
 
