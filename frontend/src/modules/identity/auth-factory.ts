@@ -100,6 +100,17 @@ export function buildAuthOptions({
         path: "/",
       },
     },
+    ...(surface === "user"
+      ? {
+          emailAndPassword: {
+            enabled: true,
+            disableSignUp: true,
+            minPasswordLength: 8,
+            maxPasswordLength: 128,
+            revokeSessionsOnPasswordReset: true,
+          },
+        }
+      : {}),
     plugins: [
       emailOTP(createEmailOtpOptions(emailSender, secret, surface === "admin")),
       admin({

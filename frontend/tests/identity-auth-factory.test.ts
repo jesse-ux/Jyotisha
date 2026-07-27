@@ -107,6 +107,14 @@ test("user and admin auth surfaces have host-only isolated cookies", () => {
   assert.equal(adminOptions.secret, config.adminSecret);
   assert.equal(userOptions.advanced?.cookiePrefix, "jyotisha-user");
   assert.equal(adminOptions.advanced?.cookiePrefix, "jyotisha-admin");
+  assert.deepEqual(userOptions.emailAndPassword, {
+    enabled: true,
+    disableSignUp: true,
+    minPasswordLength: 8,
+    maxPasswordLength: 128,
+    revokeSessionsOnPasswordReset: true,
+  });
+  assert.equal(adminOptions.emailAndPassword, undefined);
   for (const options of [userOptions, adminOptions]) {
     const attributes = options.advanced?.defaultCookieAttributes;
     assert.equal(attributes?.secure, true);

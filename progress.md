@@ -972,3 +972,18 @@
 - 2026-07-11：补跑年度尺度控制日期；主链 timing gate 降级为 `unvalidated_broad_window`，并按领域标记 career blocked、marriage partial candidate。
 - 2026-07-16：Prashna guarded evidence、Rangacharya knowledge-only/source gates 与 clean-checkout governance 已提交；主域 score/verdict 不受 Prashna context 影响。
 - 2026-07-16：VedAstro preview/metadata 已移除认证 header，实际 HTTP 发送前才注入 API key；此前暴露的 key 必须轮换。
+
+## 2026-07-27 - staging 普通用户邮箱密码认证
+
+- 目标：仅 staging 普通用户启用 Better Auth 邮箱注册、OTP/密码登录、首次设密与 OTP 重置密码；不改 admin、production Supabase、数据库结构或依赖。
+- 顺序：基线验证 → 后端原生密码能力 → 单页登录/注册/重置 UI → 测试与反向验证 → 精确提交 → main/staging 同 SHA 发布验收。
+- 基线：fetch 后 origin/main=origin/staging=f402e6f79c7c8c65de9137770b3041c6eb55da42，双向祖先检查通过；独立 worktree/分支创建完成。
+- 基线验证：npm ci 成功；identity 单元 35/35、PostgreSQL OTP 集成 1/1、npm run build 全绿，skipped=todo=0。
+- 最大风险：Better Auth 1.6.23 的 OTP 新用户/设密/重置会话语义、真实 staging 收信条件、main 分支保护与同 SHA 发布控制器。
+- 实现：仅 user surface 启用原生 emailAndPassword；新增登录/注册/首次设密/OTP 重置单页流程与受 session 保护的设密接口，admin/Supabase 保持 OTP-only。
+- 新集成测试：1/1 通过，覆盖新旧 OTP 用户设密、密码/OTP 登录、重置撤销旧会话、哈希、错误密码无 Cookie、admin 无密码登录；skipped=todo=0。
+- 第 1 轮完整验证：identity 36/36、PostgreSQL 集成 1/1、staging 契约 20/20、ESLint 0 warning/error、Next build 成功、git diff --check 通过，全部 skipped=todo=0。
+- 反向验证：临时将 user emailAndPassword.enabled=false 后新增集成测试按预期失败（400 != 200）；trap 恢复文件后同测试 1/1 全绿，未保留临时破坏。
+- 第 2 轮最终验证：兼容保留既有 selfHostedOtpActions/createSelfHostedOtpActions 导出后，identity 36/36、集成 1/1、staging 契约 20/20、ESLint、build、diff check 再次全绿。
+- 发布前：再次 fetch 后 main/staging 仍同为 f402e6f79c7c8c65de9137770b3041c6eb55da42，main 未受保护；允许范围审计通过，依赖/lockfile/migration/deploy/workflow diff=0。
+- 阻塞：执行环境无受控 staging 测试邮箱/收件箱，真实收信验收写入 BLOCKED.md；不使用他人邮箱，代码与部署继续。

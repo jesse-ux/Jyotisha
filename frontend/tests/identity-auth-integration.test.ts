@@ -11,6 +11,10 @@ import {
 import type { SelfHostedIdentityConfig } from "../src/modules/identity/config.ts";
 import { FakeEmailOtpSender } from "../src/modules/identity/email/fake-email-otp-sender.ts";
 import { createHostIsolatedAuthHandlers } from "../src/modules/identity/host.ts";
+import {
+  GET as getPasswordStatus,
+  POST as setAccountPassword,
+} from "../src/app/api/account/password/route.ts";
 import { startPostgresFixture } from "./helpers/postgres-fixture.ts";
 
 const runnerPath = fileURLToPath(
@@ -19,24 +23,45 @@ const runnerPath = fileURLToPath(
 const migrationsDirectory = fileURLToPath(
   new URL("../db/migrations", import.meta.url),
 );
+const userHost = "staging.jyotisha.chat";
+const adminHost = "admin.staging.jyotisha.chat";
 
 function request(
   host: string,
   path: string,
-  body: Record<string, unknown>,
+  body?: Record<string, unknown>,
+  cookie?: string,
 ): Request {
+  const headers: Record<string, string> = {
+    host,
+    origin: `https://${host}`,
+  };
+  if (body) headers["content-type"] = "application/json";
+  if (cookie) headers.cookie = cookie;
   return new Request(`https://${host}${path}`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      host,
-      origin: `https://${host}`,
-    },
-    body: JSON.stringify(body),
+    method: body ? "POST" : "GET",
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
   });
 }
 
-test("Better Auth completes OTP sign-in against the migrated identity schema with isolated cookies", async () => {
+function sessionCookie(response: Response): string {
+  return (response.headers.get("set-cookie") ?? "").split(";", 1)[0];
+}
+
+const envKeys = [
+  "AUTH_PROVIDER",
+  "SELF_HOSTED_IDENTITY_ENABLED",
+  "IDENTITY_DATABASE_URL",
+  "AUTH_USER_ORIGIN",
+  "AUTH_ADMIN_ORIGIN",
+  "BETTER_AUTH_USER_SECRET",
+  "BETTER_AUTH_ADMIN_SECRET",
+  "RESEND_API_KEY",
+  "RESEND_FROM_EMAIL",
+] as const;
+
+test("Better Auth supports OTP registration/login, first password, password login, and OTP reset while admin stays OTP-only", async () => {
   const fixture = startPostgresFixture();
   const migration = spawnSync(process.execPath, [runnerPath], {
     encoding: "utf8",
@@ -57,13 +82,33 @@ test("Better Auth completes OTP sign-in against the migrated identity schema wit
       "identity_runtime",
       "identity-runtime-test-password",
     ),
-    userOrigin: "https://staging.jyotisha.chat",
-    adminOrigin: "https://admin.staging.jyotisha.chat",
+    userOrigin: `https://${userHost}`,
+    adminOrigin: `https://${adminHost}`,
     userSecret: "user-secret-that-is-at-least-32-bytes-long",
     adminSecret: "admin-secret-that-is-at-least-32-bytes-long",
     resendApiKey: "re_test",
     resendFrom: "Jyotisha <login@staging.jyotisha.chat>",
   };
+  const previousEnv = new Map(
+    envKeys.map((key) => [key, process.env[key]] as const),
+  );
+  Object.assign(process.env, {
+    AUTH_PROVIDER: "self-hosted",
+    SELF_HOSTED_IDENTITY_ENABLED: "true",
+    IDENTITY_DATABASE_URL: config.databaseUrl,
+    AUTH_USER_ORIGIN: config.userOrigin,
+    AUTH_ADMIN_ORIGIN: config.adminOrigin,
+    BETTER_AUTH_USER_SECRET: config.userSecret,
+    BETTER_AUTH_ADMIN_SECRET: config.adminSecret,
+    RESEND_API_KEY: config.resendApiKey,
+    RESEND_FROM_EMAIL: config.resendFrom,
+  });
+
+  const identityGlobal = globalThis as typeof globalThis & {
+    jyotishaIdentityAuth?: ReturnType<typeof createIdentityAuthServices>;
+  };
+  delete identityGlobal.jyotishaIdentityAuth;
+
   const sender = new FakeEmailOtpSender();
   const pool = createIdentityPool(config.databaseUrl);
   const services = createIdentityAuthServices(config, {
@@ -75,81 +120,239 @@ test("Better Auth completes OTP sign-in against the migrated identity schema wit
     admin: toNextJsHandler(services.admin),
   });
 
-  try {
-    const userSend = await handlers.POST(
-      request(
-        "staging.jyotisha.chat",
-        "/api/auth/email-otp/send-verification-otp",
-        { email: "person@example.com", type: "sign-in" },
-      ),
-    );
-    assert.equal(userSend.status, 200, await userSend.text());
-    assert.equal(sender.messages.length, 1);
-
-    const userSignIn = await handlers.POST(
-      request("staging.jyotisha.chat", "/api/auth/sign-in/email-otp", {
-        email: "person@example.com",
-        otp: sender.messages[0].otp,
+  async function otpSignIn(email: string): Promise<string> {
+    const send = await handlers.POST(
+      request(userHost, "/api/auth/email-otp/send-verification-otp", {
+        email,
+        type: "sign-in",
       }),
     );
-    const userCookie = userSignIn.headers.get("set-cookie") ?? "";
-    assert.equal(userSignIn.status, 200, await userSignIn.text());
-    assert.match(userCookie, /jyotisha-user\.session_token=/);
-    assert.doesNotMatch(userCookie, /jyotisha-admin/);
-    assert.match(userCookie, /HttpOnly/i);
-    assert.match(userCookie, /Secure/i);
-    assert.match(userCookie, /SameSite=Lax/i);
-    assert.doesNotMatch(userCookie, /Domain=/i);
-    assert.equal(fixture.psql("select count(*) from identity.users"), "1");
-    assert.equal(fixture.psql("select count(*) from identity.sessions"), "1");
+    assert.equal(send.status, 200);
+    const message = sender.messages.at(-1);
+    assert.equal(message?.email, email);
+    assert.equal(message?.type, "sign-in");
 
-    const adminSend = await handlers.POST(
+    const signIn = await handlers.POST(
+      request(userHost, "/api/auth/sign-in/email-otp", {
+        email,
+        otp: message?.otp,
+      }),
+    );
+    assert.equal(signIn.status, 200);
+    const cookie = sessionCookie(signIn);
+    assert.match(cookie, /^(?:__Secure-)?jyotisha-user\.session_token=/);
+    return cookie;
+  }
+
+  async function passwordSignIn(
+    email: string,
+    password: string,
+  ): Promise<Response> {
+    return handlers.POST(
+      request(userHost, "/api/auth/sign-in/email", { email, password }),
+    );
+  }
+
+  try {
+    const unauthenticatedSet = await setAccountPassword(
+      request(userHost, "/api/account/password", {
+        newPassword: "not-authorized",
+      }),
+    );
+    assert.equal(unauthenticatedSet.status, 401);
+
+    const newEmail = "new-user@example.com";
+    const firstPassword = "first-password";
+    const resetPassword = "reset-password";
+    const newUserOtpCookie = await otpSignIn(newEmail);
+
+    const initialStatus = await getPasswordStatus(
+      request(userHost, "/api/account/password", undefined, newUserOtpCookie),
+    );
+    assert.equal(initialStatus.status, 200);
+    assert.deepEqual(await initialStatus.json(), { hasPassword: false });
+
+    const firstSet = await setAccountPassword(
       request(
-        "admin.staging.jyotisha.chat",
-        "/api/auth/email-otp/send-verification-otp",
-        { email: "person@example.com", type: "sign-in" },
+        userHost,
+        "/api/account/password",
+        { newPassword: firstPassword },
+        newUserOtpCookie,
       ),
     );
-    assert.equal(adminSend.status, 200, await adminSend.text());
-    const deniedAdminSignIn = await handlers.POST(
+    assert.equal(firstSet.status, 200);
+
+    const secondSet = await setAccountPassword(
       request(
-        "admin.staging.jyotisha.chat",
-        "/api/auth/sign-in/email-otp",
-        { email: "person@example.com", otp: sender.messages[1].otp },
+        userHost,
+        "/api/account/password",
+        { newPassword: "must-not-overwrite" },
+        newUserOtpCookie,
       ),
     );
-    assert.equal(deniedAdminSignIn.status, 403);
-    assert.equal(deniedAdminSignIn.headers.has("set-cookie"), false);
-    assert.equal(fixture.psql("select count(*) from identity.sessions"), "1");
+    assert.equal(secondSet.status, 409);
+
+    const storedHash = fixture.psql(
+      "select password from identity.accounts where provider_id = 'credential' and user_id = (select id from identity.users where email = 'new-user@example.com')",
+    );
+    assert.notEqual(storedHash, firstPassword);
+    assert.match(storedHash, /^[0-9a-f]{32}:[0-9a-f]{128}$/);
+
+    const passwordLogin = await passwordSignIn(newEmail, firstPassword);
+    assert.equal(passwordLogin.status, 200);
+    const passwordCookie = sessionCookie(passwordLogin);
+    assert.match(passwordCookie, /^(?:__Secure-)?jyotisha-user\.session_token=/);
+
+    const wrongPassword = await passwordSignIn(newEmail, "wrong-password");
+    assert.notEqual(wrongPassword.status, 200);
+    assert.equal(wrongPassword.headers.has("set-cookie"), false);
+
+    const otpLoginCookie = await otpSignIn(newEmail);
+    assert.match(otpLoginCookie, /^(?:__Secure-)?jyotisha-user\.session_token=/);
+
+    const oldOtpEmail = "otp-only@example.com";
+    const firstOldOtpCookie = await otpSignIn(oldOtpEmail);
+    const signOut = await handlers.POST(
+      request(
+        userHost,
+        "/api/auth/sign-out",
+        {},
+        firstOldOtpCookie,
+      ),
+    );
+    assert.equal(signOut.status, 200);
+    const returningOldOtpCookie = await otpSignIn(oldOtpEmail);
+    const oldOtpStatus = await getPasswordStatus(
+      request(
+        userHost,
+        "/api/account/password",
+        undefined,
+        returningOldOtpCookie,
+      ),
+    );
+    assert.deepEqual(await oldOtpStatus.json(), { hasPassword: false });
+    const oldOtpSet = await setAccountPassword(
+      request(
+        userHost,
+        "/api/account/password",
+        { newPassword: "old-user-password" },
+        returningOldOtpCookie,
+      ),
+    );
+    assert.equal(oldOtpSet.status, 200);
+    assert.equal(
+      (await passwordSignIn(oldOtpEmail, "old-user-password")).status,
+      200,
+    );
+
+    const unknownResetMessageCount = sender.messages.length;
+    const unknownReset = await handlers.POST(
+      request(userHost, "/api/auth/email-otp/request-password-reset", {
+        email: "missing@example.com",
+      }),
+    );
+    assert.equal(unknownReset.status, 200);
+    assert.equal(sender.messages.length, unknownResetMessageCount);
+
+    const resetRequest = await handlers.POST(
+      request(userHost, "/api/auth/email-otp/request-password-reset", {
+        email: newEmail,
+      }),
+    );
+    assert.equal(resetRequest.status, 200);
+    const resetMessage = sender.messages.at(-1);
+    assert.equal(resetMessage?.type, "forget-password");
+
+    const reset = await handlers.POST(
+      request(userHost, "/api/auth/email-otp/reset-password", {
+        email: newEmail,
+        otp: resetMessage?.otp,
+        password: resetPassword,
+      }),
+    );
+    assert.equal(reset.status, 200);
+
+    const newUserId = fixture.psql(
+      "select id from identity.users where email = 'new-user@example.com'",
+    );
+    assert.equal(
+      fixture.psql(
+        `select count(*) from identity.sessions where user_id = '${newUserId}'`,
+      ),
+      "0",
+    );
+    for (const cookie of [newUserOtpCookie, passwordCookie, otpLoginCookie]) {
+      assert.equal(
+        await services.user.api.getSession({
+          headers: new Headers({ cookie }),
+        }),
+        null,
+      );
+    }
+
+    const oldPasswordAfterReset = await passwordSignIn(newEmail, firstPassword);
+    assert.notEqual(oldPasswordAfterReset.status, 200);
+    assert.equal(oldPasswordAfterReset.headers.has("set-cookie"), false);
+    const newPasswordAfterReset = await passwordSignIn(newEmail, resetPassword);
+    assert.equal(newPasswordAfterReset.status, 200);
+    assert.match(
+      sessionCookie(newPasswordAfterReset),
+      /^(?:__Secure-)?jyotisha-user\.session_token=/,
+    );
 
     fixture.psqlAs(
       "identity_runtime",
       "identity-runtime-test-password",
-      "update identity.users set role = 'user,admin' where email = 'person@example.com'",
+      "update identity.users set role = 'user,admin' where email = 'new-user@example.com'",
     );
-    const promotedSend = await handlers.POST(
-      request(
-        "admin.staging.jyotisha.chat",
-        "/api/auth/email-otp/send-verification-otp",
-        { email: "person@example.com", type: "sign-in" },
-      ),
+    const adminPasswordLogin = await handlers.POST(
+      request(adminHost, "/api/auth/sign-in/email", {
+        email: newEmail,
+        password: resetPassword,
+      }),
     );
-    assert.equal(promotedSend.status, 200, await promotedSend.text());
+    assert.notEqual(adminPasswordLogin.status, 200);
+    assert.equal(adminPasswordLogin.headers.has("set-cookie"), false);
+
+    const adminSend = await handlers.POST(
+      request(adminHost, "/api/auth/email-otp/send-verification-otp", {
+        email: newEmail,
+        type: "sign-in",
+      }),
+    );
+    assert.equal(adminSend.status, 200);
+    const adminMessage = sender.messages.at(-1);
+    assert.equal(adminMessage?.type, "sign-in");
     const adminSignIn = await handlers.POST(
+      request(adminHost, "/api/auth/sign-in/email-otp", {
+        email: newEmail,
+        otp: adminMessage?.otp,
+      }),
+    );
+    assert.equal(adminSignIn.status, 200);
+    assert.match(sessionCookie(adminSignIn), /^(?:__Secure-)?jyotisha-admin\.session_token=/);
+
+    const adminPasswordRoute = await setAccountPassword(
       request(
-        "admin.staging.jyotisha.chat",
-        "/api/auth/sign-in/email-otp",
-        { email: "person@example.com", otp: sender.messages[2].otp },
+        adminHost,
+        "/api/account/password",
+        { newPassword: "admin-must-not-set-password" },
+        sessionCookie(adminSignIn),
       ),
     );
-    const adminCookie = adminSignIn.headers.get("set-cookie") ?? "";
-    assert.equal(adminSignIn.status, 200, await adminSignIn.text());
-    assert.match(adminCookie, /jyotisha-admin\.session_token=/);
-    assert.doesNotMatch(adminCookie, /jyotisha-user/);
-    assert.doesNotMatch(adminCookie, /Domain=/i);
-    assert.equal(fixture.psql("select count(*) from identity.sessions"), "2");
+    assert.equal(adminPasswordRoute.status, 401);
   } finally {
+    const globalServices = identityGlobal.jyotishaIdentityAuth;
+    if (globalServices) {
+      await globalServices.pool.end();
+      delete identityGlobal.jyotishaIdentityAuth;
+    }
     await pool.end();
     fixture.stop();
+    for (const key of envKeys) {
+      const value = previousEnv.get(key);
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   }
 });

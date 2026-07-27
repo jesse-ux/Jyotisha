@@ -4,9 +4,11 @@ import Image from "next/image";
 import { FormEvent, useState } from "react";
 
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
-import { selfHostedOtpActions } from "@/modules/identity/client";
+import { selfHostedAuthActions } from "@/modules/identity/client";
 
 type AuthProvider = "supabase" | "self-hosted";
+type AuthMode = "otp" | "password" | "register" | "forgot";
+type AuthStep = "email" | "otp" | "set-password" | "existing";
 
 function authMessage(caught: unknown) {
   const message = caught instanceof Error ? caught.message : "暂时无法登录";
@@ -23,13 +25,42 @@ function authMessage(caught: unknown) {
   return message;
 }
 
-export function EmailOtpLogin({ provider }: { provider: AuthProvider }) {
+function passwordError(password: string, confirmation: string): string {
+  if (password.length < 8 || password.length > 128) {
+    return "密码长度须为 8–128 位";
+  }
+  if (password !== confirmation) return "两次输入的密码不一致";
+  return "";
+}
+
+export function EmailOtpLogin({
+  provider,
+  passwordEnabled = false,
+}: {
+  provider: AuthProvider;
+  passwordEnabled?: boolean;
+}) {
+  const [mode, setMode] = useState<AuthMode>("otp");
+  const [step, setStep] = useState<AuthStep>("email");
   const [email, setEmail] = useState("");
   const [token, setToken] = useState("");
-  const [sent, setSent] = useState(false);
+  const [password, setPassword] = useState("");
+  const [confirmation, setConfirmation] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+
+  const canUsePassword = provider === "self-hosted" && passwordEnabled;
+
+  function chooseMode(nextMode: AuthMode, nextNotice = "") {
+    setMode(nextMode);
+    setStep("email");
+    setToken("");
+    setPassword("");
+    setConfirmation("");
+    setError("");
+    setNotice(nextNotice);
+  }
 
   async function sendOtp(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
@@ -40,7 +71,11 @@ export function EmailOtpLogin({ provider }: { provider: AuthProvider }) {
     setNotice("");
     try {
       if (provider === "self-hosted") {
-        await selfHostedOtpActions.send(normalizedEmail);
+        if (mode === "forgot") {
+          await selfHostedAuthActions.requestPasswordReset(normalizedEmail);
+        } else {
+          await selfHostedAuthActions.send(normalizedEmail);
+        }
       } else {
         const { error: otpError } =
           await createBrowserSupabaseClient().auth.signInWithOtp({
@@ -49,8 +84,12 @@ export function EmailOtpLogin({ provider }: { provider: AuthProvider }) {
           });
         if (otpError) throw otpError;
       }
-      setSent(true);
-      setNotice(`验证码已发送至 ${normalizedEmail}`);
+      setStep("otp");
+      setNotice(
+        mode === "forgot"
+          ? "如果该邮箱可用，验证码已发送，请检查收件箱"
+          : `验证码已发送至 ${normalizedEmail}`,
+      );
     } catch (caught) {
       if (!(caught instanceof Error)) throw caught;
       setError(authMessage(caught));
@@ -66,7 +105,18 @@ export function EmailOtpLogin({ provider }: { provider: AuthProvider }) {
     setError("");
     try {
       if (provider === "self-hosted") {
-        await selfHostedOtpActions.verify(email, token);
+        await selfHostedAuthActions.verify(email, token);
+        const hasPassword = await selfHostedAuthActions.hasPassword();
+        if (!hasPassword) {
+          setStep("set-password");
+          setNotice("邮箱验证成功，请设置登录密码");
+          return;
+        }
+        if (mode === "register") {
+          setStep("existing");
+          setNotice("此邮箱已有账户，您已登录；原密码未被更改");
+          return;
+        }
       } else {
         const { error: otpError } =
           await createBrowserSupabaseClient().auth.verifyOtp({
@@ -80,16 +130,97 @@ export function EmailOtpLogin({ provider }: { provider: AuthProvider }) {
     } catch (caught) {
       if (!(caught instanceof Error)) throw caught;
       setError(authMessage(caught));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function signInWithPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!email.trim() || !password || busy) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await selfHostedAuthActions.signInWithPassword(email, password);
+      window.location.assign("/");
+    } catch (caught) {
+      if (!(caught instanceof Error)) throw caught;
+      setError(authMessage(caught));
+      setBusy(false);
+    }
+  }
+
+  async function saveFirstPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const validationError = passwordError(password, confirmation);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await selfHostedAuthActions.setPassword(password);
+      window.location.assign("/");
+    } catch (caught) {
+      if (!(caught instanceof Error)) throw caught;
+      const message = authMessage(caught);
+      if (message.includes("原密码未被更改")) {
+        setStep("existing");
+        setNotice(message);
+      } else {
+        setError(message);
+      }
+      setBusy(false);
+    }
+  }
+
+  async function resetPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const validationError = passwordError(password, confirmation);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    if (!token || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      await selfHostedAuthActions.resetPassword(email, token, password);
+      chooseMode("password", "密码已重置，请使用新密码登录");
+    } catch (caught) {
+      if (!(caught instanceof Error)) throw caught;
+      setError(authMessage(caught));
+    } finally {
       setBusy(false);
     }
   }
 
   function changeEmail() {
-    setSent(false);
+    setStep("email");
     setToken("");
+    setPassword("");
+    setConfirmation("");
     setError("");
     setNotice("");
   }
+
+  const title =
+    mode === "register"
+      ? "注册账号"
+      : mode === "forgot"
+        ? "忘记密码"
+        : "欢迎回来";
+  const intro =
+    mode === "password"
+      ? "使用邮箱和密码登录。"
+      : mode === "register"
+        ? "验证邮箱后设置密码，并自动登录。"
+        : mode === "forgot"
+          ? "通过邮箱验证码设置新密码，旧会话将失效。"
+          : "邮箱验证码登录，新邮箱将自动创建账户。";
 
   return (
     <main className="standalone-page auth-page">
@@ -123,13 +254,82 @@ export function EmailOtpLogin({ provider }: { provider: AuthProvider }) {
             <span aria-hidden="true" />
             <strong>Jyotisha</strong>
           </div>
-          <h1 id="login-title">欢迎回来</h1>
-          <p className="page-intro">
-            邮箱验证码登录，
-            <span className="phrase-nowrap">新邮箱将自动创建账户。</span>
-          </p>
+          <h1 id="login-title">{title}</h1>
+          <p className="page-intro">{intro}</p>
 
-          {!sent ? (
+          {canUsePassword && (
+            <nav className="auth-mode-nav" aria-label="登录方式">
+              <div className="auth-mode-tabs">
+                <button
+                  type="button"
+                  aria-pressed={mode === "otp"}
+                  onClick={() => chooseMode("otp")}
+                >
+                  验证码登录
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={mode === "password"}
+                  onClick={() => chooseMode("password")}
+                >
+                  密码登录
+                </button>
+              </div>
+              <div className="auth-links">
+                <button type="button" onClick={() => chooseMode("register")}>
+                  注册账号
+                </button>
+                <button type="button" onClick={() => chooseMode("forgot")}>
+                  忘记密码
+                </button>
+              </div>
+            </nav>
+          )}
+
+          {mode === "password" && step === "email" ? (
+            <form
+              key="password-login"
+              className="stack-form auth-step"
+              onSubmit={signInWithPassword}
+            >
+              <label htmlFor="password-email">邮箱</label>
+              <input
+                id="password-email"
+                type="email"
+                autoComplete="email"
+                inputMode="email"
+                required
+                autoFocus
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setError("");
+                }}
+                placeholder="you@example.com"
+              />
+              <label htmlFor="current-password">密码</label>
+              <input
+                id="current-password"
+                type="password"
+                autoComplete="current-password"
+                required
+                minLength={8}
+                maxLength={128}
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setError("");
+                }}
+              />
+              <button
+                className="button-primary"
+                type="submit"
+                disabled={!email.trim() || !password || busy}
+              >
+                {busy ? "登录中" : "密码登录"}
+              </button>
+            </form>
+          ) : step === "email" ? (
             <form key="email" className="stack-form auth-step" onSubmit={sendOtp}>
               <label htmlFor="login-email">邮箱</label>
               <input
@@ -155,7 +355,75 @@ export function EmailOtpLogin({ provider }: { provider: AuthProvider }) {
                 {busy ? "发送中" : "发送验证码"}
               </button>
             </form>
-          ) : (
+          ) : step === "otp" && mode === "forgot" ? (
+            <form
+              key="reset-password"
+              className="stack-form auth-step"
+              onSubmit={resetPassword}
+            >
+              <label htmlFor="reset-token">邮箱验证码</label>
+              <input
+                id="reset-token"
+                className="otp-input"
+                type="text"
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                minLength={6}
+                maxLength={6}
+                required
+                autoFocus
+                value={token}
+                onChange={(event) => {
+                  setToken(event.target.value.replace(/\D/g, "").slice(0, 6));
+                  setError("");
+                }}
+              />
+              <label htmlFor="reset-password-new">新密码</label>
+              <input
+                id="reset-password-new"
+                type="password"
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={128}
+                required
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setError("");
+                }}
+              />
+              <label htmlFor="reset-password-confirm">确认新密码</label>
+              <input
+                id="reset-password-confirm"
+                type="password"
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={128}
+                required
+                value={confirmation}
+                onChange={(event) => {
+                  setConfirmation(event.target.value);
+                  setError("");
+                }}
+              />
+              <button
+                className="button-primary"
+                type="submit"
+                disabled={!token || !password || !confirmation || busy}
+              >
+                {busy ? "重置中" : "重置密码"}
+              </button>
+              <div className="inline-actions">
+                <button type="button" disabled={busy} onClick={() => void sendOtp()}>
+                  {busy ? "发送中" : "重新发送验证码"}
+                </button>
+                <button type="button" disabled={busy} onClick={changeEmail}>
+                  更换邮箱
+                </button>
+              </div>
+            </form>
+          ) : step === "otp" ? (
             <form key="otp" className="stack-form auth-step" onSubmit={verifyOtp}>
               <label htmlFor="login-token">邮箱验证码</label>
               <input
@@ -191,7 +459,61 @@ export function EmailOtpLogin({ provider }: { provider: AuthProvider }) {
                 </button>
               </div>
             </form>
+          ) : step === "set-password" ? (
+            <form
+              key="set-password"
+              className="stack-form auth-step"
+              onSubmit={saveFirstPassword}
+            >
+              <label htmlFor="new-password">设置密码</label>
+              <input
+                id="new-password"
+                type="password"
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={128}
+                required
+                autoFocus
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setError("");
+                }}
+              />
+              <label htmlFor="confirm-password">确认密码</label>
+              <input
+                id="confirm-password"
+                type="password"
+                autoComplete="new-password"
+                minLength={8}
+                maxLength={128}
+                required
+                value={confirmation}
+                onChange={(event) => {
+                  setConfirmation(event.target.value);
+                  setError("");
+                }}
+              />
+              <button
+                className="button-primary"
+                type="submit"
+                disabled={!password || !confirmation || busy}
+              >
+                {busy ? "保存中" : "设置密码并继续"}
+              </button>
+            </form>
+          ) : (
+            <div className="stack-form auth-step">
+              <button
+                className="button-primary"
+                type="button"
+                onClick={() => window.location.assign("/")}
+              >
+                进入首页
+              </button>
+            </div>
           )}
+
           {error && (
             <p className="form-error" role="alert">
               {error}
