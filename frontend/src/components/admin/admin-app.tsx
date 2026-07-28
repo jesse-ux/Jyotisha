@@ -32,10 +32,10 @@ export function AdminApp({ children }: { children: ReactNode }) {
           notificationProvider={notificationProvider}
           resources={[
             { name: "codes", list: "/admin/codes", meta: { label: "兑换码", icon: <GiftOutlined /> } },
-            { name: "users", list: "/admin/users", meta: { label: "用户资料", icon: <TeamOutlined /> } },
-            { name: "credit-transactions", list: "/admin/credit-transactions", meta: { label: "积分流水", icon: <TransactionOutlined /> } },
-            { name: "consultations", list: "/admin/consultations", meta: { label: "咨询请求", icon: <MessageOutlined /> } },
-            { name: "audit-logs", list: "/admin/audit-logs", meta: { label: "审计日志", icon: <AuditOutlined /> } },
+            { name: "users", list: "/admin/codes?resource=users", meta: { label: "用户资料", icon: <TeamOutlined /> } },
+            { name: "credit-transactions", list: "/admin/codes?resource=credit-transactions", meta: { label: "积分流水", icon: <TransactionOutlined /> } },
+            { name: "consultations", list: "/admin/codes?resource=consultations", meta: { label: "咨询请求", icon: <MessageOutlined /> } },
+            { name: "audit-logs", list: "/admin/codes?resource=audit-logs", meta: { label: "审计日志", icon: <AuditOutlined /> } },
           ]}
           options={{
             syncWithLocation: true,
