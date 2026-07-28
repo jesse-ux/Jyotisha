@@ -1,0 +1,81 @@
+name: Reset Staging Account
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_deploy_sha:
+        description: Exact 40-character SHA currently deployed to staging
+        required: true
+        type: string
+      email:
+        description: Exact staging account email
+        required: true
+        type: string
+      confirmation:
+        description: Type RESET followed by a space and the exact email
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-mutation
+  cancel-in-progress: false
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+    env:
+      DEPLOY_HOST: ${{ vars.STAGING_HOST }}
+      DEPLOY_PORT: ${{ vars.STAGING_PORT }}
+      DEPLOY_USER: ${{ vars.STAGING_USER }}
+      DEPLOY_PATH: ${{ vars.STAGING_PATH }}
+      STAGING_KNOWN_HOSTS: ${{ vars.STAGING_KNOWN_HOSTS }}
+      EXPECTED_DEPLOY_SHA: ${{ inputs.expected_deploy_sha }}
+      RESET_EMAIL: ${{ inputs.email }}
+      RESET_CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - name: Checkout trusted controller
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Validate account reset request and staging target
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]]
+          [[ "$RESET_EMAIL" =~ ^[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,63}$ ]]
+          test "$RESET_CONFIRMATION" = "RESET $RESET_EMAIL"
+          test "$DEPLOY_HOST" = "118.26.111.127"
+          test "$DEPLOY_PORT" = "22"
+          test "$DEPLOY_USER" = "deploy"
+          test "$DEPLOY_PATH" = "/opt/jyotisha-staging"
+          test -n "$STAGING_KNOWN_HOSTS"
+          bash -n deploy/reset-staging-account.sh
+
+      - name: Configure pinned staging SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_PRIVATE_KEY"
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" >~/.ssh/jyotisha-staging
+          chmod 600 ~/.ssh/jyotisha-staging
+          printf '%s\n' "$STAGING_KNOWN_HOSTS" >~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Reset one staging account under host lock
+        run: |
+          set -euo pipefail
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "DEPLOY_PATH='$DEPLOY_PATH' EXPECTED_DEPLOY_SHA='$EXPECTED_DEPLOY_SHA' RESET_EMAIL='$RESET_EMAIL' RESET_CONFIRMATION='$RESET_CONFIRMATION' bash -s" \
+            < deploy/reset-staging-account.sh
