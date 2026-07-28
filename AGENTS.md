@@ -153,3 +153,17 @@ Deployment safety rules:
 4. 若当轮只能诊断或被阻塞，也要把已确认事实写成 `investigating` 或 `blocked`，不得编造根因或提前标记 `resolved`。
 5. `resolved` 必须有与风险相称的证据：至少一个针对性回归测试；生产问题还必须有脱敏后的迁移、部署、健康检查或 smoke 证据。
 6. Bug 历史严禁写入姓名、出生资料、邮箱、用户/案例 ID、Cookie、JWT、密码、密钥、完整请求体或模型原文。
+
+## Agent skills
+
+### Issue tracker
+
+Issues and PRDs are tracked in this repository's GitHub Issues using the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Triage uses the canonical `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, and `wontfix` labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Domain documentation uses the single-context layout. See `docs/agents/domain.md`.
