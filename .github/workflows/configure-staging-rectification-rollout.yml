@@ -1,0 +1,92 @@
+name: Configure Staging Rectification Rollout
+
+on:
+  workflow_dispatch:
+    inputs:
+      expected_deploy_sha:
+        description: Exact 40-character SHA currently deployed to staging
+        required: true
+        type: string
+      audience:
+        description: New-case creation audience
+        required: true
+        default: paused
+        type: choice
+        options:
+          - paused
+          - smoke_only
+          - public
+      synthetic_smoke_user_ids:
+        description: Comma-separated canonical UUIDs; required only for smoke_only
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-mutation
+  cancel-in-progress: false
+
+jobs:
+  configure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_URL }}
+    env:
+      DEPLOY_HOST: ${{ vars.STAGING_HOST }}
+      DEPLOY_PORT: ${{ vars.STAGING_PORT }}
+      DEPLOY_USER: ${{ vars.STAGING_USER }}
+      DEPLOY_PATH: ${{ vars.STAGING_PATH }}
+      STAGING_URL: ${{ vars.STAGING_URL }}
+      STAGING_KNOWN_HOSTS: ${{ vars.STAGING_KNOWN_HOSTS }}
+      EXPECTED_DEPLOY_SHA: ${{ inputs.expected_deploy_sha }}
+      ROLLOUT_AUDIENCE: ${{ inputs.audience }}
+      SYNTHETIC_SMOKE_USER_IDS: ${{ inputs.synthetic_smoke_user_ids }}
+
+    steps:
+      - name: Checkout trusted controller
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Validate rollout request and staging target
+        run: |
+          set -euo pipefail
+          [[ "$EXPECTED_DEPLOY_SHA" =~ ^[0-9a-f]{40}$ ]]
+          case "$ROLLOUT_AUDIENCE" in paused|smoke_only|public) ;; *) exit 1 ;; esac
+          if [ "$ROLLOUT_AUDIENCE" = smoke_only ]; then
+            [[ "$SYNTHETIC_SMOKE_USER_IDS" =~ ^[0-9a-f-]{36}(,[0-9a-f-]{36})*$ ]]
+          else
+            test -z "$SYNTHETIC_SMOKE_USER_IDS"
+          fi
+          test "$DEPLOY_HOST" = "118.26.111.127"
+          test "$DEPLOY_PORT" = "22"
+          test "$DEPLOY_USER" = "deploy"
+          test "$DEPLOY_PATH" = "/opt/jyotisha-staging"
+          test "$STAGING_URL" = "https://staging.jyotisha.chat"
+          test -n "$STAGING_KNOWN_HOSTS"
+          bash -n deploy/configure-staging-rectification-rollout.sh
+
+      - name: Configure pinned staging SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.STAGING_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "$SSH_PRIVATE_KEY"
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" >~/.ssh/jyotisha-staging
+          chmod 600 ~/.ssh/jyotisha-staging
+          printf '%s\n' "$STAGING_KNOWN_HOSTS" >~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Apply rollout under staging mutation lock
+        run: |
+          set -euo pipefail
+          SSH_OPTIONS="-i $HOME/.ssh/jyotisha-staging -p $DEPLOY_PORT -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10"
+          ssh $SSH_OPTIONS "$DEPLOY_USER@$DEPLOY_HOST" \
+            "DEPLOY_PATH='$DEPLOY_PATH' EXPECTED_DEPLOY_SHA='$EXPECTED_DEPLOY_SHA' ROLLOUT_AUDIENCE='$ROLLOUT_AUDIENCE' SYNTHETIC_SMOKE_USER_IDS='$SYNTHETIC_SMOKE_USER_IDS' STAGING_URL='$STAGING_URL' bash -s" \
+            < deploy/configure-staging-rectification-rollout.sh

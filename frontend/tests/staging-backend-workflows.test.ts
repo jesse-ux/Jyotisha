@@ -18,12 +18,20 @@ const migrationWorkflow = new URL(
   "../../.github/workflows/migrate-staging-database.yml",
   import.meta.url,
 );
+const rolloutWorkflow = new URL(
+  "../../.github/workflows/configure-staging-rectification-rollout.yml",
+  import.meta.url,
+);
 const deployScript = new URL(
   "../../deploy/run-staging-deploy.sh",
   import.meta.url,
 );
 const migrationScript = new URL(
   "../../deploy/run-staging-migration.sh",
+  import.meta.url,
+);
+const rolloutScript = new URL(
+  "../../deploy/configure-staging-rectification-rollout.sh",
   import.meta.url,
 );
 const syncScript = new URL(
@@ -49,7 +57,7 @@ function assertOrder(text: string, labels: string[]): void {
 }
 
 test("changed staging workflows are syntactically valid YAML", () => {
-  for (const workflow of [qualityWorkflow, deployWorkflow, migrationWorkflow]) {
+  for (const workflow of [qualityWorkflow, deployWorkflow, migrationWorkflow, rolloutWorkflow]) {
     const result = spawnSync(
       "ruby",
       ["-e", "require 'yaml'; YAML.parse_file(ARGV.fetch(0))", fileURLToPath(workflow)],
@@ -151,15 +159,20 @@ test("all staging mutations share Actions serialization and one host lock", () =
   const deployRunner = read(deployScript);
   const migrationRunner = read(migrationScript);
 
-  for (const workflow of [deployment, migration]) {
+  const rollout = read(rolloutWorkflow);
+  const rolloutRunner = read(rolloutScript);
+
+  for (const workflow of [deployment, migration, rollout]) {
     assert.match(workflow, /concurrency:\n\s+group: staging-mutation\n\s+cancel-in-progress: false/);
   }
-  for (const runner of [deployRunner, migrationRunner]) {
+  for (const runner of [deployRunner, migrationRunner, rolloutRunner]) {
     assert.match(runner, /state_directory="\$DEPLOY_PATH\/\.state"/);
     assert.match(runner, /state_directory\/mutation\.lock/);
     assert.match(runner, /flock -n 9/);
-    assert.ok(runner.indexOf("flock -n 9") < runner.indexOf("sync-staging-tree.sh"));
     assert.ok(runner.indexOf("flock -n 9") < runner.indexOf("docker"));
+  }
+  for (const runner of [deployRunner, migrationRunner]) {
+    assert.ok(runner.indexOf("flock -n 9") < runner.indexOf("sync-staging-tree.sh"));
   }
 });
 
@@ -391,8 +404,98 @@ test("production remains manual-only and separate from staging database automati
   assert.doesNotMatch(production, /docker-compose\.postgres\.yml|db:migrate/);
 });
 
+
+test("public rectification rollout rewrites only rollout gates and recreates web runtimes", () => {
+  const root = mkdtempSync(join(tmpdir(), "jyotisha-rollout-"));
+  const deploymentPath = join(root, "app");
+  const statePath = join(deploymentPath, ".state");
+  const deployPath = join(deploymentPath, "deploy");
+  const mockBin = join(root, "bin");
+  const sha = "8".repeat(40);
+  mkdirSync(statePath, { recursive: true });
+  mkdirSync(deployPath, { recursive: true });
+  mkdirSync(mockBin, { recursive: true });
+  writeFileSync(join(statePath, "deployed-revision"), sha);
+  writeFileSync(
+    join(deploymentPath, ".env.staging"),
+    [
+      "APP_ENV_FILE=../.env.staging",
+      "CADDYFILE_PATH=./Caddyfile.staging",
+      "SITE_ADDRESS=https://staging.jyotisha.chat",
+      "ADMIN_SITE_ADDRESS=https://admin.staging.jyotisha.chat",
+      "AUTH_PROVIDER=self-hosted",
+      "SELF_HOSTED_IDENTITY_ENABLED=true",
+      "AUTH_USER_ORIGIN=https://staging.jyotisha.chat",
+      "AUTH_ADMIN_ORIGIN=https://admin.staging.jyotisha.chat",
+      `IDENTITY_DATABASE_URL=postgresql://identity_runtime:${"i".repeat(40)}@postgres:5432/jyotisha`,
+      `APP_DATABASE_URL=postgresql://app_runtime:${"a".repeat(40)}@postgres:5432/jyotisha`,
+      `ADMIN_DATABASE_URL=postgresql://admin_runtime:${"d".repeat(40)}@postgres:5432/jyotisha`,
+      `BETTER_AUTH_USER_SECRET=${"u".repeat(32)}`,
+      `BETTER_AUTH_ADMIN_SECRET=${"v".repeat(32)}`,
+      "RESEND_API_KEY=re_test_key",
+      "RESEND_FROM_EMAIL=test@example.com",
+      "ADMIN_EMAILS=admin@example.com",
+      `JYOTISH_DYNAMIC_RECTIFICATION_TOKEN=${"t".repeat(32)}`,
+      "KEEP_ME=unchanged",
+      "RECTIFICATION_V3_CREATE_ENABLED=false",
+      "RECTIFICATION_V3_MIGRATIONS_READY=false",
+      "RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA=old",
+      "RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS=00000000-0000-4000-8000-000000009001",
+      "",
+    ].join("\n"),
+    { mode: 0o600 },
+  );
+  writeFileSync(
+    join(deployPath, "validate-staging-env.sh"),
+    readFileSync(new URL("../../deploy/validate-staging-env.sh", import.meta.url), "utf8"),
+  );
+  writeFileSync(join(mockBin, "flock"), "#!/usr/bin/env bash\nexit 0\n");
+  writeFileSync(
+    join(mockBin, "docker"),
+    [
+      "#!/usr/bin/env bash",
+      'if [ "$1" = ps ]; then echo web-container; exit 0; fi',
+      `if [ "$1" = inspect ]; then echo ghcr.io/jesse-ux/jyotisha-web@sha256:${"b".repeat(64)}; exit 0; fi`,
+      `printf '%s\n' "$*" >>${join(root, "docker.log")}`,
+    ].join("\n"),
+  );
+  writeFileSync(
+    join(mockBin, "curl"),
+    `#!/usr/bin/env bash\nprintf '%s' '{"deployment":{"gitCommit":"${sha}"},"rollout":{"conversationalRectificationV3":{"creationAudience":"public","readyForNewCases":true}}}'\n`,
+  );
+  for (const command of ["flock", "docker", "curl"]) {
+    chmodSync(join(mockBin, command), 0o755);
+  }
+
+  try {
+    const result = spawnSync("bash", [fileURLToPath(rolloutScript)], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: `${mockBin}:${process.env.PATH ?? ""}`,
+        DEPLOY_PATH: deploymentPath,
+        EXPECTED_DEPLOY_SHA: sha,
+        ROLLOUT_AUDIENCE: "public",
+        SYNTHETIC_SMOKE_USER_IDS: "",
+        STAGING_URL: "https://staging.jyotisha.chat",
+      },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    const env = readFileSync(join(deploymentPath, ".env.staging"), "utf8");
+    assert.match(env, /^KEEP_ME=unchanged$/m);
+    assert.match(env, /^RECTIFICATION_V3_CREATE_ENABLED=true$/m);
+    assert.match(env, /^RECTIFICATION_V3_MIGRATIONS_READY=true$/m);
+    assert.match(env, new RegExp(`^RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA=${sha}$`, "m"));
+    assert.match(env, /^RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS=$/m);
+    assert.equal((env.match(/^RECTIFICATION_V3_CREATE_ENABLED=/gm) ?? []).length, 1);
+    assert.match(readFileSync(join(root, "docker.log"), "utf8"), /force-recreate --no-deps web rectification-v4-worker/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("staging scripts pass shell syntax validation", () => {
-  for (const script of [deployScript, migrationScript, syncScript]) {
+  for (const script of [deployScript, migrationScript, rolloutScript, syncScript]) {
     const path = fileURLToPath(script);
     chmodSync(path, 0o755);
     const result = spawnSync("bash", ["-n", path], { encoding: "utf8" });
