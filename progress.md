@@ -1019,4 +1019,7 @@
 - GitHub CLI 认证已恢复可用；此前认证阻塞已从 BLOCKED 移除。未触发 production。
 - rebase 到 `origin/staging=43581ac` 后新 SHA `635c919` 首次 gate 红灯：能力审计按 `page.tsx` 枚举路由，实际新增后台页面与既有固定合同冲突；未改断言/Python，改为唯一 `/admin/codes` 页面用 query 切换 5 资源，`/admin` route handler 重定向。
 - 修复 SHA `218cee579e92fcf9bfe435a349250cfe23304547` 已 fast-forward push 到 origin/staging；exact gate run 30322107657 全部成功，含 Python quick gate、frontend/database contracts、API/web image 与 immutable manifest。
-- 自动 deploy run 30322719839 及手动 migration run 30322756154 均被既有 main-ancestry 控制器拒绝：`staging revision is not in the reviewed main history`。这与“不碰 main、只合入 staging”硬规则互斥，未绕过，详见 BLOCKED。
+- 自动 deploy run 30322719839 及手动 migration run 30322756154 均被既有 main-ancestry 控制器拒绝；随后用户明确授权将同一 SHA fast-forward 到 main，再部署 staging。
+- main/staging 同步后，migration run 30324787560 成功：应用 `20260727000000_admin_viewer_identity.sql` 与 `20260727010000_refine_admin_redemption_audit.sql`，并自动 dispatch deploy run 30324940917；该 deploy 成功，health exact SHA 为 `f950bfd...`。
+- 线上 `/admin` 冒烟发现反向代理 Location 错用容器 URL `https://0.0.0.0:3000/admin/codes`；改为相对 `/admin/codes`，形成最终 SHA `5206fb2323c87c877e5d361dc64c77d0497e14dd`，同步 fast-forward 到 main/staging。
+- 最终 SHA gate run 30325219367 success，自动 deploy run 30325788303 success；health 返回同一 SHA，`/admin` 307 到相对 `/admin/codes`，Refine shell 200，5 个匿名资源与匿名写请求均 401。未触发 production deploy。
