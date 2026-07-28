@@ -1015,3 +1015,5 @@
 - 独立安全复核后修复：为 admin_runtime 增加列级 grants + 明确 RLS 只读 policies，避免后台列表静默为空；移除迁移内层 BEGIN/COMMIT，保持 runner+ledger 原子性；RPC 由 identity.users 校验操作者；补 revoked 成对约束与 NULL JSON 防护。
 - 本地全量 `npm test`：1043 tests，1031 pass，12 fail，skipped/todo=0；11 项因 docker ENOENT（包含本功能反向测试），1 项因缺 Playwright headless Chromium，均已写入 BLOCKED。
 - 最终静态验证：ESLint 0 error（3 个既有 warning）、Next build 成功、`git diff --check` 通过。
+- 初始功能提交 `06ca1c805c3a8c7054885c1482985a716681ee58`；发布前 fetch 发现 `origin/staging` 已前进到 `43581ac`，按硬规则不强推，先 rebase 并重新全量复验。
+- GitHub CLI 认证已恢复可用；此前认证阻塞已从 BLOCKED 移除。未触发 production。
