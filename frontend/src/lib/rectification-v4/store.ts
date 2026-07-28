@@ -1,6 +1,8 @@
+import type { AgentRun, CandidateFeatureSnapshot, DiagnosticsSummary, PublicMessage, ValidatedDecision } from "../rectification-agent/contracts.ts";
 import type {
   CandidateSnapshot,
   LifeEventRevision,
+  PendingEvidence,
   RectificationV4Case,
   RectificationV4Job,
   RectificationV4Phase,
@@ -26,7 +28,13 @@ export type CompleteRectificationV4JobInput = Readonly<{
   outputEvidenceSetHash: string;
   calculationSpecHash: string;
   newEventRevisions: readonly LifeEventRevision[];
+  pendingEvidence: readonly PendingEvidence[];
   snapshot: CandidateSnapshot | null;
+  diagnostics: DiagnosticsSummary | null;
+  featureSnapshot: CandidateFeatureSnapshot | null;
+  validatedDecision: ValidatedDecision;
+  publicMessage: PublicMessage;
+  agentRun: AgentRun;
   nextQuestion: RectificationV4Question | null;
   status: RectificationV4Case["status"];
   phase: RectificationV4Phase;

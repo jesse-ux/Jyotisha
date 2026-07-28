@@ -1553,28 +1553,28 @@
 
 - 状态：investigating
 - 首次发现：2026-07-27
-- 最近更新：2026-07-27
-- 影响面：生时校正 V4 聊天界面、历史恢复、模型选择、下一问规划与 staging 验收
+- 最近更新：2026-07-28
+- 影响面：生时校正聊天 Surface、事件语义、后台 Job、候选计算、诊断、Reasoner、Renderer 与持久化主链
 - 用户现象：进入生时校正后看到独立的校正面板、证据区域和固定问题；交互不像普通 session，领域也不再根据用户刚讲的经历动态选择。
-- 触发条件：V4 页面入口渲染旧式 `RectificationV4Panel` 视觉结构，页面给会话容器添加 `is-rectification`，同时问题规划器按硬编码领域顺序和模板生成下一问。
-- 根因：组件 wrapper 无条件绕过原普通聊天 Surface；普通 session CSS 又显式排除 `is-rectification`；`question-planner.ts` 把教育、迁移、关系、事业、财务、健康压力和家庭写成固定顺序与固定文案，测试还把这些实现细节当成产品合同。
-- 修复：V4 复用普通 session 的消息列表、输入框和模型选择器，并从持久化 turns 恢复完整对话；回答时原子保存所选模型 ID，Worker 将完整 turns、事件台账、日期精度、已追问事件与候选范围交给模型动态生成下一问。确定性 planner 只保留日期修订和开放叙述降级，不再轮询领域或输出固定问卷；候选范围仍不得表述为已确认出生分钟。
-- 验证：聚焦 V4/domain/service/replay/handoff/migration、普通 session UI 合同和 consultation entrypoint 共 59 个测试通过；staging 构建、迁移和登录态 smoke 完成后更新为 resolved 并填写精确提交与部署 SHA。
-- 防复发：可见生时校正必须复用普通聊天 Surface；测试应锁定自然语言消息、turn 恢复、模型 ID 传递和无固定领域控件，不得锁定领域顺序或问题模板。模型只负责选择和表达下一条高信息量问题，证据修订、评分、稳定性门、范围接受、handoff 与扣费继续由确定性后端负责。
-- 相关记录：BUG-020、BUG-075、BUG-080、BUG-081、BUG-082、BUG-083、BUG-084
-- 修复版本：待提交（staging 验收中）
+- 触发条件：旧 V4 既在界面层使用独立校正结构，又让 `question-planner.ts` 和 `question-author.ts` 直接决定领域顺序与问题文案；模型只负责写下一问，后台没有形成完整 Agent 决策闭环。
+- 根因：产品状态被压缩成“下一问字符串”，事件语义、候选特征、诊断结果、问题机会、模型决策和公开消息之间没有受约束的 durable contract；因此即使替换提示词，系统仍会沿用问卷式控制流，且无法审计模型为何选题或安全重放已完成 Job。
+- 修复：删除旧 `question-planner.ts` 与 `question-author.ts`，将回答处理重构为完整 V5 主链：保存回答并创建后台 Job → Evidence Reconciliation → Candidate Engine / Feature Snapshot → Diagnostics → Opportunity Builder → Bounded Reasoner → Decision Validator → Renderer → Atomic Job Completion。可见层继续复用普通 session 聊天 Surface；Reasoner 只能选择服务端生成的 opportunity 或受约束动作，不能注入分钟、分数、事件或任意问题；Renderer 只表达已验证决定，候选范围不得表述为已确认出生分钟。Agent Run、Public Message、Diagnostics、Feature Snapshot、Pending Evidence 和事件修订均作为一等产物持久化。
+- 验证：67 个 TypeScript 聚焦合同全部通过，覆盖普通 session UI、完整 V5 artifact chain、Reasoner 单次诊断预算、Opportunity 选择、shadow/legacy 隔离和 range-only 输出；7 个 Python 服务合同通过。真实 PostgreSQL 14 已按 V4 → V5 顺序完成 migration dry-run，并跑通 `processing → reasoning → rendering → complete`、五类 artifact 各一条落库和 completed Job 幂等重放。`tsc --noEmit` 未出现 V5 新错误，只剩 `birth-time-journey-engine`、`identity-auth-integration`、`onboarding-route` 三处无关基线错误。当前完成边界为本地可测，尚未提交、推送、迁移 staging 或执行登录态 smoke。
+- 防复发：生时校正不得再次把模型降级为“问题文案生成器”；所有可见动作必须来自 server-owned opportunity，经 bounded reasoner、decision validator 和 renderer 后原子持久化。测试必须同时锁定 legacy/shadow 隔离、artifact 完整性、候选范围边界和 completed-job replay 指纹。
+- 相关记录：BUG-020、BUG-075、BUG-080、BUG-081、BUG-082、BUG-083、BUG-084、BUG-086
+- 修复版本：本地 V5 重构，待提交与 staging 验收
 
 ## BUG-086 | 模型下一问可绕过当前事件而跳成领域问卷
 
 - 状态：investigating
 - 首次发现：2026-07-27
-- 最近更新：2026-07-27
-- 影响面：生时校正 V4 的模型提问规划、事件日期补全和 staging 对话体验
+- 最近更新：2026-07-28
+- 影响面：生时校正 V5 的当前事件延续、问题机会构建、诊断工具预算、模型决策验证和 Job replay
 - 用户现象：用户回答“2016 年离家去外地上大学”后，下一问直接变成“请说一次影响较大的搬家或长期迁居”，看起来仍按“升学 → 搬家”模板轮询，而没有承接刚才的具体经历。
-- 触发条件：最新可评分事件只有年份精度，但模型返回新的领域和空 `targetEventId`；Worker 直接接受格式合法的模型结果。
-- 根因：模型提示虽然要求优先延续当前事件，但 Worker 只校验了输出结构，没有把确定性 planner 识别出的必要日期补全当作服务端路由约束；因此模型可越过仍缺月份的当前事件。旧测试只证明模型拿到了完整上下文，没有覆盖模型违反路由建议的情况。
-- 修复：planner 将月份视为足够的首选精度；年份、季度或范围精度仍产生必要的当前事件补全。问题作者收到 `requiredContinuation`，必须围绕该事件自然追问月份或日期；Worker 在信任边界拒绝模型切换事件或领域，并回退到同一事件的开放式日期追问。当前事件达到月份精度后，模型才可根据上下文自由选择下一条高信息量问题，不设领域顺序。
-- 验证：新增用户原句回归，模拟模型错误返回搬家问题，断言 Worker 仍追问“离家去外地上大学”的月份且不出现搬家模板；同时锁定月份精度后模型可自由选题。聚焦 domain/service/replay 共 18 个测试通过；staging 部署与真实登录态 smoke 完成后更新状态。
-- 防复发：模型可以表达和选择下一题，但不能绕过服务端判定的当前事件必要补全；测试必须包含“模型输出合法但路由错误”的对抗用例，不能只测 happy path。
+- 触发条件：当前事件仍缺必要精度，但旧 Worker 只校验模型返回结构；只要模型输出一个格式合法的新领域问题，就可以绕过当前事件和服务端已知证据缺口。
+- 根因：旧方案把“required continuation”作为给模型的提示，而不是服务器拥有的候选动作和最终决策约束；诊断结果也没有独立工具预算、持久化产物和可回放选择依据，无法阻止合法 JSON 携带错误业务路由。
+- 修复：Opportunity Builder 将未解决的当前目标设为独占路由，并只发布带稳定 ID、目标事件、效用分解和隐私成本的问题机会；Bounded Reasoner 最多执行一次只读诊断，最终只能选择活动 opportunity 或受限状态动作；Decision Validator 拒绝不存在、跨 Case、非活动或越权的机会，也禁止模型直接写问题、分钟、分数和事件。Reasoner 不可用、返回非最终诊断或耗尽预算时走同一确定性 fallback policy；Renderer 根据 validated decision 生成自然语言承接，Worker 再通过单一 completion RPC 原子保存全部产物。
+- 验证：对抗合同覆盖“当前目标独占下一问”“只能选择服务端活动 opportunity”“诊断预算耗尽 fail closed”“模型不得注入问题/分钟/事件/分数”和“Reasoner/Renderer 不可用时确定性降级”。真实 PostgreSQL completed-job replay 已验证：相同完整 payload 指纹返回既有 Case；任一 artifact 改变且指纹不同会抛出 `rectification_v5_replay_payload_mismatch`，不会二次写入或接受漂移结果。当前仅完成本地验证，staging 行为仍待发布后验收。
+- 防复发：当前事件延续必须是服务端 opportunity 所有权规则，而不是 prompt 建议；模型输出即使结构合法，也必须经过 bounded tool budget、active-opportunity lookup、decision validation 和 completion payload hash 四层门控。
 - 相关记录：BUG-075、BUG-085
-- 修复版本：待提交
+- 修复版本：本地 V5 重构，待提交与 staging 验收

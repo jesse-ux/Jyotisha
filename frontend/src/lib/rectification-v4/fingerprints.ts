@@ -11,20 +11,22 @@ function canonical(value: unknown): unknown {
   return value;
 }
 
-function hash(value: unknown): string {
+export function rectificationFingerprint(value: unknown): string {
   return createHash("sha256").update(JSON.stringify(canonical(value))).digest("hex");
 }
 
 export function calculationSpecHash(spec: CalculationSpec): string {
-  return hash(spec);
+  return rectificationFingerprint(spec);
 }
 
 export function evidenceSetHash(revisions: readonly LifeEventRevision[]): string {
-  return hash(latestEventRevisions(revisions).map((event) => ({
+  return rectificationFingerprint(latestEventRevisions(revisions).map((event) => ({
     eventId: event.eventId,
     revision: event.revision,
     domain: event.domain,
     eventKind: event.eventKind,
+    subject: event.subject,
+    relatedPerson: event.relatedPerson,
     dateRange: event.dateRange,
     scoreability: event.scoreability,
   })));

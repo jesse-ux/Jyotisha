@@ -122,19 +122,35 @@ test("accepts nineteenth-century Chinese and ISO dates as scoreable historical e
   );
 });
 
-for (const rawText of [
-  "2003年确诊癌症并接受手术",
-  "2006年丈夫因交通事故去世",
-]) {
-  test(`classifies dated health, accident, and bereavement evidence for D30 scoring: ${rawText}`, () => {
-    const evidence = extractLifeEventEvidence({ rawText, sourceTurnId, asOfDate: "2026-07-20" });
-
-    assert.ok(evidence.length > 0);
-    assert.ok(evidence.every((item) => item.domain === "health_pressure"));
-    assert.ok(evidence.every((item) => item.scoreable));
-    assert.ok(evidence.every((item) => lifeEventEvidenceSchema.safeParse(item).success));
+test("classifies the user's dated illness as scoreable self-health evidence", () => {
+  const [evidence] = extractLifeEventEvidence({
+    rawText: "2003年确诊癌症并接受手术",
+    sourceTurnId,
+    asOfDate: "2026-07-20",
   });
-}
+
+  assert.equal(evidence?.domain, "health_pressure");
+  assert.equal(evidence?.eventKind, "self_health_event");
+  assert.equal(evidence?.subject, "self");
+  assert.equal(evidence?.scoreable, true);
+  assert.equal(lifeEventEvidenceSchema.safeParse(evidence).success, true);
+});
+
+test("keeps a partner's bereavement as family context instead of personal-health scoring", () => {
+  const [evidence] = extractLifeEventEvidence({
+    rawText: "2006年丈夫因交通事故去世",
+    sourceTurnId,
+    asOfDate: "2026-07-20",
+  });
+
+  assert.equal(evidence?.domain, "family");
+  assert.equal(evidence?.eventKind, "family_bereavement");
+  assert.equal(evidence?.subject, "family");
+  assert.equal(evidence?.relatedPerson, "partner");
+  assert.equal(evidence?.scoreability, "context_only");
+  assert.equal(evidence?.scoreable, false);
+  assert.equal(lifeEventEvidenceSchema.safeParse(evidence).success, true);
+});
 
 test("classifies dated income and asset changes as finance evidence", () => {
   const [evidence] = extractLifeEventEvidence({
@@ -144,6 +160,7 @@ test("classifies dated income and asset changes as finance evidence", () => {
   });
 
   assert.equal(evidence?.domain, "finance");
+  assert.equal(evidence?.eventKind, "finance_change");
   assert.equal(evidence?.dateValue, "2022-08");
   assert.equal(evidence?.scoreable, true);
   assert.equal(lifeEventEvidenceSchema.safeParse(evidence).success, true);

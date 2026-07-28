@@ -14,7 +14,7 @@ import sys
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
 from collections.abc import Sequence
-from typing import Final, assert_never
+from typing import Any, Final, assert_never
 
 from scripts.active_rectification_events import (
     CandidateEvidence,
@@ -316,10 +316,22 @@ def _shadbala_verified_components_auxiliary(natal_chart: dict, birth_hour: float
     return [], 0.0
 
 
-def _candidate_row(
+def _feature_hash(value: Any) -> str:
+    normalized = json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _arudha_sign(arudha_padas: dict, key: str) -> int | None:
+    value = arudha_padas.get(key) or {}
+    sign_index = value.get("sign_idx")
+    return int(sign_index) if isinstance(sign_index, int) and 0 <= sign_index <= 11 else None
+
+
+def build_candidate_static_context(
     request: RectificationEventRequest,
     candidate_at: datetime,
-) -> CandidateScoreRow:
+) -> dict[str, Any]:
+    """Compute every candidate-minute natal layer once for scoring and diagnostics."""
     chart = domain_calculation_service.compute_chart({
         "year": candidate_at.year,
         "month": candidate_at.month,
@@ -340,16 +352,102 @@ def _candidate_row(
     ascendant_longitude = float(chart["ascendant"]["lon"])
     ascendant_index = int(ascendant_longitude // 30)
     arudha = jaimini.calc_arudha_padas(ascendant_index, planet_longitudes)
-    arudha_padas = {
-        **(arudha.get("padas") or {}),
-        "UL": arudha.get("upapada") or {},
-    }
+    arudha_padas = {**(arudha.get("padas") or {}), "UL": arudha.get("upapada") or {}}
     charts = varga.calc_all_vargas(
         planet_longitudes,
         ascendant_longitude,
         divisions=[2, 4, 9, 10, 24, 30],
     )
     d11_chart = _d11_chart(planet_longitudes, ascendant_longitude)
+    varga_charts = {
+        prefix: d11_chart if prefix == "D11" else _varga_chart(charts, prefix)
+        for prefix in ("D2", "D4", "D9", "D10", "D11", "D24", "D30")
+    }
+    available_layers = ["D1"]
+    blocked_layers = ["KP_cusps"]
+    varga_ascendants: dict[str, int] = {}
+    for prefix, value in varga_charts.items():
+        ascendant = (value or {}).get("Ascendant") or {}
+        sign_index = ascendant.get("sign_idx")
+        if isinstance(sign_index, int) and 0 <= sign_index <= 11:
+            varga_ascendants[prefix] = sign_index
+            available_layers.append(prefix)
+        else:
+            blocked_layers.append(prefix)
+
+    arudha_signs = {key: _arudha_sign(arudha_padas, key) for key in ("A7", "A10", "UL")}
+    for key, sign_index in arudha_signs.items():
+        (available_layers if sign_index is not None else blocked_layers).append(key)
+
+    ashtakavarga_result = None
+    try:
+        ashtakavarga_result = ashtakavarga.calc_ashtakavarga(chart.get("planets", {}), ascendant_index)
+        available_layers.append("Ashtakavarga")
+    except (KeyError, TypeError, ValueError):
+        blocked_layers.append("Ashtakavarga")
+
+    shadbala_result = None
+    try:
+        shadbala_result = shadbala.calc_shadbala(
+            chart.get("planets", {}),
+            str(chart["ascendant"].get("sign")),
+            candidate_at.hour + candidate_at.minute / 60,
+            planet_longitudes["Sun"],
+            planet_longitudes["Moon"],
+            birth_minute=float(candidate_at.minute),
+        )
+        available_layers.append("Shadbala")
+    except (KeyError, TypeError, ValueError):
+        blocked_layers.append("Shadbala")
+
+    feature_payload = {
+        "time": candidate_at.strftime("%H:%M"),
+        "ascendant_degree": ascendant_longitude,
+        "ascendant_sign_index": ascendant_index,
+        "varga_ascendants": varga_ascendants,
+        "arudha_signs": arudha_signs,
+        "available_layers": sorted(set(available_layers)),
+        "blocked_layers": sorted(set(blocked_layers)),
+        "fingerprints": {
+            "natal": str(chart.get("result_hash") or _feature_hash({"ascendant": chart.get("ascendant"), "planets": chart.get("planets")})),
+            "vargas": _feature_hash(varga_ascendants),
+            "arudha": _feature_hash(arudha_signs),
+            "ashtakavarga": _feature_hash(ashtakavarga_result) if ashtakavarga_result is not None else "blocked",
+            "shadbala": _feature_hash(shadbala_result) if shadbala_result is not None else "blocked",
+        },
+    }
+    feature_payload["fingerprints"]["static"] = _feature_hash(feature_payload)
+    return {
+        "candidate_at": candidate_at,
+        "chart": chart,
+        "planet_longitudes": planet_longitudes,
+        "ascendant_longitude": ascendant_longitude,
+        "ascendant_index": ascendant_index,
+        "arudha_padas": arudha_padas,
+        "varga_charts": varga_charts,
+        "feature": feature_payload,
+    }
+
+
+def compute_candidate_static_contexts(
+    request: RectificationEventRequest,
+    *,
+    candidates: Sequence[datetime] | None = None,
+) -> list[dict[str, Any]]:
+    candidate_datetimes = list(candidates) if candidates is not None else _candidate_datetimes(request)
+    return [build_candidate_static_context(request, candidate) for candidate in candidate_datetimes]
+
+
+def _candidate_row(
+    request: RectificationEventRequest,
+    context: dict[str, Any],
+) -> CandidateScoreRow:
+    candidate_at = context["candidate_at"]
+    chart = context["chart"]
+    planet_longitudes = context["planet_longitudes"]
+    ascendant_index = context["ascendant_index"]
+    arudha_padas = context["arudha_padas"]
+    varga_charts = context["varga_charts"]
     moon_longitude = planet_longitudes["Moon"]
     evidence: list[CandidateEvidence] = []
     missing_layers: list[str] = []
@@ -357,7 +455,7 @@ def _candidate_row(
     for event in request["events"]:
         event_at = _event_datetime(event)
         prefixes, _ = DOMAIN_CONFIG[event["domain"]]
-        domain_vargas = [d11_chart if prefix == "D11" else _varga_chart(charts, prefix) for prefix in prefixes]
+        domain_vargas = [varga_charts[prefix] for prefix in prefixes]
         if any(chart is None for chart in domain_vargas):
             missing_layers.extend(prefixes)
             continue
@@ -407,7 +505,7 @@ def _candidate_row(
         "time": candidate_at.strftime("%H:%M"),
         "score": round(sum(item["points"] for item in evidence), 4),
         "evidence": evidence,
-        "missing_layers": sorted(set(missing_layers)),
+        "missing_layers": sorted(set(missing_layers + context["feature"]["blocked_layers"])),
     }
 
 
@@ -501,7 +599,8 @@ def compute_event_candidate_rows(
     request: RectificationEventRequest,
     *,
     candidates: Sequence[datetime] | None = None,
+    static_contexts: Sequence[dict[str, Any]] | None = None,
 ) -> list[CandidateScoreRow]:
-    """Return every computed minute row without performing release adjudication."""
-    candidate_datetimes = list(candidates) if candidates is not None else _candidate_datetimes(request)
-    return [_candidate_row(request, candidate) for candidate in candidate_datetimes]
+    """Return every computed minute row while reusing one static chart scan per candidate."""
+    contexts = list(static_contexts) if static_contexts is not None else compute_candidate_static_contexts(request, candidates=candidates)
+    return [_candidate_row(request, context) for context in contexts]

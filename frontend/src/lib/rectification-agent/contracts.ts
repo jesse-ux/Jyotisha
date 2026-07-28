@@ -1,0 +1,194 @@
+import { z } from "zod";
+import { clockTimeSchema, evidenceDomainSchema, rectificationDeploymentModeSchema } from "../rectification-v4/contracts.ts";
+
+const uuid = z.string().uuid();
+const hash = z.string().regex(/^[a-f0-9]{64}$/);
+const nonblank = (max: number) => z.string().trim().min(1).max(max);
+
+export const rectificationDiagnosticSchema = z.enum([
+  "leave_one_event_out",
+  "leave_one_domain_out",
+  "date_sensitivity",
+  "neighbor_stability",
+  "candidate_split",
+]);
+export type RectificationDiagnostic = z.infer<typeof rectificationDiagnosticSchema>;
+
+export const rectificationDecisionSchema = z.discriminatedUnion("action", [
+  z.object({
+    action: z.literal("ask_question"),
+    opportunityId: uuid,
+    narrativeFocus: z.array(z.enum(["latest_event", "candidate_change", "date_precision", "uncertainty"])).max(3),
+  }).strict(),
+  z.object({ action: z.literal("run_diagnostic"), diagnostic: rectificationDiagnosticSchema }).strict(),
+  z.object({ action: z.literal("offer_candidate_range"), snapshotId: uuid }).strict(),
+  z.object({ action: z.literal("stop_low_confidence"), reasonCodes: z.array(nonblank(80)).min(1).max(8) }).strict(),
+]);
+export type RectificationDecision = z.infer<typeof rectificationDecisionSchema>;
+
+export const questionOpportunitySchema = z.object({
+  opportunityId: uuid,
+  kind: z.enum([
+    "clarify_intake",
+    "clarify_event_subject",
+    "refine_event_date",
+    "pair_related_event",
+    "ask_new_event",
+    "resolve_event_conflict",
+    "disambiguate_candidate_split",
+  ]),
+  domain: evidenceDomainSchema,
+  targetEventId: uuid.nullable(),
+  prompt: nonblank(1_000),
+  reason: nonblank(240),
+  expectedInformationGain: z.number().finite().min(0).max(1),
+  dateSensitivity: z.number().finite().min(0).max(1),
+  candidateSplitRelevance: z.number().finite().min(0).max(1),
+  domainCoverageGain: z.number().finite().min(0).max(1),
+  recallEase: z.number().finite().min(0).max(1),
+  novelty: z.number().finite().min(0).max(1),
+  repetitionPenalty: z.number().finite().min(0).max(1),
+  privacyCost: z.number().finite().min(0).max(1),
+  utility: z.number().finite(),
+  active: z.boolean(),
+}).strict();
+export type QuestionOpportunity = z.infer<typeof questionOpportunitySchema>;
+
+export const eventDateSensitivitySchema = z.object({
+  eventId: uuid,
+  declaredDateRange: z.object({ start: nonblank(10), end: nonblank(10), precision: nonblank(20) }).strict(),
+  sampleDates: z.array(nonblank(10)).min(1).max(12),
+  winnerRetentionRate: z.number().finite().min(0).max(1),
+  scoreVariance: z.number().finite().nonnegative(),
+  candidateClusterRetentionRate: z.number().finite().min(0).max(1),
+}).strict();
+
+export const candidateSplitSchema = z.object({
+  leftCluster: z.object({ start: clockTimeSchema, end: clockTimeSchema }).strict(),
+  rightCluster: z.object({ start: clockTimeSchema, end: clockTimeSchema }).strict(),
+  techniqueLayers: z.array(nonblank(80)).max(40),
+  eventIds: z.array(uuid).max(100),
+}).strict();
+
+export const diagnosticsSummarySchema = z.object({
+  id: uuid,
+  caseId: uuid,
+  snapshotId: uuid,
+  primaryClusterRetentionRate: z.number().finite().min(0).max(1),
+  leaveOneEventOutRetentionRate: z.number().finite().min(0).max(1),
+  leaveOneDomainOutRetentionRate: z.number().finite().min(0).max(1),
+  dateSensitivityRetentionRate: z.number().finite().min(0).max(1),
+  neighborSupportMinutes: z.number().int().min(0).max(1_440),
+  primarySecondaryMarginPercent: z.number().finite().min(0).max(100),
+  clusterMassRatio: z.number().finite().min(0).max(1),
+  unstableEventIds: z.array(uuid).max(100),
+  mostDiscriminatingLayers: z.array(nonblank(80)).max(40),
+  eventDateSensitivity: z.array(eventDateSensitivitySchema).max(100),
+  candidateSplits: z.array(candidateSplitSchema).max(20),
+  calculationHash: hash,
+  createdAt: z.string().datetime({ offset: true }),
+}).strict();
+export type DiagnosticsSummary = z.infer<typeof diagnosticsSummarySchema>;
+
+export const candidateFeatureSnapshotSchema = z.object({
+  id: uuid,
+  caseId: uuid,
+  calculationSpecHash: hash,
+  algorithmVersion: nonblank(120),
+  candidateCount: z.number().int().positive().max(1_440),
+  featureHash: hash,
+  features: z.array(z.object({
+    time: clockTimeSchema,
+    ascendantDegree: z.number().finite().min(0).max(360).nullable(),
+    ascendantSignIndex: z.number().int().min(0).max(11).nullable(),
+    vargaAscendants: z.record(z.string(), z.number().int().min(0).max(11)),
+    arudhaSigns: z.object({ A7: z.number().int().min(0).max(11).nullable(), A10: z.number().int().min(0).max(11).nullable(), UL: z.number().int().min(0).max(11).nullable() }).strict(),
+    availableLayers: z.array(nonblank(80)).max(80),
+    blockedLayers: z.array(nonblank(80)).max(80),
+    fingerprints: z.record(z.string(), z.string()),
+  }).strict()).max(1_440),
+  createdAt: z.string().datetime({ offset: true }),
+}).strict();
+export type CandidateFeatureSnapshot = z.infer<typeof candidateFeatureSnapshotSchema>;
+
+export const toolCallTraceSchema = z.object({
+  tool: nonblank(120),
+  diagnostic: rectificationDiagnosticSchema.nullable(),
+  outcome: z.enum(["succeeded", "failed", "rejected"]),
+  durationMs: z.number().int().min(0).max(300_000),
+  errorCode: nonblank(120).nullable(),
+}).strict();
+export type ToolCallTrace = z.infer<typeof toolCallTraceSchema>;
+
+export const validatedDecisionSchema = z.object({
+  decision: rectificationDecisionSchema,
+  mode: z.enum(["agent", "deterministic_fallback"]),
+  validationIssues: z.array(nonblank(120)).max(20),
+  selectedOpportunity: questionOpportunitySchema.nullable(),
+}).strict();
+export type ValidatedDecision = z.infer<typeof validatedDecisionSchema>;
+
+export const publicMessageSchema = z.object({
+  acknowledgement: nonblank(1_000),
+  candidateUpdate: nonblank(1_000).nullable(),
+  limitation: nonblank(1_000).nullable(),
+  question: nonblank(1_000).nullable(),
+}).strict();
+export type PublicMessage = z.infer<typeof publicMessageSchema>;
+
+export const agentRunSchema = z.object({
+  id: uuid,
+  caseId: uuid,
+  jobId: uuid,
+  caseVersion: z.number().int().nonnegative(),
+  modelId: nonblank(120).nullable(),
+  skillVersion: nonblank(120),
+  promptVersion: nonblank(120),
+  deploymentSha: nonblank(80).nullable(),
+  deploymentMode: rectificationDeploymentModeSchema,
+  decision: rectificationDecisionSchema.nullable(),
+  validatedDecision: validatedDecisionSchema,
+  toolCalls: z.array(toolCallTraceSchema).max(8),
+  fallbackReason: nonblank(120).nullable(),
+  inputTokenCount: z.number().int().nonnegative().nullable(),
+  outputTokenCount: z.number().int().nonnegative().nullable(),
+  latencyMs: z.number().int().nonnegative().max(300_000),
+  createdAt: z.string().datetime({ offset: true }),
+}).strict();
+export type AgentRun = z.infer<typeof agentRunSchema>;
+
+export type RectificationDecisionValidation = Readonly<{
+  valid: boolean;
+  decision: RectificationDecision | null;
+  issues: readonly string[];
+}>;
+
+export function validateRectificationDecision(input: Readonly<{
+  decision: unknown;
+  caseId?: string;
+  snapshotId?: string | null;
+  opportunities: readonly QuestionOpportunity[];
+  diagnostics: DiagnosticsSummary;
+  candidateRangeOfferAllowed: boolean;
+  usedDiagnostics?: readonly RectificationDiagnostic[];
+  toolCallCount?: number;
+  maxToolCalls?: number;
+}>): RectificationDecisionValidation {
+  const parsed = rectificationDecisionSchema.safeParse(input.decision);
+  if (!parsed.success) return { valid: false, decision: null, issues: ["decision_schema_invalid"] };
+  const decision = parsed.data;
+  const issues: string[] = [];
+  if (input.caseId && input.diagnostics.caseId !== input.caseId) issues.push("diagnostics_case_mismatch");
+  if ((input.toolCallCount ?? 0) > (input.maxToolCalls ?? 2)) issues.push("tool_call_budget_exceeded");
+  if (decision.action === "ask_question") {
+    const opportunity = input.opportunities.find((item) => item.opportunityId === decision.opportunityId && item.active);
+    if (!opportunity) issues.push("opportunity_not_active");
+    if (opportunity?.kind === "clarify_event_subject" && !opportunity.targetEventId) issues.push("subject_clarification_requires_target_event");
+  }
+  if (decision.action === "offer_candidate_range") {
+    if (!input.candidateRangeOfferAllowed) issues.push("candidate_range_gate_failed");
+    if (!input.snapshotId || decision.snapshotId !== input.snapshotId || input.diagnostics.snapshotId !== input.snapshotId) issues.push("snapshot_not_current");
+  }
+  if (decision.action === "run_diagnostic" && input.usedDiagnostics?.includes(decision.diagnostic)) issues.push("diagnostic_already_run");
+  return { valid: issues.length === 0, decision: issues.length === 0 ? decision : null, issues };
+}

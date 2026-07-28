@@ -5,9 +5,10 @@ import type {
   RectificationV4ApiResponse,
   RectificationV4Case,
 } from "./contracts.ts";
-import { rectificationV4Protocol } from "./contracts.ts";
+import { rectificationAgentV5Protocol, rectificationV4AlgorithmVersion, rectificationV4Protocol } from "./contracts.ts";
+import { selectRectificationDeploymentMode } from "../rectification-agent/feature-policy.ts";
 import { calculationSpecHash, evidenceSetHash } from "./fingerprints.ts";
-import { openingQuestion } from "./question-planner.ts";
+import { openingQuestion } from "./opening-question.ts";
 import type { RectificationV4Store } from "./store.ts";
 
 export function createRectificationV4CaseService(store: RectificationV4Store, options: { readonly now?: () => Date } = {}) {
@@ -29,10 +30,11 @@ export function createRectificationV4CaseService(store: RectificationV4Store, op
   return {
     async createCase(input: { readonly userId: string; readonly actionId: string; readonly calculationSpec: CalculationSpec }) {
       const timestamp = now().toISOString();
+      const deploymentMode = selectRectificationDeploymentMode(input.userId);
       const caseValue: RectificationV4Case = {
         id: randomUUID(),
         userId: input.userId,
-        protocol: rectificationV4Protocol,
+        protocol: deploymentMode === "v4_legacy" ? rectificationV4Protocol : rectificationAgentV5Protocol,
         version: 0,
         status: "awaiting_answer",
         phase: "collecting_evidence",
@@ -41,6 +43,15 @@ export function createRectificationV4CaseService(store: RectificationV4Store, op
         evidenceSetHash: evidenceSetHash([]),
         currentQuestion: openingQuestion(input.calculationSpec.candidateRange),
         latestSnapshot: null,
+        orchestrationModelId: process.env.RECTIFICATION_ORCHESTRATION_MODEL_ID?.trim() || null,
+        narrationModelId: process.env.RECTIFICATION_NARRATION_MODEL_ID?.trim() || null,
+        skillVersion: "birth-time-rectification-v5",
+        promptVersion: "rectification-agent-v5-1",
+        algorithmVersion: rectificationV4AlgorithmVersion,
+        deploymentMode,
+        agentMode: "deterministic_fallback",
+        featureSnapshotId: null,
+        latestDiagnosticsId: null,
         acceptedRange: null,
         createdAt: timestamp,
         updatedAt: timestamp,

@@ -132,6 +132,7 @@ const transitionValidatorVersion = "conversational-rectification-orchestrator-v1
 const explicitDirectionChangePattern = /(?:都不符合|都不是|不符合|换(?:个|一)?(?:方向|领域)|其他方向|别的方向|不想(?:谈|说|回答)|拒绝回答)/;
 const genericUncertaintyPattern = /(?:不知道|不确定)/;
 const contextualRelativeMonthPattern = /(?:来年|次年|第二年|翌年|同年|当年|那年)\s*(\d{1,2})\s*月份?/;
+const contextualRelativeEventMonthPattern = /(来年|次年|第二年|翌年|同年|当年|那年)([^。！？!?；;]{0,80}?)(\d{1,2})\s*月份?([^。！？!?；;]*)/;
 const contextualBareMonthDayPattern = /^\s*(\d{1,2})\s*月\s*(\d{1,2})\s*(?:日|号)\s*[。.]?\s*$/;
 const contextualBareDayPattern = /^\s*(\d{1,2})\s*(?:日|号)\s*[。.]?\s*$/;
 const affirmativeAnswerPattern = /^\s*(?:是(?:的)?|对(?:的)?|没错|正确|确认|就是|嗯+|没问题)\s*[。.!！,，]?\s*$/u;
@@ -332,7 +333,9 @@ function evidenceRecap(evidence: ReadonlyArray<LifeEventEvidenceInput>) {
     id: item.id,
     summary: visibleEvidenceSummary(item.eventSummary),
     dateLabel: item.dateValue
-      ? item.scoreable === false && item.extractionStatus !== "needs_clarification"
+      ? item.scoreable === false
+        && (item.scoreability === undefined || item.scoreability === "scoreable")
+        && item.extractionStatus !== "needs_clarification"
         ? `${item.dateValue}（未来，仅作背景）`
         : item.dateValue
       : "日期待补充",
@@ -653,30 +656,45 @@ function nonScoringTurn(input: {
   }>;
 }): { readonly turn: ConversationalRectificationTurn; readonly receipt: ValidationReceipt } {
   const allEvidence = [...input.current.eventEvidence, ...input.newEvidence];
+  const latestIncomplete = input.newEvidence
+    .filter((item) => item.extractionStatus === "needs_clarification")
+    .at(-1);
   const authoredNarrative = input.authoredNarrative;
   const latestSummary = input.newEvidence.at(-1)?.eventSummary;
   const fallbackSubject = latestSummary && latestSummary !== "事件内容待补充"
     ? latestSummary
     : input.latestUserText.trim().slice(0, 80);
   const narrative = authoredNarrative?.narrative
-    ?? `我收到了你这轮关于“${fallbackSubject || "这段经历"}”的补充，内容已经保留。你可以继续讲这段经历，也可以按自己的节奏说下一件想到的事。`;
+    ?? `我收到了你这轮关于“${fallbackSubject || "这段经历"}”的补充，但这次分析暂时没有完成。内容已经保留，你可以按自己的节奏继续补充它的时间和经过，或直接说下一件已经发生的经历。`;
   const status = input.correctionReset
     ? "active" as const
     : input.current.status === "confirming" ? "confirming" as const : "active" as const;
   const actions = actionsFor(status);
-  const authoredRequest = authoredNarrative?.output.evidenceRequest;
-  const priorRequest = input.current.latestTurn.evidenceRequest;
-  const evidenceRequest = authoredRequest
-    ? {
-        domains: authoredRequest.domains,
-        datePrecision: authoredRequest.datePrecision,
-        freeTextAllowed: true as const,
-        prompt: authoredRequest.prompt,
-        followUp: input.followUpOverride ?? authoredRequest.followUp,
-      }
-    : input.followUpOverride && priorRequest
-      ? { ...priorRequest, followUp: input.followUpOverride }
+  const clarificationFollowUp = latestIncomplete?.dateValue === null
+    && latestIncomplete.eventSummary !== "事件内容待补充"
+    ? { kind: "event_date" as const, evidenceId: latestIncomplete.id }
+    : latestIncomplete?.dateValue
+      && latestIncomplete.eventSummary === "事件内容待补充"
+      ? { kind: "event_detail" as const, evidenceId: latestIncomplete.id }
       : null;
+    const authoredRequest = authoredNarrative?.output.evidenceRequest;
+    const priorRequest = input.current.latestTurn.evidenceRequest;
+  const evidenceRequest = status === "confirming" && priorRequest === null
+    ? null
+    : authoredRequest
+      ? {
+          domains: authoredRequest.domains,
+          datePrecision: authoredRequest.datePrecision,
+          freeTextAllowed: true as const,
+          prompt: authoredRequest.prompt,
+          followUp: input.followUpOverride ?? authoredRequest.followUp,
+        }
+      : priorRequest
+        ? {
+            ...priorRequest,
+            followUp: input.followUpOverride ?? clarificationFollowUp ?? priorRequest.followUp,
+          }
+        : null;
   const parsed = conversationalRectificationTurnSchema.safeParse({
     ...input.current.latestTurn,
     status,
@@ -901,7 +919,7 @@ export function createConversationalRectificationService(
     current: LoadedConversationalRectificationCase,
   ): string {
     const followUp = current.latestTurn.evidenceRequest?.followUp;
-    if (followUp?.kind !== "event_date" && followUp?.kind !== "event_detail") {
+    if (!followUp || !["new_event", "event_date", "event_detail"].includes(followUp.kind)) {
       return command.answer;
     }
     const activeEvidence = effectiveLifeEventEvidence(current.eventEvidence);
@@ -913,6 +931,17 @@ export function createConversationalRectificationService(
       : activeEvidence.filter((item) => item.dateValue !== null).at(-1);
     const anchorYear = Number(anchor?.dateValue?.slice(0, 4));
     if (!Number.isInteger(anchorYear)) return command.answer;
+
+    const relativeEventMonth = followUp.kind === "new_event"
+      ? command.answer.match(contextualRelativeEventMonthPattern)
+      : null;
+    if (relativeEventMonth) {
+      const month = Number(relativeEventMonth[3]);
+      if (month >= 1 && month <= 12) {
+        const sameYear = /(?:同年|当年|那年)/.test(relativeEventMonth[1] ?? "");
+        return `${sameYear ? anchorYear : anchorYear + 1}年${month}月${relativeEventMonth[2] ?? ""}${relativeEventMonth[4] ?? ""}`;
+      }
+    }
 
     const bareMonthDay = followUp.kind === "event_date"
       ? command.answer.match(contextualBareMonthDayPattern)
@@ -1014,6 +1043,10 @@ export function createConversationalRectificationService(
         rawText: `${target.rawText}\n确认：${command.answer}`,
         eventSummary: target.eventSummary,
         domain: target.domain,
+        eventKind: target.eventKind ?? item.eventKind,
+        subject: target.subject ?? item.subject,
+        relatedPerson: target.relatedPerson ?? item.relatedPerson,
+        scoreability: target.scoreability ?? item.scoreability,
         correctsEvidenceIds: [target.id],
       })),
     };
@@ -1063,7 +1096,19 @@ export function createConversationalRectificationService(
           })),
         }, { signal: AbortSignal.timeout(8_000) });
         if (domain && domain !== "other") {
-          return [{ ...ambiguous, domain }];
+          const scoreability = domain === "family" ? "context_only" : "scoreable";
+          return [{
+            ...ambiguous,
+            domain,
+            eventKind: `${domain}_event`,
+            subject: domain === "family" ? "family" : "self",
+            relatedPerson: null,
+            scoreability,
+            scoreable: scoreability === "scoreable"
+              && ambiguous.dateValue !== null
+              && ambiguous.extractionStatus !== "needs_clarification"
+              && !evidencePostdatesAsOfDate(ambiguous, ports.asOfDate()),
+          }];
         }
       } catch {
         // Semantic classification is advisory. Keep the deterministic fallback
@@ -1142,6 +1187,10 @@ export function createConversationalRectificationService(
       rawText: `${pending.rawText}\n补充：${input.command.answer}`,
       eventSummary: summary,
       domain: pending.domain === "other" ? item.domain : pending.domain,
+      eventKind: pending.eventKind ?? item.eventKind,
+      subject: pending.subject ?? item.subject,
+      relatedPerson: pending.relatedPerson ?? item.relatedPerson,
+      scoreability: pending.scoreability ?? item.scoreability,
       correctsEvidenceIds: [...item.correctsEvidenceIds],
     }));
   }

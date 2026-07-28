@@ -18,6 +18,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ cas
       eventId,
       domain: body.domain,
       eventKind: body.eventKind,
+      subject: body.subject,
+      relatedPerson: body.relatedPerson,
       summary: body.summary,
       rawText: body.rawText,
       dateRange: body.dateRange,

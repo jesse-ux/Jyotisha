@@ -17,7 +17,7 @@ import type {
   RectificationV4Store,
 } from "./store.ts";
 import { RectificationV4StoreError } from "./store.ts";
-import { evidenceSetHash } from "./fingerprints.ts";
+import { evidenceSetHash, rectificationFingerprint } from "./fingerprints.ts";
 
 type Row = Record<string, unknown>;
 
@@ -70,6 +70,15 @@ function caseValue(row: Row, latestSnapshot: CandidateSnapshot | null): Rectific
     evidenceSetHash: row.evidence_set_hash,
     currentQuestion: row.current_question,
     latestSnapshot,
+    orchestrationModelId: row.orchestration_model_id ? String(row.orchestration_model_id) : null,
+    narrationModelId: row.narration_model_id ? String(row.narration_model_id) : null,
+    skillVersion: row.skill_version ? String(row.skill_version) : "birth-time-rectification-v5",
+    promptVersion: row.prompt_version ? String(row.prompt_version) : "rectification-agent-v5-1",
+    algorithmVersion: row.algorithm_version ? String(row.algorithm_version) : "rectification-v5-matrix-scoring-1",
+    deploymentMode: row.deployment_mode === "v5_agent" || row.deployment_mode === "v5_shadow" ? row.deployment_mode : "v4_legacy",
+    agentMode: row.agent_mode === "agent" ? "agent" : "deterministic_fallback",
+    featureSnapshotId: row.feature_snapshot_id ? String(row.feature_snapshot_id) : null,
+    latestDiagnosticsId: row.latest_diagnostics_id ? String(row.latest_diagnostics_id) : null,
     acceptedRange: row.accepted_range_start && row.accepted_range_end
       ? { start: row.accepted_range_start, end: row.accepted_range_end }
       : null,
@@ -85,6 +94,8 @@ function eventRevision(row: Row): LifeEventRevision {
     revision: Number(row.revision),
     domain: row.domain,
     eventKind: row.event_kind,
+    subject: row.subject ?? "self",
+    relatedPerson: row.related_person ?? null,
     summary: row.summary,
     rawText: row.raw_text,
     dateRange: {
@@ -189,7 +200,7 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
     loadEvents: loadEventsByCase,
     loadTurns: loadTurnsByCase,
     async createCase(input) {
-      const id = String(await rpc("create_birth_time_rectification_v4_case", {
+      const id = String(await rpc("create_birth_time_rectification_v5_case", {
         p_user_id: input.case.userId,
         p_case_id: input.case.id,
         p_action_id: input.actionId,
@@ -199,6 +210,12 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
         p_calculation_spec_hash: input.case.calculationSpecHash,
         p_evidence_set_hash: input.case.evidenceSetHash,
         p_current_question: input.case.currentQuestion,
+        p_orchestration_model_id: input.case.orchestrationModelId,
+        p_narration_model_id: input.case.narrationModelId,
+        p_skill_version: input.case.skillVersion,
+        p_prompt_version: input.case.promptVersion,
+        p_algorithm_version: input.case.algorithmVersion,
+        p_deployment_mode: input.case.deploymentMode,
         p_now: input.case.createdAt,
       }));
       const value = await loadCaseById(input.case.userId, id);
@@ -300,15 +317,23 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
     async completeJob(input: CompleteRectificationV4JobInput, now) {
       const jobRow = await loadJobRow(input.jobId);
       if (!jobRow) throw new RectificationV4StoreError("not_found");
-      await rpc("complete_birth_time_rectification_v4_job", {
+      const completionPayload = { ...input, workerId: undefined };
+      await rpc("complete_birth_time_rectification_v5_job", {
         p_worker_id: input.workerId,
         p_job_id: input.jobId,
         p_expected_case_version: input.expectedCaseVersion,
         p_input_evidence_set_hash: input.inputEvidenceSetHash,
         p_output_evidence_set_hash: input.outputEvidenceSetHash,
         p_calculation_spec_hash: input.calculationSpecHash,
+        p_completion_payload_hash: rectificationFingerprint(completionPayload),
         p_event_revisions: input.newEventRevisions,
+        p_pending_evidence: input.pendingEvidence,
         p_snapshot: input.snapshot,
+        p_diagnostics: input.diagnostics,
+        p_feature_snapshot: input.featureSnapshot,
+        p_validated_decision: input.validatedDecision,
+        p_public_message: input.publicMessage,
+        p_agent_run: input.agentRun,
         p_next_question: input.nextQuestion,
         p_status: input.status,
         p_phase: input.phase,

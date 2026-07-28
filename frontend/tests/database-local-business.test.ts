@@ -30,6 +30,8 @@ test("local PostgreSQL applies the reviewed business schema and serves authentic
     assert.match(migration.stdout, /applied 20260721150000_align_conversational_finance_domain\.sql/);
     assert.match(migration.stdout, /applied 20260723010000_restore_conversational_message_history\.sql/);
     assert.match(migration.stdout, /applied 20260723020000_mark_captured_conversational_messages\.sql/);
+    assert.match(migration.stdout, /applied 20260728010000_conversational_event_semantics\.sql/);
+    assert.match(migration.stdout, /applied 20260728020000_rectification_agent_v5\.sql/);
 
     assert.equal(
       fixture.psql(`
@@ -76,12 +78,17 @@ test("local PostgreSQL applies the reviewed business schema and serves authentic
       `),
       [
         "birth_time_rectification_action_receipts",
+        "birth_time_rectification_agent_runs",
         "birth_time_rectification_billing",
+        "birth_time_rectification_candidate_feature_snapshots",
         "birth_time_rectification_cases",
+        "birth_time_rectification_diagnostics",
         "birth_time_rectification_dynamic_state",
         "birth_time_rectification_event_evidence",
         "birth_time_rectification_handoff_attach_receipts",
         "birth_time_rectification_handoff_settlements",
+        "birth_time_rectification_pending_evidence",
+        "birth_time_rectification_public_messages",
         "birth_time_rectification_question_handoffs",
         "birth_time_rectification_scoring_jobs",
         "birth_time_rectification_turns",

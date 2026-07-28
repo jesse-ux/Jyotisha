@@ -1,0 +1,11 @@
+{
+  "education": { "primary": ["D24", "Dasha"], "scoreableByDefault": true },
+  "relocation": { "primary": ["D4", "Dasha"], "scoreableByDefault": true },
+  "relationship": { "primary": ["D9", "UL", "A7", "Dasha"], "scoreableByDefault": true },
+  "career": { "primary": ["D10", "A10", "Dasha"], "scoreableByDefault": true },
+  "finance": { "primary": ["D2", "D11", "Dasha"], "scoreableByDefault": true },
+  "family": { "primary": ["D12"], "scoreableByDefault": false },
+  "children": { "primary": ["D7"], "scoreableByDefault": false },
+  "health_pressure": { "primary": ["D30"], "scoreableByDefault": true },
+  "D60": { "primary": ["D60"], "scoreableByDefault": false }
+}

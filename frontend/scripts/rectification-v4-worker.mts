@@ -1,7 +1,6 @@
 import { setTimeout as sleep } from "node:timers/promises";
 import { createRectificationV4CandidateEngine } from "../src/lib/rectification-v4/candidate-engine.ts";
 import { createRectificationV4SupabaseStore } from "../src/lib/rectification-v4/supabase-store.ts";
-import { authorRectificationV4Question } from "../src/lib/rectification-v4/question-author.ts";
 import { createRectificationV4Worker } from "../src/lib/rectification-v4/worker.ts";
 import { createAdminSupabaseClient } from "../src/lib/supabase/admin-client-core.ts";
 
@@ -15,7 +14,6 @@ const worker = createRectificationV4Worker({
   engine: createRectificationV4CandidateEngine({
     apiBase: process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200",
   }),
-  questionAuthor: authorRectificationV4Question,
 });
 
 do {

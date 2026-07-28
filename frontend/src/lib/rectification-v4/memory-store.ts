@@ -1,5 +1,7 @@
+import type { AgentRun, CandidateFeatureSnapshot, DiagnosticsSummary, PublicMessage, ValidatedDecision } from "../rectification-agent/contracts.ts";
 import type {
   LifeEventRevision,
+  PendingEvidence,
   RectificationV4Case,
   RectificationV4Job,
 } from "./contracts.ts";
@@ -15,12 +17,24 @@ import { evidenceSetHash } from "./fingerprints.ts";
 export function createRectificationV4MemoryStore(): RectificationV4Store & {
   readonly cases: Map<string, RectificationV4Case>;
   readonly jobs: Map<string, RectificationV4Job & { workerId: string | null; turnId: string }>;
+  readonly diagnostics: Map<string, DiagnosticsSummary>;
+  readonly featureSnapshots: Map<string, CandidateFeatureSnapshot>;
+  readonly agentRuns: Map<string, AgentRun>;
+  readonly publicMessages: Map<string, PublicMessage>;
+  readonly validatedDecisions: Map<string, ValidatedDecision>;
+  readonly pendingEvidence: Map<string, PendingEvidence>;
 } {
   const cases = new Map<string, RectificationV4Case>();
   const events = new Map<string, LifeEventRevision[]>();
   const turns = new Map<string, RectificationV4Turn>();
   const jobs = new Map<string, RectificationV4Job & { workerId: string | null; turnId: string }>();
   const actionResults = new Map<string, { caseId: string; jobId: string | null }>();
+  const diagnostics = new Map<string, DiagnosticsSummary>();
+  const featureSnapshots = new Map<string, CandidateFeatureSnapshot>();
+  const agentRuns = new Map<string, AgentRun>();
+  const publicMessages = new Map<string, PublicMessage>();
+  const validatedDecisions = new Map<string, ValidatedDecision>();
+  const pendingEvidence = new Map<string, PendingEvidence>();
 
   function owned(userId: string, caseId: string): RectificationV4Case {
     const value = cases.get(caseId);
@@ -31,6 +45,12 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
   return {
     cases,
     jobs,
+    diagnostics,
+    featureSnapshots,
+    agentRuns,
+    publicMessages,
+    validatedDecisions,
+    pendingEvidence,
     async findActiveCase(userId) {
       return [...cases.values()].find((value) => value.userId === userId
         && value.status !== "abandoned" && value.acceptedRange === null) ?? null;
@@ -206,11 +226,20 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
         || current.calculationSpecHash !== input.calculationSpecHash) throw new RectificationV4StoreError("stale_job");
       const nextEvents = [...(events.get(current.id) ?? []), ...input.newEventRevisions];
       events.set(current.id, nextEvents);
+      if (input.diagnostics) diagnostics.set(input.diagnostics.id, input.diagnostics);
+      if (input.featureSnapshot) featureSnapshots.set(input.featureSnapshot.id, input.featureSnapshot);
+      agentRuns.set(input.agentRun.id, input.agentRun);
+      publicMessages.set(input.jobId, input.publicMessage);
+      validatedDecisions.set(input.jobId, input.validatedDecision);
+      for (const item of input.pendingEvidence) pendingEvidence.set(item.id, item);
       const updated: RectificationV4Case = {
         ...current,
         version: current.version + 1,
         evidenceSetHash: input.outputEvidenceSetHash,
         latestSnapshot: input.snapshot,
+        agentMode: input.validatedDecision.mode,
+        featureSnapshotId: input.featureSnapshot?.id ?? current.featureSnapshotId,
+        latestDiagnosticsId: input.diagnostics?.id ?? current.latestDiagnosticsId,
         currentQuestion: input.nextQuestion,
         status: input.status,
         phase: input.phase,

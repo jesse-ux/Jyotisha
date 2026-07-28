@@ -83,8 +83,8 @@
         {
           "event_id": "curie_widowed_1906",
           "user_utterance": "1906年4月19日我的丈夫因交通事故去世。",
-          "expected_extraction": {"date_value": "1906-04-19", "date_precision": "day", "domain": "health_pressure", "scoreable": true},
-          "expected_route_scoreable": true
+          "expected_extraction": {"date_value": "1906-04-19", "date_precision": "day", "domain": "family", "scoreable": false},
+          "expected_route_scoreable": false
         }
       ]
     }

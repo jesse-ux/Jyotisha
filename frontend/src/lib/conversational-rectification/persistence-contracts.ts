@@ -193,14 +193,26 @@ export type ValidationReceipt = z.infer<typeof validationReceiptSchema>;
 
 const correctionEvidenceIdsSchema = boundedJson(z.array(uuidSchema).max(1), 64);
 
+const eventSubjectSchema = z.enum(["self", "family", "partner", "other"]);
+const relatedPersonSchema = z.enum([
+  "father", "mother", "grandparent", "sibling", "partner",
+]);
+const eventScoreabilitySchema = z.enum([
+  "scoreable", "context_only", "pending_review", "unsupported",
+]);
+
 export const lifeEventEvidenceSchema = boundedJson(z.object({
   id: uuidSchema,
   rawText: boundedText(4_000),
   domain: evidenceDomainSchema,
+  eventKind: boundedText(120).optional(),
+  subject: eventSubjectSchema.optional(),
+  relatedPerson: relatedPersonSchema.nullable().optional(),
   eventSummary: boundedText(1_000),
   dateValue: boundedText(80).nullable(),
   datePrecision: z.enum(["day", "month", "year", "range", "unknown"]),
   extractionStatus: z.enum(["clear", "needs_clarification", "corrected"]),
+  scoreability: eventScoreabilitySchema.optional(),
   scoreable: z.boolean().optional(),
   // Optional only for rows written before durable correction lineage existed.
   correctsEvidenceIds: correctionEvidenceIdsSchema.optional(),

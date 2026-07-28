@@ -3,10 +3,10 @@ import { randomUUID } from "node:crypto";
 import test from "node:test";
 
 import { createRectificationV4CaseService } from "../src/lib/rectification-v4/case-service.ts";
-import type { CalculationSpec } from "../src/lib/rectification-v4/contracts.ts";
-import { calculationSpecHash } from "../src/lib/rectification-v4/fingerprints.ts";
+import type { CalculationSpec, CandidateMinute } from "../src/lib/rectification-v4/contracts.ts";
 import { createRectificationV4MemoryStore } from "../src/lib/rectification-v4/memory-store.ts";
 import { createRectificationV4Worker } from "../src/lib/rectification-v4/worker.ts";
+import { v5EngineResult, withV5Mode } from "./rectification-v5-test-support.ts";
 
 const now = () => new Date("2026-07-26T08:00:00.000Z");
 const spec: CalculationSpec = {
@@ -29,13 +29,7 @@ async function answerAndRun(
   version: number,
   answer: string,
 ) {
-  const queued = await service.answer({
-    userId,
-    caseId,
-    actionId: randomUUID(),
-    expectedCaseVersion: version,
-    answer,
-  });
+  const queued = await service.answer({ userId, caseId, actionId: randomUUID(), expectedCaseVersion: version, answer });
   assert.ok(queued?.job);
   assert.equal(await worker.runOnce(), true);
   const loaded = await service.loadCase(userId, caseId);
@@ -43,79 +37,95 @@ async function answerAndRun(
   return loaded;
 }
 
-test("fixture replay returns ranges only and never mutates the profile birth minute", async () => {
+test("V5 golden replay persists the full artifact chain, returns ranges only, and never mutates the profile minute", async () => withV5Mode("v5_agent", async () => {
   const profile = { active_birth_time: "05:00:00" };
   const store = createRectificationV4MemoryStore();
   const service = createRectificationV4CaseService(store, { now });
+  const candidates: readonly CandidateMinute[] = [
+    { time: "05:13", score: 100, supportingEventIds: [], conflictingEventIds: [] },
+    { time: "05:14", score: 99, supportingEventIds: [], conflictingEventIds: [] },
+    { time: "05:15", score: 98, supportingEventIds: [], conflictingEventIds: [] },
+    { time: "05:16", score: 60, supportingEventIds: [], conflictingEventIds: [] },
+    { time: "05:17", score: 97.8, supportingEventIds: [], conflictingEventIds: [] },
+    { time: "05:18", score: 97.7, supportingEventIds: [], conflictingEventIds: [] },
+    { time: "05:19", score: 97.6, supportingEventIds: [], conflictingEventIds: [] },
+  ];
   const worker = createRectificationV4Worker({
     store,
     now,
-    questionAuthor: async () => ({
-      id: randomUUID(),
-      domain: "other",
-      targetEventId: null,
-      prompt: "请继续讲另一件时间比较清楚的人生变化。",
-      recallCost: "low",
-      reason: "Replay keeps narration open instead of depending on a fixed domain order.",
-    }),
     engine: {
       async score({ calculationSpec, events }) {
         const ids = events.map((event) => event.eventId);
-        return {
-          resultId: randomUUID(),
-          calculationSpecHash: calculationSpecHash(calculationSpec),
-          candidates: [
-            { time: "05:13", score: 100, supportingEventIds: ids, conflictingEventIds: [] },
-            { time: "05:14", score: 99, supportingEventIds: ids, conflictingEventIds: [] },
-            { time: "05:15", score: 98, supportingEventIds: ids, conflictingEventIds: [] },
-            { time: "05:16", score: 60, supportingEventIds: [], conflictingEventIds: ids },
-            { time: "05:17", score: 97.8, supportingEventIds: ids, conflictingEventIds: [] },
-            { time: "05:18", score: 97.7, supportingEventIds: ids, conflictingEventIds: [] },
-            { time: "05:19", score: 97.6, supportingEventIds: ids, conflictingEventIds: [] },
-          ],
-          robustness: {
-            neighborSupportMinutes: 3,
-            leaveOneOutRetentionRate: 1,
-            dateSensitivityRetentionRate: 0.9,
-          },
-          missingLayers: [],
-        };
+        return v5EngineResult(calculationSpec, events, candidates.map((candidate) => ({
+          ...candidate,
+          supportingEventIds: candidate.score >= 97 ? ids : [],
+          conflictingEventIds: candidate.score < 97 ? ids : [],
+        })));
       },
     },
   });
   const userId = randomUUID();
   const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
-  let loaded = await answerAndRun(
-    service,
-    worker,
-    userId,
-    created.case.id,
-    created.case.version,
-    "2015年7月高中毕业后复读一年，2016年6月再次高中毕业",
-  );
+  assert.equal(created.case.deploymentMode, "v5_agent");
+
+  let loaded = await answerAndRun(service, worker, userId, created.case.id, created.case.version, "2015年7月高中毕业后复读一年，2016年6月再次高中毕业");
   assert.deepEqual(loaded.events.map((event) => [event.dateRange.start, event.dateRange.end]), [
     ["2015-07-01", "2015-07-31"],
     ["2016-06-01", "2016-06-30"],
   ]);
-  loaded = await answerAndRun(service, worker, userId, created.case.id, loaded.case.version, "2018年8月搬家到北京");
+  const firstTarget = loaded.case.currentQuestion?.targetEventId;
+  assert.ok(firstTarget);
+  const firstTargetEvent = loaded.events.find((event) => event.eventId === firstTarget);
+  assert.ok(firstTargetEvent);
   loaded = await answerAndRun(
     service,
     worker,
     userId,
     created.case.id,
     loaded.case.version,
-    "2020年5月开始恋爱，2022年3月分手",
+    firstTargetEvent.dateRange.start.startsWith("2015-") ? "2015年7月18日" : "2016年6月22日",
   );
+  const secondTarget = loaded.case.currentQuestion?.targetEventId;
+  assert.ok(secondTarget);
+  assert.notEqual(secondTarget, firstTarget);
+  const secondTargetEvent = loaded.events.find((event) => event.eventId === secondTarget);
+  assert.ok(secondTargetEvent);
+  loaded = await answerAndRun(
+    service,
+    worker,
+    userId,
+    created.case.id,
+    loaded.case.version,
+    secondTargetEvent.dateRange.start.startsWith("2015-") ? "2015年7月18日" : "2016年6月22日",
+  );
+  assert.equal(loaded.case.currentQuestion?.domain, "relocation");
+  loaded = await answerAndRun(
+    service,
+    worker,
+    userId,
+    created.case.id,
+    loaded.case.version,
+    "2018年8月搬家到北京；2019年3月入职新公司；2020年5月开始一段恋爱关系",
+  );
+
   const snapshot = loaded.case.latestSnapshot;
   assert.ok(snapshot);
   assert.equal(snapshot.canConfirmExactMinute, false);
   assert.equal(snapshot.canAcceptRange, true);
-  assert.deepEqual(snapshot.clusters.map((cluster) => [cluster.startTime, cluster.endTime]), [
-    ["05:13", "05:15"],
-    ["05:17", "05:19"],
-  ]);
+  assert.deepEqual(snapshot.clusters.map((cluster) => [cluster.startTime, cluster.endTime]), [["05:13", "05:15"], ["05:17", "05:19"]]);
   assert.equal(snapshot.clusters[0]?.representativeTime, "05:13");
   assert.equal(loaded.case.acceptedRange, null);
+  assert.ok(loaded.case.featureSnapshotId);
+  assert.ok(loaded.case.latestDiagnosticsId);
+  assert.equal(store.featureSnapshots.size, 1);
+  assert.equal(store.diagnostics.size, 1);
+  assert.equal(store.agentRuns.size, 4);
+  assert.equal(store.publicMessages.size, 4);
+  assert.equal(store.validatedDecisions.size, 4);
+  const finalRun = [...store.agentRuns.values()].at(-1);
+  assert.equal(finalRun?.validatedDecision.decision.action, "offer_candidate_range");
+  assert.equal(finalRun?.inputTokenCount, null);
+  assert.equal(finalRun?.outputTokenCount, null);
 
   const accepted = await service.acceptRange({
     userId,
@@ -128,4 +138,4 @@ test("fixture replay returns ranges only and never mutates the profile birth min
   assert.deepEqual(accepted?.case.acceptedRange, { start: "05:13", end: "05:15" });
   assert.equal(accepted?.case.latestSnapshot?.canConfirmExactMinute, false);
   assert.equal(profile.active_birth_time, "05:00:00");
-});
+}));

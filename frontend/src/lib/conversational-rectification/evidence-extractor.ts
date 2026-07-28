@@ -5,10 +5,14 @@ export type ExtractedLifeEventEvidence = {
   readonly id: string;
   readonly rawText: string;
   readonly domain: RectificationEvidenceDomain;
+  readonly eventKind: string;
+  readonly subject: "self" | "family" | "partner" | "other";
+  readonly relatedPerson: "father" | "mother" | "grandparent" | "sibling" | "partner" | null;
   readonly eventSummary: string;
   readonly dateValue: string | null;
   readonly datePrecision: "day" | "month" | "year" | "unknown";
   readonly extractionStatus: "clear" | "needs_clarification" | "corrected";
+  readonly scoreability: "scoreable" | "context_only" | "pending_review" | "unsupported";
   readonly scoreable: boolean;
   readonly correctsEvidenceIds: readonly string[];
 };
@@ -86,15 +90,59 @@ function eventSummary(fragment: string): string {
     : missingEventSummary;
 }
 
-function classifyDomain(summary: string): RectificationEvidenceDomain {
-  if (/确诊|疾病|癌症|肿瘤|手术|住院|受伤|事故|车祸|交通事故|创伤|康复|病危|去世|离世|死亡|丧亲|健康/.test(summary)) return "health_pressure";
-  if (/毕业|入学|升学|转学|学校|大学|专业|考试|留学|学业|学习/.test(summary)) return "education";
-  if (/搬家|迁居|外地|异地|离乡|移居|出国|住所|居住/.test(summary)) return "relocation";
-  if (/结婚|恋爱|分手|离婚|订婚|伴侣|关系/.test(summary)) return "relationship";
-  if (/生育|孩子|父亲|母亲|父母|家人|家庭|亲人/.test(summary)) return "family";
-  if (/收入|工资|薪资|奖金|财富|财务|投资|亏损|盈利|负债|债务|资产/.test(summary)) return "finance";
-  if (/工作|入职|离职|辞职|升职|创业|职业|职位|任职|管理职责|公司|项目/.test(summary)) return "career";
-  return "other";
+type EventSemantics = Readonly<{
+  domain: RectificationEvidenceDomain;
+  eventKind: string;
+  subject: "self" | "family" | "partner" | "other";
+  relatedPerson: "father" | "mother" | "grandparent" | "sibling" | "partner" | null;
+  scoreability: "scoreable" | "context_only" | "pending_review" | "unsupported";
+}>;
+
+function classifyEvent(summary: string): EventSemantics {
+  const familyPerson = summary.match(/(父亲|爸爸|母亲|妈妈|爷爷|奶奶|外公|外婆|祖父|祖母|外祖父|外祖母|兄弟|姐妹|伴侣|配偶|丈夫|妻子|老公|老婆|男友|女友|儿子|女儿|孩子)/);
+  if (familyPerson && /确诊|疾病|癌症|肿瘤|手术|住院|受伤|事故|车祸|交通事故|创伤|康复|病危|重病|去世|离世|死亡|丧亲|葬礼/.test(summary)) {
+    const relatedPerson = /父亲|爸爸/.test(familyPerson[1])
+      ? "father"
+      : /母亲|妈妈/.test(familyPerson[1])
+        ? "mother"
+        : /爷爷|奶奶|外公|外婆|祖父|祖母|外祖父|外祖母/.test(familyPerson[1])
+          ? "grandparent"
+          : /兄弟|姐妹/.test(familyPerson[1])
+            ? "sibling"
+            : /伴侣|配偶|丈夫|妻子|老公|老婆|男友|女友/.test(familyPerson[1])
+              ? "partner"
+              : null;
+    const bereavement = /去世|离世|死亡|丧亲|葬礼/.test(summary);
+    return {
+      domain: "family",
+      eventKind: bereavement ? "family_bereavement" : "family_health_event",
+      subject: "family",
+      relatedPerson,
+      scoreability: "context_only",
+    };
+  }
+  if (/确诊|疾病|癌症|肿瘤|手术|住院|受伤|事故|车祸|交通事故|创伤|康复|病危|健康/.test(summary)) {
+    return { domain: "health_pressure", eventKind: "self_health_event", subject: "self", relatedPerson: null, scoreability: "scoreable" };
+  }
+  if (/毕业|入学|升学|转学|学校|大学|专业|考试|考(?:了)?(?:一)?次?研|研究生(?:入学)?考试|留学|学业|学习/.test(summary)) {
+    return { domain: "education", eventKind: "education_milestone", subject: "self", relatedPerson: null, scoreability: "scoreable" };
+  }
+  if (/搬家|迁居|外地|异地|离乡|移居|出国|住所|居住/.test(summary)) {
+    return { domain: "relocation", eventKind: "relocation", subject: "self", relatedPerson: null, scoreability: "scoreable" };
+  }
+  if (/结婚|恋爱|分手|离婚|订婚|伴侣|关系/.test(summary)) {
+    return { domain: "relationship", eventKind: "relationship_change", subject: /伴侣|配偶/.test(summary) ? "partner" : "self", relatedPerson: /伴侣|配偶/.test(summary) ? "partner" : null, scoreability: "scoreable" };
+  }
+  if (/生育|孩子|父亲|母亲|父母|家人|家庭|亲人/.test(summary)) {
+    return { domain: "family", eventKind: "family_event", subject: "family", relatedPerson: null, scoreability: "context_only" };
+  }
+  if (/收入|工资|薪资|奖金|财富|财务|投资|亏损|盈利|负债|债务|资产/.test(summary)) {
+    return { domain: "finance", eventKind: "finance_change", subject: "self", relatedPerson: null, scoreability: "scoreable" };
+  }
+  if (/工作|入职|离职|辞职|升职|创业|职业|职位|任职|管理职责|公司|项目/.test(summary)) {
+    return { domain: "career", eventKind: "career_change", subject: "self", relatedPerson: null, scoreability: "scoreable" };
+  }
+  return { domain: "other", eventKind: "other", subject: "other", relatedPerson: null, scoreability: "unsupported" };
 }
 
 function dateIsFuture(date: ParsedDate, asOfDate: string): boolean {
@@ -155,7 +203,11 @@ function coalesceSameEventDetails(
       && previous.dateValue === event.dateValue
       && previous.datePrecision === event.datePrecision
       && previous.domain === event.domain
+      && previous.eventKind === event.eventKind
+      && previous.subject === event.subject
+      && previous.relatedPerson === event.relatedPerson
       && previous.extractionStatus === event.extractionStatus
+      && previous.scoreability === event.scoreability
       && previous.scoreable === event.scoreable
       && previous.correctsEvidenceIds.join("\0") === event.correctsEvidenceIds.join("\0");
     if (!canMerge) {
@@ -192,19 +244,25 @@ export function extractLifeEventEvidence(
         ? ownDates[0] ?? null
         : ownDates.length === 0 && !unresolvedRelativeTime ? sharedDate : null;
       const summary = eventSummary(fragment);
+      const semantics = classifyEvent(summary);
       const complete = summary !== missingEventSummary && date !== null && !unresolvedRelativeTime;
       const extractionStatus = !complete
         ? "needs_clarification"
         : correctionTargets.length > 0 ? "corrected" : "clear";
+      const scoreable = complete && !dateIsFuture(date, input.asOfDate) && semantics.scoreability === "scoreable";
       events.push({
         id: evidenceId(input, events.length, summary),
         rawText: input.rawText,
-        domain: classifyDomain(summary),
+        domain: semantics.domain,
+        eventKind: semantics.eventKind,
+        subject: semantics.subject,
+        relatedPerson: semantics.relatedPerson,
         eventSummary: summary,
         dateValue: date?.value ?? null,
         datePrecision: date?.precision ?? "unknown",
         extractionStatus,
-        scoreable: complete && !dateIsFuture(date, input.asOfDate),
+        scoreability: complete ? semantics.scoreability : "pending_review",
+        scoreable,
         correctsEvidenceIds: correctionTargets,
       });
     }

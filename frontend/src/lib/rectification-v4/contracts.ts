@@ -1,7 +1,10 @@
 import { z } from "zod";
 
 export const rectificationV4Protocol = "rectification-evidence-v4" as const;
-export const rectificationV4AlgorithmVersion = "rectification-v4-range-scoring-1" as const;
+export const rectificationAgentV5Protocol = "rectification-evidence-v5" as const;
+export const rectificationDeploymentModeSchema = z.enum(["v4_legacy", "v5_shadow", "v5_agent"]);
+export type RectificationDeploymentMode = z.infer<typeof rectificationDeploymentModeSchema>;
+export const rectificationV4AlgorithmVersion = "rectification-v5-matrix-scoring-1" as const;
 
 export const rectificationV4CaseStatusSchema = z.enum([
   "awaiting_answer",
@@ -18,6 +21,8 @@ export const rectificationV4PhaseSchema = z.enum([
   "scoring_candidates",
   "checking_robustness",
   "planning_question",
+  "reasoning",
+  "rendering",
   "complete",
 ]);
 export type RectificationV4Phase = z.infer<typeof rectificationV4PhaseSchema>;
@@ -41,7 +46,10 @@ export const eventKindSchema = z.enum([
   "relationship_end",
   "career_change",
   "finance_change",
-  "health_event",
+  "self_health_event",
+  "family_health_event",
+  "family_bereavement",
+  "relationship_change",
   "family_event",
   "other",
 ]);
@@ -65,7 +73,13 @@ export const eventDateRangeSchema = z.object({
 });
 export type EventDateRange = z.infer<typeof eventDateRangeSchema>;
 
-export const scoreabilitySchema = z.enum(["scoreable", "context_only"]);
+export const eventSubjectSchema = z.enum(["self", "family", "partner", "other"]);
+export type EventSubject = z.infer<typeof eventSubjectSchema>;
+
+export const relatedPersonSchema = z.enum(["father", "mother", "grandparent", "sibling", "partner"]);
+export type RelatedPerson = z.infer<typeof relatedPersonSchema>;
+
+export const scoreabilitySchema = z.enum(["scoreable", "context_only", "pending_review", "unsupported"]);
 export type Scoreability = z.infer<typeof scoreabilitySchema>;
 
 export const lifeEventRevisionSchema = z.object({
@@ -74,6 +88,8 @@ export const lifeEventRevisionSchema = z.object({
   revision: z.number().int().positive(),
   domain: evidenceDomainSchema,
   eventKind: eventKindSchema,
+  subject: eventSubjectSchema,
+  relatedPerson: relatedPersonSchema.nullable(),
   summary: z.string().trim().min(1).max(1_000),
   rawText: z.string().trim().min(1).max(4_000),
   dateRange: eventDateRangeSchema,
@@ -82,6 +98,19 @@ export const lifeEventRevisionSchema = z.object({
   createdAt: z.string().datetime({ offset: true }),
 }).strict();
 export type LifeEventRevision = z.infer<typeof lifeEventRevisionSchema>;
+
+export const pendingEvidenceSchema = z.object({
+  id: z.string().uuid(),
+  caseId: z.string().uuid(),
+  turnId: z.string().uuid(),
+  rawText: z.string().trim().min(1).max(4_000),
+  reasonCode: z.enum(["date_unresolved", "event_unparsed"]),
+  targetEventId: z.string().uuid().nullable(),
+  resolvedEventId: z.string().uuid().nullable(),
+  createdAt: z.string().datetime({ offset: true }),
+  resolvedAt: z.string().datetime({ offset: true }).nullable(),
+}).strict();
+export type PendingEvidence = z.infer<typeof pendingEvidenceSchema>;
 
 export const calculationSpecSchema = z.object({
   version: z.literal("rectification-calculation-spec-v4"),
@@ -168,7 +197,7 @@ export type RectificationV4Turn = z.infer<typeof rectificationV4TurnSchema>;
 export const rectificationV4CaseSchema = z.object({
   id: z.string().uuid(),
   userId: z.string().uuid(),
-  protocol: z.literal(rectificationV4Protocol),
+  protocol: z.union([z.literal(rectificationV4Protocol), z.literal(rectificationAgentV5Protocol)]),
   version: z.number().int().nonnegative(),
   status: rectificationV4CaseStatusSchema,
   phase: rectificationV4PhaseSchema,
@@ -177,6 +206,15 @@ export const rectificationV4CaseSchema = z.object({
   evidenceSetHash: z.string().regex(/^[a-f0-9]{64}$/),
   currentQuestion: rectificationV4QuestionSchema.nullable(),
   latestSnapshot: candidateSnapshotSchema.nullable(),
+  orchestrationModelId: z.string().trim().min(1).max(120).nullable(),
+  narrationModelId: z.string().trim().min(1).max(120).nullable(),
+  skillVersion: z.string().trim().min(1).max(120),
+  promptVersion: z.string().trim().min(1).max(120),
+  algorithmVersion: z.string().trim().min(1).max(120),
+  deploymentMode: rectificationDeploymentModeSchema,
+  agentMode: z.enum(["agent", "deterministic_fallback"]),
+  featureSnapshotId: z.string().uuid().nullable(),
+  latestDiagnosticsId: z.string().uuid().nullable(),
   acceptedRange: z.object({ start: clockTimeSchema, end: clockTimeSchema }).strict().nullable(),
   createdAt: z.string().datetime({ offset: true }),
   updatedAt: z.string().datetime({ offset: true }),
@@ -200,6 +238,8 @@ export const reviseEventRequestSchema = z.object({
   expectedCaseVersion: z.number().int().nonnegative(),
   domain: evidenceDomainSchema,
   eventKind: eventKindSchema,
+  subject: eventSubjectSchema,
+  relatedPerson: relatedPersonSchema.nullable(),
   summary: z.string().trim().min(1).max(1_000),
   rawText: z.string().trim().min(1).max(4_000),
   dateRange: eventDateRangeSchema,
@@ -246,7 +286,7 @@ export const rectificationV4HandoffStatusSchema = z.enum([
 ]);
 
 export const rectificationV4HandoffSchema = z.object({
-  protocol: z.literal(rectificationV4Protocol),
+  protocol: z.union([z.literal(rectificationV4Protocol), z.literal(rectificationAgentV5Protocol)]),
   caseId: z.string().uuid(),
   caseVersion: z.number().int().nonnegative(),
   question: z.string().trim().min(1).max(500),

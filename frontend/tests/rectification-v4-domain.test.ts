@@ -1,16 +1,18 @@
 import assert from "node:assert/strict";
-import test from "node:test";
 import { randomUUID } from "node:crypto";
+import test from "node:test";
+import { buildQuestionOpportunities } from "../src/lib/rectification-agent/opportunity-builder.ts";
 import { buildCandidateClusters } from "../src/lib/rectification-v4/candidate-clusters.ts";
 import { dateRangeFromDeclared, sampledDates } from "../src/lib/rectification-v4/date-range.ts";
 import { evaluateDecisionGate } from "../src/lib/rectification-v4/decision-gate.ts";
 import { appendEventRevision, latestEventRevisions } from "../src/lib/rectification-v4/evidence-ledger.ts";
 import { extractV4EventRevisions } from "../src/lib/rectification-v4/extraction.ts";
-import { openingQuestion, planNextQuestion } from "../src/lib/rectification-v4/question-planner.ts";
+import { openingQuestion } from "../src/lib/rectification-v4/opening-question.ts";
 
-const now = new Date("2026-07-26T00:00:00.000Z");
+const now = new Date("2026-07-28T00:00:00.000Z");
+const revision = (input: Parameters<typeof appendEventRevision>[1]) => appendEventRevision([], input, { id: randomUUID(), now });
 
-test("declared month, quarter and year retain real boundaries instead of invented midpoints", () => {
+test("declared month, quarter and year retain boundaries instead of invented midpoints", () => {
   assert.deepEqual(dateRangeFromDeclared("2024-02", "month"), {
     start: "2024-02-01", end: "2024-02-29", precision: "month", label: "2024-02",
   });
@@ -23,31 +25,39 @@ test("declared month, quarter and year retain real boundaries instead of invente
   assert.equal(sampledDates(dateRangeFromDeclared("2024-02", "month")).includes("2024-02-15"), false);
 });
 
-test("relationship start and end remain separate immutable events", () => {
-  const startId = randomUUID();
-  const endId = randomUUID();
-  const start = appendEventRevision([], {
-    eventId: startId, domain: "relationship", eventKind: "relationship_start", summary: "关系开始",
-    rawText: "2024年5月开始", dateRange: dateRangeFromDeclared("2024-05", "month"),
-  }, { id: randomUUID(), now });
-  const end = appendEventRevision([start], {
-    eventId: endId, domain: "relationship", eventKind: "relationship_end", summary: "关系结束",
-    rawText: "2024年8月结束", dateRange: dateRangeFromDeclared("2024-08", "month"),
-  }, { id: randomUUID(), now });
+test("relationship start and end remain separate self/partner events", () => {
+  const start = revision({
+    eventId: randomUUID(), domain: "relationship", eventKind: "relationship_start", subject: "self", relatedPerson: "partner",
+    summary: "关系开始", rawText: "2024年5月开始", dateRange: dateRangeFromDeclared("2024-05", "month"), scoreability: "scoreable",
+  });
+  const end = revision({
+    eventId: randomUUID(), domain: "relationship", eventKind: "relationship_end", subject: "self", relatedPerson: "partner",
+    summary: "关系结束", rawText: "2024年8月结束", dateRange: dateRangeFromDeclared("2024-08", "month"), scoreability: "scoreable",
+  });
   assert.notEqual(start.eventId, end.eventId);
-  assert.equal(start.eventKind, "relationship_start");
-  assert.equal(end.eventKind, "relationship_end");
+  assert.deepEqual([start.eventKind, end.eventKind], ["relationship_start", "relationship_end"]);
 });
 
-test("family evidence is retained explicitly as context only", () => {
-  const revision = appendEventRevision([], {
-    eventId: randomUUID(), domain: "family", eventKind: "family_event", summary: "家庭变化",
-    rawText: "家庭发生变化", dateRange: dateRangeFromDeclared("2020", "year"),
-  }, { id: randomUUID(), now });
-  assert.equal(revision.scoreability, "context_only");
+test("family health and bereavement stay context-only while self health is scoreable", () => {
+  for (const eventKind of ["family_health_event", "family_bereavement"] as const) {
+    const event = revision({
+      eventId: randomUUID(), domain: "family", eventKind, subject: "family", relatedPerson: "mother",
+      summary: "家人健康事件", rawText: "2020年家人住院", dateRange: dateRangeFromDeclared("2020", "year"), scoreability: "context_only",
+    });
+    assert.equal(event.scoreability, "context_only");
+  }
+  const selfHealth = revision({
+    eventId: randomUUID(), domain: "health_pressure", eventKind: "self_health_event", subject: "self", relatedPerson: null,
+    summary: "本人手术", rawText: "2021年3月手术", dateRange: dateRangeFromDeclared("2021-03", "month"), scoreability: "scoreable",
+  });
+  assert.equal(selfHealth.scoreability, "scoreable");
+  assert.throws(() => revision({
+    eventId: randomUUID(), domain: "health_pressure", eventKind: "self_health_event", subject: "family", relatedPerson: "mother",
+    summary: "母亲手术", rawText: "2021年3月母亲手术", dateRange: dateRangeFromDeclared("2021-03", "month"), scoreability: "scoreable",
+  }), /non_self_event_not_scoreable/);
 });
 
-test("candidate minutes merge into ranked contiguous clusters", () => {
+test("candidate minutes merge into ranked contiguous clusters and never confirm one minute", () => {
   const id = randomUUID();
   const clusters = buildCandidateClusters([
     { time: "05:13", score: 100, supportingEventIds: [id], conflictingEventIds: [] },
@@ -57,25 +67,19 @@ test("candidate minutes merge into ranked contiguous clusters", () => {
     { time: "05:17", score: 97, supportingEventIds: [id], conflictingEventIds: [] },
     { time: "05:18", score: 97, supportingEventIds: [id], conflictingEventIds: [] },
   ]);
-  assert.deepEqual(clusters.map((cluster) => [cluster.rank, cluster.startTime, cluster.endTime]), [
-    [1, "05:13", "05:15"], [2, "05:17", "05:18"],
-  ]);
-});
-
-test("decision gate can accept a stable range but never an exact minute", () => {
-  const result = evaluateDecisionGate({
-    clusters: [{ rank: 1, startTime: "05:13", endTime: "05:15", representativeTime: "05:13", widthMinutes: 3, peakScore: 10, scoreMass: 29 }],
+  assert.deepEqual(clusters.map((cluster) => [cluster.rank, cluster.startTime, cluster.endTime]), [[1, "05:13", "05:15"], [2, "05:17", "05:18"]]);
+  const gate = evaluateDecisionGate({
+    clusters: [clusters[0]!],
     robustness: { neighborSupportMinutes: 3, leaveOneOutRetentionRate: 1, dateSensitivityRetentionRate: 0.9, calculationSpecHashMatched: true },
     scoreableEventCount: 10,
     scoreableDomainCount: 5,
   });
-  assert.equal(result.canAcceptRange, true);
-  assert.equal(result.canConfirmExactMinute, false);
+  assert.equal(gate.canAcceptRange, true);
+  assert.equal(gate.canConfirmExactMinute, false);
 });
 
-test("opening question invites free narration without a fixed domain", () => {
+test("opening question is open narration, not a fixed-domain questionnaire", () => {
   const question = openingQuestion({ start: "04:50", end: "05:10" }, randomUUID());
-
   assert.equal(question.domain, "other");
   assert.equal(question.targetEventId, null);
   assert.match(question.prompt, /04:50–05:10/);
@@ -84,70 +88,33 @@ test("opening question invites free narration without a fixed domain", () => {
   assert.doesNotMatch(question.prompt, /毕业|搬家|恋爱|工作|财务|健康/);
 });
 
-test("fallback planner refines an imprecise event, then returns to open narration", () => {
-  const eventId = randomUUID();
-  const event = appendEventRevision([], {
-    eventId, domain: "education", eventKind: "education_milestone", summary: "高中毕业",
-    rawText: "2016年高中毕业", dateRange: dateRangeFromDeclared("2016", "year"),
-  }, { id: randomUUID(), now });
-  const question = planNextQuestion({
-    events: [event],
-    attemptedRefinementEventIds: [],
-    latestAnswer: "2016年高中毕业",
-    id: randomUUID(),
+test("Opportunity Builder prioritizes event-local date refinement and never asks family as self health", () => {
+  const event = revision({
+    eventId: randomUUID(), domain: "education", eventKind: "education_milestone", subject: "self", relatedPerson: null,
+    summary: "离家去外地上大学", rawText: "2016年离家去外地上大学", dateRange: dateRangeFromDeclared("2016", "year"), scoreability: "scoreable",
   });
-  assert.equal(question.targetEventId, eventId);
-  assert.equal(question.domain, "education");
-  assert.match(question.prompt, /高中毕业/);
-  assert.match(question.prompt, /月份或日期/);
-
-  const fallback = planNextQuestion({
-    events: [event],
-    attemptedRefinementEventIds: [eventId],
-    latestAnswer: "2016年高中毕业",
-    id: randomUUID(),
-  });
-  assert.equal(fallback.targetEventId, null);
-  assert.equal(fallback.domain, "other");
-  assert.match(fallback.prompt, /继续讲另一件/);
-  assert.doesNotMatch(fallback.prompt, /搬家|恋爱|事业|财务|健康/);
+  const opportunities = buildQuestionOpportunities({ caseId: randomUUID(), events: [event], turns: [], snapshot: null, diagnostics: null });
+  const local = opportunities.find((item) => item.kind === "refine_event_date");
+  assert.equal(local?.targetEventId, event.eventId);
+  assert.equal(local?.domain, "education");
+  assert.match(local?.prompt ?? "", /离家去外地上大学/);
+  assert.match(local?.prompt ?? "", /月份或日期/);
+  assert.ok(opportunities.every((item, index) => index === 0 || opportunities[index - 1]!.utility >= item.utility));
+  assert.ok(opportunities.every((item) => item.domain !== "family"));
 });
 
-test("month-precise evidence is sufficient for the model to choose the next topic", () => {
-  const event = appendEventRevision([], {
-    eventId: randomUUID(), domain: "education", eventKind: "education_milestone", summary: "去外地上大学",
-    rawText: "2016年9月去外地上大学", dateRange: dateRangeFromDeclared("2016-09", "month"),
-  }, { id: randomUUID(), now });
-
-  const question = planNextQuestion({
-    events: [event],
-    attemptedRefinementEventIds: [],
-    latestAnswer: "2016年9月去外地上大学",
-    id: randomUUID(),
-  });
-
-  assert.equal(question.targetEventId, null);
-  assert.equal(question.domain, "other");
-});
-
-test("targeted date answer appends a revision without duplicating the scoreable event", () => {
+test("targeted date answer appends a revision without duplicating the event", () => {
   const eventId = randomUUID();
-  const original = appendEventRevision([], {
-    eventId, domain: "education", eventKind: "education_milestone", summary: "高中毕业",
-    rawText: "2016年高中毕业", dateRange: dateRangeFromDeclared("2016", "year"),
-  }, { id: randomUUID(), now });
+  const original = revision({
+    eventId, domain: "education", eventKind: "education_milestone", subject: "self", relatedPerson: null,
+    summary: "高中毕业", rawText: "2016年高中毕业", dateRange: dateRangeFromDeclared("2016", "year"), scoreability: "scoreable",
+  });
   const revisions = extractV4EventRevisions({
-    answer: "2016年6月8日",
-    sourceTurnId: randomUUID(),
-    asOfDate: "2026-07-26",
-    existing: [original],
-    targetEventId: eventId,
-    now,
+    answer: "2016年6月8日", sourceTurnId: randomUUID(), asOfDate: "2026-07-28", existing: [original], targetEventId: eventId, now,
   });
   assert.equal(revisions.length, 1);
   assert.equal(revisions[0]?.eventId, eventId);
   assert.equal(revisions[0]?.revision, 2);
-  assert.equal(revisions[0]?.dateRange.precision, "day");
   assert.equal(revisions[0]?.dateRange.start, "2016-06-08");
   assert.equal(latestEventRevisions([original, ...revisions]).length, 1);
 });
