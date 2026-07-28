@@ -1017,3 +1017,6 @@
 - 最终静态验证：ESLint 0 error（3 个既有 warning）、Next build 成功、`git diff --check` 通过。
 - 初始功能提交 `06ca1c805c3a8c7054885c1482985a716681ee58`；发布前 fetch 发现 `origin/staging` 已前进到 `43581ac`，按硬规则不强推，先 rebase 并重新全量复验。
 - GitHub CLI 认证已恢复可用；此前认证阻塞已从 BLOCKED 移除。未触发 production。
+- rebase 到 `origin/staging=43581ac` 后新 SHA `635c919` 首次 gate 红灯：能力审计按 `page.tsx` 枚举路由，实际新增后台页面与既有固定合同冲突；未改断言/Python，改为唯一 `/admin/codes` 页面用 query 切换 5 资源，`/admin` route handler 重定向。
+- 修复 SHA `218cee579e92fcf9bfe435a349250cfe23304547` 已 fast-forward push 到 origin/staging；exact gate run 30322107657 全部成功，含 Python quick gate、frontend/database contracts、API/web image 与 immutable manifest。
+- 自动 deploy run 30322719839 及手动 migration run 30322756154 均被既有 main-ancestry 控制器拒绝：`staging revision is not in the reviewed main history`。这与“不碰 main、只合入 staging”硬规则互斥，未绕过，详见 BLOCKED。
