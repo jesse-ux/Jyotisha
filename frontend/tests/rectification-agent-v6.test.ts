@@ -191,6 +191,31 @@ test("Builder 的领域排序不受事件输入数组顺序影响", () => {
   assert.deepEqual(domains([education, career]), domains([career, education]));
 });
 
+test("Builder 和 Reasoner 按事件创建时间承接最近经历而不是 UUID 顺序", () => {
+  const older = event({
+    eventId: "ffffffff-ffff-4fff-8fff-ffffffffffff",
+    summary: "较早的研究院实习",
+    createdAt: "2026-07-29T01:00:00.000Z",
+  });
+  const newer = event({
+    eventId: "00000000-0000-4000-8000-000000000000",
+    domain: "relocation",
+    eventKind: "relocation",
+    summary: "刚提到的搬到北京",
+    rawText: "2018年8月搬到北京",
+    dateRange: { start: "2018-08-01", end: "2018-08-31", precision: "month", label: "2018年8月" },
+    createdAt: "2026-07-29T02:00:00.000Z",
+  });
+  const opportunities = buildQuestionOpportunities({ caseId, events: [newer, older], turns: [], snapshot: null, diagnostics: null });
+  const askNewEvent = opportunities.find((item) => item.kind === "ask_new_event");
+  assert.ok(askNewEvent);
+  assert.match(askNewEvent.fallbackPrompt, /刚提到的搬到北京/);
+  assert.doesNotMatch(askNewEvent.fallbackPrompt, /较早的研究院实习/);
+
+  const state = buildReasonerState({ snapshot: null, diagnostics: diagnostics(), opportunities, recentEvents: [newer, older] });
+  assert.equal(state.recentEvents.at(-1)?.summary, "刚提到的搬到北京");
+});
+
 test("Reasoner 状态包含最近语义上下文但不包含贡献矩阵", () => {
   const latestEvent = event();
   const opportunity = targetOpportunity(latestEvent);

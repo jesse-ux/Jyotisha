@@ -292,6 +292,18 @@ const allowedKindsByDomain: Readonly<Record<RectificationEvidenceDomain, readonl
   other: ["other"],
 };
 
+const familyRelatedPeople = new Set<ModelAssistedEventExtraction["relatedPerson"]>([
+  "father",
+  "mother",
+  "grandparent",
+  "sibling",
+]);
+const explicitFamilySubjectMarkers = [
+  "父亲", "爸爸", "老爸", "母亲", "妈妈", "老妈",
+  "爷爷", "奶奶", "外公", "外婆", "祖父", "祖母", "外祖父", "外祖母",
+  "兄弟", "姐妹", "家里老人", "家中老人",
+] as const;
+
 export function validatedModelAssistedEvidence(input: Readonly<{
   rawText: string;
   sourceTurnId: string;
@@ -305,7 +317,14 @@ export function validatedModelAssistedEvidence(input: Readonly<{
   const date = parseDeclaredDateText(dateText.normalize("NFKC"), input.asOfDate);
   if (!date || dateIsFuture(date, input.asOfDate)) return null;
   if (!allowedKindsByDomain[input.extraction.domain]?.includes(input.extraction.eventKind)) return null;
-  if (input.extraction.subject === "partner" && input.extraction.domain !== "relationship") return null;
+  const { subject, relatedPerson, domain } = input.extraction;
+  if (subject === "self" && relatedPerson !== null) return null;
+  if ((subject === "family") !== (domain === "family")) return null;
+  if (familyRelatedPeople.has(relatedPerson) && subject !== "family") return null;
+  if (relatedPerson === "partner" && (subject !== "partner" || domain !== "relationship")) return null;
+  if (subject === "partner" && (domain !== "relationship" || relatedPerson !== "partner")) return null;
+  if (explicitFamilySubjectMarkers.some((marker) => sourceSpan.includes(marker))
+    && (subject !== "family" || domain !== "family")) return null;
   const summary = eventSummary(sourceSpan);
   if (summary === missingEventSummary) return null;
   const familyContext = input.extraction.subject === "family" || input.extraction.domain === "family";

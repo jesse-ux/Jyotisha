@@ -1606,3 +1606,31 @@
 - 修复：删除客户端不应拥有的 `high_rigor` 输入；在异步请求结束后从 `globalThis` 重新读取身份缓存；按生产边界把 `Date` 归一化为日期字符串后再构建 onboarding cache identity。
 - 验证：`npx tsc --noEmit`、相关前端测试和生产构建通过。
 - 防复发：测试输入只使用公开类型拥有的字段；异步初始化的全局缓存不要依赖删除前的局部控制流；数据库日期联合类型在进入纯字符串合同前必须归一化。
+
+## BUG-089 | Staging CI 自动升级 MCP 2.0 导致旧 FastMCP 导入失败
+
+- 状态：resolved
+- 首次发现：2026-07-29
+- 最近更新：2026-07-29
+- 影响面：`Staging Backend Quality Gate` 的 Python quick quality gate 与 staging 发布
+- 用户现象：本地完整验证通过，但 staging push 的质量门在导入 `mcp_server.py` 时失败，报 `ModuleNotFoundError: No module named 'mcp.server.fastmcp'`。
+- 根因：`requirements.txt` 与 `pyproject.toml` 仅声明 `mcp>=1.0`；CI 在 2026-07-29 安装了不兼容的 `mcp 2.0.0`，而仓库当前服务端仍使用 MCP 1.x 的 `mcp.server.fastmcp.FastMCP` 导入合同。本地环境保留 `mcp 1.25.0`，因此未复现依赖漂移。
+- 修复：两个发布依赖入口统一限制为 `mcp>=1.0,<2`，继续使用已验证的 MCP 1.x API，不在本次发布中混入 MCP 2.0 迁移。
+- 验证：新增依赖合同测试同时读取 `requirements.txt` 和 `pyproject.toml`，防止任一入口再次放宽到 MCP 2.x；Python quick quality gate 与构建重新执行。
+- 防复发：运行时依赖的主版本兼容边界必须在全部安装入口保持一致；升级 MCP 2.x 必须作为独立迁移处理并先替换导入/API 合同。
+- 相关记录：BUG-087、BUG-088
+- 修复版本：待本次 staging 修复提交与部署验收
+
+## BUG-090 | V6 审查发现用户可见分钟注入、家庭事件越权和最新事件排序错误
+
+- 状态：resolved
+- 首次发现：2026-07-29
+- 最近更新：2026-07-29
+- 影响面：生时纠正 Renderer、模型辅助事件提取、Opportunity 与 Reasoner 最近事件上下文
+- 用户现象：模型可能在 acknowledgement 或 limitation 中声称唯一出生分钟；家庭健康事件可能被矛盾模型字段伪装成本人可评分事件；UUID 排序与创建时间相反时，下一问可能承接较早经历。
+- 根因：分钟安全验证只覆盖 question；辅助提取校验未拒绝 `subject=self` 与非空家庭 `relatedPerson` 的矛盾组合；账本的稳定 UUID 排序被误当作会话时间顺序。
+- 修复：全部用户可见 Renderer 字段统一执行出生分钟和内部信息安全校验并回落到服务器确定性文案；辅助提取在服务器拒绝主体/亲属矛盾并保持家庭事件 `context_only` 边界；Builder 与 Reasoner 显式按 `createdAt`、`eventId`、revision 稳定排序最近事件，不改变证据哈希使用的账本排序。
+- 验证：新增 acknowledgement/limitation 分钟注入、家庭 ICU 事件越权、UUID 与创建时间逆序的回归测试，并重新运行前端完整测试、lint、TypeScript 与构建。
+- 防复发：所有模型可写用户文案共享同一安全边界；模型提取不能决定评分主体；用于哈希的稳定顺序不得被复用为会话时序。
+- 相关记录：BUG-075、BUG-086、BUG-087
+- 修复版本：待本次 staging 修复提交与部署验收

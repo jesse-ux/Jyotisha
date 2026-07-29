@@ -15,6 +15,12 @@ export function latestEventRevisions(revisions: readonly LifeEventRevision[]): r
   return [...latest.values()].sort((left, right) => left.eventId.localeCompare(right.eventId));
 }
 
+export function chronologicalEvents(events: readonly LifeEventRevision[]): readonly LifeEventRevision[] {
+  return [...events].sort((left, right) => left.createdAt.localeCompare(right.createdAt)
+    || left.eventId.localeCompare(right.eventId)
+    || left.revision - right.revision);
+}
+
 export function appendEventRevision(
   revisions: readonly LifeEventRevision[],
   input: NewEventRevision,

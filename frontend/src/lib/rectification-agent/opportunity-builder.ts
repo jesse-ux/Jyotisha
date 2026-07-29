@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { CandidateSnapshot, EvidenceDomain, LifeEventRevision, RectificationV4Turn } from "../rectification-v4/contracts.ts";
+import { chronologicalEvents } from "../rectification-v4/evidence-ledger.ts";
 import type { TargetDisposition } from "../rectification-v4/extraction.ts";
 import type { DiagnosticsSummary, QuestionOpportunity, SemanticQuestionOpportunity } from "./contracts.ts";
 
@@ -181,12 +182,12 @@ export function buildQuestionOpportunities(input: Readonly<{
   }
 
   const scoreableCount = input.events.filter((event) => event.scoreability === "scoreable").length;
+  const latestEvent = chronologicalEvents(input.events).at(-1);
   for (const [domain, policy] of Object.entries(domainPolicy) as [Exclude<EvidenceDomain, "family" | "other">, (typeof domainPolicy)[Exclude<EvidenceDomain, "family" | "other">]][]) {
     if (refusedDomains.has(domain)) continue;
     const covered = scoreableDomains.has(domain);
     const themeBonus = policy.keywords.test(latestContext) ? .12 : 0;
     const alreadyAsked = input.turns.some((turn) => turn.questionDomain === domain && !turn.questionTargetEventId);
-    const latestEvent = input.events.at(-1);
     const latestAnchor = latestEvent ? anchorFor(latestEvent) : null;
     const prompt = latestAnchor
       ? `承接“${latestAnchor}”，请再说一件时间相对明确的经历：${policy.fallbackPrompt}`

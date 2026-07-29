@@ -4,6 +4,7 @@ import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import { defaultLanguageModel, resolveLanguageModel } from "@/mastra/model";
 import type { CandidateSnapshot, LifeEventRevision, PendingEvidence, RectificationV4Case, RectificationV4Turn } from "../rectification-v4/contracts.ts";
+import { chronologicalEvents } from "../rectification-v4/evidence-ledger.ts";
 import type { TargetDisposition } from "../rectification-v4/extraction.ts";
 import { deterministicDecision } from "./fallback-policy.ts";
 import { recordRectificationAgentTelemetry } from "./telemetry.ts";
@@ -54,7 +55,7 @@ export function buildReasonerState(input: Readonly<{
     candidateRangeChanged: input.candidateRangeChanged ?? false,
     latestAnswer: input.recentTurns?.at(-1)?.answer ?? "",
     recentTurns: (input.recentTurns ?? []).slice(-6).map((turn) => ({ question: turn.question, answer: turn.answer })),
-    recentEvents: (input.recentEvents ?? []).slice(-5).map((event) => ({ summary: event.summary, date: event.dateRange.label, domain: event.domain, subject: event.subject })),
+    recentEvents: chronologicalEvents(input.recentEvents ?? []).slice(-5).map((event) => ({ summary: event.summary, date: event.dateRange.label, domain: event.domain, subject: event.subject })),
     currentTarget: input.currentTarget ? { summary: input.currentTarget.summary, date: input.currentTarget.dateRange.label, domain: input.currentTarget.domain } : null,
     targetDisposition: input.targetDisposition ?? "not_applicable",
     pendingEvidence: {

@@ -11,7 +11,8 @@ const bannedAcknowledgement = /(?:这个信息很有用|它不是单纯的|而�
 const overinterpretedAcknowledgement = /(?:职业方向正式落地|人生意义|意味着你|说明你(?:已经|开始|正式)|标志着你)/;
 const internalTerms = /(?:opportunityId|snapshotId|eventId|targetEventId|requestedFields|fallbackPrompt|tool\s*call|tool_call|score|评分|模型名|opportunity|snapshot|D\d{1,2}|KP\b|Vimshottari)/i;
 const multiQuestionMoves = /(?:另外|还有|同时再说|并且告诉我|顺便|再告诉我)/;
-const birthMinute = /(?:出生|生时|几点).{0,12}(?:[01]\d|2[0-3]):[0-5]\d|(?:[01]\d|2[0-3]):[0-5]\d.{0,12}(?:出生|生时)/;
+const exactClockMinute = /(?:[01]?\d|2[0-3])[:：][0-5]\d|(?:[零〇一二两三四五六七八九十]{1,3}|(?:[01]?\d|2[0-3]))点(?:[零〇一二两三四五六七八九十]{1,3}|[0-5]?\d)分/;
+const exactMinuteClaim = /(?:唯一|准确|精确|确切|确认|确定|代表).{0,12}(?:出生|生时)?(?:时间|时刻|分钟)|(?:出生|生时)(?:时间|时刻|分钟)?.{0,12}(?:唯一|准确|精确|确切|确认|确定|代表|就是)/;
 
 function agentFor(modelId: string | null): { id: string; agent: Agent } | null {
   const selected = (modelId ? resolveLanguageModel(modelId) : null) ?? defaultLanguageModel();
@@ -33,6 +34,13 @@ function normalized(value: string): string {
   return value.normalize("NFKC").replace(/[“”"'\s，,。.!！?？:：；;]/g, "");
 }
 
+function visibleTextSafetyIssues(value: string): string[] {
+  const issues: string[] = [];
+  if (internalTerms.test(value)) issues.push("internal_information_exposed");
+  if (exactClockMinute.test(value) || exactMinuteClaim.test(value)) issues.push("birth_minute_injected");
+  return issues;
+}
+
 export function validateQuestionRealization(question: unknown, opportunity: QuestionOpportunity): Readonly<{ valid: boolean; issues: readonly string[] }> {
   if (typeof question !== "string") return { valid: false, issues: ["question_missing"] };
   const value = question.trim();
@@ -41,9 +49,8 @@ export function validateQuestionRealization(question: unknown, opportunity: Ques
   if ((value.match(/[?？]/g) ?? []).length > 1) issues.push("multiple_question_marks");
   if ((value.match(/[。.!！?？]/g) ?? []).length > 2) issues.push("too_many_sentences");
   if (/\n\s*(?:[-*•]|\d+[.)、])/.test(value)) issues.push("question_list_forbidden");
-  if (internalTerms.test(value)) issues.push("internal_information_exposed");
+  issues.push(...visibleTextSafetyIssues(value));
   if (multiQuestionMoves.test(value)) issues.push("multiple_question_instruction");
-  if (birthMinute.test(value)) issues.push("birth_minute_injected");
   if (opportunity.targetEventId) {
     const questionText = normalized(value);
     if (!opportunity.anchors.some((anchor) => questionText.includes(normalized(anchor)))) issues.push("target_anchor_missing");
@@ -111,9 +118,9 @@ export function realizePublicMessage(value: unknown, input: Parameters<typeof de
   const parsed = publicMessageSchema.parse(value);
   const opportunity = input.validated.selectedOpportunity;
   const fallback = deterministic(input);
-  const acknowledgement = bannedAcknowledgement.test(parsed.acknowledgement)
+  const acknowledgement = visibleTextSafetyIssues(parsed.acknowledgement).length > 0
+    || bannedAcknowledgement.test(parsed.acknowledgement)
     || overinterpretedAcknowledgement.test(parsed.acknowledgement)
-    || internalTerms.test(parsed.acknowledgement)
     || (parsed.acknowledgement.match(/[。.!！?？]/g) ?? []).length > 2
     || (input.acceptedEvents.at(-1) && !normalized(parsed.acknowledgement).includes(normalized(input.acceptedEvents.at(-1)!.summary)))
     ? fallback.acknowledgement
@@ -124,7 +131,7 @@ export function realizePublicMessage(value: unknown, input: Parameters<typeof de
   return {
     acknowledgement,
     candidateUpdate: fallback.candidateUpdate,
-    limitation: fallback.limitation ?? (parsed.limitation && !internalTerms.test(parsed.limitation) ? parsed.limitation : null),
+    limitation: fallback.limitation ?? (parsed.limitation && visibleTextSafetyIssues(parsed.limitation).length === 0 ? parsed.limitation : null),
     question,
   };
 }
