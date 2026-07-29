@@ -150,11 +150,16 @@ def score_from_matrix(request: RectificationRequest, built: dict[str, Any]) -> l
 
 
 def calculation_spec(request: RectificationRequest) -> dict[str, Any]:
+    def json_number(value: float) -> int | float:
+        return int(value) if value.is_integer() else value
+
     return {
         "version": INPUT_CONTRACT_VERSION,
         "birthDate": request["birth_date"],
         "candidateRange": {"start": request["start_time"], "end": request["end_time"]},
-        "latitude": request["lat"], "longitude": request["lon"], "timezoneOffsetHours": request["tz"],
+        "latitude": json_number(request["lat"]),
+        "longitude": json_number(request["lon"]),
+        "timezoneOffsetHours": json_number(request["tz"]),
         "ayanamsa": "lahiri", "nodeMode": "mean", "minuteStep": 1,
     }
 

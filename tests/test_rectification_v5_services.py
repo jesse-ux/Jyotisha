@@ -6,7 +6,13 @@ from unittest.mock import patch
 
 from scripts.rectification.api_service import diagnostics, score_candidates
 from scripts.rectification.contracts import normalize_rectification_request
-from scripts.rectification.scoring_service import build_event_contribution_matrix, sample_event_dates, score_from_matrix
+from scripts.rectification.scoring_service import (
+    build_event_contribution_matrix,
+    calculation_spec,
+    sample_event_dates,
+    score_from_matrix,
+    sha256,
+)
 from scripts.jyotish_api_server import (
     API_COMMAND_MAP,
     TECHNIQUE_EXAMPLE_ENDPOINTS,
@@ -38,6 +44,13 @@ def request(*, precision: str = "month", event_kind: str = "education_milestone"
 
 
 class RectificationV5ServicesTest(unittest.TestCase):
+    def test_calculation_spec_hash_matches_typescript_for_integral_timezone(self):
+        normalized = normalize_rectification_request(request(), today=date(2026, 7, 28))
+        self.assertEqual(
+            sha256(calculation_spec(normalized)),
+            "f05fe0f56ef9ba2b18ec3c6c54f1649f06f1ae5a926491a5c5f676d718d92865",
+        )
+
     def test_shared_validator_rejects_family_and_non_self_health_scoring(self):
         with self.assertRaisesRegex(ValueError, "domain is not scoreable"):
             normalize_rectification_request(request(domain="family", event_kind="family_bereavement"), today=date(2026, 7, 28))

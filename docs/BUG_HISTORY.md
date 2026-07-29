@@ -1662,3 +1662,17 @@
 - 防复发：模型调用成功、Schema 成功和问题被接受必须分开观测；Opportunity utility 不得把历史关键词与“未覆盖领域”组合成伪装的固定轮询。
 - 相关记录：BUG-086、BUG-090、BUG-091
 - 修复版本：`birth-time-rectification-v6` / `rectification-agent-v6-1`
+
+## BUG-093 | 首次候选评分因跨语言计算规格哈希不一致而失败
+
+- 状态：resolved
+- 首次发现：2026-07-29
+- 最近更新：2026-07-29
+- 影响面：V5 Candidate Engine 首次达到三事件评分门后的 Feature Snapshot 原子持久化
+- 用户现象：第三件可评分事件已经保存在 Turn，但 Worker 最终显示“这次比较没有完成，回答已经保留，请再试一次”，Case 恢复上一问题且没有写入新事件。
+- 根因：服务器创建 Case 时由 TypeScript 对整数时区 `8` 计算规格哈希；Python 请求归一化把它变成浮点数 `8.0`，而 Python JSON 序列化保留 `.0`。两个运行时对语义相同的规格得到不同哈希，完成事务因此拒绝 Feature Snapshot 并抛出 `rectification_v5_feature_snapshot_mismatch`。
+- 修复：Python 生成跨服务 Calculation Spec 时将整数值的经纬度和时区规范化为整数，使其 JSON 数字表示与 TypeScript `JSON.stringify` 一致；评分算法和候选矩阵不变。
+- 验证：新增已知 TypeScript 哈希向量测试，修复前稳定失败、修复后通过；staging Case `e2d3e1d2-efb0-461d-9914-f890bc2b8569` 的 PostgreSQL 日志确认原始异常，使用同一规格重放确认 Python Feature Snapshot 哈希恢复为 Case 哈希。
+- 防复发：跨语言持久化指纹必须使用已知向量验证 JSON 数字规范化，不能只在各自语言内断言自洽。
+- 相关记录：BUG-087、BUG-092
+- 修复版本：`rectification-v5-matrix-scoring-1`（仅修复输入规范化，算法版本不变）
