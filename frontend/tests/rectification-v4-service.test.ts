@@ -53,7 +53,7 @@ test("same calculation spec resumes while a changed spec abandons the old case a
   assert.equal(store.jobs.get(queued.job.id)?.status, "stale");
 }));
 
-test("answer is durably queued and polling does not mutate the job", async () => withMode("v5_agent", async () => {
+test("answer is durably queued and a processing case reload restores its active job", async () => withMode("v5_agent", async () => {
   const store = createRectificationV4MemoryStore();
   const service = createRectificationV4CaseService(store, { now: fixedNow });
   const userId = randomUUID();
@@ -66,8 +66,12 @@ test("answer is durably queued and polling does not mutate the job", async () =>
   });
   assert.equal(queued?.case.status, "processing");
   assert.equal(queued?.turns.at(-1)?.modelId, "gpt-5.5");
+  const queuedJob = queued?.job;
+  assert.ok(queuedJob);
   const before = JSON.stringify([...store.jobs.values()]);
-  assert.equal((await service.loadCase(userId, created.case.id))?.job, null);
+  const restored = await service.loadCase(userId, created.case.id);
+  assert.equal(restored?.job?.id, queuedJob.id);
+  assert.equal(restored?.job?.status, "pending");
   assert.equal(JSON.stringify([...store.jobs.values()]), before);
 }));
 
@@ -78,7 +82,7 @@ test("V5 agent fallback persists Agent Run, Public Message and a server-owned op
   const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
   const queued = await service.answer({
     userId, caseId: created.case.id, actionId: randomUUID(), expectedCaseVersion: 0,
-    answer: "2016年离家去外地上大学",
+    answer: "2016年9月离家去外地上大学",
   });
   assert.ok(queued?.job);
   const worker = createRectificationV4Worker({
@@ -109,7 +113,7 @@ test("V5 shadow runs and persists V5 artifacts but keeps the legacy visible proj
   const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
   const queued = await service.answer({
     userId, caseId: created.case.id, actionId: randomUUID(), expectedCaseVersion: 0,
-    answer: "2016年离家去外地上大学",
+    answer: "2016年9月离家去外地上大学",
   });
   const worker = createRectificationV4Worker({
     store, now: fixedNow,
@@ -123,9 +127,32 @@ test("V5 shadow runs and persists V5 artifacts but keeps the legacy visible proj
   assert.equal(run.deploymentMode, "v5_shadow");
   assert.equal(run.validatedDecision.selectedOpportunity?.kind, "ask_new_event");
   assert.equal(run.validatedDecision.selectedOpportunity?.targetEventId, null);
-  assert.equal(done.case.currentQuestion?.targetEventId, event.eventId);
+  assert.equal(done.case.currentQuestion?.targetEventId, null);
   assert.match(done.case.currentQuestion?.reason ?? "", /V4 legacy projector/);
   assert.match(store.publicMessages.get(queued.job.id)?.acknowledgement ?? "", /我记下了/);
+}));
+
+test("V5 shadow keeps legacy year-precision refinement targeted to the original event", async () => withMode("v5_shadow", async () => {
+  const store = createRectificationV4MemoryStore();
+  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const userId = randomUUID();
+  const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+  const queued = await service.answer({
+    userId, caseId: created.case.id, actionId: randomUUID(), expectedCaseVersion: 0,
+    answer: "2016年离家去外地上大学",
+  });
+  const worker = createRectificationV4Worker({
+    store, now: fixedNow,
+    engine: { async score() { throw new Error("engine must not run before enough events"); } },
+  });
+  assert.equal(await worker.runOnce(), true);
+  const done = await service.loadCase(userId, created.case.id);
+  const event = done?.events[0];
+  assert.ok(queued?.job && event);
+  assert.equal(done.case.currentQuestion?.targetEventId, event.eventId);
+  assert.match(done.case.currentQuestion?.reason ?? "", /V4 legacy projector/);
+  assert.ok([...store.agentRuns.values()].length > 0);
+  assert.ok(store.publicMessages.has(queued.job.id));
 }));
 
 test("legacy cases are not hard-switched to V5 even when flags change later", async () => {

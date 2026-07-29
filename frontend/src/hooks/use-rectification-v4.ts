@@ -24,6 +24,16 @@ function friendly(error: unknown): string {
   return error instanceof Error ? error.message : "暂时无法处理，请稍后再试。";
 }
 
+export function applyRectificationV4JobUpdate(
+  data: RectificationV4ApiResponse | null,
+  job: RectificationV4Job,
+): RectificationV4ApiResponse | null {
+  if (data?.job?.id !== job.id) return data;
+  if (["completed", "failed", "stale"].includes(data.job.status)) return data;
+  if (job.updatedAt < data.job.updatedAt) return data;
+  return { ...data, job };
+}
+
 export function useRectificationV4(input: {
   readonly pendingConsultationQuestion?: string | null;
   readonly onPendingChange?: (pending: boolean) => void;
@@ -31,12 +41,16 @@ export function useRectificationV4(input: {
   const onPendingChange = input.onPendingChange;
   const pendingConsultationQuestion = input.pendingConsultationQuestion?.trim() || null;
   const [data, setData] = useState<RectificationV4ApiResponse | null>(null);
-  const [job, setJob] = useState<RectificationV4Job | null>(null);
   const [handoff, setHandoff] = useState<RectificationV4Handoff | null>(null);
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
   const mounted = useRef(true);
+
+  const job = data?.job ?? null;
+  const jobId = job?.id ?? null;
+  const jobStatus = job?.status ?? null;
+  const caseId = data?.case.id ?? null;
 
   const setBusy = useCallback((value: boolean) => {
     setPending(value);
@@ -47,7 +61,6 @@ export function useRectificationV4(input: {
     const result = caseId ? await loadRectificationV4(caseId) : await loadActiveRectificationV4();
     if (mounted.current) {
       setData(result);
-      setJob(result?.job ?? null);
     }
     return result;
   }, []);
@@ -74,7 +87,6 @@ export function useRectificationV4(input: {
         }
         if (mounted.current) {
           setData(result);
-          setJob(result.job);
           setHandoff(nextHandoff);
         }
       } catch (caught) {
@@ -87,23 +99,30 @@ export function useRectificationV4(input: {
   }, [pendingConsultationQuestion]);
 
   useEffect(() => {
-    const jobId = job?.id;
-    if (!jobId || !["pending", "processing"].includes(job.status)) return;
-    const timer = window.setInterval(() => {
-      void loadRectificationV4Job(jobId).then(async (next) => {
-        if (!mounted.current) return;
-        setJob(next);
-        if (["completed", "failed", "stale"].includes(next.status) && data) {
-          window.clearInterval(timer);
-          const latest = await refresh(data.case.id);
+    if (!jobId || !jobStatus || !["pending", "processing"].includes(jobStatus)) return;
+    let cancelled = false;
+    let timer: number | null = null;
+    const poll = async () => {
+      try {
+        const next = await loadRectificationV4Job(jobId);
+        if (cancelled || !mounted.current) return;
+        setData((current) => applyRectificationV4JobUpdate(current, next));
+        if (["completed", "failed", "stale"].includes(next.status) && caseId) {
+          const latest = await refresh(caseId);
           if (next.status === "failed" && latest) setError("这次比较没有完成，回答已经保留，请再试一次。");
+          return;
         }
-      }).catch((caught) => {
-        if (mounted.current) setError(friendly(caught));
-      });
-    }, 1_000);
-    return () => window.clearInterval(timer);
-  }, [data, job, refresh]);
+      } catch (caught) {
+        if (!cancelled && mounted.current) setError(friendly(caught));
+      }
+      if (!cancelled) timer = window.setTimeout(() => void poll(), 1_000);
+    };
+    timer = window.setTimeout(() => void poll(), 1_000);
+    return () => {
+      cancelled = true;
+      if (timer !== null) window.clearTimeout(timer);
+    };
+  }, [caseId, jobId, jobStatus, refresh]);
 
   const mutate = useCallback(async (operation: () => Promise<RectificationV4ApiResponse>) => {
     setBusy(true);
@@ -112,7 +131,6 @@ export function useRectificationV4(input: {
       const result = await operation();
       if (mounted.current) {
         setData(result);
-        setJob(result.job);
       }
       return result;
     } catch (caught) {

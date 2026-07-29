@@ -1724,3 +1724,19 @@
 - 相关记录：BUG-076、BUG-091、BUG-095
 - 复发自：无
 - 修复版本：待本次 staging 修复提交与部署验收
+
+## BUG-097 | 生时纠正分析状态停滞且教育事件被换词重问为迁居
+
+- 状态：resolved
+- 首次发现：2026-07-29
+- 最近更新：2026-07-29
+- 影响面：V5 Agent 生时纠正运行状态、历史消息布局、Semantic Question Opportunity 排序与 Renderer 安全回退
+- 用户现象：任务实际已经经过“生成语义问题机会、选择下一步动作、生成安全回复”，页面运行中却一直显示“正在整理你刚才提到的经历”；完成后的“分析过程”显示在 Agent 正文下方；用户已经说明离家去外地上大学的年月后，下一问仍把同一经历换词问成搬到新城市或长期离乡。
+- 触发条件：Job 轮询返回新的 `phase`，但聊天消息继续读取首次 Case 响应中的旧 `data.job`；同时教育事件原文中的“离家、外地”命中迁居领域关键词并抬高 relocation 机会，Renderer 失败回退后直接使用带“以当前事件为时间参照”的模板。
+- 根因：Hook 同时维护 `data.job` 与独立 Job state，轮询只更新后者；恢复 processing Case 时 API 没有返回 active Job，刷新后无法继续轮询；`setInterval` 允许并发请求，较旧响应可能覆盖较新 phase；机会排序把零散地点词当成迁居主题信号，没有优先采用最新账本事件的已确认领域；迁居 fallback 和问题验证器没有禁止把当前事件改写成另一件事件继续追问。
+- 修复：轮询结果原子合并回 `data.job`，消息状态直接跟随服务端 `extracting_evidence / planning_question / reasoning / rendering`；Case Store 和 API 为 processing Case 恢复最新 pending/processing Job；轮询改为单飞 `setTimeout` 并拒绝较旧响应；把持久化分析收据移动到 Agent 正文上方并保留正文下方操作栏；迁居关键词收窄为明确搬迁动作，最新事件主题加权以账本领域为准；所有新事件 fallback 明确询问另一件独立事件，Renderer 拒绝旧跨事件模板、同义重复和与所选机会领域不匹配的问题。
+- 验证：组件测试锁定分析过程、正文、操作栏顺序、连续 Job phase 更新及乱序响应不倒退；服务测试锁定 processing 刷新恢复 active Job 和 shadow 年精度 legacy 细化；Agent 测试锁定外地上大学不会提升 relocation、事件数组顺序不改变排序、旧模板与跨领域实现触发安全 fallback；完整前端测试、lint、TypeScript、staging 构建、Python V5 服务测试和 staging 精确 SHA smoke 随本次发布执行。
+- 防复发：UI 只允许一个 Job 真源，恢复 processing Case 必须携带 active Job，轮询必须单飞且单调更新；新事件机会不得把 anchor 当作待细化目标；主题信号优先来自已验证事件领域，地点词不能单独代表迁居；Renderer 必须同时验证“另一件事件”、所选领域语义与安全边界。
+- 相关记录：BUG-090、BUG-093、BUG-094、BUG-095
+- 复发自：BUG-093、BUG-095
+- 修复版本：待本次 staging 修复提交与部署验收

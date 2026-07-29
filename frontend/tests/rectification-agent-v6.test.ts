@@ -191,6 +191,66 @@ test("Builder 的领域排序不受事件输入数组顺序影响", () => {
   assert.deepEqual(domains([education, career]), domains([career, education]));
 });
 
+test("外地上大学不会被换词提升为迁居问题", () => {
+  const education = event({
+    summary: "离家去外地上大学",
+    rawText: "2016 年 9 月离家去外地上大学",
+  });
+  const opportunities = buildQuestionOpportunities({
+    caseId,
+    events: [education],
+    turns: [turn({ answer: education.rawText })],
+    snapshot: null,
+    diagnostics: null,
+  });
+
+  assert.notEqual(opportunities[0]?.domain, "relocation");
+  const relocation = opportunities.find((item) => item.kind === "ask_new_event" && item.domain === "relocation");
+  assert.ok(relocation);
+  assert.doesNotMatch(relocation.fallbackPrompt, /搬到新城市|长期离乡|以.*为(?:时间)?参照/);
+  assert.match(relocation.fallbackPrompt, /除了.*离家去外地上大学.*搬家或迁居/);
+
+  const repeated = "以“离家去外地上大学”为时间参照，你哪次搬到新城市或长期离乡的年月最确定？";
+  assert.equal(validateQuestionRealization(repeated, relocation).valid, false);
+  assert.equal(validateQuestionRealization("离家去外地上大学这件事大概发生在哪年哪月？", relocation).valid, false);
+  assert.equal(validateQuestionRealization("除了离家去外地上大学，你哪次工作变化发生在哪年哪月？", relocation).valid, false);
+  const message = realizePublicMessage({ acknowledgement: "你提到的是 2016 年 9 月离家去外地上大学。", candidateUpdate: null, limitation: null, question: repeated }, {
+    latestAnswer: education.rawText,
+    acceptedEvents: [education],
+    pendingEvidence: [],
+    snapshot: null,
+    previousSnapshot: null,
+    validated: validated(relocation),
+  });
+  assert.equal(message.question, relocation.fallbackPrompt);
+});
+
+test("外地上大学场景的机会排序不受事件数组顺序影响", () => {
+  const education = event({
+    summary: "离家去外地上大学",
+    rawText: "2016 年 9 月离家去外地上大学",
+    createdAt: "2026-07-29T02:00:00.000Z",
+  });
+  const career = event({
+    domain: "career",
+    eventKind: "career_change",
+    summary: "开始第一份工作",
+    rawText: "2019 年 7 月开始第一份工作",
+    dateRange: { start: "2019-07-01", end: "2019-07-31", precision: "month", label: "2019年7月" },
+    createdAt: "2026-07-29T01:00:00.000Z",
+  });
+  const ranked = (events: readonly LifeEventRevision[]) => buildQuestionOpportunities({
+    caseId,
+    events,
+    turns: [turn({ answer: education.rawText, createdAt: education.createdAt })],
+    snapshot: null,
+    diagnostics: null,
+  }).map((item) => [item.kind, item.domain, item.utility, item.fallbackPrompt]);
+
+  assert.deepEqual(ranked([education, career]), ranked([career, education]));
+  assert.doesNotMatch(ranked([education, career]).map((item) => item[3]).join("\n"), /搬到新城市|长期离乡|以.*为(?:时间)?参照/);
+});
+
 test("研究院实习后优先延续最新主题，不被旧教育事件的离家关键词拉回迁居问卷", () => {
   const education = event({
     summary: "离家去外地上大学",
@@ -248,6 +308,51 @@ test("Renderer 接受锚定最新事件的自然新事件问题并拒绝旧固�
   });
   assert.equal(message.question, naturalQuestion);
   assert.notEqual(message.question, opportunity.fallbackPrompt);
+});
+
+test("ask_new_event 领域验证忽略承接 anchor，拒绝实际询问的跨领域事件", () => {
+  const latest = event({
+    domain: "career",
+    eventKind: "career_change",
+    summary: "去石油化工研究院实习做研究员",
+    rawText: "2020年4月去石油化工研究院实习做研究员",
+    dateRange: { start: "2020-04-01", end: "2020-04-30", precision: "month", label: "2020年4月" },
+  });
+  const opportunity = buildQuestionOpportunities({ caseId, events: [latest], turns: [turn({ answer: latest.rawText })], snapshot: null, diagnostics: null })
+    .find((item) => item.kind === "ask_new_event" && item.domain === "career");
+  assert.ok(opportunity);
+
+  const result = validateQuestionRealization("研究院实习之后，下一次升学大概发生在什么时候？", opportunity);
+  assert.equal(result.valid, false);
+  assert.ok(result.issues.includes("new_event_domain_mismatch"));
+});
+
+test("ask_new_event 允许明确代词承接并识别教育领域的升学事件", () => {
+  const latest = event({
+    domain: "career",
+    eventKind: "career_change",
+    summary: "去石油化工研究院实习做研究员",
+    rawText: "2020年4月去石油化工研究院实习做研究员",
+    dateRange: { start: "2020-04-01", end: "2020-04-30", precision: "month", label: "2020年4月" },
+  });
+  const baseOpportunity = buildQuestionOpportunities({ caseId, events: [latest], turns: [turn({ answer: latest.rawText })], snapshot: null, diagnostics: null })
+    .find((item) => item.kind === "ask_new_event" && item.domain === "career");
+  assert.ok(baseOpportunity);
+  const opportunity: QuestionOpportunity = { ...baseOpportunity, domain: "education" };
+
+  for (const reference of ["这次经历", "刚才那段", "你刚说的"]) {
+    const result = validateQuestionRealization(`${reference}之后，下一次升学大概发生在什么时候？`, opportunity);
+    assert.equal(result.valid, true, `${reference}: ${result.issues.join(",")}`);
+  }
+});
+
+test("targetEventId 非空时只接受完整真实 anchor，不接受代词或四字片段", () => {
+  const target = event({ summary: "2020年4月研究院实习" });
+  const opportunity = targetOpportunity(target);
+
+  assert.equal(validateQuestionRealization("关于2020年4月研究院实习，你还记得具体日期吗？", opportunity).valid, true);
+  assert.equal(validateQuestionRealization("关于研究院实习，你还记得具体日期吗？", opportunity).valid, false);
+  assert.equal(validateQuestionRealization("关于这次经历，你还记得具体日期吗？", opportunity).valid, false);
 });
 
 test("Builder 和 Reasoner 按事件创建时间承接最近经历而不是 UUID 顺序", () => {

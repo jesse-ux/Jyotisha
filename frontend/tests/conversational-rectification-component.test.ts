@@ -7,6 +7,7 @@ import {
   rectificationPhaseLabel,
   toggleRectificationFeedback,
 } from "../src/components/rectification-v4-panel.tsx";
+import { applyRectificationV4JobUpdate } from "../src/hooks/use-rectification-v4.ts";
 import type { RectificationV4ApiResponse } from "../src/lib/rectification-v4/contracts.ts";
 
 const id = "00000000-0000-4000-8000-000000000901";
@@ -122,7 +123,7 @@ test("v4 rectification reuses the ordinary session message list, composer, and m
   assert.match(component, /<span>分析过程<\/span>/);
   assert.match(
     component,
-    /<RectificationAnalysisDetails trace=\{message\.analysisTrace\} \/>[\s\S]*?<div className="rectification-message-actions"/,
+    /<RectificationAnalysisDetails trace=\{message\.analysisTrace\} \/>[\s\S]*?<RectificationMessageRow[\s\S]*?<div className="rectification-message-actions"/,
   );
   assert.match(component, /caseValue\?\.deploymentMode === "v5_agent"/);
   assert.match(component, /controller\.regenerate\(\)/);
@@ -229,28 +230,57 @@ test("legacy and shadow modes do not expose persisted analysis traces", () => {
   }
 });
 
-test("processing shows the current server job phase in Chinese", () => {
-  const base = response({ currentQuestion: null, status: "processing", phase: "checking_robustness" });
-  const data = {
-    ...base,
-    job: {
-      id: "00000000-0000-4000-8000-000000000909",
-      caseId: id,
-      status: "processing",
-      phase: "checking_robustness",
-      expectedCaseVersion: 2,
-      evidenceSetHash: "b".repeat(64),
-      calculationSpecHash: "a".repeat(64),
-      errorCode: null,
-      createdAt: now,
-      updatedAt: now,
-    },
-  } as unknown as RectificationV4ApiResponse;
-  const messages = rectificationV4ChatMessages(data, true);
-  assert.equal(messages.at(-1)?.role, "assistant");
-  assert.equal(messages.at(-1)?.state, "thinking");
-  assert.equal(messages.at(-1)?.text, "正在检查候选范围的稳定性…");
-  assert.equal(rectificationPhaseLabel("planning_question"), "正在选择下一条最有信息量的问题…");
+test("processing follows every server job phase returned by polling", () => {
+  const base = response({ currentQuestion: null, status: "processing", phase: "extracting_evidence" });
+  const job = {
+    id: "00000000-0000-4000-8000-000000000909",
+    caseId: id,
+    status: "processing",
+    phase: "extracting_evidence",
+    expectedCaseVersion: 2,
+    evidenceSetHash: "b".repeat(64),
+    calculationSpecHash: "a".repeat(64),
+    errorCode: null,
+    createdAt: now,
+    updatedAt: now,
+  } as const;
+  let data = { ...base, job } as unknown as RectificationV4ApiResponse;
+  const phases = [
+    ["extracting_evidence", "正在整理你刚才提到的经历…"],
+    ["planning_question", "正在生成语义问题机会…"],
+    ["reasoning", "正在选择下一步动作…"],
+    ["rendering", "正在生成安全回复…"],
+  ] as const;
+
+  for (const [phase, label] of phases) {
+    const updated = applyRectificationV4JobUpdate(data, { ...job, phase });
+    assert.ok(updated);
+    data = updated;
+    const message = rectificationV4ChatMessages(data, true).at(-1);
+    assert.equal(message?.role, "assistant");
+    assert.equal(message?.state, "thinking");
+    assert.equal(message?.text, label);
+  }
+  assert.equal(rectificationPhaseLabel("checking_robustness"), "正在检查候选范围的稳定性…");
+});
+
+test("polling ignores an older job response so the visible phase cannot move backward", () => {
+  const base = response({ currentQuestion: null, status: "processing", phase: "rendering" });
+  const latest = {
+    id: "00000000-0000-4000-8000-000000000909",
+    caseId: id,
+    status: "processing",
+    phase: "rendering",
+    expectedCaseVersion: 2,
+    evidenceSetHash: "b".repeat(64),
+    calculationSpecHash: "a".repeat(64),
+    errorCode: null,
+    createdAt: now,
+    updatedAt: "2026-07-27T00:00:02.000Z",
+  } as const;
+  const data = { ...base, job: latest } as unknown as RectificationV4ApiResponse;
+  const stale = { ...latest, phase: "planning_question" as const, updatedAt: "2026-07-27T00:00:01.000Z" };
+  assert.equal(applyRectificationV4JobUpdate(data, stale)?.job?.phase, "rendering");
 });
 
 test("analysis details render only public labels and preserve the message action icons", () => {

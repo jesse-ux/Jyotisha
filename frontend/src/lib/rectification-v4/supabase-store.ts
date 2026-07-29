@@ -345,6 +345,14 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
       if (!row || row.user_id !== userId) return null;
       return jobValue(row);
     },
+    async loadActiveJob(userId, caseId) {
+      const { data, error } = await supabase.from("birth_time_rectification_v4_jobs")
+        .select("*").eq("user_id", userId).eq("case_id", caseId)
+        .in("status", ["pending", "processing"])
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (error) throw storeError(error);
+      return data ? jobValue(data as Row) : null;
+    },
     async updateJobPhase(input) {
       await rpc("update_birth_time_rectification_v4_job_phase", {
         p_worker_id: input.workerId,

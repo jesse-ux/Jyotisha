@@ -16,12 +16,12 @@ const domainPolicy: Readonly<Record<Exclude<EvidenceDomain, "family" | "other">,
   recallEase: number;
   privacyCost: number;
 }>>> = {
-  education: { goal: "收集一件有大致日期的教育转折。", fallbackPrompt: (anchor) => anchor ? `在“${anchor}”之外，你还记得哪次入学、毕业或专业变化大概发生在哪年哪月？` : "你还记得哪次入学、毕业或专业变化大概发生在哪年哪月？", keywords: /大学|学校|入学|毕业|考试|专业|读书/, recallEase: .82, privacyCost: .03 },
-  relocation: { goal: "收集一件有大致日期的迁居经历。", fallbackPrompt: (anchor) => anchor ? `以“${anchor}”为时间参照，你哪次搬到新城市或长期离乡的年月最确定？` : "你哪次搬到新城市或长期离乡的年月最确定？", keywords: /搬家|迁居|离家|外地|城市|北京|上海|出国/, recallEase: .78, privacyCost: .04 },
-  relationship: { goal: "在用户愿意的前提下收集一件有大致日期的关系转折。", fallbackPrompt: (anchor) => anchor ? `说到“${anchor}”这段时期，如果你愿意，哪次关系变化的大概年月还记得？` : "如果你愿意，哪次关系变化的大概年月还记得？", keywords: /恋爱|关系|结婚|离婚|分手|伴侣|对象/, recallEase: .62, privacyCost: .22 },
-  career: { goal: "收集一件有大致日期的职业转折。", fallbackPrompt: (anchor) => anchor ? `在“${anchor}”之后，哪次工作或职责明显变化的年月你还记得？` : "哪次工作或职责明显变化的年月你还记得？", keywords: /工作|实习|公司|研究院|职业|入职|离职|创业|负责/, recallEase: .85, privacyCost: .03 },
-  finance: { goal: "在用户愿意的前提下收集一件有大致日期的财务转折。", fallbackPrompt: (anchor) => anchor ? `以“${anchor}”为时间参照，如果方便，哪次财务状况明显变化的年月你还记得？` : "如果方便，哪次财务状况明显变化的年月你还记得？", keywords: /收入|负债|投资|资产|财务|买房|卖房/, recallEase: .6, privacyCost: .18 },
-  health_pressure: { goal: "在用户愿意的前提下收集一件本人有大致日期的健康转折。", fallbackPrompt: (anchor) => anchor ? `说到“${anchor}”前后，如果方便，你本人哪次健康变化的大概年月还记得？` : "如果方便，你本人哪次健康变化的大概年月还记得？", keywords: /住院|手术|事故|健康|生病|确诊|康复/, recallEase: .58, privacyCost: .28 },
+  education: { goal: "收集一件有大致日期的教育转折。", fallbackPrompt: (anchor) => anchor ? `除了“${anchor}”，你还记得哪次入学、毕业或专业变化大概发生在哪年哪月？` : "你还记得哪次入学、毕业或专业变化大概发生在哪年哪月？", keywords: /大学|学校|入学|毕业|考试|专业|读书/, recallEase: .82, privacyCost: .03 },
+  relocation: { goal: "收集一件有大致日期的迁居经历。", fallbackPrompt: (anchor) => anchor ? `除了“${anchor}”，你还记得哪次独立搬家或迁居大概发生在哪年哪月？` : "你还记得哪次搬家或迁居大概发生在哪年哪月？", keywords: /搬家|搬到|搬去|迁居|迁到|迁往|移居|定居|长期居住/, recallEase: .78, privacyCost: .04 },
+  relationship: { goal: "在用户愿意的前提下收集一件有大致日期的关系转折。", fallbackPrompt: (anchor) => anchor ? `除了“${anchor}”，如果你愿意，哪次关系变化的大概年月还记得？` : "如果你愿意，哪次关系变化的大概年月还记得？", keywords: /恋爱|关系|结婚|离婚|分手|伴侣|对象/, recallEase: .62, privacyCost: .22 },
+  career: { goal: "收集一件有大致日期的职业转折。", fallbackPrompt: (anchor) => anchor ? `除了“${anchor}”，哪次工作或职责明显变化的年月你还记得？` : "哪次工作或职责明显变化的年月你还记得？", keywords: /工作|实习|公司|研究院|职业|入职|离职|创业|负责/, recallEase: .85, privacyCost: .03 },
+  finance: { goal: "在用户愿意的前提下收集一件有大致日期的财务转折。", fallbackPrompt: (anchor) => anchor ? `除了“${anchor}”，如果方便，哪次财务状况明显变化的年月你还记得？` : "如果方便，哪次财务状况明显变化的年月你还记得？", keywords: /收入|负债|投资|资产|财务|买房|卖房/, recallEase: .6, privacyCost: .18 },
+  health_pressure: { goal: "在用户愿意的前提下收集一件本人有大致日期的健康转折。", fallbackPrompt: (anchor) => anchor ? `除了“${anchor}”，如果方便，你本人哪次健康变化的大概年月还记得？` : "如果方便，你本人哪次健康变化的大概年月还记得？", keywords: /住院|手术|事故|健康|生病|确诊|康复/, recallEase: .58, privacyCost: .28 },
 };
 
 function stableUuid(value: string): string {
@@ -182,13 +182,15 @@ export function buildQuestionOpportunities(input: Readonly<{
   for (const [domain, policy] of Object.entries(domainPolicy) as [Exclude<EvidenceDomain, "family" | "other">, (typeof domainPolicy)[Exclude<EvidenceDomain, "family" | "other">]][]) {
     if (refusedDomains.has(domain)) continue;
     const covered = scoreableDomains.has(domain);
-    const themeBonus = policy.keywords.test(latestContext) ? .22 : 0;
+    const themeBonus = latestEvent
+      ? latestEvent.domain === domain ? .22 : 0
+      : policy.keywords.test(latestContext) ? .22 : 0;
     const alreadyAsked = input.turns.some((turn) => turn.questionDomain === domain && !turn.questionTargetEventId);
     const latestAnchor = latestEvent ? anchorFor(latestEvent) : null;
     opportunities.push(opportunity(input.caseId, {
       kind: "ask_new_event", domain, targetEventId: null, goal: policy.goal,
       requestedFields: ["new_dated_event"], anchors: latestAnchor ? [latestAnchor] : [],
-      contextFacts: [`已有 ${scoreableCount} 件可评分事件。`, `该领域${covered ? "已有覆盖" : "尚未覆盖"}。`],
+      contextFacts: [`已有 ${scoreableCount} 件可评分事件。`, `该领域${covered ? "已有覆盖" : "尚未覆盖"}。`, "需要另一件独立事件，不要把最新事件换词重问。"],
       fallbackPrompt: policy.fallbackPrompt(latestAnchor), reason: covered ? "继续收集可区分候选的独立事件。" : "补足证据领域覆盖。",
       expectedInformationGain: covered ? .54 + themeBonus : .65 + themeBonus / 2,
       dateSensitivity: input.snapshot ? .5 : .35,

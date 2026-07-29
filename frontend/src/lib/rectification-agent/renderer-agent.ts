@@ -12,9 +12,19 @@ const bannedAcknowledgement = /(?:这个信息很有用|它不是单纯的|而�
 const overinterpretedAcknowledgement = /(?:职业方向正式落地|人生意义|意味着你|说明你(?:已经|开始|正式)|标志着你)/;
 const internalTerms = /(?:opportunityId|snapshotId|eventId|targetEventId|requestedFields|fallbackPrompt|tool\s*call|tool_call|score|评分|模型名|opportunity|snapshot|D\d{1,2}|KP\b|Vimshottari)/i;
 const multiQuestionMoves = /(?:另外|还有|同时再说|并且告诉我|顺便|再告诉我)/;
-const cannedQuestion = /(?:承接[“\"']?.{0,80}[”\"']?，?请再说一件|接下来请继续讲另一件|我会顺着你的叙述继续核对)/;
+const cannedQuestion = /(?:承接[“\"']?.{0,80}[”\"']?，?请再说一件|接下来请继续讲另一件|我会顺着你的叙述继续核对|以[“\"']?.{0,80}[”\"']?为(?:时间)?参照|搬到新城市|长期离乡)/;
 const exactClockMinute = /(?:[01]?\d|2[0-3])[:：][0-5]\d|(?:[零〇一二两三四五六七八九十]{1,3}|(?:[01]?\d|2[0-3]))点(?:[零〇一二两三四五六七八九十]{1,3}|[0-5]?\d)分/;
 const exactMinuteClaim = /(?:唯一|准确|精确|确切|确认|确定|代表).{0,12}(?:出生|生时)?(?:时间|时刻|分钟)|(?:出生|生时)(?:时间|时刻|分钟)?.{0,12}(?:唯一|准确|精确|确切|确认|确定|代表|就是)/;
+const distinctEventMove = /(?:除了|另一(?:件|次)|下(?:一|1)次|之后|后来|此后|还记得)/;
+const explicitAnchorReference = /(?:这次经历|这段经历|刚才那段|刚才这段|你刚说的|你刚提到的|刚说的|刚提到的|前面那段|这件事)/;
+const newEventDomainTerms: Readonly<Partial<Record<QuestionOpportunity["domain"], RegExp>>> = {
+  education: /(?:入学|升学|毕业|学校|大学|专业|考试|读书)/,
+  relocation: /(?:搬家|搬到|搬去|迁居|迁到|迁往|移居|定居)/,
+  relationship: /(?:恋爱|关系|结婚|离婚|分手|伴侣|对象)/,
+  career: /(?:工作|实习|公司|研究院|职业|入职|离职|创业|职责|负责)/,
+  finance: /(?:收入|负债|投资|资产|财务|买房|卖房)/,
+  health_pressure: /(?:住院|手术|事故|健康|生病|确诊|康复)/,
+};
 const questionRealizationSchema = z.object({ question: z.string().trim().min(1).max(1_000) }).strict();
 
 function agentFor(modelId: string | null): { id: string; agent: Agent } | null {
@@ -37,14 +47,32 @@ function normalized(value: string): string {
   return value.normalize("NFKC").replace(/[“”"'\s，,。.!！?？:：；;]/g, "");
 }
 
-function includesAnchor(question: string, anchor: string): boolean {
+function matchingAnchorFragment(question: string, anchor: string): string | null {
   const normalizedQuestion = normalized(question);
   const normalizedAnchor = normalized(anchor);
-  if (normalizedQuestion.includes(normalizedAnchor)) return true;
-  for (let start = 0; start <= normalizedAnchor.length - 4; start += 1) {
-    if (normalizedQuestion.includes(normalizedAnchor.slice(start, start + 4))) return true;
+  if (!normalizedAnchor) return null;
+  if (normalizedQuestion.includes(normalizedAnchor)) return normalizedAnchor;
+  for (let length = Math.min(normalizedQuestion.length, normalizedAnchor.length); length >= 4; length -= 1) {
+    for (let start = 0; start <= normalizedAnchor.length - length; start += 1) {
+      const fragment = normalizedAnchor.slice(start, start + length);
+      if (normalizedQuestion.includes(fragment)) return fragment;
+    }
   }
-  return false;
+  return null;
+}
+
+function includesStrictAnchor(question: string, anchor: string): boolean {
+  const normalizedAnchor = normalized(anchor);
+  return normalizedAnchor.length > 0 && normalized(question).includes(normalizedAnchor);
+}
+
+function withoutMatchedAnchors(question: string, anchors: readonly string[]): string {
+  let remaining = normalized(question);
+  for (const anchor of anchors) {
+    const matched = matchingAnchorFragment(remaining, anchor);
+    if (matched) remaining = remaining.replace(matched, "");
+  }
+  return remaining;
 }
 
 function visibleTextSafetyIssues(value: string): string[] {
@@ -65,8 +93,15 @@ export function validateQuestionRealization(question: unknown, opportunity: Ques
   issues.push(...visibleTextSafetyIssues(value));
   if (multiQuestionMoves.test(value)) issues.push("multiple_question_instruction");
   if (cannedQuestion.test(value)) issues.push("canned_question_forbidden");
-  if (opportunity.targetEventId || (opportunity.kind === "ask_new_event" && opportunity.anchors.length > 0)) {
-    if (!opportunity.anchors.some((anchor) => includesAnchor(value, anchor))) issues.push("target_anchor_missing");
+  if (opportunity.targetEventId) {
+    if (!opportunity.anchors.some((anchor) => includesStrictAnchor(value, anchor))) issues.push("target_anchor_missing");
+  } else if (opportunity.kind === "ask_new_event") {
+    const anchorMatched = opportunity.anchors.some((anchor) => matchingAnchorFragment(value, anchor) !== null);
+    if (opportunity.anchors.length > 0 && !anchorMatched && !explicitAnchorReference.test(value)) issues.push("target_anchor_missing");
+    if (opportunity.anchors.length > 0 && !distinctEventMove.test(value)) issues.push("new_event_not_distinct");
+    const domainTerms = newEventDomainTerms[opportunity.domain];
+    const questionWithoutAnchor = withoutMatchedAnchors(value, opportunity.anchors);
+    if (domainTerms && !domainTerms.test(questionWithoutAnchor)) issues.push("new_event_domain_mismatch");
   }
   for (const field of opportunity.requestedFields) {
     if (field === "event_subject" && !/(?:本人|你自己|家人|伴侣|配偶)/.test(value)) issues.push("event_subject_not_requested");

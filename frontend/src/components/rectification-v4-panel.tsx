@@ -39,9 +39,9 @@ const phaseLabels = {
   extracting_evidence: "正在整理你刚才提到的经历…",
   scoring_candidates: "正在扫描候选时间…",
   checking_robustness: "正在检查候选范围的稳定性…",
-  planning_question: "正在选择下一条最有信息量的问题…",
-  reasoning: "正在结合上下文决定下一步…",
-  rendering: "正在组织下一条回复…",
+  planning_question: "正在生成语义问题机会…",
+  reasoning: "正在选择下一步动作…",
+  rendering: "正在生成安全回复…",
   complete: "分析已完成",
 } as const;
 
@@ -380,12 +380,12 @@ export function RectificationV4Panel(props: RectificationV4PanelProps) {
             });
             return (
               <div className="rectification-message-entry" key={message.renderKey}>
-                <RectificationMessageRow message={regenerating
-                  ? { ...message, text: "", state: "thinking" }
-                  : message} />
                 {message.role === "assistant" && message.state === "settled" && message.analysisTrace && (
                   <RectificationAnalysisDetails trace={message.analysisTrace} />
                 )}
+                <RectificationMessageRow message={regenerating
+                  ? { ...message, text: "", state: "thinking" }
+                  : message} />
                 {showActions && !regenerating && (
                   <div className="rectification-message-actions" aria-label="Agent 回答操作">
                     <button

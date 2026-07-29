@@ -230,6 +230,12 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
       owned(userId, job.caseId);
       return job;
     },
+    async loadActiveJob(userId, caseId) {
+      owned(userId, caseId);
+      return [...jobs.values()]
+        .filter((job) => job.caseId === caseId && ["pending", "processing"].includes(job.status))
+        .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0] ?? null;
+    },
     async updateJobPhase(input) {
       const job = jobs.get(input.jobId);
       if (!job || job.workerId !== input.workerId || job.status !== "processing") throw new RectificationV4StoreError("lease_lost");

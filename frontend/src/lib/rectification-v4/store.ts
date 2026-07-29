@@ -90,6 +90,7 @@ export interface RectificationV4Store {
     readonly now: string;
   }): Promise<RectificationV4Case>;
   loadJob(userId: string, jobId: string): Promise<RectificationV4Job | null>;
+  loadActiveJob(userId: string, caseId: string): Promise<RectificationV4Job | null>;
   updateJobPhase(input: { readonly workerId: string; readonly jobId: string; readonly phase: RectificationV4Phase; readonly now: string }): Promise<void>;
   claimNextJob(workerId: string, now: string): Promise<ClaimedRectificationV4Job | null>;
   completeJob(input: CompleteRectificationV4JobInput, now: string): Promise<RectificationV4Case>;
