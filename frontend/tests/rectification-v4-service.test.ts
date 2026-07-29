@@ -93,9 +93,11 @@ test("V5 agent fallback persists Agent Run, Public Message and a server-owned op
   assert.ok(event && run && message);
   assert.equal(run.deploymentMode, "v5_agent");
   assert.equal(run.validatedDecision.mode, "deterministic_fallback");
-  assert.equal(run.validatedDecision.selectedOpportunity?.targetEventId, event.eventId);
-  assert.equal(done?.case.currentQuestion?.targetEventId, event.eventId);
+  assert.equal(run.validatedDecision.selectedOpportunity?.kind, "ask_new_event");
+  assert.equal(run.validatedDecision.selectedOpportunity?.targetEventId, null);
+  assert.equal(done?.case.currentQuestion?.targetEventId, null);
   assert.match(done?.case.currentQuestion?.prompt ?? "", /离家去外地上大学/);
+  assert.doesNotMatch(done?.case.currentQuestion?.prompt ?? "", /具体哪一天|几号/);
   assert.equal(message.question, done?.case.currentQuestion?.prompt);
   assert.equal(done?.case.latestSnapshot, null);
 }));
@@ -119,7 +121,8 @@ test("V5 shadow runs and persists V5 artifacts but keeps the legacy visible proj
   const run = [...store.agentRuns.values()][0];
   assert.ok(queued?.job && event && run);
   assert.equal(run.deploymentMode, "v5_shadow");
-  assert.equal(run.validatedDecision.selectedOpportunity?.targetEventId, event.eventId);
+  assert.equal(run.validatedDecision.selectedOpportunity?.kind, "ask_new_event");
+  assert.equal(run.validatedDecision.selectedOpportunity?.targetEventId, null);
   assert.equal(done.case.currentQuestion?.targetEventId, event.eventId);
   assert.match(done.case.currentQuestion?.reason ?? "", /V4 legacy projector/);
   assert.match(store.publicMessages.get(queued.job.id)?.acknowledgement ?? "", /我记下了/);

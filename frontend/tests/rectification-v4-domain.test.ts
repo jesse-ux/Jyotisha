@@ -97,8 +97,8 @@ test("Opportunity Builder prioritizes event-local date refinement and never asks
   const local = opportunities.find((item) => item.kind === "refine_event_date");
   assert.equal(local?.targetEventId, event.eventId);
   assert.equal(local?.domain, "education");
-  assert.match(local?.prompt ?? "", /离家去外地上大学/);
-  assert.match(local?.prompt ?? "", /月份或日期/);
+  assert.match(local?.fallbackPrompt ?? "", /离家去外地上大学/);
+  assert.match(local?.fallbackPrompt ?? "", /哪个月|时间段/);
   assert.ok(opportunities.every((item, index) => index === 0 || opportunities[index - 1]!.utility >= item.utility));
   assert.ok(opportunities.every((item) => item.domain !== "family"));
 });

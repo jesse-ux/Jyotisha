@@ -2,46 +2,142 @@ import path from "node:path";
 import { Agent } from "@mastra/core/agent";
 import { defaultLanguageModel, resolveLanguageModel } from "@/mastra/model";
 import type { CandidateSnapshot, LifeEventRevision, PendingEvidence, RectificationV4Case } from "../rectification-v4/contracts.ts";
-import { publicMessageSchema, type PublicMessage, type ValidatedDecision } from "./contracts.ts";
+import { publicMessageSchema, type PublicMessage, type QuestionOpportunity, type ValidatedDecision } from "./contracts.ts";
 import { recordRectificationAgentTelemetry } from "./telemetry.ts";
 
 const skillPath = process.env.RECTIFICATION_SKILL_PATH?.trim() || path.resolve(process.cwd(), "..", "skills", "birth-time-rectification");
 const agents = new Map<string, Agent>();
+const bannedAcknowledgement = /(?:这个信息很有用|它不是单纯的|而是把|接下来最有价值的是|这样可以避免|已记录[:：]?|我记下了)/;
+const overinterpretedAcknowledgement = /(?:职业方向正式落地|人生意义|意味着你|说明你(?:已经|开始|正式)|标志着你)/;
+const internalTerms = /(?:opportunityId|snapshotId|eventId|targetEventId|requestedFields|fallbackPrompt|tool\s*call|tool_call|score|评分|模型名|opportunity|snapshot|D\d{1,2}|KP\b|Vimshottari)/i;
+const multiQuestionMoves = /(?:另外|还有|同时再说|并且告诉我|顺便|再告诉我)/;
+const birthMinute = /(?:出生|生时|几点).{0,12}(?:[01]\d|2[0-3]):[0-5]\d|(?:[01]\d|2[0-3]):[0-5]\d.{0,12}(?:出生|生时)/;
+
 function agentFor(modelId: string | null): { id: string; agent: Agent } | null {
   const selected = (modelId ? resolveLanguageModel(modelId) : null) ?? defaultLanguageModel();
   if (!selected) return null;
   const cached = agents.get(selected.id);
   if (cached) return { id: selected.id, agent: cached };
   const agent = new Agent({
-    id: `rectification-v5-renderer-${selected.id}`, name: "Birth Time Rectification Response Renderer", model: selected.model, skills: [skillPath],
-    instructions: "Write concise natural Simplified Chinese. Acknowledge the latest experience, state uncertainty honestly, and never expose ids, scores, internal domains, representative minutes, model/tool details, or claim an exact birth minute. Return strict JSON only.",
+    id: `rectification-v6-renderer-${selected.id}`,
+    name: "Birth Time Rectification Response Renderer",
+    model: selected.model,
+    skills: [skillPath],
+    instructions: "Write concise natural Simplified Chinese. Realize exactly one question from the supplied semantic opportunity. Do not invent events or dates, switch targets, interpret the life meaning of an experience, expose ids/scores/techniques, mention a representative minute, or claim an exact birth minute. Avoid canned acknowledgement. Return strict JSON only.",
   });
   agents.set(selected.id, agent);
   return { id: selected.id, agent };
 }
 
-function deterministic(input: { latestAnswer: string; acceptedEvents: readonly LifeEventRevision[]; pendingEvidence: readonly PendingEvidence[]; snapshot: CandidateSnapshot | null; validated: ValidatedDecision }): PublicMessage {
-  const latest = input.acceptedEvents.at(-1);
-  const acknowledgement = latest
-    ? `我记下了你提到的“${latest.summary}”，并保留了你给出的时间精度。`
-    : input.pendingEvidence.length
-      ? "我保留了你刚才的原始描述；其中的日期或事件关系还不能安全进入评分。"
-      : input.latestAnswer
-        ? "我保留了你刚才的原始描述；目前还没有足够明确的新日期可以直接进入评分。"
-        : "我会继续根据已确认的人生事件比较候选范围。";
-  const primary = input.snapshot?.clusters[0];
-  const candidateUpdate = primary ? `目前较集中的候选仍是 ${primary.startTime}–${primary.endTime}；这只是待验证范围，不代表其中某一分钟已被确认。` : null;
-  const limitation = input.validated.decision.action === "stop_low_confidence" ? "现有证据不足以安全缩小范围，我不会把不稳定结果包装成确定时间。" : null;
-  return { acknowledgement, candidateUpdate, limitation, question: input.validated.selectedOpportunity?.prompt ?? null };
+function normalized(value: string): string {
+  return value.normalize("NFKC").replace(/[“”"'\s，,。.!！?？:：；;]/g, "");
 }
 
-export function enforceServerQuestion(value: unknown, question: string | null): PublicMessage {
-  return { ...publicMessageSchema.parse(value), question };
+export function validateQuestionRealization(question: unknown, opportunity: QuestionOpportunity): Readonly<{ valid: boolean; issues: readonly string[] }> {
+  if (typeof question !== "string") return { valid: false, issues: ["question_missing"] };
+  const value = question.trim();
+  const issues: string[] = [];
+  if (value.length < 8 || value.length > 180) issues.push("question_length_invalid");
+  if ((value.match(/[?？]/g) ?? []).length > 1) issues.push("multiple_question_marks");
+  if ((value.match(/[。.!！?？]/g) ?? []).length > 2) issues.push("too_many_sentences");
+  if (/\n\s*(?:[-*•]|\d+[.)、])/.test(value)) issues.push("question_list_forbidden");
+  if (internalTerms.test(value)) issues.push("internal_information_exposed");
+  if (multiQuestionMoves.test(value)) issues.push("multiple_question_instruction");
+  if (birthMinute.test(value)) issues.push("birth_minute_injected");
+  if (opportunity.targetEventId) {
+    const questionText = normalized(value);
+    if (!opportunity.anchors.some((anchor) => questionText.includes(normalized(anchor)))) issues.push("target_anchor_missing");
+  }
+  for (const field of opportunity.requestedFields) {
+    if (field === "event_subject" && !/(?:本人|你自己|家人|伴侣|配偶)/.test(value)) issues.push("event_subject_not_requested");
+    if (field === "event_month" && !/(?:月份|哪个月|几月|大概月份|时间段)/.test(value)) issues.push("event_month_not_requested");
+    if (field === "event_day" && !/(?:哪一天|几号|具体日期|大概日期)/.test(value)) issues.push("event_day_not_requested");
+    if (field === "event_range" && !/(?:大概时间|时间范围|什么时候|哪个时间|哪一段时间)/.test(value)) issues.push("event_range_not_requested");
+    if (field === "event_stage" && !/(?:开始|高峰|结束|正式发生)/.test(value)) issues.push("event_stage_not_requested");
+    if (field === "new_dated_event" && !/(?:哪次|哪件|一件|经历)/.test(value)) issues.push("new_event_not_requested");
+    if (field === "new_dated_event" && !/(?:时间|日期|什么时候|哪年|哪月|几月)/.test(value)) issues.push("new_event_date_not_requested");
+    if (field === "event_year" && !/(?:哪年|年份|哪一年)/.test(value)) issues.push("event_year_not_requested");
+  }
+  return { valid: issues.length === 0, issues };
+}
+
+function primaryRange(snapshot: CandidateSnapshot | null): string | null {
+  const primary = snapshot?.clusters[0];
+  return primary ? `${primary.startTime}–${primary.endTime}` : null;
+}
+
+export function candidateUpdateFor(input: Readonly<{
+  snapshot: CandidateSnapshot | null;
+  previousSnapshot: CandidateSnapshot | null;
+  decisionAction: ValidatedDecision["decision"]["action"];
+}>): string | null {
+  if (!input.snapshot?.canAcceptRange) return null;
+  const current = primaryRange(input.snapshot);
+  if (!current) return null;
+  const previous = primaryRange(input.previousSnapshot);
+  const firstStable = !input.previousSnapshot?.canAcceptRange;
+  const changed = previous !== current;
+  if (!firstStable && !changed) return null;
+  return `目前通过稳定性门的候选范围是 ${current}；它仍是待验证范围，不代表其中某一分钟已被确认。`;
+}
+
+function naturalAcknowledgement(input: { latestAnswer: string; acceptedEvents: readonly LifeEventRevision[]; pendingEvidence: readonly PendingEvidence[] }): string {
+  const latest = input.acceptedEvents.at(-1);
+  if (latest) return `你提到的是 ${latest.dateRange.label} 的“${latest.summary}”。`;
+  if (input.pendingEvidence.length) return "这段经历的事件或日期目前还不足以安全进入评分。";
+  if (input.latestAnswer) return "我会保留你刚才的原始说法，不补写你没有确认的信息。";
+  return "我们继续用时间相对明确的经历比较候选范围。";
+}
+
+function deterministic(input: {
+  latestAnswer: string;
+  acceptedEvents: readonly LifeEventRevision[];
+  pendingEvidence: readonly PendingEvidence[];
+  snapshot: CandidateSnapshot | null;
+  previousSnapshot: CandidateSnapshot | null;
+  validated: ValidatedDecision;
+}): PublicMessage {
+  return {
+    acknowledgement: naturalAcknowledgement(input),
+    candidateUpdate: candidateUpdateFor({ snapshot: input.snapshot, previousSnapshot: input.previousSnapshot, decisionAction: input.validated.decision.action }),
+    limitation: input.validated.decision.action === "stop_low_confidence"
+      ? "现有证据不足以安全缩小范围，我会在这里停下，不把不稳定结果包装成确定时间。"
+      : null,
+    question: input.validated.selectedOpportunity?.fallbackPrompt ?? null,
+  };
+}
+
+export function realizePublicMessage(value: unknown, input: Parameters<typeof deterministic>[0]): PublicMessage {
+  const parsed = publicMessageSchema.parse(value);
+  const opportunity = input.validated.selectedOpportunity;
+  const fallback = deterministic(input);
+  const acknowledgement = bannedAcknowledgement.test(parsed.acknowledgement)
+    || overinterpretedAcknowledgement.test(parsed.acknowledgement)
+    || internalTerms.test(parsed.acknowledgement)
+    || (parsed.acknowledgement.match(/[。.!！?？]/g) ?? []).length > 2
+    || (input.acceptedEvents.at(-1) && !normalized(parsed.acknowledgement).includes(normalized(input.acceptedEvents.at(-1)!.summary)))
+    ? fallback.acknowledgement
+    : parsed.acknowledgement;
+  const question = opportunity
+    ? validateQuestionRealization(parsed.question, opportunity).valid ? parsed.question : opportunity.fallbackPrompt
+    : null;
+  return {
+    acknowledgement,
+    candidateUpdate: fallback.candidateUpdate,
+    limitation: fallback.limitation ?? (parsed.limitation && !internalTerms.test(parsed.limitation) ? parsed.limitation : null),
+    question,
+  };
 }
 
 export async function renderPublicTurn(input: Readonly<{
-  caseValue: RectificationV4Case; latestAnswer: string; acceptedEvents: readonly LifeEventRevision[];
-  pendingEvidence: readonly PendingEvidence[]; snapshot: CandidateSnapshot | null; validated: ValidatedDecision; timeoutMs?: number;
+  caseValue: RectificationV4Case;
+  latestAnswer: string;
+  acceptedEvents: readonly LifeEventRevision[];
+  pendingEvidence: readonly PendingEvidence[];
+  snapshot: CandidateSnapshot | null;
+  previousSnapshot: CandidateSnapshot | null;
+  validated: ValidatedDecision;
+  timeoutMs?: number;
 }>): Promise<PublicMessage> {
   const started = Date.now();
   const deploymentSha = process.env.DEPLOYMENT_SHA?.trim() || null;
@@ -53,14 +149,23 @@ export async function renderPublicTurn(input: Readonly<{
   }
   recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "renderer", outcome: "started", modelId: selected.id, toolName: null, decisionAction: input.validated.decision.action, durationMs: null, errorCode: null, deploymentSha });
   try {
+    const opportunity = input.validated.selectedOpportunity;
     const result = await selected.agent.generate(JSON.stringify({
-      task: "Render the public turn. The server-owned question must not be changed.", latestAnswer: input.latestAnswer,
+      task: "Render one public turn and naturally realize the semantic question contract.",
+      latestAnswer: input.latestAnswer,
       acceptedEvents: input.acceptedEvents.slice(-3).map((event) => ({ summary: event.summary, date: event.dateRange.label, subject: event.subject })),
-      pendingEvidence: input.pendingEvidence.slice(-3).map((event) => ({ rawText: event.rawText, reasonCode: event.reasonCode })),
-      candidateRange: input.snapshot?.clusters[0] ? { start: input.snapshot.clusters[0].startTime, end: input.snapshot.clusters[0].endTime } : null,
-      action: input.validated.decision.action, exactQuestion: input.validated.selectedOpportunity?.prompt ?? null,
+      pendingEvidence: input.pendingEvidence.slice(-3).map((event) => ({ reasonCode: event.reasonCode })),
+      action: input.validated.decision.action,
+      selectedOpportunity: opportunity ? {
+        kind: opportunity.kind,
+        goal: opportunity.goal,
+        requestedFields: opportunity.requestedFields,
+        anchors: opportunity.anchors,
+        contextFacts: opportunity.contextFacts,
+        forbiddenMoves: opportunity.forbiddenMoves,
+      } : null,
     }), { abortSignal: AbortSignal.timeout(input.timeoutMs ?? 15_000), structuredOutput: { schema: publicMessageSchema, jsonPromptInjection: "inline" } });
-    const message = enforceServerQuestion(result.object, input.validated.selectedOpportunity?.prompt ?? null);
+    const message = realizePublicMessage(result.object, input);
     recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "renderer", outcome: "succeeded", modelId: selected.id, toolName: null, decisionAction: input.validated.decision.action, durationMs: Date.now() - started, errorCode: null, deploymentSha });
     return message;
   } catch {

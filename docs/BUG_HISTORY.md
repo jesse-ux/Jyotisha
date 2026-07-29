@@ -1578,3 +1578,31 @@
 - 防复发：当前事件延续必须是服务端 opportunity 所有权规则，而不是 prompt 建议；模型输出即使结构合法，也必须经过 bounded tool budget、active-opportunity lookup、decision validation 和 completion payload hash 四层门控。
 - 相关记录：BUG-075、BUG-085
 - 修复版本：本地 V5 重构，待提交与 staging 验收
+
+## BUG-087 | 语义机会仍退化为固定文案并在拒绝后重复追问
+
+- 状态：resolved
+- 首次发现：2026-07-29
+- 最近更新：2026-07-29
+- 影响面：生时校正 Agent 的证据协调、问题机会、Reasoner 上下文、Renderer、候选范围提示与 Skill 合同
+- 用户现象：对话会把月份已经明确的经历继续机械追问具体日期，按固定领域顺序轮询；用户表示不知道、跳过或换方向后仍可能回到同一事件，Renderer 还会重复套话和未变化的候选范围。
+- 触发条件：Question Opportunity 直接持久化最终 `prompt`，Renderer 再用服务端问题覆盖自然生成结果；缺失领域按固定数组选择，日期策略把所有非日精度事件视为未完成，且证据协调未完整区分拒绝、未知、换向和回答了另一事件。
+- 根因：机会合同混合了“为什么问、要补什么字段”和“最终怎么说”，导致 Reasoner 看不到最近对话语义、Renderer 无法安全自然表达；同时 target disposition 和重复追问预算不完整，固定领域与日期控制流绕过了信息增益、隐私成本和稳定性诊断。
+- 修复：升级为兼容旧 `prompt` 的 `semantic-question-v2`，由 Builder 同时生成并按 utility 排序最多五个活动机会；补齐 `resolved / unknown / declined / direction_change / answered_other_event / unresolved / not_applicable`，限制同一目标连续追问和回答其他事件后的温和补问次数；月份默认足够，仅在日期敏感诊断不稳定时细化。Reasoner 获得脱敏的最近 Turn、事件、目标和机会语义；Renderer 改为验证自然问题并在失败时使用锚定 fallback，同时只在公开门首次通过或范围实际变化时播报范围，相同范围即使再次计算或收到 offer 决策也不重复播报。受限模型辅助提取仅补充确定性解析缺口，服务端继续校验原文子串和日期。
+- 验证：V6 语义合同、日期敏感性、拒绝/换向、回答新事件不覆盖旧事件、单次补问、Renderer 锚点/单问题/分钟注入/内部信息拒绝、候选范围去重、Reasoner 上下文、模型辅助提取和旧 Opportunity 兼容测试通过；四轮端到端测试覆盖月份职业事件、外地入学、无日期搬家换向和后续职业事件，并保留 exact-minute、Profile 写入、legacy/shadow、V5 候选引擎与 completed-job replay 边界。完整前端测试、lint、TypeScript 与 Python 结果见本任务交付记录。
+- 防复发：问题机会只表达服务器拥有的语义目标和约束，最终文案必须通过 realization validator；日期追问必须有诊断依据，拒绝/换向必须关闭目标，领域选择必须由 utility 和上下文驱动。Skill 明确禁止固定问卷、重复范围、唯一分钟、D60 驱动和公开内部评分/技术轨迹。
+- 相关记录：BUG-068、BUG-075、BUG-080、BUG-081、BUG-082、BUG-085、BUG-086
+- 复发自：BUG-085、BUG-086
+- 修复版本：`birth-time-rectification-v6` / `rectification-agent-v6-1`，本地验证完成，待提交与 staging 发布
+
+## BUG-088 | TypeScript 全量检查被过期测试夹具阻塞
+
+- 状态：resolved
+- 首次发现：2026-07-29
+- 最近更新：2026-07-29
+- 影响面：`npx tsc --noEmit` 本地发布前质量门
+- 用户现象：生产构建通过，但全量 TypeScript 检查在三个测试文件报错：事件评分输入仍传入服务端固定的 `high_rigor`、身份全局缓存清理被控制流误收窄为 `never`、onboarding 测试未归一化 PostgreSQL `Date` 联合类型。
+- 根因：测试夹具落后于现有生产合同；这些报错不来自 V6 Agent 运行时，但会让显式 TypeScript 验证失败。
+- 修复：删除客户端不应拥有的 `high_rigor` 输入；在异步请求结束后从 `globalThis` 重新读取身份缓存；按生产边界把 `Date` 归一化为日期字符串后再构建 onboarding cache identity。
+- 验证：`npx tsc --noEmit`、相关前端测试和生产构建通过。
+- 防复发：测试输入只使用公开类型拥有的字段；异步初始化的全局缓存不要依赖删除前的局部控制流；数据库日期联合类型在进入纯字符串合同前必须归一化。

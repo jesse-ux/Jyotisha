@@ -346,7 +346,7 @@ test("Better Auth supports user OTP/password flows and password-only admin login
     );
     assert.equal(adminPasswordRoute.status, 401);
   } finally {
-    const globalServices = identityGlobal.jyotishaIdentityAuth;
+    const globalServices = (globalThis as typeof identityGlobal).jyotishaIdentityAuth;
     if (globalServices) {
       await globalServices.pool.end();
       delete identityGlobal.jyotishaIdentityAuth;

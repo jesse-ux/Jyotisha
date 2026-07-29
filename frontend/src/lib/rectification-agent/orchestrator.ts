@@ -4,6 +4,7 @@ import { buildCandidateClusters } from "../rectification-v4/candidate-clusters.t
 import type { CandidateSnapshot, RectificationV4Question } from "../rectification-v4/contracts.ts";
 import { evaluateDecisionGate } from "../rectification-v4/decision-gate.ts";
 import { reconcileV4Evidence } from "../rectification-v4/extraction.ts";
+import { extractEventWithModel } from "./event-extractor-agent.ts";
 import { evidenceSetHash } from "../rectification-v4/fingerprints.ts";
 import { latestEventRevisions, scoreableEvents } from "../rectification-v4/evidence-ledger.ts";
 import { projectLegacyV4Turn } from "../rectification-v4/legacy-projector.ts";
@@ -48,15 +49,38 @@ export async function processRectificationAgentTurn(input: Readonly<{
 }>> {
   const { claimed, now } = input;
   await input.onPhase?.("extracting_evidence");
-  const reconciliation = claimed.turn.answer ? reconcileV4Evidence({
+  const asOfDate = now.toISOString().slice(0, 10);
+  let reconciliation = claimed.turn.answer ? reconcileV4Evidence({
     caseId: claimed.case.id,
     answer: claimed.turn.answer,
     sourceTurnId: claimed.turn.id,
-    asOfDate: now.toISOString().slice(0, 10),
+    asOfDate,
     existing: claimed.events,
     targetEventId: claimed.turn.questionTargetEventId,
     now,
-  }) : { revisions: [], pending: [], unansweredTargetEventId: null };
+  }) : { revisions: [], pending: [], unansweredTargetEventId: null, targetDisposition: "not_applicable" as const };
+  const needsAssistance = claimed.case.deploymentMode !== "v4_legacy" && (
+    reconciliation.pending.some((event) => event.reasonCode === "event_unparsed")
+    || reconciliation.revisions.some((event) => event.scoreability === "pending_review" || event.scoreability === "unsupported")
+  );
+  if (needsAssistance) {
+    const assisted = await extractEventWithModel({
+      rawText: claimed.turn.answer,
+      sourceTurnId: claimed.turn.id,
+      asOfDate,
+      modelId: claimed.case.orchestrationModelId,
+    });
+    if (assisted) reconciliation = reconcileV4Evidence({
+      caseId: claimed.case.id,
+      answer: claimed.turn.answer,
+      sourceTurnId: claimed.turn.id,
+      asOfDate,
+      existing: claimed.events,
+      targetEventId: claimed.turn.questionTargetEventId,
+      assistedEvidence: [assisted],
+      now,
+    });
+  }
   const extracted = reconciliation.revisions;
   const events = latestEventRevisions([...claimed.events, ...extracted]);
   const scoreable = scoreableEvents(events);
@@ -174,6 +198,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     turns: claimed.turns,
     snapshot,
     diagnostics,
+    targetDisposition: reconciliation.targetDisposition,
     retryTargetEventIds: reconciliation.unansweredTargetEventId ? [reconciliation.unansweredTargetEventId] : [],
   });
   await input.onPhase?.("reasoning");
@@ -182,6 +207,15 @@ export async function processRectificationAgentTurn(input: Readonly<{
     snapshot,
     diagnostics: safeDiagnostics,
     opportunities,
+    recentTurns: claimed.turns,
+    recentEvents: events,
+    currentTarget: claimed.turn.questionTargetEventId
+      ? events.find((event) => event.eventId === claimed.turn.questionTargetEventId) ?? null
+      : null,
+    targetDisposition: reconciliation.targetDisposition,
+    pendingEvidence: reconciliation.pending,
+    candidateRangeChanged: claimed.case.latestSnapshot?.clusters[0]?.startTime !== snapshot?.clusters[0]?.startTime
+      || claimed.case.latestSnapshot?.clusters[0]?.endTime !== snapshot?.clusters[0]?.endTime,
     enabled: claimed.case.deploymentMode !== "v4_legacy",
   });
   const rawDecision = reasoned.decision;
@@ -241,6 +275,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
       acceptedEvents: extracted,
       pendingEvidence: reconciliation.pending,
       snapshot,
+      previousSnapshot: claimed.case.latestSnapshot,
       validated: validatedDecision,
     })
     : legacyProjection.publicMessage;
@@ -248,7 +283,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     id: randomUUID(),
     domain: selectedOpportunity.domain,
     targetEventId: selectedOpportunity.targetEventId,
-    prompt: selectedOpportunity.prompt,
+    prompt: publicMessage.question ?? selectedOpportunity.fallbackPrompt,
     recallCost: selectedOpportunity.privacyCost >= .2
       ? "high" as const
       : selectedOpportunity.recallEase < .6

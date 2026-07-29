@@ -228,7 +228,11 @@ test("profile B replaces profile A active pending claim instead of waiting on A"
   // Given: A has a fresh pending claim, then B changes the active birth time.
   const profile = completeProfileRow();
   const identityA = createOnboardingCacheIdentity({
-    name: profile.name, birthDate: profile.birth_date, birthTime: profile.birth_time,
+    name: profile.name,
+    birthDate: profile.birth_date instanceof Date
+      ? profile.birth_date.toISOString().slice(0, 10)
+      : profile.birth_date,
+    birthTime: profile.birth_time,
     activeBirthTime: profile.active_birth_time, birthTimeStatus: profile.birth_time_status,
     countryCode: profile.country_code, provinceCode: profile.province_code, cityCode: profile.city_code,
   });

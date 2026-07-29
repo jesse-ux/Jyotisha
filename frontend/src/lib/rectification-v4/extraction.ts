@@ -17,6 +17,25 @@ const allowedKinds = new Set<EventKind>([
   "career_change", "finance_change", "self_health_event", "family_health_event", "family_bereavement", "family_event", "other",
 ]);
 const missingEventSummary = "事件内容待补充";
+const directionChangePattern = /(?:换一个|换个问题|问别的|换个方向|都不符合|不是这个|不聊这个)/;
+const declinedPattern = /(?:不想说|不方便说|不想回答|跳过|这个不说)/;
+const unknownPattern = /(?:不知道|不清楚|记不清|不确定|没印象|忘了|想不起来)/;
+
+export type TargetDisposition =
+  | "resolved"
+  | "unknown"
+  | "declined"
+  | "direction_change"
+  | "answered_other_event"
+  | "unresolved"
+  | "not_applicable";
+
+function explicitDisposition(answer: string): TargetDisposition | null {
+  if (directionChangePattern.test(answer)) return "direction_change";
+  if (declinedPattern.test(answer)) return "declined";
+  if (unknownPattern.test(answer)) return "unknown";
+  return null;
+}
 
 function normalizeKind(domain: EvidenceDomain, value: string, summary: string): EventKind {
   if (allowedKinds.has(value as EventKind)) return value as EventKind;
@@ -100,6 +119,7 @@ export type ReconciledV4Evidence = Readonly<{
   revisions: readonly LifeEventRevision[];
   pending: readonly PendingEvidence[];
   unansweredTargetEventId: string | null;
+  targetDisposition: TargetDisposition;
 }>;
 
 export function reconcileV4Evidence(input: {
@@ -109,13 +129,16 @@ export function reconcileV4Evidence(input: {
   readonly asOfDate: string;
   readonly existing: readonly LifeEventRevision[];
   readonly targetEventId?: string | null;
+  readonly assistedEvidence?: readonly ExtractedLifeEventEvidence[];
   readonly now?: Date;
 }): ReconciledV4Evidence {
-  const extracted = extractLifeEventEvidence({ rawText: input.answer, sourceTurnId: input.sourceTurnId, asOfDate: input.asOfDate });
+  const deterministic = extractLifeEventEvidence({ rawText: input.answer, sourceTurnId: input.sourceTurnId, asOfDate: input.asOfDate });
+  const extracted = [...(input.assistedEvidence ?? []), ...deterministic];
   const target = input.targetEventId ? latestEventRevisions(input.existing).find((event) => event.eventId === input.targetEventId) ?? null : null;
   if (input.targetEventId && !target) throw new Error("rectification_v4_target_event_not_found");
 
   const revisions: LifeEventRevision[] = [];
+  const consumed = new Set<string>();
   let unresolvedReason: PendingEvidence["reasonCode"] | null = null;
   let targetResolved = !target;
 
@@ -140,6 +163,7 @@ export function reconcileV4Evidence(input: {
             dateRange,
             scoreability: target.scoreability,
           }, { id: targetAnswer.id, now: input.now }));
+          consumed.add(targetAnswer.id);
           targetResolved = true;
         }
       }
@@ -147,17 +171,27 @@ export function reconcileV4Evidence(input: {
   }
 
   for (const event of extracted) {
-    if (revisions.some((revision) => revision.id === event.id)) continue;
+    if (consumed.has(event.id) || revisions.some((revision) => revision.id === event.id)) continue;
     const revision = newRevision(event, [...input.existing, ...revisions], input.now);
     if (revision && revision.dateRange.start <= input.asOfDate) {
-      revisions.push(revision);
+      if (!revisions.some((value) => value.eventId === revision.eventId)) revisions.push(revision);
       continue;
     }
     unresolvedReason = event.datePrecision === "unknown" ? "date_unresolved" : "event_unparsed";
   }
 
-  if (extracted.length === 0) unresolvedReason = "event_unparsed";
-  const pending = unresolvedReason ? [
+  const explicit = explicitDisposition(input.answer);
+  const addedOtherEvent = target
+    ? revisions.some((revision) => revision.eventId !== target.eventId)
+    : false;
+  const targetDisposition: TargetDisposition = explicit ?? (!target
+    ? "not_applicable"
+    : targetResolved ? "resolved" : addedOtherEvent ? "answered_other_event" : "unresolved");
+  const suppressPending = targetDisposition === "unknown"
+    || targetDisposition === "declined"
+    || targetDisposition === "direction_change";
+  if (extracted.length === 0 && !suppressPending) unresolvedReason = "event_unparsed";
+  const pending = unresolvedReason && !suppressPending ? [
     pendingEvidence({
       caseId: input.caseId,
       turnId: input.sourceTurnId,
@@ -171,7 +205,8 @@ export function reconcileV4Evidence(input: {
   return {
     revisions,
     pending,
-    unansweredTargetEventId: target && !targetResolved ? target.eventId : null,
+    unansweredTargetEventId: target && (targetDisposition === "unresolved" || targetDisposition === "answered_other_event") ? target.eventId : null,
+    targetDisposition,
   };
 }
 

@@ -73,32 +73,7 @@ test("V5 golden replay persists the full artifact chain, returns ranges only, an
     ["2015-07-01", "2015-07-31"],
     ["2016-06-01", "2016-06-30"],
   ]);
-  const firstTarget = loaded.case.currentQuestion?.targetEventId;
-  assert.ok(firstTarget);
-  const firstTargetEvent = loaded.events.find((event) => event.eventId === firstTarget);
-  assert.ok(firstTargetEvent);
-  loaded = await answerAndRun(
-    service,
-    worker,
-    userId,
-    created.case.id,
-    loaded.case.version,
-    firstTargetEvent.dateRange.start.startsWith("2015-") ? "2015年7月18日" : "2016年6月22日",
-  );
-  const secondTarget = loaded.case.currentQuestion?.targetEventId;
-  assert.ok(secondTarget);
-  assert.notEqual(secondTarget, firstTarget);
-  const secondTargetEvent = loaded.events.find((event) => event.eventId === secondTarget);
-  assert.ok(secondTargetEvent);
-  loaded = await answerAndRun(
-    service,
-    worker,
-    userId,
-    created.case.id,
-    loaded.case.version,
-    secondTargetEvent.dateRange.start.startsWith("2015-") ? "2015年7月18日" : "2016年6月22日",
-  );
-  assert.equal(loaded.case.currentQuestion?.domain, "relocation");
+  assert.equal(loaded.case.currentQuestion?.targetEventId, null, "month precision should move to a new dated event");
   loaded = await answerAndRun(
     service,
     worker,
@@ -119,9 +94,9 @@ test("V5 golden replay persists the full artifact chain, returns ranges only, an
   assert.ok(loaded.case.latestDiagnosticsId);
   assert.equal(store.featureSnapshots.size, 1);
   assert.equal(store.diagnostics.size, 1);
-  assert.equal(store.agentRuns.size, 4);
-  assert.equal(store.publicMessages.size, 4);
-  assert.equal(store.validatedDecisions.size, 4);
+  assert.equal(store.agentRuns.size, 2);
+  assert.equal(store.publicMessages.size, 2);
+  assert.equal(store.validatedDecisions.size, 2);
   const finalRun = [...store.agentRuns.values()].at(-1);
   assert.equal(finalRun?.validatedDecision.decision.action, "offer_candidate_range");
   assert.equal(finalRun?.inputTokenCount, null);

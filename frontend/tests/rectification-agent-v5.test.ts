@@ -11,7 +11,7 @@ import {
 import { rectificationCanaryBucket, selectRectificationDeploymentMode } from "../src/lib/rectification-agent/feature-policy.ts";
 import { buildQuestionOpportunities } from "../src/lib/rectification-agent/opportunity-builder.ts";
 import { runBoundedReasoner } from "../src/lib/rectification-agent/reasoner-agent.ts";
-import { enforceServerQuestion } from "../src/lib/rectification-agent/renderer-agent.ts";
+import { realizePublicMessage, validateQuestionRealization } from "../src/lib/rectification-agent/renderer-agent.ts";
 import { createRectificationV4CaseService } from "../src/lib/rectification-v4/case-service.ts";
 import type {
   CalculationSpec,
@@ -82,11 +82,17 @@ const diagnostics: DiagnosticsSummary = diagnosticsSummarySchema.parse({
   createdAt: now,
 });
 const opportunity: QuestionOpportunity = {
+  contractVersion: "semantic-question-v2",
   opportunityId,
   kind: "ask_new_event",
   domain: "career",
   targetEventId: null,
-  prompt: "请补充一次职业变化。",
+  goal: "收集一件有大致日期的职业变化。",
+  requestedFields: ["new_dated_event"],
+  anchors: [],
+  contextFacts: ["职业领域尚未覆盖。"],
+  forbiddenMoves: ["switch_target_event", "ask_multiple_questions", "claim_exact_birth_minute", "invent_event", "invent_date", "expose_private_score", "expose_internal_id", "expose_technique_trace"],
+  fallbackPrompt: "请说一件时间比较明确的职业变化经历。",
   reason: "领域覆盖不足。",
   expectedInformationGain: .8,
   dateSensitivity: .5,
@@ -171,7 +177,7 @@ test("opportunities are ordered only by their published utility", () => {
   assert.deepEqual(values.map((value) => value.utility), [...values].map((value) => value.utility).sort((a, b) => b - a));
 });
 
-test("an unresolved current target exclusively owns the next-question route", () => {
+test("a previously asked unresolved target does not monopolize the next-question route", () => {
   const target = event();
   const values = buildQuestionOpportunities({
     caseId,
@@ -179,9 +185,11 @@ test("an unresolved current target exclusively owns the next-question route", ()
     turns: [],
     snapshot: null,
     diagnostics: null,
+    targetDisposition: "unresolved",
     retryTargetEventIds: [target.eventId],
   });
-  assert.deepEqual(values.map((value) => [value.kind, value.targetEventId]), [["resolve_event_conflict", target.eventId]]);
+  assert.ok(values.length > 0);
+  assert.ok(values.every((value) => value.targetEventId !== target.eventId));
 });
 
 test("reasoner falls back when unavailable", async () => {
@@ -238,18 +246,39 @@ test("reasoner rejects a second diagnostic and enforces the tool budget", async 
   assert.equal(exhausted.toolCalls[0]?.outcome, "rejected");
 });
 
-test("renderer cannot replace the server-owned question", () => {
-  assert.deepEqual(enforceServerQuestion({
-    acknowledgement: "已记录。",
+test("renderer rejects an unrelated question and falls back to the semantic contract", () => {
+  const target = event({ summary: "2020年4月研究院实习" });
+  const targeted: QuestionOpportunity = {
+    ...opportunity,
+    kind: "refine_event_date",
+    domain: "career",
+    targetEventId: target.eventId,
+    goal: "细化研究院实习日期。",
+    requestedFields: ["event_day"],
+    anchors: [target.summary],
+    contextFacts: ["日期敏感。"],
+    fallbackPrompt: "关于“2020年4月研究院实习”，你还记得大概哪一天吗？",
+  };
+  assert.equal(validateQuestionRealization("你后来有没有搬家？", targeted).valid, false);
+  const message = realizePublicMessage({
+    acknowledgement: "你提到的是2020年4月研究院实习。",
     candidateUpdate: null,
     limitation: null,
-    question: "模型注入的问题",
-  }, "服务器选定的问题"), {
-    acknowledgement: "已记录。",
-    candidateUpdate: null,
-    limitation: null,
-    question: "服务器选定的问题",
+    question: "你后来有没有搬家？",
+  }, {
+    latestAnswer: "2020年4月研究院实习",
+    acceptedEvents: [target],
+    pendingEvidence: [],
+    snapshot: null,
+    previousSnapshot: null,
+    validated: {
+      decision: { action: "ask_question", opportunityId: targeted.opportunityId, narrativeFocus: [] },
+      mode: "agent",
+      validationIssues: [],
+      selectedOpportunity: targeted,
+    },
   });
+  assert.equal(message.question, targeted.fallbackPrompt);
 });
 
 test("agent-run persistence contract carries deployment, tool, token, and latency facts", () => {
@@ -289,13 +318,15 @@ test("an answer about another event never overwrites the current target and crea
     turns: [],
     snapshot: null,
     diagnostics: null,
+    targetDisposition: reconciled.targetDisposition,
     retryTargetEventIds: [target.eventId],
   });
-  assert.equal(opportunities[0]?.kind, "resolve_event_conflict");
-  assert.equal(opportunities[0]?.targetEventId, target.eventId);
+  const conflict = opportunities.filter((item) => item.kind === "resolve_event_conflict");
+  assert.equal(conflict.length, 1);
+  assert.equal(conflict[0]?.targetEventId, target.eventId);
 });
 
-test("unparsed answers are retained as pending evidence", () => {
+test("unknown target answers are kept in the turn without pending evidence", () => {
   const target = event();
   const turnId = randomUUID();
   const reconciled = reconcileV4Evidence({
@@ -308,9 +339,8 @@ test("unparsed answers are retained as pending evidence", () => {
     now: new Date(now),
   });
   assert.equal(reconciled.revisions.length, 0);
-  assert.equal(reconciled.pending.length, 1);
-  assert.equal(reconciled.pending[0]?.turnId, turnId);
-  assert.equal(reconciled.pending[0]?.targetEventId, target.eventId);
+  assert.equal(reconciled.targetDisposition, "unknown");
+  assert.equal(reconciled.pending.length, 0);
 });
 
 test("shadow mode persists V5 artifacts while preserving the legacy visible reply", async () => {
@@ -343,4 +373,70 @@ test("shadow mode persists V5 artifacts while preserving the legacy visible repl
   assert.deepEqual(shadow.message, legacy.message);
   assert.equal(shadow.question?.prompt, legacy.question?.prompt);
   assert.equal(shadow.agentRuns, 1);
+});
+
+test("V6 agent conversation follows dated events, respects direction change, and runs the existing V5 engine", async () => {
+  await withV5Mode("v5_agent", async () => {
+    const store = createRectificationV4MemoryStore();
+    const service = createRectificationV4CaseService(store, { now: () => new Date("2026-07-29T00:00:00.000Z") });
+    let scoreCalls = 0;
+    const worker = createRectificationV4Worker({
+      store,
+      now: () => new Date("2026-07-29T00:00:00.000Z"),
+      engine: { score: async ({ calculationSpec, events }) => {
+        scoreCalls += 1;
+        return v5EngineResult(calculationSpec, events);
+      } },
+    });
+    const userId = randomUUID();
+    const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+
+    async function answer(value: string) {
+      const current = await service.loadCase(userId, created.case.id);
+      assert.ok(current?.case.currentQuestion);
+      const queued = await service.answer({
+        userId,
+        caseId: created.case.id,
+        actionId: randomUUID(),
+        expectedCaseVersion: current.case.version,
+        answer: value,
+      });
+      assert.ok(queued?.job);
+      assert.equal(await worker.runOnce(), true);
+      const loaded = await service.loadCase(userId, created.case.id);
+      assert.ok(loaded);
+      return loaded;
+    }
+
+    const first = await answer("2020 年 4 月去石油化工研究院实习做研究员。");
+    const firstEvent = first.events.find((event) => event.summary.includes("石油化工研究院实习做研究员"));
+    assert.deepEqual(
+      firstEvent && [firstEvent.domain, firstEvent.subject, firstEvent.dateRange.precision, firstEvent.scoreability],
+      ["career", "self", "month", "scoreable"],
+    );
+    assert.doesNotMatch(first.case.currentQuestion?.prompt ?? "", /哪一天|几号|具体日期/);
+    const firstMessage = [...store.publicMessages.values()].at(-1);
+    assert.doesNotMatch(firstMessage?.acknowledgement ?? "", /已记录|我记下了|职业方向正式落地/);
+    assert.match(firstMessage?.acknowledgement ?? "", /研究院实习/);
+
+    const second = await answer("2016 年 9 月离家去外地上大学。");
+    assert.ok(second.events.some((event) => event.domain === "education" && event.dateRange.precision === "month"));
+    assert.doesNotMatch(second.case.currentQuestion?.prompt ?? "", /^请说一次搬家/);
+    assert.ok(!second.case.currentQuestion?.targetEventId || /离家去外地上大学/.test(second.case.currentQuestion.prompt));
+
+    const pendingBefore = store.pendingEvidence.size;
+    const third = await answer("后来有一次搬家，但我记不清时间了，换一个吧。");
+    assert.equal(store.pendingEvidence.size, pendingBefore);
+    assert.equal(third.events.filter((event) => event.domain === "relocation").length, 0);
+    assert.doesNotMatch(third.case.currentQuestion?.prompt ?? "", /搬家.*(?:时间|日期|月份)|(?:时间|日期|月份).*搬家/);
+
+    const fourth = await answer("2023 年 9 月开始负责一家商业巡演经纪公司。");
+    assert.ok(fourth.events.some((event) => event.domain === "career" && event.summary.includes("商业巡演经纪公司")));
+    assert.equal(scoreCalls, 1);
+    assert.ok(store.diagnostics.size > 0);
+    assert.equal(fourth.case.latestSnapshot?.canConfirmExactMinute, false);
+    assert.equal(fourth.case.algorithmVersion, "rectification-v5-matrix-scoring-1");
+    const finalMessage = [...store.publicMessages.values()].at(-1);
+    assert.doesNotMatch(`${finalMessage?.candidateUpdate ?? ""}${finalMessage?.limitation ?? ""}`, /唯一分钟|准确分钟|代表分钟|05:13/);
+  });
 });

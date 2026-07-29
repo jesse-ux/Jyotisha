@@ -7,6 +7,7 @@ import type {
 } from "./contracts.ts";
 import { rectificationAgentV5Protocol, rectificationV4AlgorithmVersion, rectificationV4Protocol } from "./contracts.ts";
 import { selectRectificationDeploymentMode } from "../rectification-agent/feature-policy.ts";
+import { CURRENT_RECTIFICATION_PROMPT_VERSION, CURRENT_RECTIFICATION_SKILL_VERSION } from "../rectification-agent/contracts.ts";
 import { calculationSpecHash, evidenceSetHash } from "./fingerprints.ts";
 import { openingQuestion } from "./opening-question.ts";
 import type { RectificationV4Store } from "./store.ts";
@@ -45,8 +46,8 @@ export function createRectificationV4CaseService(store: RectificationV4Store, op
         latestSnapshot: null,
         orchestrationModelId: process.env.RECTIFICATION_ORCHESTRATION_MODEL_ID?.trim() || null,
         narrationModelId: process.env.RECTIFICATION_NARRATION_MODEL_ID?.trim() || null,
-        skillVersion: "birth-time-rectification-v5",
-        promptVersion: "rectification-agent-v5-1",
+        skillVersion: CURRENT_RECTIFICATION_SKILL_VERSION,
+        promptVersion: CURRENT_RECTIFICATION_PROMPT_VERSION,
         algorithmVersion: rectificationV4AlgorithmVersion,
         deploymentMode,
         agentMode: "deterministic_fallback",

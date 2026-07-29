@@ -1,3 +1,44 @@
 # Output contract
 
-Public output contains an acknowledgement, a concise calculation update grounded in the packet, and at most one question. It never contains a single-minute conclusion or private scores.
+Public output keeps the existing shape:
+
+```ts
+{
+  acknowledgement: string;
+  candidateUpdate: string | null;
+  limitation: string | null;
+  question: string | null;
+}
+```
+
+## Acknowledgement
+
+Use at most one or two short sentences and refer to the user's concrete experience. Do not repeatedly begin with “已记录” or “我记下了”. Do not use “这个信息很有用”, “它不是单纯的……”, “而是把……”, “接下来最有价值的是……”, or “这样可以避免……”. Do not interpret an ordinary event as a confirmed life turning point.
+
+## Question
+
+When a validated opportunity is selected, `question` is required; otherwise it is `null`. The question must:
+
+- be 8-180 characters, at most two sentences, and contain at most one question mark;
+- ask one thing only and match the opportunity's requested fields;
+- include a valid anchor when `targetEventId` is present;
+- ask self/family/partner only for `event_subject`;
+- ask month, approximate month, or range for `event_month`;
+- ask start, peak, end, or formal stage for `event_stage`;
+- ask for one new roughly dated event for `new_dated_event`;
+- contain no internal ID/field, score, snapshot, opportunity, tool call, model name, technique trace such as `D9`/`D60`, or unapproved `HH:MM` birth time.
+
+Reject multi-question transitions such as “另外”, “还有”, “同时再说”, or “并且告诉我” when they introduce another request. On validation failure, use the selected opportunity's short, anchored `fallbackPrompt`.
+
+## Candidate update
+
+`candidateUpdate` is allowed only when the current range has passed every public gate and one of these is true:
+
+1. it differs materially from the previous Snapshot's primary range; or
+2. it is the first Snapshot to pass the public stability gate.
+
+The no-repeat rule takes precedence: it must be `null` for an unchanged range, insufficient event/domain coverage, an internal unstable Snapshot, or a repeated equivalent calculation. Never state or imply a unique or representative birth minute.
+
+## Deterministic fallback
+
+Fallback follows the same public rules as model output: acknowledge the actual event naturally, ask one anchored question, avoid repetition and over-interpretation, and never claim exact-minute certainty.

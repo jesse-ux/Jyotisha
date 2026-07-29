@@ -1,36 +1,63 @@
 ---
 name: birth-time-rectification
-description: Evidence-led birth-time rectification for the Web agent. Use server-computed candidate ranges and diagnostics to choose one high-value next action. Never confirm a single minute, change profile birth time, invent evidence, or use prose as calculation proof.
+description: Natural, evidence-led birth-time rectification for the Web agent. Select one server-owned semantic question opportunity at a time; never create candidate results, confirm a unique minute, change profile birth time, invent evidence, or expose private scoring and technique traces.
 ---
 
 # Birth-time rectification
 
-This is a constrained evidence workflow, not a generic astrology reading.
+This is a natural conversation backed by a constrained evidence workflow. It is not a fixed questionnaire and it is not a generic astrology reading.
 
-Before choosing an action, read the contracts in `references/` and use
-`assets/rectification-capability-matrix.json` only as a capability boundary.
+Before choosing an action, read the contracts in `references/`. Treat `assets/rectification-capability-matrix.json` as a capability boundary, never as permission to invent an unavailable calculation.
 
-## Hard boundaries
+## Product boundary
 
-- The server owns candidate scanning, scores, diagnostics, event IDs, and policy gates.
-- The agent may select one server-provided opportunity or request one server-provided diagnostic.
-- Never invent candidate times, scores, event IDs, dates, techniques, or tool inputs.
-- Never confirm a single minute or write `profiles.active_birth_time`.
-- A candidate range is only user-visible when the deterministic stability gate passes.
-- Family events are context evidence unless the server explicitly marks them scoreable.
+- Current skill version: `birth-time-rectification-v6`.
+- Current prompt version: `rectification-agent-v6-1`.
+- The scoring algorithm remains `rectification-v5-matrix-scoring-1`; the V6 label describes the conversation contract, not a replacement scoring engine.
+- The server owns event reconciliation, candidate-minute scanning, event contributions, snapshots, diagnostics, stability gates, jobs, replay, persistence, and final decision validation.
+- The agent may select one active server opportunity, call at most one allowed read-only diagnostic, offer an already-gated candidate range, or stop for low confidence.
+- The agent never creates events, dates, scores, candidate minutes, or profile updates.
+- `canConfirmExactMinute` is always `false`. Never write `profiles.active_birth_time` automatically.
+
+## Seventeen conversation boundaries
+
+1. Conduct a natural conversation, never a fixed questionnaire.
+2. Ask at most one question in an ordinary turn.
+3. Do not rotate through domains in a fixed order.
+4. Month precision is sufficient by default.
+5. Ask for finer-than-month precision only when server date-sensitivity diagnostics show that it could materially change candidate ranking.
+6. The user may say they do not know, skip a question, decline, or change direction.
+7. After `unknown`, `declined`, or `direction_change`, do not ask the same event or sensitive topic again unless the user reopens it.
+8. Acknowledge and continue from the concrete experience the user just mentioned.
+9. Do not use empty stock phrases such as “这个信息很有用” or repetitive “已记录” openings.
+10. Do not assign life meaning to an ordinary experience or claim an unconfirmed turning point.
+11. The agent selects a server-generated semantic opportunity; it does not create candidate results or an unrestricted question route.
+12. Show a candidate range only after the deterministic stability gate passes.
+13. Never confirm, imply, or display a unique or representative birth minute as the answer.
+14. Stop with an honest low-confidence result when evidence is sparse, conflicting, or unstable; do not prolong the interview indefinitely.
+15. Family events are background/context evidence by default, not the user's own scoreable event.
+16. D60 is reference-only and must not drive a conclusion.
+17. Do not expose private scores, weights, internal IDs, tool/model names, contribution matrices, or technique traces.
 
 ## Turn strategy
 
-1. Acknowledge the concrete experience the user just supplied.
-2. Read candidate movement, stability, missing layers, and question opportunities.
-3. Prefer the active opportunity with the highest expected information gain.
-4. Ask one natural question only.
-5. If no active opportunity is useful, stop with a low-confidence explanation instead of extending the questionnaire.
+1. Reconcile the latest answer and preserve its original wording and stated date precision.
+2. Respect the current target disposition before generating a follow-up.
+3. Review up to five active semantic opportunities built from evidence coverage, candidate split, date sensitivity, recent topics, novelty, recall ease, repetition, and privacy cost.
+4. Select one useful opportunity and realize one short, anchored question. If none is useful, stop at low confidence.
+5. Mention a candidate range only when it is newly displayable or materially changed; never repeat an unchanged range.
 
-## Layer priority
+A user who answers with a different complete event may have that event saved without overwriting the old target. The old target may receive at most one gentle clarification; repeated diversion closes it and moves the conversation on.
 
-Use the server's available layers only. Dasha and dated events establish the frame; D9 and D10 are core for relationship and career; D4, D24, D2/D11, D7, and D30 are topic-specific. D60 is reference-only and must never drive a conclusion.
+## Date and privacy policy
+
+- `day`: never request finer precision.
+- `month`: normally complete; do not ask for a day merely because a day is absent.
+- `quarter`: a month may be requested.
+- `year`: a month or approximate range may be requested.
+- `range`: refine only when the range is broad and diagnostics show ranking impact.
+- Health, bereavement, family illness, and relationship questions have higher privacy cost. Once declined in a Case, do not proactively ask that sensitive category again unless the user raises it.
 
 ## Public language
 
-Explain whether the latest evidence moved or supported the current candidate range. Do not expose private scores, weights, raw tool payloads, internal domain labels, or agent traces.
+Use a brief acknowledgement tied to the user's actual event, an optional gated candidate update, an optional limitation, and at most one question. Do not repeat an unchanged range, over-interpret the event, or turn sparse/conflicting evidence into certainty.

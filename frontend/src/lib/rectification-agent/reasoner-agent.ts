@@ -3,7 +3,8 @@ import { Agent } from "@mastra/core/agent";
 import { createTool } from "@mastra/core/tools";
 import { z } from "zod";
 import { defaultLanguageModel, resolveLanguageModel } from "@/mastra/model";
-import type { CandidateSnapshot, RectificationV4Case } from "../rectification-v4/contracts.ts";
+import type { CandidateSnapshot, LifeEventRevision, PendingEvidence, RectificationV4Case, RectificationV4Turn } from "../rectification-v4/contracts.ts";
+import type { TargetDisposition } from "../rectification-v4/extraction.ts";
 import { deterministicDecision } from "./fallback-policy.ts";
 import { recordRectificationAgentTelemetry } from "./telemetry.ts";
 import {
@@ -34,11 +35,53 @@ function diagnosticPayload(diagnostic: RectificationDiagnostic, summary: Diagnos
   }
 }
 
+export function buildReasonerState(input: Readonly<{
+  snapshot: CandidateSnapshot | null;
+  diagnostics: DiagnosticsSummary;
+  opportunities: readonly QuestionOpportunity[];
+  recentTurns?: readonly RectificationV4Turn[];
+  recentEvents?: readonly LifeEventRevision[];
+  currentTarget?: LifeEventRevision | null;
+  targetDisposition?: TargetDisposition;
+  pendingEvidence?: readonly PendingEvidence[];
+  candidateRangeChanged?: boolean;
+}>) {
+  return {
+    task: "Choose the next bounded rectification action.",
+    currentSnapshotId: input.snapshot?.id ?? null,
+    canOfferCandidateRange: input.snapshot?.canAcceptRange ?? false,
+    hasCandidateRange: Boolean(input.snapshot?.clusters[0]),
+    candidateRangeChanged: input.candidateRangeChanged ?? false,
+    latestAnswer: input.recentTurns?.at(-1)?.answer ?? "",
+    recentTurns: (input.recentTurns ?? []).slice(-6).map((turn) => ({ question: turn.question, answer: turn.answer })),
+    recentEvents: (input.recentEvents ?? []).slice(-5).map((event) => ({ summary: event.summary, date: event.dateRange.label, domain: event.domain, subject: event.subject })),
+    currentTarget: input.currentTarget ? { summary: input.currentTarget.summary, date: input.currentTarget.dateRange.label, domain: input.currentTarget.domain } : null,
+    targetDisposition: input.targetDisposition ?? "not_applicable",
+    pendingEvidence: {
+      count: input.pendingEvidence?.length ?? 0,
+      reasons: [...new Set((input.pendingEvidence ?? []).map((item) => item.reasonCode))],
+    },
+    compactDiagnostics: {
+      primaryClusterRetentionRate: input.diagnostics.primaryClusterRetentionRate,
+      mostDiscriminatingLayers: input.diagnostics.mostDiscriminatingLayers,
+    },
+    opportunities: input.opportunities.map(({ opportunityId, kind, targetEventId, goal, requestedFields, anchors, utility, reason }) => ({
+      opportunityId, kind, targetEventId, goal, requestedFields, anchors, utility, reason,
+    })),
+  };
+}
+
 export async function runBoundedReasoner(input: Readonly<{
   caseValue: RectificationV4Case;
   snapshot: CandidateSnapshot | null;
   diagnostics: DiagnosticsSummary;
   opportunities: readonly QuestionOpportunity[];
+  recentTurns?: readonly RectificationV4Turn[];
+  recentEvents?: readonly LifeEventRevision[];
+  currentTarget?: LifeEventRevision | null;
+  targetDisposition?: TargetDisposition;
+  pendingEvidence?: readonly PendingEvidence[];
+  candidateRangeChanged?: boolean;
   maxToolCalls?: number;
   timeoutMs?: number;
   enabled?: boolean;
@@ -131,16 +174,7 @@ export async function runBoundedReasoner(input: Readonly<{
     outputTokenCount += Math.max(0, Math.trunc(usage.outputTokens ?? 0));
     usageObserved = true;
   };
-  const baseState = {
-    task: "Choose the next bounded rectification action.",
-    currentSnapshotId: input.snapshot?.id ?? null,
-    canOfferCandidateRange: input.snapshot?.canAcceptRange ?? false,
-    compactDiagnostics: {
-      primaryClusterRetentionRate: input.diagnostics.primaryClusterRetentionRate,
-      mostDiscriminatingLayers: input.diagnostics.mostDiscriminatingLayers,
-    },
-    opportunities: input.opportunities.map(({ opportunityId, kind, targetEventId, utility, reason }) => ({ opportunityId, kind, targetEventId, utility, reason })),
-  };
+  const baseState = buildReasonerState(input);
 
   recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "reasoner", outcome: "started", modelId, toolName: null, decisionAction: null, durationMs: null, errorCode: null, deploymentSha });
   try {

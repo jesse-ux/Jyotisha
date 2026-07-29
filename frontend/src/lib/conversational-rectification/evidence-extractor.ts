@@ -35,7 +35,7 @@ const unresolvedRelativeTimePattern = /(?:来年|次年|第二年|翌年|后来|
 const leadingRelativeTimePattern = /^\s*(?:(?:来年|次年|第二年|翌年|后来(?:又)?|此前|同年|当年|那年|随后|先前|然后|之前|之后|今年|去年|前年|明年)\s*)+/;
 const missingEventSummary = "事件内容待补充";
 
-function normalizedDate(value: string, asOfDate: string): ParsedDate | null {
+export function parseDeclaredDateText(value: string, asOfDate: string): ParsedDate | null {
   const chinese = value.match(/^((?:1\d{3}|20\d{2}|\d{2}))\s*年(?:\s*(\d{1,2})\s*月(?:\s*(\d{1,2})\s*(?:日|号))?)?$/);
   const iso = value.match(/^((?:1\d{3}|20\d{2}))-(\d{2})(?:-(\d{2}))?$/);
   const match = chinese ?? iso;
@@ -70,7 +70,7 @@ function datesIn(value: string, asOfDate: string): ParsedDate[] {
   const matches = [...value.matchAll(chineseDatePattern), ...value.matchAll(isoDatePattern)]
     .sort((left, right) => (left.index ?? 0) - (right.index ?? 0));
   return matches.flatMap((match) => {
-    const parsed = normalizedDate(match[0], asOfDate);
+    const parsed = parseDeclaredDateText(match[0], asOfDate);
     return parsed ? [parsed] : [];
   });
 }
@@ -139,7 +139,7 @@ function classifyEvent(summary: string): EventSemantics {
   if (/收入|工资|薪资|奖金|财富|财务|投资|亏损|盈利|负债|债务|资产/.test(summary)) {
     return { domain: "finance", eventKind: "finance_change", subject: "self", relatedPerson: null, scoreability: "scoreable" };
   }
-  if (/工作|入职|离职|辞职|升职|创业|职业|职位|任职|管理职责|公司|项目/.test(summary)) {
+  if (/工作|实习|研究员|入职|离职|辞职|升职|创业|职业|职位|任职|负责|管理职责|公司|项目/.test(summary)) {
     return { domain: "career", eventKind: "career_change", subject: "self", relatedPerson: null, scoreability: "scoreable" };
   }
   return { domain: "other", eventKind: "other", subject: "other", relatedPerson: null, scoreability: "unsupported" };
@@ -268,4 +268,65 @@ export function extractLifeEventEvidence(
     }
   }
   return coalesceSameEventDetails(input, events);
+}
+
+
+export type ModelAssistedEventExtraction = Readonly<{
+  sourceSpan: string;
+  summary: string;
+  domain: RectificationEvidenceDomain;
+  eventKind: string;
+  subject: "self" | "family" | "partner" | "other";
+  relatedPerson: "father" | "mother" | "grandparent" | "sibling" | "partner" | null;
+  dateText: string | null;
+}>;
+
+const allowedKindsByDomain: Readonly<Record<RectificationEvidenceDomain, readonly string[]>> = {
+  education: ["education_milestone"],
+  relocation: ["relocation"],
+  relationship: ["relationship_start", "relationship_end", "relationship_change"],
+  career: ["career_change"],
+  finance: ["finance_change"],
+  health_pressure: ["self_health_event"],
+  family: ["family_health_event", "family_bereavement", "family_event"],
+  other: ["other"],
+};
+
+export function validatedModelAssistedEvidence(input: Readonly<{
+  rawText: string;
+  sourceTurnId: string;
+  asOfDate: string;
+  extraction: ModelAssistedEventExtraction;
+}>): ExtractedLifeEventEvidence | null {
+  const sourceSpan = input.extraction.sourceSpan.trim();
+  const dateText = input.extraction.dateText?.trim() || null;
+  if (!sourceSpan || !input.rawText.includes(sourceSpan)) return null;
+  if (!dateText || !input.rawText.includes(dateText)) return null;
+  const date = parseDeclaredDateText(dateText.normalize("NFKC"), input.asOfDate);
+  if (!date || dateIsFuture(date, input.asOfDate)) return null;
+  if (!allowedKindsByDomain[input.extraction.domain]?.includes(input.extraction.eventKind)) return null;
+  if (input.extraction.subject === "partner" && input.extraction.domain !== "relationship") return null;
+  const summary = eventSummary(sourceSpan);
+  if (summary === missingEventSummary) return null;
+  const familyContext = input.extraction.subject === "family" || input.extraction.domain === "family";
+  const scoreability = familyContext
+    ? "context_only" as const
+    : input.extraction.subject === "self" || (input.extraction.subject === "partner" && input.extraction.domain === "relationship")
+      ? "scoreable" as const
+      : "unsupported" as const;
+  return {
+    id: evidenceId({ rawText: input.rawText, sourceTurnId: input.sourceTurnId, asOfDate: input.asOfDate }, 0, summary),
+    rawText: input.rawText,
+    domain: input.extraction.domain,
+    eventKind: input.extraction.eventKind,
+    subject: input.extraction.subject,
+    relatedPerson: input.extraction.relatedPerson,
+    eventSummary: summary,
+    dateValue: date.value,
+    datePrecision: date.precision,
+    extractionStatus: "clear",
+    scoreability,
+    scoreable: scoreability === "scoreable",
+    correctsEvidenceIds: [],
+  };
 }

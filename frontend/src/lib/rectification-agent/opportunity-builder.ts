@@ -1,8 +1,27 @@
 import { createHash } from "node:crypto";
 import type { CandidateSnapshot, EvidenceDomain, LifeEventRevision, RectificationV4Turn } from "../rectification-v4/contracts.ts";
-import type { DiagnosticsSummary, QuestionOpportunity } from "./contracts.ts";
+import type { TargetDisposition } from "../rectification-v4/extraction.ts";
+import type { DiagnosticsSummary, QuestionOpportunity, SemanticQuestionOpportunity } from "./contracts.ts";
 
-const domains: readonly EvidenceDomain[] = ["education", "relocation", "relationship", "career", "finance", "health_pressure"];
+const forbiddenMoves: SemanticQuestionOpportunity["forbiddenMoves"] = [
+  "switch_target_event", "ask_multiple_questions", "claim_exact_birth_minute", "invent_event",
+  "invent_date", "expose_private_score", "expose_internal_id", "expose_technique_trace",
+];
+
+const domainPolicy: Readonly<Record<Exclude<EvidenceDomain, "family" | "other">, Readonly<{
+  goal: string;
+  fallbackPrompt: string;
+  keywords: RegExp;
+  recallEase: number;
+  privacyCost: number;
+}>>> = {
+  education: { goal: "收集一件有大致日期的教育转折。", fallbackPrompt: "哪次入学、毕业或专业变化的时间你比较确定？", keywords: /大学|学校|入学|毕业|考试|专业|读书/, recallEase: .82, privacyCost: .03 },
+  relocation: { goal: "收集一件有大致日期的迁居经历。", fallbackPrompt: "哪次搬家、离乡或长期迁居的时间你比较确定？", keywords: /搬家|迁居|离家|外地|城市|北京|上海|出国/, recallEase: .78, privacyCost: .04 },
+  relationship: { goal: "在用户愿意的前提下收集一件有大致日期的关系转折。", fallbackPrompt: "如果方便，哪段关系开始、结束或进入婚姻的时间比较确定？", keywords: /恋爱|关系|结婚|离婚|分手|伴侣|对象/, recallEase: .62, privacyCost: .22 },
+  career: { goal: "收集一件有大致日期的职业转折。", fallbackPrompt: "哪次入职、离职、转行、创业或职责变化的时间你比较确定？", keywords: /工作|实习|公司|研究院|职业|入职|离职|创业|负责/, recallEase: .85, privacyCost: .03 },
+  finance: { goal: "在用户愿意的前提下收集一件有大致日期的财务转折。", fallbackPrompt: "如果方便，哪次收入、负债或资产明显变化的时间比较确定？", keywords: /收入|负债|投资|资产|财务|买房|卖房/, recallEase: .6, privacyCost: .18 },
+  health_pressure: { goal: "在用户愿意的前提下收集一件本人有大致日期的健康转折。", fallbackPrompt: "如果方便，你本人哪次住院、手术、事故或健康转折的时间比较确定？", keywords: /住院|手术|事故|健康|生病|确诊|康复/, recallEase: .58, privacyCost: .28 },
+};
 
 function stableUuid(value: string): string {
   const hex = createHash("sha256").update(value).digest("hex").slice(0, 32).split("");
@@ -21,7 +40,9 @@ const routingValue: Record<QuestionOpportunity["kind"], number> = {
   ask_new_event: 0,
 };
 
-function utility(value: Omit<QuestionOpportunity, "opportunityId" | "utility" | "active">): number {
+type OpportunityInput = Omit<SemanticQuestionOpportunity, "contractVersion" | "opportunityId" | "utility" | "active" | "forbiddenMoves">;
+
+function utility(value: OpportunityInput): number {
   return Number((
     .35 * value.expectedInformationGain + .20 * value.dateSensitivity + .15 * value.candidateSplitRelevance
     + .10 * value.domainCoverageGain + .10 * value.recallEase + .10 * value.novelty
@@ -29,8 +50,34 @@ function utility(value: Omit<QuestionOpportunity, "opportunityId" | "utility" | 
   ).toFixed(6));
 }
 
-function opportunity(caseId: string, input: Omit<QuestionOpportunity, "opportunityId" | "utility" | "active">): QuestionOpportunity {
-  const result = { ...input, opportunityId: stableUuid(`${caseId}:${input.kind}:${input.targetEventId ?? input.domain}:${input.prompt}`), utility: utility(input), active: true };
+function opportunity(caseId: string, input: OpportunityInput): QuestionOpportunity {
+  return {
+    contractVersion: "semantic-question-v2",
+    ...input,
+    forbiddenMoves,
+    opportunityId: stableUuid(`${caseId}:${input.kind}:${input.targetEventId ?? input.domain}:${input.goal}:${input.fallbackPrompt}`),
+    utility: utility(input),
+    active: true,
+  };
+}
+
+function daysWide(event: LifeEventRevision): number {
+  return Math.floor((Date.parse(`${event.dateRange.end}T00:00:00Z`) - Date.parse(`${event.dateRange.start}T00:00:00Z`)) / 86_400_000) + 1;
+}
+
+function anchorFor(event: LifeEventRevision): string {
+  return event.summary.replace(/[“”"']/g, "").trim().slice(0, 80);
+}
+
+function recentText(turns: readonly RectificationV4Turn[]): string {
+  return turns.slice(-6).map((turn) => turn.answer).join(" ");
+}
+
+function declinedSensitiveDomains(turns: readonly RectificationV4Turn[]): ReadonlySet<EvidenceDomain> {
+  const result = new Set<EvidenceDomain>();
+  for (const turn of turns) {
+    if (turn.questionDomain && /不想说|不方便说|不想回答|跳过|这个不说|换个方向|不聊这个/.test(turn.answer)) result.add(turn.questionDomain);
+  }
   return result;
 }
 
@@ -40,74 +87,125 @@ export function buildQuestionOpportunities(input: Readonly<{
   turns: readonly RectificationV4Turn[];
   snapshot: CandidateSnapshot | null;
   diagnostics: DiagnosticsSummary | null;
+  targetDisposition?: TargetDisposition;
   retryTargetEventIds?: readonly string[];
 }>): readonly QuestionOpportunity[] {
-  const attempted = new Set(input.turns.flatMap((turn) => turn.questionTargetEventId ? [turn.questionTargetEventId] : []));
+  const targetAttempts = new Map<string, number>();
+  for (const turn of input.turns) {
+    if (turn.questionTargetEventId) targetAttempts.set(turn.questionTargetEventId, (targetAttempts.get(turn.questionTargetEventId) ?? 0) + 1);
+  }
   const retryTargets = new Set(input.retryTargetEventIds ?? []);
   const scoreableDomains = new Set(input.events.filter((event) => event.scoreability === "scoreable").map((event) => event.domain));
+  const refusedDomains = declinedSensitiveDomains(input.turns);
+  const latestContext = recentText(input.turns);
   const opportunities: QuestionOpportunity[] = [];
-  for (const eventId of retryTargets) {
-    const event = input.events.find((value) => value.eventId === eventId);
-    if (!event) continue;
-    opportunities.push(opportunity(input.caseId, {
-      kind: "resolve_event_conflict", domain: event.domain, targetEventId: event.eventId,
-      prompt: `你刚才补充的新经历已经另行保存。关于“${event.summary}”的时间仍没有确定；如果记不清，可以直接说不知道。`,
-      reason: "用户补充了另一件事，原事件的日期或主体仍待确认。",
-      expectedInformationGain: .85, dateSensitivity: .75, candidateSplitRelevance: .6, domainCoverageGain: 0, recallEase: .8, novelty: .7, repetitionPenalty: .15, privacyCost: .05,
-    }));
+
+  if (input.targetDisposition === "answered_other_event") {
+    for (const eventId of retryTargets) {
+      const event = input.events.find((value) => value.eventId === eventId);
+      if (!event || (targetAttempts.get(eventId) ?? 0) > 1) continue;
+      const anchor = anchorFor(event);
+      opportunities.push(opportunity(input.caseId, {
+        kind: "resolve_event_conflict", domain: event.domain, targetEventId: event.eventId,
+        goal: `温和确认“${anchor}”尚缺的日期或主体；允许用户直接跳过。`,
+        requestedFields: ["event_range"], anchors: [anchor], contextFacts: [`用户刚补充了另一件完整事件。`, `同一目标最多补问一次。`],
+        fallbackPrompt: `关于“${anchor}”，如果还记得大概时间范围，可以补充一下吗？`,
+        reason: "用户回答了另一件新事件，原目标只允许一次温和补问。",
+        expectedInformationGain: .78, dateSensitivity: .7, candidateSplitRelevance: .55, domainCoverageGain: 0,
+        recallEase: .72, novelty: .55, repetitionPenalty: .25, privacyCost: .05,
+      }));
+    }
   }
-  if (opportunities.length > 0) {
-    return opportunities.sort((left, right) =>
-      right.utility - left.utility
-      || left.opportunityId.localeCompare(right.opportunityId));
-  }
+
+  const targetClosed = input.targetDisposition === "unknown"
+    || input.targetDisposition === "declined"
+    || input.targetDisposition === "direction_change";
   for (const event of input.events) {
-    if (retryTargets.has(event.eventId)) continue;
-    if ((event.scoreability === "pending_review" || event.subject === "other") && !attempted.has(event.eventId)) {
+    if (targetClosed && retryTargets.has(event.eventId)) continue;
+    const attemptCount = targetAttempts.get(event.eventId) ?? 0;
+    const anchor = anchorFor(event);
+    if ((event.scoreability === "pending_review" || event.subject === "other") && attemptCount === 0) {
       opportunities.push(opportunity(input.caseId, {
         kind: "clarify_event_subject", domain: event.domain, targetEventId: event.eventId,
-        prompt: `你刚才提到“${event.summary}”，这件事主要发生在你本人，还是家人或伴侣身上？`, reason: "事件主体决定是否允许进入个人分盘评分。",
-        expectedInformationGain: .9, dateSensitivity: .2, candidateSplitRelevance: .3, domainCoverageGain: .2, recallEase: .95, novelty: .9, repetitionPenalty: 0, privacyCost: .05,
+        goal: `确认“${anchor}”发生在本人、家人还是伴侣。`, requestedFields: ["event_subject"],
+        anchors: [anchor], contextFacts: [`当前主体为 ${event.subject}。`],
+        fallbackPrompt: `“${anchor}”主要发生在你本人、家人还是伴侣身上？`,
+        reason: "事件主体决定是否允许进入个人评分。",
+        expectedInformationGain: .9, dateSensitivity: .2, candidateSplitRelevance: .3, domainCoverageGain: .2,
+        recallEase: .95, novelty: .9, repetitionPenalty: 0, privacyCost: event.domain === "health_pressure" || event.domain === "family" ? .24 : .05,
       }));
     }
-    if (event.scoreability === "scoreable" && event.dateRange.precision !== "day" && !attempted.has(event.eventId)) {
-      const sensitivity = input.diagnostics?.eventDateSensitivity.find((item) => item.eventId === event.eventId);
-      opportunities.push(opportunity(input.caseId, {
-        kind: "refine_event_date", domain: event.domain, targetEventId: event.eventId,
-        prompt: `关于“${event.summary}”，你还记得更具体的月份或日期吗？不确定也可以只说大概范围。`, reason: "日期采样显示这件事的时间精度可能影响候选排序。",
-        expectedInformationGain: sensitivity ? 1 - sensitivity.winnerRetentionRate : .72,
-        dateSensitivity: sensitivity ? 1 - sensitivity.candidateClusterRetentionRate : .7,
-        candidateSplitRelevance: .55, domainCoverageGain: 0, recallEase: .72, novelty: .8, repetitionPenalty: 0, privacyCost: .05,
-      }));
-    }
+    if (event.scoreability !== "scoreable" || event.dateRange.precision === "day" || attemptCount > 0) continue;
+    const sensitivity = input.diagnostics?.eventDateSensitivity.find((item) => item.eventId === event.eventId);
+    const dateSensitive = Boolean(sensitivity && (sensitivity.winnerRetentionRate < .65 || sensitivity.candidateClusterRetentionRate < .65));
+    const precision = event.dateRange.precision;
+    const shouldRefine = precision === "quarter" || precision === "year" || (precision === "month" && dateSensitive)
+      || (precision === "range" && daysWide(event) > 120 && dateSensitive);
+    if (!shouldRefine) continue;
+    const requestedFields: SemanticQuestionOpportunity["requestedFields"] = precision === "year" || precision === "quarter"
+      ? ["event_month"]
+      : precision === "range" ? ["event_range"] : ["event_day"];
+    const fallbackPrompt = precision === "year" || precision === "quarter"
+      ? `“${anchor}”大概发生在哪个月，或一年中的哪个时间段？`
+      : precision === "range"
+        ? `“${anchor}”的时间范围还能再缩小一些吗？`
+        : `关于“${anchor}”，你还记得大概哪一天吗？`;
+    opportunities.push(opportunity(input.caseId, {
+      kind: "refine_event_date", domain: event.domain, targetEventId: event.eventId,
+      goal: `仅在必要精度上细化“${anchor}”的日期。`, requestedFields, anchors: [anchor],
+      contextFacts: [`现有精度为 ${precision}。`, ...(sensitivity ? [`候选保持率 ${sensitivity.candidateClusterRetentionRate}。`] : [])],
+      fallbackPrompt, reason: dateSensitive ? "日期敏感性诊断显示该事件可能改变候选排序。" : "当前日期范围较宽。",
+      expectedInformationGain: sensitivity ? 1 - sensitivity.winnerRetentionRate : .66,
+      dateSensitivity: sensitivity ? 1 - sensitivity.candidateClusterRetentionRate : .55,
+      candidateSplitRelevance: .55, domainCoverageGain: 0, recallEase: precision === "year" ? .8 : .62,
+      novelty: .78, repetitionPenalty: 0, privacyCost: .05,
+    }));
   }
+
   const split = input.diagnostics?.candidateSplits[0];
   if (split) {
-    const target = input.events.find((event) => split.eventIds.includes(event.eventId));
+    const target = input.events.find((event) => split.eventIds.includes(event.eventId)
+      && (targetAttempts.get(event.eventId) ?? 0) === 0
+      && !(targetClosed && retryTargets.has(event.eventId)));
+    const anchor = target ? anchorFor(target) : null;
     opportunities.push(opportunity(input.caseId, {
       kind: "disambiguate_candidate_split", domain: target?.domain ?? "other", targetEventId: target?.eventId ?? null,
-      prompt: target ? `围绕“${target.summary}”，当时最明显的转折是事情开始、达到高峰，还是正式结束？` : "剩余候选在同一事件的阶段上有差异：你记得当时更接近开始、达到高峰，还是正式结束吗？",
-      reason: `候选簇在 ${split.techniqueLayers.slice(0, 3).join("、") || "技术层"} 上出现可检验分歧。`,
-      expectedInformationGain: .88, dateSensitivity: .45, candidateSplitRelevance: .95, domainCoverageGain: 0, recallEase: .65, novelty: .9, repetitionPenalty: target && attempted.has(target.eventId) ? .35 : 0, privacyCost: .1,
+      goal: target ? `确认“${anchor}”更接近开始、高峰还是正式结束。` : "确认一件现有事件的发生阶段。",
+      requestedFields: ["event_stage"], anchors: anchor ? [anchor] : [],
+      contextFacts: [`候选分歧涉及 ${split.techniqueLayers.length} 个已计算技术层。`],
+      fallbackPrompt: target ? `“${anchor}”当时更接近事情开始、达到高峰，还是正式结束？` : "那件经历更接近开始、达到高峰，还是正式结束？",
+      reason: "候选簇在现有诊断中出现可检验分歧。",
+      expectedInformationGain: .88, dateSensitivity: .45, candidateSplitRelevance: .95, domainCoverageGain: 0,
+      recallEase: .65, novelty: .9, repetitionPenalty: 0, privacyCost: .1,
     }));
   }
-  const missingDomain = domains.find((domain) => !scoreableDomains.has(domain));
-  if (missingDomain) {
-    const prompts: Record<EvidenceDomain, string> = {
-      education: "你人生中有没有一次入学、毕业、考试或专业变化，时间大致在什么时候？",
-      relocation: "你有没有一次印象深刻的搬家、离乡或长期迁居？大致在什么时候？",
-      relationship: "你有没有一段关系正式开始、结束或进入婚姻的明确时间点？",
-      career: "你有没有一次入职、离职、升职、转行或创业的明确时间点？",
-      finance: "你有没有一次收入、投资、负债或资产状况明显改变的时间点？",
-      health_pressure: "你本人有没有一次住院、手术、事故或明显健康转折？大致在什么时候？",
-      family: "请补充一个家庭事件。", other: "请补充一个有明确时间的重要人生事件。",
-    };
+
+  const scoreableCount = input.events.filter((event) => event.scoreability === "scoreable").length;
+  for (const [domain, policy] of Object.entries(domainPolicy) as [Exclude<EvidenceDomain, "family" | "other">, (typeof domainPolicy)[Exclude<EvidenceDomain, "family" | "other">]][]) {
+    if (refusedDomains.has(domain)) continue;
+    const covered = scoreableDomains.has(domain);
+    const themeBonus = policy.keywords.test(latestContext) ? .12 : 0;
+    const alreadyAsked = input.turns.some((turn) => turn.questionDomain === domain && !turn.questionTargetEventId);
+    const latestEvent = input.events.at(-1);
+    const latestAnchor = latestEvent ? anchorFor(latestEvent) : null;
+    const prompt = latestAnchor
+      ? `承接“${latestAnchor}”，请再说一件时间相对明确的经历：${policy.fallbackPrompt}`
+      : policy.fallbackPrompt;
     opportunities.push(opportunity(input.caseId, {
-      kind: "ask_new_event", domain: missingDomain, targetEventId: null, prompt: prompts[missingDomain], reason: "当前证据领域覆盖不足。",
-      expectedInformationGain: .7, dateSensitivity: .45, candidateSplitRelevance: .5, domainCoverageGain: 1, recallEase: .7, novelty: 1, repetitionPenalty: 0, privacyCost: missingDomain === "health_pressure" ? .2 : .08,
+      kind: "ask_new_event", domain, targetEventId: null, goal: policy.goal,
+      requestedFields: ["new_dated_event"], anchors: latestAnchor ? [latestAnchor] : [],
+      contextFacts: [`已有 ${scoreableCount} 件可评分事件。`, `该领域${covered ? "已有覆盖" : "尚未覆盖"}。`],
+      fallbackPrompt: prompt, reason: covered ? "继续收集可区分候选的独立事件。" : "补足证据领域覆盖。",
+      expectedInformationGain: covered ? .54 + themeBonus : .7 + themeBonus,
+      dateSensitivity: input.snapshot ? .5 : .35,
+      candidateSplitRelevance: input.diagnostics?.candidateSplits.length ? .58 : .42,
+      domainCoverageGain: covered ? 0 : 1,
+      recallEase: policy.recallEase, novelty: alreadyAsked ? .35 : .9,
+      repetitionPenalty: alreadyAsked ? .3 : 0, privacyCost: policy.privacyCost,
     }));
   }
-  return opportunities.sort((left, right) =>
-    right.utility - left.utility
-    || left.opportunityId.localeCompare(right.opportunityId));
+
+  return opportunities
+    .sort((left, right) => right.utility - left.utility || left.opportunityId.localeCompare(right.opportunityId))
+    .slice(0, 5);
 }

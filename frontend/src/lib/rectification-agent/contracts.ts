@@ -5,6 +5,9 @@ const uuid = z.string().uuid();
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
 const nonblank = (max: number) => z.string().trim().min(1).max(max);
 
+export const CURRENT_RECTIFICATION_SKILL_VERSION = "birth-time-rectification-v6" as const;
+export const CURRENT_RECTIFICATION_PROMPT_VERSION = "rectification-agent-v6-1" as const;
+
 export const rectificationDiagnosticSchema = z.enum([
   "leave_one_event_out",
   "leave_one_domain_out",
@@ -26,21 +29,41 @@ export const rectificationDecisionSchema = z.discriminatedUnion("action", [
 ]);
 export type RectificationDecision = z.infer<typeof rectificationDecisionSchema>;
 
-export const questionOpportunitySchema = z.object({
-  opportunityId: uuid,
-  kind: z.enum([
-    "clarify_intake",
-    "clarify_event_subject",
-    "refine_event_date",
-    "pair_related_event",
-    "ask_new_event",
-    "resolve_event_conflict",
-    "disambiguate_candidate_split",
-  ]),
-  domain: evidenceDomainSchema,
-  targetEventId: uuid.nullable(),
-  prompt: nonblank(1_000),
-  reason: nonblank(240),
+export const semanticQuestionKindSchema = z.enum([
+  "clarify_intake",
+  "clarify_event_subject",
+  "refine_event_date",
+  "pair_related_event",
+  "ask_new_event",
+  "resolve_event_conflict",
+  "disambiguate_candidate_split",
+]);
+export type SemanticQuestionKind = z.infer<typeof semanticQuestionKindSchema>;
+
+export const requestedQuestionFieldSchema = z.enum([
+  "event_year",
+  "event_month",
+  "event_day",
+  "event_range",
+  "event_subject",
+  "event_stage",
+  "new_dated_event",
+]);
+export type RequestedQuestionField = z.infer<typeof requestedQuestionFieldSchema>;
+
+export const forbiddenQuestionMoveSchema = z.enum([
+  "switch_target_event",
+  "ask_multiple_questions",
+  "claim_exact_birth_minute",
+  "invent_event",
+  "invent_date",
+  "expose_private_score",
+  "expose_internal_id",
+  "expose_technique_trace",
+]);
+export type ForbiddenQuestionMove = z.infer<typeof forbiddenQuestionMoveSchema>;
+
+const opportunityMetrics = {
   expectedInformationGain: z.number().finite().min(0).max(1),
   dateSensitivity: z.number().finite().min(0).max(1),
   candidateSplitRelevance: z.number().finite().min(0).max(1),
@@ -51,8 +74,103 @@ export const questionOpportunitySchema = z.object({
   privacyCost: z.number().finite().min(0).max(1),
   utility: z.number().finite(),
   active: z.boolean(),
+} as const;
+
+export const semanticQuestionOpportunitySchema = z.object({
+  contractVersion: z.literal("semantic-question-v2"),
+  opportunityId: uuid,
+  kind: semanticQuestionKindSchema,
+  domain: evidenceDomainSchema,
+  targetEventId: uuid.nullable(),
+  goal: nonblank(500),
+  requestedFields: z.array(requestedQuestionFieldSchema).min(1).max(4),
+  anchors: z.array(nonblank(240)).max(8),
+  contextFacts: z.array(nonblank(500)).max(16),
+  forbiddenMoves: z.array(forbiddenQuestionMoveSchema).min(1).max(8),
+  fallbackPrompt: nonblank(1_000),
+  reason: nonblank(500),
+  ...opportunityMetrics,
 }).strict();
-export type QuestionOpportunity = z.infer<typeof questionOpportunitySchema>;
+export type SemanticQuestionOpportunity = z.infer<typeof semanticQuestionOpportunitySchema>;
+
+const legacyQuestionOpportunitySchema = z.object({ prompt: nonblank(1_000) }).passthrough();
+
+function legacyUuid(value: string): string {
+  let hashValue = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hashValue ^= value.charCodeAt(index);
+    hashValue = Math.imul(hashValue, 16777619);
+  }
+  const block = (hashValue >>> 0).toString(16).padStart(8, "0");
+  return `${block}-${block.slice(0, 4)}-4${block.slice(1, 4)}-8${block.slice(1, 4)}-${block}${block.slice(0, 4)}`;
+}
+
+const defaultForbiddenMoves: SemanticQuestionOpportunity["forbiddenMoves"] = [
+  "switch_target_event",
+  "ask_multiple_questions",
+  "claim_exact_birth_minute",
+  "invent_event",
+  "invent_date",
+  "expose_private_score",
+  "expose_internal_id",
+  "expose_technique_trace",
+];
+
+function numberFrom(value: unknown, fallback: number): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function requestedFieldsFor(kind: SemanticQuestionKind): SemanticQuestionOpportunity["requestedFields"] {
+  if (kind === "clarify_event_subject") return ["event_subject"];
+  if (kind === "refine_event_date") return ["event_month"];
+  if (kind === "disambiguate_candidate_split") return ["event_stage"];
+  if (kind === "ask_new_event" || kind === "pair_related_event") return ["new_dated_event"];
+  return ["event_range"];
+}
+
+export function normalizeQuestionOpportunity(value: unknown): SemanticQuestionOpportunity {
+  const semantic = semanticQuestionOpportunitySchema.safeParse(value);
+  if (semantic.success) return semantic.data;
+  const legacy = legacyQuestionOpportunitySchema.parse(value) as Record<string, unknown> & { prompt: string };
+  const kind = semanticQuestionKindSchema.safeParse(legacy.kind).success
+    ? semanticQuestionKindSchema.parse(legacy.kind)
+    : "clarify_intake";
+  const domain = evidenceDomainSchema.safeParse(legacy.domain).success
+    ? evidenceDomainSchema.parse(legacy.domain)
+    : "other";
+  const targetEventId = uuid.safeParse(legacy.targetEventId).success ? uuid.parse(legacy.targetEventId) : null;
+  const reason = typeof legacy.reason === "string" && legacy.reason.trim() ? legacy.reason.trim().slice(0, 500) : "历史问题机会兼容读取。";
+  return semanticQuestionOpportunitySchema.parse({
+    contractVersion: "semantic-question-v2",
+    opportunityId: uuid.safeParse(legacy.opportunityId).success ? legacy.opportunityId : legacyUuid(legacy.prompt),
+    kind,
+    domain,
+    targetEventId,
+    goal: reason,
+    requestedFields: requestedFieldsFor(kind),
+    anchors: [],
+    contextFacts: [],
+    forbiddenMoves: defaultForbiddenMoves,
+    fallbackPrompt: legacy.prompt,
+    reason,
+    expectedInformationGain: numberFrom(legacy.expectedInformationGain, .5),
+    dateSensitivity: numberFrom(legacy.dateSensitivity, .5),
+    candidateSplitRelevance: numberFrom(legacy.candidateSplitRelevance, .5),
+    domainCoverageGain: numberFrom(legacy.domainCoverageGain, 0),
+    recallEase: numberFrom(legacy.recallEase, .5),
+    novelty: numberFrom(legacy.novelty, .5),
+    repetitionPenalty: numberFrom(legacy.repetitionPenalty, 0),
+    privacyCost: numberFrom(legacy.privacyCost, 0),
+    utility: numberFrom(legacy.utility, .5),
+    active: typeof legacy.active === "boolean" ? legacy.active : true,
+  });
+}
+
+export const questionOpportunitySchema = z.union([
+  semanticQuestionOpportunitySchema,
+  legacyQuestionOpportunitySchema,
+]).transform(normalizeQuestionOpportunity);
+export type QuestionOpportunity = z.output<typeof questionOpportunitySchema>;
 
 export const eventDateSensitivitySchema = z.object({
   eventId: uuid,

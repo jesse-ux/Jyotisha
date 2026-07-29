@@ -774,10 +774,10 @@ test("uses Agent semantic classification when a single event falls through the d
     caseId: startActionId,
     actionId: answerActionId,
     turnVersion: 0,
-    answer: "2020年4月去石油化工研究院实习做研究员",
+    answer: "2020年4月开始带团队做商业巡演",
   });
 
-  assert.deepEqual(classifiedTexts, ["2020年4月去石油化工研究院实习做研究员"]);
+  assert.deepEqual(classifiedTexts, ["2020年4月开始带团队做商业巡演"]);
   const saved = value.cases.get(startActionId)?.row.eventEvidence.at(-1);
   assert.equal(saved?.dateValue, "2020-04");
   assert.equal(saved?.domain, "career");

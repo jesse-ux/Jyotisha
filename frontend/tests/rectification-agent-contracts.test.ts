@@ -30,11 +30,17 @@ const diagnostics: DiagnosticsSummary = {
   createdAt: "2026-07-28T00:00:00.000Z",
 };
 const opportunity: QuestionOpportunity = {
+  contractVersion: "semantic-question-v2",
   opportunityId,
   kind: "ask_new_event",
   domain: "career",
   targetEventId: null,
-  prompt: "请补充一个有明确年月的重要事件。",
+  goal: "收集一件有大致日期的职业转折。",
+  requestedFields: ["new_dated_event"],
+  anchors: [],
+  contextFacts: ["职业领域尚未覆盖。"],
+  forbiddenMoves: ["switch_target_event", "ask_multiple_questions", "claim_exact_birth_minute", "invent_event", "invent_date", "expose_private_score", "expose_internal_id", "expose_technique_trace"],
+  fallbackPrompt: "请说一件时间比较明确的职业变化经历。",
   reason: "当前证据领域覆盖不足。",
   expectedInformationGain: 0.8,
   dateSensitivity: 0.5,
