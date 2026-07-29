@@ -77,6 +77,10 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
         .sort((left, right) => right.caseVersion - left.caseVersion || right.createdAt.localeCompare(left.createdAt))[0];
       return latest ? validatedDecisions.get(latest.jobId) ?? latest.validatedDecision : null;
     },
+    async loadActionCase(userId, actionId) {
+      const replay = actionResults.get(`${userId}:${actionId}`);
+      return replay ? owned(userId, replay.caseId) : null;
+    },
     async createCase(input) {
       const replay = actionResults.get(`${input.case.userId}:${input.actionId}`);
       if (replay) return owned(input.case.userId, replay.caseId);

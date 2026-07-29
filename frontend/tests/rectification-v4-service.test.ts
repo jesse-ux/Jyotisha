@@ -151,7 +151,15 @@ test("legacy cases are not hard-switched to V5 even when flags change later", as
 
 test("V5 Agent regenerate rewrites only the current semantic question and replays the same action once", async () => withMode("v5_agent", async () => {
   const store = createRectificationV4MemoryStore();
-  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  let realizationCalls = 0;
+  const service = createRectificationV4CaseService(store, {
+    now: fixedNow,
+    regenerateQuestion: async ({ opportunity }) => {
+      realizationCalls += 1;
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      return opportunity.fallbackPrompt;
+    },
+  });
   const userId = randomUUID();
   const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
   const queued = await service.answer({
@@ -172,13 +180,19 @@ test("V5 Agent regenerate rewrites only the current semantic question and replay
   const before = await service.loadCase(userId, created.case.id);
   assert.ok(before?.case.currentQuestion);
   const actionId = randomUUID();
-  const regenerated = await service.regenerateQuestion({
+  const regenerationInput = {
     userId,
     caseId: created.case.id,
     actionId,
     expectedCaseVersion: before.case.version,
-  });
+  };
+  const [regenerated, concurrentReplay] = await Promise.all([
+    service.regenerateQuestion(regenerationInput),
+    service.regenerateQuestion(regenerationInput),
+  ]);
   assert.ok(regenerated?.case.currentQuestion);
+  assert.equal(concurrentReplay?.case.currentQuestion?.id, regenerated.case.currentQuestion.id);
+  assert.equal(realizationCalls, 1);
   assert.equal(regenerated.case.version, before.case.version + 1);
   assert.notEqual(regenerated.case.currentQuestion.id, before.case.currentQuestion.id);
   assert.equal(regenerated.case.currentQuestion.domain, before.case.currentQuestion.domain);
@@ -197,6 +211,7 @@ test("V5 Agent regenerate rewrites only the current semantic question and replay
   });
   assert.equal(replayed?.case.version, regenerated.case.version);
   assert.equal(replayed?.case.currentQuestion?.id, regenerated.case.currentQuestion.id);
+  assert.equal(realizationCalls, 1);
   assert.equal(store.jobs.size, 1);
   assert.equal(regenerated.case.latestSnapshot?.canConfirmExactMinute ?? false, false);
 }));

@@ -13,8 +13,17 @@ import { calculationSpecHash, evidenceSetHash } from "./fingerprints.ts";
 import { openingQuestion } from "./opening-question.ts";
 import type { RectificationV4Store } from "./store.ts";
 
-export function createRectificationV4CaseService(store: RectificationV4Store, options: { readonly now?: () => Date } = {}) {
+const regenerationInFlight = new Map<string, Promise<RectificationV4Case | null>>();
+
+export function createRectificationV4CaseService(
+  store: RectificationV4Store,
+  options: {
+    readonly now?: () => Date;
+    readonly regenerateQuestion?: typeof regenerateQuestionRealization;
+  } = {},
+) {
   const now = options.now ?? (() => new Date());
+  const realizeQuestion = options.regenerateQuestion ?? regenerateQuestionRealization;
 
   async function response(userId: string, caseValue: RectificationV4Case, jobId?: string): Promise<RectificationV4ApiResponse> {
     const [events, turns] = await Promise.all([
@@ -95,32 +104,45 @@ export function createRectificationV4CaseService(store: RectificationV4Store, op
       readonly actionId: string;
       readonly expectedCaseVersion: number;
     }) {
-      const current = await store.loadCase(input.userId, input.caseId);
-      if (!current?.currentQuestion || current.deploymentMode !== "v5_agent") return null;
-      const validated = await store.loadLatestValidatedDecision(input.userId, input.caseId);
-      const opportunity = validated?.selectedOpportunity;
-      if (!opportunity) return null;
-      const [events, turns] = await Promise.all([
-        store.loadEvents(input.userId, input.caseId),
-        store.loadTurns(input.userId, input.caseId),
-      ]);
-      const prompt = await regenerateQuestionRealization({
-        caseValue: current,
-        currentPrompt: current.currentQuestion.prompt,
-        latestAnswer: turns.at(-1)?.answer ?? "",
-        acceptedEvents: events,
-        opportunity,
-      });
-      const nextQuestion = {
-        ...current.currentQuestion,
-        id: randomUUID(),
-        prompt,
-      };
-      return response(input.userId, await store.replaceCurrentQuestion({
-        ...input,
-        question: nextQuestion,
-        now: now().toISOString(),
-      }));
+      const replay = await store.loadActionCase(input.userId, input.actionId);
+      if (replay) return response(input.userId, replay);
+
+      const key = `${input.userId}:${input.actionId}`;
+      let pending = regenerationInFlight.get(key);
+      if (!pending) {
+        pending = (async () => {
+          const secondReplay = await store.loadActionCase(input.userId, input.actionId);
+          if (secondReplay) return secondReplay;
+          const current = await store.loadCase(input.userId, input.caseId);
+          if (!current?.currentQuestion || current.deploymentMode !== "v5_agent") return null;
+          const validated = await store.loadLatestValidatedDecision(input.userId, input.caseId);
+          const opportunity = validated?.selectedOpportunity;
+          if (!opportunity) return null;
+          const [events, turns] = await Promise.all([
+            store.loadEvents(input.userId, input.caseId),
+            store.loadTurns(input.userId, input.caseId),
+          ]);
+          const prompt = await realizeQuestion({
+            caseValue: current,
+            currentPrompt: current.currentQuestion.prompt,
+            latestAnswer: turns.at(-1)?.answer ?? "",
+            acceptedEvents: events,
+            opportunity,
+          });
+          return store.replaceCurrentQuestion({
+            ...input,
+            question: { ...current.currentQuestion, id: randomUUID(), prompt },
+            now: now().toISOString(),
+          });
+        })();
+        regenerationInFlight.set(key, pending);
+      }
+      try {
+        const saved = await pending;
+        return saved ? response(input.userId, saved) : null;
+      } finally {
+        if (regenerationInFlight.get(key) === pending) regenerationInFlight.delete(key);
+      }
     },
 
     async reviseEvent(input: {

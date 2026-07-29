@@ -208,6 +208,12 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
       if (error) throw storeError(error);
       return data ? validatedDecisionSchema.parse((data as Row).validated_decision_json) : null;
     },
+    async loadActionCase(userId, actionId) {
+      const { data, error } = await supabase.from("birth_time_rectification_v4_actions")
+        .select("case_id").eq("user_id", userId).eq("action_id", actionId).maybeSingle();
+      if (error) throw storeError(error);
+      return data ? loadCaseById(userId, String((data as Row).case_id)) : null;
+    },
     async createCase(input) {
       const id = String(await rpc("create_birth_time_rectification_v5_case", {
         p_user_id: input.case.userId,
