@@ -458,7 +458,8 @@ test("public rectification rollout enables the semantic agent and recreates web 
     [
       "#!/usr/bin/env bash",
       'if [ "$1" = ps ]; then echo web-container; exit 0; fi',
-      `if [ "$1" = inspect ]; then echo ghcr.io/jesse-ux/jyotisha-web@sha256:${"b".repeat(64)}; exit 0; fi`,
+      `if [ "$1" = inspect ] && [[ "$*" == *Config.Image* ]]; then echo ghcr.io/jesse-ux/jyotisha-web@sha256:${"b".repeat(64)}; exit 0; fi`,
+      'if [ "$1" = inspect ] && [[ "$*" == *Config.Env* ]]; then printf "%s\n" RECTIFICATION_AGENT_V5_ENABLED=true RECTIFICATION_AGENT_V5_SHADOW=false RECTIFICATION_AGENT_V5_CANARY_PERCENT=100; exit 0; fi',
       `printf '%s\n' "$*" >>${join(root, "docker.log")}`,
     ].join("\n"),
   );

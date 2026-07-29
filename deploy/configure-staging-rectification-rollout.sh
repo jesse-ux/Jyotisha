@@ -151,6 +151,18 @@ compose=(docker compose -p jyotisha-staging --env-file .env.staging "${compose_f
 "${compose[@]}" config --quiet
 "${compose[@]}" up -d --no-build --pull never --force-recreate --no-deps web rectification-v4-worker
 
+for service in web rectification-v4-worker; do
+  container="$(docker ps -q --filter 'label=com.docker.compose.project=jyotisha-staging' --filter "label=com.docker.compose.service=$service" | head -n 1)"
+  [ -n "$container" ] || {
+    echo "staging $service container is missing after rollout" >&2
+    false
+  }
+  runtime_env="$(docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$container")"
+  grep -Fxq "RECTIFICATION_AGENT_V5_ENABLED=$creation_enabled" <<<"$runtime_env"
+  grep -Fxq "RECTIFICATION_AGENT_V5_SHADOW=false" <<<"$runtime_env"
+  grep -Fxq "RECTIFICATION_AGENT_V5_CANARY_PERCENT=100" <<<"$runtime_env"
+done
+
 health=""
 for _ in $(seq 1 30); do
   health="$(curl --fail --silent --show-error "$STAGING_URL/api/health" 2>/dev/null || true)"

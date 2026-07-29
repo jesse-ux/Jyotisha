@@ -1644,7 +1644,7 @@
 - 用户现象：用户提交“2016 年 9 月离家去外地上大学”后，回复仍固定为“我记下了这段经历。接下来请继续讲另一件……”，没有进入 Semantic Question Renderer。
 - 根因：Case rollout 只写入 V3 创建门和 smoke 状态，没有写入 `RECTIFICATION_AGENT_V5_ENABLED`、`RECTIFICATION_AGENT_V5_SHADOW`、`RECTIFICATION_AGENT_V5_CANARY_PERCENT`；因此 `selectRectificationDeploymentMode()` 把新 Case 持久化为 `v4_legacy`，Orchestrator 必然调用 Legacy Projector。
 - 修复：受控 staging rollout 现在原子写入 V5 Agent 开关，public 与 smoke rollout 使用 `v5_agent`、100% canary，并重建 web/worker；staging 中唯一满足 V6 版本、未完成、无 open Job 条件的错误 Case 已原位升级为 `rectification-evidence-v5` / `v5_agent`，历史 Turn、Event、Job 与 Agent Run 保持不变。
-- 验证：rollout 脚本测试断言三项 V5 选择器只写一次；staging 运行容器已读取 `enabled=true`、`shadow=false`、`canary=100`；活跃 Case 聚合只剩 `v5_agent`；健康检查保持 exact SHA、public、ready。
-- 防复发：公开 Case rollout 必须同时控制创建门与 Agent deployment mode；仅有 `readyForNewCases=true` 不再视为新对话 Renderer 已启用的充分证据。
+- 验证：rollout 脚本测试断言三项 V5 选择器只写一次，并在成功前核对 web/worker 容器实际读取的 `enabled`、`shadow`、`canary`；staging 活跃 Case 聚合只剩 `v5_agent`；健康检查保持 exact SHA、public、ready。
+- 防复发：公开 Case rollout 必须同时控制创建门与 Agent deployment mode，并验证运行容器的实际环境；仅有 `readyForNewCases=true` 不再视为新对话 Renderer 已启用的充分证据。
 - 相关记录：BUG-085、BUG-086、BUG-087
 - 修复版本：`birth-time-rectification-v6` / `rectification-agent-v6-1`

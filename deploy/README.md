@@ -437,9 +437,9 @@ sequence. A plain HTTP `200` is not substitute evidence:
    event, then a clear event. Verify the ambiguous/future facts do not score.
 4. Pause, reload, and resume from a second authenticated browser session.
    Verify no second rectification charge.
-5. Reach a candidate, verify the prior active time is still in force, reject a
-   mismatched candidate confirmation, then explicitly confirm the exact
-   candidate. Verify the time changes atomically.
+5. Reach a stable candidate range and verify the prior active time remains in
+   force. Confirm that no exact minute can be accepted and that rectification
+   does not write `profiles.active_birth_time`.
 6. Explicitly continue the saved ordinary question. Verify one normal
    consultation reservation. Delete its chat and verify the account case still
    resumes/loads.
