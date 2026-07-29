@@ -6,6 +6,8 @@ Question opportunities describe meaning, not final prose. New opportunities use 
 
 The builder produces several candidates and publishes at most five active opportunities. Rank them by evidence and context: expected information gain, candidate-split relevance, date sensitivity, domain coverage, recent user topics, recall ease, novelty, repetition penalty, and privacy cost. Never select the first missing domain from a fixed education/relocation/relationship/career/finance/health sequence.
 
+Use the latest answer and latest accepted event as the current topic. Do not let keywords from older turns pull the conversation back to a stale domain, and do not give an uncovered domain both a coverage reward and a second topic reward from the same older event. Once the minimum domain coverage is already present, continuity and information gain should outweigh collecting another domain merely because it is missing.
+
 ## One-turn rule
 
 - Ask one question only.
@@ -14,6 +16,8 @@ The builder produces several candidates and publishes at most five active opport
 - Do not ask a list of questions or combine a clarification with a new-domain request.
 - Do not invent an event or date.
 - Do not expose IDs, fields, scores, tools, models, or technique traces.
+- Reject canned realizations such as `承接……请再说一件……`; a deterministic fallback must still read as one short contextual question.
+- Validate the question semantically. Natural wording such as “下一次明显变化大概发生在什么时候” must not be rejected only because it omits a fixed phrase such as `哪次` or `哪件`.
 
 ## Target disposition
 

@@ -191,6 +191,65 @@ test("Builder 的领域排序不受事件输入数组顺序影响", () => {
   assert.deepEqual(domains([education, career]), domains([career, education]));
 });
 
+test("研究院实习后优先延续最新主题，不被旧教育事件的离家关键词拉回迁居问卷", () => {
+  const education = event({
+    summary: "离家去外地上大学",
+    rawText: "2016年9月离家去外地上大学",
+    createdAt: "2026-07-29T01:00:00.000Z",
+  });
+  const career = event({
+    domain: "career",
+    eventKind: "career_change",
+    summary: "去石油化工研究院实习做研究员",
+    rawText: "2020年4月去石油化工研究院实习做研究员",
+    dateRange: { start: "2020-04-01", end: "2020-04-30", precision: "month", label: "2020年4月" },
+    createdAt: "2026-07-29T02:00:00.000Z",
+  });
+  const opportunities = buildQuestionOpportunities({
+    caseId,
+    events: [education, career],
+    turns: [
+      turn({ answer: education.rawText, createdAt: "2026-07-29T01:00:00.000Z" }),
+      turn({ answer: career.rawText, createdAt: "2026-07-29T02:00:00.000Z" }),
+    ],
+    snapshot: null,
+    diagnostics: null,
+  });
+
+  assert.equal(opportunities.some((item) => item.kind === "refine_event_date"), false);
+  assert.equal(opportunities[0]?.kind, "ask_new_event");
+  assert.equal(opportunities[0]?.domain, "career");
+  assert.match(opportunities[0]?.fallbackPrompt ?? "", /研究院实习/);
+  assert.doesNotMatch(opportunities[0]?.fallbackPrompt ?? "", /承接.*请再说一件|哪次搬家、离乡或长期迁居/);
+});
+
+test("Renderer 接受锚定最新事件的自然新事件问题并拒绝旧固定模板", () => {
+  const latest = event({
+    domain: "career",
+    eventKind: "career_change",
+    summary: "去石油化工研究院实习做研究员",
+    rawText: "2020年4月去石油化工研究院实习做研究员",
+    dateRange: { start: "2020-04-01", end: "2020-04-30", precision: "month", label: "2020年4月" },
+  });
+  const opportunity = buildQuestionOpportunities({ caseId, events: [latest], turns: [turn({ answer: latest.rawText })], snapshot: null, diagnostics: null })
+    .find((item) => item.kind === "ask_new_event" && item.domain === "career");
+  assert.ok(opportunity);
+  const naturalQuestion = "研究院实习之后，下一次工作发生明显变化大概是什么时候？";
+  const canned = `承接“${latest.summary}”，请再说一件时间相对明确的经历：哪次工作变化的时间你比较确定？`;
+  assert.equal(validateQuestionRealization(naturalQuestion, opportunity).valid, true);
+  assert.equal(validateQuestionRealization(canned, opportunity).valid, false);
+  const message = realizePublicMessage({ acknowledgement: `你提到的是“${latest.summary}”。`, candidateUpdate: null, limitation: null, question: naturalQuestion }, {
+    latestAnswer: latest.rawText,
+    acceptedEvents: [latest],
+    pendingEvidence: [],
+    snapshot: null,
+    previousSnapshot: null,
+    validated: validated(opportunity),
+  });
+  assert.equal(message.question, naturalQuestion);
+  assert.notEqual(message.question, opportunity.fallbackPrompt);
+});
+
 test("Builder 和 Reasoner 按事件创建时间承接最近经历而不是 UUID 顺序", () => {
   const older = event({
     eventId: "ffffffff-ffff-4fff-8fff-ffffffffffff",

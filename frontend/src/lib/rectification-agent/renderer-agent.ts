@@ -11,6 +11,7 @@ const bannedAcknowledgement = /(?:这个信息很有用|它不是单纯的|而�
 const overinterpretedAcknowledgement = /(?:职业方向正式落地|人生意义|意味着你|说明你(?:已经|开始|正式)|标志着你)/;
 const internalTerms = /(?:opportunityId|snapshotId|eventId|targetEventId|requestedFields|fallbackPrompt|tool\s*call|tool_call|score|评分|模型名|opportunity|snapshot|D\d{1,2}|KP\b|Vimshottari)/i;
 const multiQuestionMoves = /(?:另外|还有|同时再说|并且告诉我|顺便|再告诉我)/;
+const cannedQuestion = /(?:承接[“\"']?.{0,80}[”\"']?，?请再说一件|接下来请继续讲另一件|我会顺着你的叙述继续核对)/;
 const exactClockMinute = /(?:[01]?\d|2[0-3])[:：][0-5]\d|(?:[零〇一二两三四五六七八九十]{1,3}|(?:[01]?\d|2[0-3]))点(?:[零〇一二两三四五六七八九十]{1,3}|[0-5]?\d)分/;
 const exactMinuteClaim = /(?:唯一|准确|精确|确切|确认|确定|代表).{0,12}(?:出生|生时)?(?:时间|时刻|分钟)|(?:出生|生时)(?:时间|时刻|分钟)?.{0,12}(?:唯一|准确|精确|确切|确认|确定|代表|就是)/;
 
@@ -34,6 +35,16 @@ function normalized(value: string): string {
   return value.normalize("NFKC").replace(/[“”"'\s，,。.!！?？:：；;]/g, "");
 }
 
+function includesAnchor(question: string, anchor: string): boolean {
+  const normalizedQuestion = normalized(question);
+  const normalizedAnchor = normalized(anchor);
+  if (normalizedQuestion.includes(normalizedAnchor)) return true;
+  for (let start = 0; start <= normalizedAnchor.length - 4; start += 1) {
+    if (normalizedQuestion.includes(normalizedAnchor.slice(start, start + 4))) return true;
+  }
+  return false;
+}
+
 function visibleTextSafetyIssues(value: string): string[] {
   const issues: string[] = [];
   if (internalTerms.test(value)) issues.push("internal_information_exposed");
@@ -51,9 +62,9 @@ export function validateQuestionRealization(question: unknown, opportunity: Ques
   if (/\n\s*(?:[-*•]|\d+[.)、])/.test(value)) issues.push("question_list_forbidden");
   issues.push(...visibleTextSafetyIssues(value));
   if (multiQuestionMoves.test(value)) issues.push("multiple_question_instruction");
-  if (opportunity.targetEventId) {
-    const questionText = normalized(value);
-    if (!opportunity.anchors.some((anchor) => questionText.includes(normalized(anchor)))) issues.push("target_anchor_missing");
+  if (cannedQuestion.test(value)) issues.push("canned_question_forbidden");
+  if (opportunity.targetEventId || (opportunity.kind === "ask_new_event" && opportunity.anchors.length > 0)) {
+    if (!opportunity.anchors.some((anchor) => includesAnchor(value, anchor))) issues.push("target_anchor_missing");
   }
   for (const field of opportunity.requestedFields) {
     if (field === "event_subject" && !/(?:本人|你自己|家人|伴侣|配偶)/.test(value)) issues.push("event_subject_not_requested");
@@ -61,7 +72,7 @@ export function validateQuestionRealization(question: unknown, opportunity: Ques
     if (field === "event_day" && !/(?:哪一天|几号|具体日期|大概日期)/.test(value)) issues.push("event_day_not_requested");
     if (field === "event_range" && !/(?:大概时间|时间范围|什么时候|哪个时间|哪一段时间)/.test(value)) issues.push("event_range_not_requested");
     if (field === "event_stage" && !/(?:开始|高峰|结束|正式发生)/.test(value)) issues.push("event_stage_not_requested");
-    if (field === "new_dated_event" && !/(?:哪次|哪件|一件|经历)/.test(value)) issues.push("new_event_not_requested");
+    if (field === "new_dated_event" && !/(?:哪次|哪件|一件|经历|变化|转折|发生)/.test(value)) issues.push("new_event_not_requested");
     if (field === "new_dated_event" && !/(?:时间|日期|什么时候|哪年|哪月|几月)/.test(value)) issues.push("new_event_date_not_requested");
     if (field === "event_year" && !/(?:哪年|年份|哪一年)/.test(value)) issues.push("event_year_not_requested");
   }
@@ -172,7 +183,14 @@ export async function renderPublicTurn(input: Readonly<{
         forbiddenMoves: opportunity.forbiddenMoves,
       } : null,
     }), { abortSignal: AbortSignal.timeout(input.timeoutMs ?? 15_000), structuredOutput: { schema: publicMessageSchema, jsonPromptInjection: "inline" } });
-    const message = realizePublicMessage(result.object, input);
+    const generated = publicMessageSchema.parse(result.object);
+    const questionValidation = opportunity ? validateQuestionRealization(generated.question, opportunity) : null;
+    const message = realizePublicMessage(generated, input);
+    if (questionValidation && !questionValidation.valid) {
+      recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "renderer", outcome: "rejected", modelId: selected.id, toolName: null, decisionAction: input.validated.decision.action, durationMs: Date.now() - started, errorCode: questionValidation.issues[0] ?? "renderer_question_rejected", deploymentSha });
+      recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "fallback", outcome: "succeeded", modelId: selected.id, toolName: null, decisionAction: input.validated.decision.action, durationMs: Date.now() - started, errorCode: "renderer_question_rejected", deploymentSha });
+      return message;
+    }
     recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "renderer", outcome: "succeeded", modelId: selected.id, toolName: null, decisionAction: input.validated.decision.action, durationMs: Date.now() - started, errorCode: null, deploymentSha });
     return message;
   } catch {

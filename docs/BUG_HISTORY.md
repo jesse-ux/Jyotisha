@@ -1648,3 +1648,17 @@
 - 防复发：公开 Case rollout 必须同时控制创建门与 Agent deployment mode，并验证运行容器的实际环境；仅有 `readyForNewCases=true` 不再视为新对话 Renderer 已启用的充分证据。
 - 相关记录：BUG-085、BUG-086、BUG-087
 - 修复版本：`birth-time-rectification-v6` / `rectification-agent-v6-1`
+
+## BUG-092 | Semantic Renderer 成功后仍被静默替换成固定领域模板
+
+- 状态：resolved
+- 首次发现：2026-07-29
+- 最近更新：2026-07-29
+- 影响面：V6 `ask_new_event` Opportunity 排序、问题验证、Renderer telemetry 与 staging 用户可见下一问
+- 用户现象：用户提交“2020 年 4 月去石油化工研究院实习做研究员”后，系统仍显示“承接……请再说一件……哪次搬家、离乡或长期迁居……”，像固定问卷。
+- 根因：Builder 将最近六轮答案拼接为当前主题，使较早教育事件中的“离家/外地”再次提升 relocation，同时未覆盖领域奖励在已经满足最小领域数后仍占主导；Renderer 对自然 `new_dated_event` 问法使用过窄词面校验，校验失败后静默替换为 Builder 固定 fallback，telemetry 仍记为 `renderer succeeded`。
+- 修复：当前主题只读取最新回答或最新事件；达到两个可评分领域后显著降低纯领域覆盖收益并提高最新主题连续性；移除“承接……请再说一件……”拼接，fallback 改为锚定当前经历的单句问题；放宽自然新事件词面但继续执行单问题、锚点、内部信息和出生分钟安全校验；validator 回退单独记录 `renderer rejected` 与脱敏错误码。
+- 验证：真实两事件重放断言 career 机会优先于旧 relocation 关键词、月份不被细化、旧固定模板被拒绝、锚定研究院实习的自然问题被保留且不等于 fallback；完整前端、lint、TypeScript、Python V5 与 staging smoke 随发布记录执行。
+- 防复发：模型调用成功、Schema 成功和问题被接受必须分开观测；Opportunity utility 不得把历史关键词与“未覆盖领域”组合成伪装的固定轮询。
+- 相关记录：BUG-086、BUG-090、BUG-091
+- 修复版本：`birth-time-rectification-v6` / `rectification-agent-v6-1`
