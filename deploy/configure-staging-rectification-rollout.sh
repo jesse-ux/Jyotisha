@@ -102,12 +102,16 @@ awk \
   -v create="$creation_enabled" \
   -v migrations="true" \
   -v smoke_sha="$smoke_sha" \
-  -v smoke_users="$smoke_user_ids" '
+  -v smoke_users="$smoke_user_ids" \
+  -v agent_enabled="$creation_enabled" '
 BEGIN {
   values["RECTIFICATION_V3_CREATE_ENABLED"] = create
   values["RECTIFICATION_V3_MIGRATIONS_READY"] = migrations
   values["RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA"] = smoke_sha
   values["RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS"] = smoke_users
+  values["RECTIFICATION_AGENT_V5_ENABLED"] = agent_enabled
+  values["RECTIFICATION_AGENT_V5_SHADOW"] = "false"
+  values["RECTIFICATION_AGENT_V5_CANARY_PERCENT"] = "100"
 }
 {
   split($0, parts, "=")

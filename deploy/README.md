@@ -406,11 +406,14 @@ previous-revision smoke SHA must remain pending. If the create flag, migration
 flag, deployment SHA, or strict UUID allowlist is invalid, creation audience
 must be `paused`, including for the smoke account.
 
-After the smoke sequence below passes, set
+After the smoke sequence below passes, use the guarded rollout workflow to set
 `RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA` to the exact deployed 40-character
-lowercase Git SHA, remove `RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS`, and
-restart the web container. Then fetch health again and
-verify all of the following against the revision that passed validation:
+lowercase Git SHA, remove `RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS`, enable
+`RECTIFICATION_AGENT_V5_ENABLED=true`, disable shadow mode, set the canary to
+100 percent, and restart both the web and rectification worker containers. The
+workflow writes these selectors together so public Case creation cannot silently
+fall back to the fixed `v4_legacy` projector. Then fetch health again and verify
+all of the following against the revision that passed validation:
 
 - `deployment.gitCommit` exactly equals the tested 40-character Git SHA;
 - `rollout.conversationalRectificationV3.protocol` is

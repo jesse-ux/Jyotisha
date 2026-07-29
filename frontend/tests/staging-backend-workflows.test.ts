@@ -405,7 +405,7 @@ test("production remains manual-only and separate from staging database automati
 });
 
 
-test("public rectification rollout rewrites only rollout gates and recreates web runtimes", () => {
+test("public rectification rollout enables the semantic agent and recreates web runtimes", () => {
   const root = mkdtempSync(join(tmpdir(), "jyotisha-rollout-"));
   const deploymentPath = join(root, "app");
   const statePath = join(deploymentPath, ".state");
@@ -441,6 +441,9 @@ test("public rectification rollout rewrites only rollout gates and recreates web
       "RECTIFICATION_V3_MIGRATIONS_READY=false",
       "RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA=old",
       "RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS=00000000-0000-4000-8000-000000009001",
+      "RECTIFICATION_AGENT_V5_ENABLED=false",
+      "RECTIFICATION_AGENT_V5_SHADOW=true",
+      "RECTIFICATION_AGENT_V5_CANARY_PERCENT=0",
       "",
     ].join("\n"),
     { mode: 0o600 },
@@ -487,7 +490,13 @@ test("public rectification rollout rewrites only rollout gates and recreates web
     assert.match(env, /^RECTIFICATION_V3_MIGRATIONS_READY=true$/m);
     assert.match(env, new RegExp(`^RECTIFICATION_V3_SYNTHETIC_SMOKE_SHA=${sha}$`, "m"));
     assert.match(env, /^RECTIFICATION_V3_SYNTHETIC_SMOKE_USER_IDS=$/m);
+    assert.match(env, /^RECTIFICATION_AGENT_V5_ENABLED=true$/m);
+    assert.match(env, /^RECTIFICATION_AGENT_V5_SHADOW=false$/m);
+    assert.match(env, /^RECTIFICATION_AGENT_V5_CANARY_PERCENT=100$/m);
     assert.equal((env.match(/^RECTIFICATION_V3_CREATE_ENABLED=/gm) ?? []).length, 1);
+    assert.equal((env.match(/^RECTIFICATION_AGENT_V5_ENABLED=/gm) ?? []).length, 1);
+    assert.equal((env.match(/^RECTIFICATION_AGENT_V5_SHADOW=/gm) ?? []).length, 1);
+    assert.equal((env.match(/^RECTIFICATION_AGENT_V5_CANARY_PERCENT=/gm) ?? []).length, 1);
     assert.match(readFileSync(join(root, "docker.log"), "utf8"), /force-recreate --no-deps web rectification-v4-worker/);
   } finally {
     rmSync(root, { recursive: true, force: true });
