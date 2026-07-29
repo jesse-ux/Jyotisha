@@ -1,4 +1,4 @@
-import type { AgentRun, CandidateFeatureSnapshot, DiagnosticsSummary, PublicMessage, ValidatedDecision } from "../rectification-agent/contracts.ts";
+import type { AgentRun, CandidateFeatureSnapshot, DiagnosticsSummary, StoredPublicMessage, ValidatedDecision } from "../rectification-agent/contracts.ts";
 import type {
   LifeEventRevision,
   PendingEvidence,
@@ -20,7 +20,7 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
   readonly diagnostics: Map<string, DiagnosticsSummary>;
   readonly featureSnapshots: Map<string, CandidateFeatureSnapshot>;
   readonly agentRuns: Map<string, AgentRun>;
-  readonly publicMessages: Map<string, PublicMessage>;
+  readonly publicMessages: Map<string, StoredPublicMessage>;
   readonly validatedDecisions: Map<string, ValidatedDecision>;
   readonly pendingEvidence: Map<string, PendingEvidence>;
 } {
@@ -32,7 +32,7 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
   const diagnostics = new Map<string, DiagnosticsSummary>();
   const featureSnapshots = new Map<string, CandidateFeatureSnapshot>();
   const agentRuns = new Map<string, AgentRun>();
-  const publicMessages = new Map<string, PublicMessage>();
+  const publicMessages = new Map<string, StoredPublicMessage>();
   const validatedDecisions = new Map<string, ValidatedDecision>();
   const pendingEvidence = new Map<string, PendingEvidence>();
 
@@ -68,6 +68,13 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
       return [...turns.values()]
         .filter((turn) => turn.caseId === caseId)
         .sort((left, right) => left.caseVersion - right.caseVersion || left.createdAt.localeCompare(right.createdAt));
+    },
+    async loadAnalysisMessages(userId, caseId) {
+      owned(userId, caseId);
+      return [...jobs.values()]
+        .filter((job) => job.caseId === caseId && publicMessages.get(job.id)?.analysisTrace)
+        .sort((left, right) => turns.get(left.turnId)!.caseVersion - turns.get(right.turnId)!.caseVersion)
+        .map((job) => ({ sourceTurnId: job.turnId, trace: publicMessages.get(job.id)!.analysisTrace! }));
     },
     async loadLatestValidatedDecision(userId, caseId) {
       const caseValue = cases.get(caseId);

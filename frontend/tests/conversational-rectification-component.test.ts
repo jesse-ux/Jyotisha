@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   canRegenerateRectificationMessage,
   rectificationV4ChatMessages,
+  rectificationPhaseLabel,
   toggleRectificationFeedback,
 } from "../src/components/rectification-v4-panel.tsx";
 import type { RectificationV4ApiResponse } from "../src/lib/rectification-v4/contracts.ts";
@@ -59,6 +60,7 @@ function response(overrides: Record<string, unknown> = {}): RectificationV4ApiRe
     },
     job: null,
     events: [],
+    analysis: [],
     turns: [{
       id: "00000000-0000-4000-8000-000000000903",
       caseId: id,
@@ -72,7 +74,28 @@ function response(overrides: Record<string, unknown> = {}): RectificationV4ApiRe
       actionId: "00000000-0000-4000-8000-000000000905",
       createdAt: now,
     }],
-  };
+  } as unknown as RectificationV4ApiResponse;
+}
+
+function analysisTrace(label: string) {
+  return {
+    status: "completed",
+    stages: [{
+      phase: "extracting_evidence",
+      label,
+      status: "completed",
+      durationMs: 320,
+    }],
+    toolCalls: [{
+      category: "candidate_engine",
+      label: "候选分钟扫描",
+      outcome: "succeeded",
+      durationMs: 840,
+    }],
+    techniques: ["Vimshottari Dasha", "D24"],
+    reasoningSummary: "现有证据更适合继续收集另一件时间明确的经历。",
+    reasoningSource: "provider_summary",
+  } as const;
 }
 
 test("v4 rectification reuses the ordinary session message list, composer, and model selector", () => {
@@ -93,7 +116,14 @@ test("v4 rectification reuses the ordinary session message list, composer, and m
   assert.match(component, /<ModelSelector/);
   assert.match(component, /aria-label="赞"/);
   assert.match(component, /aria-label="踩"/);
+  assert.match(component, /aria-label="复制回答"/);
   assert.match(component, /aria-label="重新生成回答"/);
+  assert.match(component, /<details className="rectification-analysis">/);
+  assert.match(component, /<span>分析过程<\/span>/);
+  assert.match(
+    component,
+    /<RectificationAnalysisDetails trace=\{message\.analysisTrace\} \/>[\s\S]*?<div className="rectification-message-actions"/,
+  );
   assert.match(component, /caseValue\?\.deploymentMode === "v5_agent"/);
   assert.match(component, /controller\.regenerate\(\)/);
   assert.match(component, /controller\.answer\(answer, props\.selectedModelId \|\| null\)/);
@@ -151,10 +181,95 @@ test("turn history and the context-aware next question render as one chat timeli
   ]);
 });
 
-test("processing is an ordinary assistant thinking message after the saved answer", () => {
-  const messages = rectificationV4ChatMessages(response({ currentQuestion: null, status: "processing" }), true);
+test("completed analysis is attached to the next Agent message by source turn", () => {
+  const base = response();
+  const firstTurn = base.turns[0]!;
+  const secondTurn = {
+    ...firstTurn,
+    id: "00000000-0000-4000-8000-000000000906",
+    caseVersion: 2,
+    questionId: "00000000-0000-4000-8000-000000000907",
+    question: "承接复读后再次毕业，你还记得哪次职业变化的大概时间？",
+    answer: "2020年4月去研究院实习。",
+    actionId: "00000000-0000-4000-8000-000000000908",
+  };
+  const firstTrace = analysisTrace("整理第一轮经历");
+  const secondTrace = analysisTrace("整理第二轮经历");
+  const data = {
+    ...base,
+    turns: [firstTurn, secondTurn],
+    analysis: [
+      { sourceTurnId: firstTurn.id, trace: firstTrace },
+      { sourceTurnId: secondTurn.id, trace: secondTrace },
+    ],
+  } as unknown as RectificationV4ApiResponse;
+
+  const assistantMessages = rectificationV4ChatMessages(data, false)
+    .filter((message) => message.role === "assistant");
+
+  assert.equal(assistantMessages[0]?.analysisTrace, undefined);
+  assert.equal(assistantMessages[1]?.analysisTrace, firstTrace);
+  assert.equal(assistantMessages[2]?.analysisTrace, secondTrace);
+});
+
+test("legacy and shadow modes do not expose persisted analysis traces", () => {
+  const base = response();
+  const trace = analysisTrace("不应显示");
+  for (const deploymentMode of ["v4_legacy", "v5_shadow"] as const) {
+    const data = {
+      ...base,
+      case: { ...base.case, deploymentMode },
+      analysis: [{ sourceTurnId: base.turns[0]!.id, trace }],
+    } as unknown as RectificationV4ApiResponse;
+    assert.equal(
+      rectificationV4ChatMessages(data, false).some((message) => message.analysisTrace),
+      false,
+      deploymentMode,
+    );
+  }
+});
+
+test("processing shows the current server job phase in Chinese", () => {
+  const base = response({ currentQuestion: null, status: "processing", phase: "checking_robustness" });
+  const data = {
+    ...base,
+    job: {
+      id: "00000000-0000-4000-8000-000000000909",
+      caseId: id,
+      status: "processing",
+      phase: "checking_robustness",
+      expectedCaseVersion: 2,
+      evidenceSetHash: "b".repeat(64),
+      calculationSpecHash: "a".repeat(64),
+      errorCode: null,
+      createdAt: now,
+      updatedAt: now,
+    },
+  } as unknown as RectificationV4ApiResponse;
+  const messages = rectificationV4ChatMessages(data, true);
   assert.equal(messages.at(-1)?.role, "assistant");
   assert.equal(messages.at(-1)?.state, "thinking");
+  assert.equal(messages.at(-1)?.text, "正在检查候选范围的稳定性…");
+  assert.equal(rectificationPhaseLabel("planning_question"), "正在选择下一条最有信息量的问题…");
+});
+
+test("analysis details render only public labels and preserve the message action icons", () => {
+  const component = readFileSync(new URL("../src/components/rectification-v4-panel.tsx", import.meta.url), "utf8");
+  const css = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
+
+  assert.match(component, /\{stage\.label\}/);
+  assert.match(component, /\{toolCall\.label\}/);
+  assert.match(component, /trace\.techniques\.join\("、"\)/);
+  assert.match(component, /trace\.reasoningSource === "provider_summary"/);
+  assert.doesNotMatch(component, />\{stage\.phase\}</);
+  assert.doesNotMatch(component, />\{toolCall\.category\}</);
+  assert.doesNotMatch(component, />\{item\.sourceTurnId\}</);
+  assert.match(component, /<ThumbsUp aria-hidden="true" \/>/);
+  assert.match(component, /<ThumbsDown aria-hidden="true" \/>/);
+  assert.match(component, /<Copy aria-hidden="true" \/>/);
+  assert.match(component, /<RotateCcw aria-hidden="true" \/>/);
+  assert.match(css, /\.rectification-analysis > summary/);
+  assert.doesNotMatch(component, /candidateScore|contributionMatrix|opportunityId|snapshotId/);
 });
 
 test("range messages never claim an exact confirmed birth minute", () => {

@@ -1,8 +1,9 @@
-import type { AgentRun, CandidateFeatureSnapshot, DiagnosticsSummary, PublicMessage, ValidatedDecision } from "../rectification-agent/contracts.ts";
+import type { AgentRun, CandidateFeatureSnapshot, DiagnosticsSummary, StoredPublicMessage, ValidatedDecision } from "../rectification-agent/contracts.ts";
 import type {
   CandidateSnapshot,
   LifeEventRevision,
   PendingEvidence,
+  RectificationAnalysisItem,
   RectificationV4Case,
   RectificationV4Job,
   RectificationV4Phase,
@@ -33,7 +34,7 @@ export type CompleteRectificationV4JobInput = Readonly<{
   diagnostics: DiagnosticsSummary | null;
   featureSnapshot: CandidateFeatureSnapshot | null;
   validatedDecision: ValidatedDecision;
-  publicMessage: PublicMessage;
+  publicMessage: StoredPublicMessage;
   agentRun: AgentRun;
   nextQuestion: RectificationV4Question | null;
   status: RectificationV4Case["status"];
@@ -45,6 +46,7 @@ export interface RectificationV4Store {
   loadCase(userId: string, caseId: string): Promise<RectificationV4Case | null>;
   loadEvents(userId: string, caseId: string): Promise<readonly LifeEventRevision[]>;
   loadTurns(userId: string, caseId: string): Promise<readonly RectificationV4Turn[]>;
+  loadAnalysisMessages(userId: string, caseId: string): Promise<readonly RectificationAnalysisItem[]>;
   loadLatestValidatedDecision(userId: string, caseId: string): Promise<ValidatedDecision | null>;
   loadActionCase(userId: string, actionId: string): Promise<RectificationV4Case | null>;
   createCase(input: { readonly case: RectificationV4Case; readonly actionId: string }): Promise<RectificationV4Case>;

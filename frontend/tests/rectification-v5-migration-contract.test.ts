@@ -69,6 +69,12 @@ test("V5 completion is lease-bound, hash-bound, ownership-bound and replay-safe"
   assert.match(migration, /completion_payload_hash = p_completion_payload_hash/);
 });
 
+test("V5 completion accepts and replays the full extensible public message JSON", () => {
+  assert.match(migration, /jsonb_typeof\(p_public_message\) is distinct from 'object'/);
+  assert.match(migration, /v_existing_message\.message is distinct from p_public_message/);
+  assert.match(migration, /birth_time_rectification_public_messages[\s\S]*p_public_message/);
+});
+
 test("V5 inserts use explicit columns and never mutate the profile birth minute", () => {
   for (const table of [
     "birth_time_rectification_v4_events",

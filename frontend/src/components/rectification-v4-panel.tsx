@@ -2,11 +2,12 @@
 
 import { ArrowUp, Check, Copy, RotateCcw, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { AgentActivityStatus } from "@/components/agent-activity-status";
 import { useRectificationV4 } from "@/hooks/use-rectification-v4";
 import type { ChatMessageView } from "@/lib/chat-message-view";
 import type { PublicLanguageModel } from "@/lib/public-models";
-import type { RectificationV4ApiResponse } from "@/lib/rectification-v4/contracts";
-import { ChatMessageRow } from "./chat-message-row";
+import type { RectificationAnalysisItem, RectificationAnalysisTrace, RectificationV4ApiResponse } from "@/lib/rectification-v4/contracts";
+import { AgentAvatar, ChatMessageRow } from "./chat-message-row";
 import { ModelSelector } from "./model-selector";
 import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
@@ -28,6 +29,115 @@ type RectificationV4PanelProps = Readonly<{
   onPendingChange?: (pending: boolean) => void;
   onContinueOriginalQuestion?: (continuation: RectificationV4Continuation) => void;
 }>;
+
+type RectificationChatMessageView = ChatMessageView & Readonly<{
+  analysisTrace?: RectificationAnalysisTrace;
+}>;
+
+const phaseLabels = {
+  collecting_evidence: "正在准备继续收集经历…",
+  extracting_evidence: "正在整理你刚才提到的经历…",
+  scoring_candidates: "正在扫描候选时间…",
+  checking_robustness: "正在检查候选范围的稳定性…",
+  planning_question: "正在选择下一条最有信息量的问题…",
+  reasoning: "正在结合上下文决定下一步…",
+  rendering: "正在组织下一条回复…",
+  complete: "分析已完成",
+} as const;
+
+export function rectificationPhaseLabel(
+  phase: NonNullable<RectificationV4ApiResponse["job"]>["phase"],
+): string {
+  return phaseLabels[phase];
+}
+
+function durationLabel(durationMs: number | null): string | null {
+  if (durationMs === null || durationMs < 0) return null;
+  return durationMs < 1_000 ? `${durationMs} 毫秒` : `${(durationMs / 1_000).toFixed(1)} 秒`;
+}
+
+function publicStatusLabel(status: string): string {
+  return ({
+    completed: "已完成",
+    succeeded: "已完成",
+    running: "进行中",
+    failed: "未完成",
+    skipped: "已跳过",
+    legacy: "历史记录",
+  } as Record<string, string>)[status] ?? "已记录";
+}
+
+function RectificationAnalysisDetails({ trace }: Readonly<{ trace: RectificationAnalysisTrace }>) {
+  return (
+    <details className="rectification-analysis">
+      <summary>
+        <span>分析过程</span>
+        <small>{publicStatusLabel(trace.status)}</small>
+      </summary>
+      <div className="rectification-analysis-content">
+        {trace.stages.length > 0 && (
+          <section aria-label="执行阶段">
+            <h4>执行阶段</h4>
+            <ol>
+              {trace.stages.map((stage, index) => {
+                const duration = durationLabel(stage.durationMs);
+                return (
+                  <li key={`${stage.phase}-${index}`}>
+                    <span>{stage.label}</span>
+                    <small>{publicStatusLabel(stage.status)}{duration ? ` · ${duration}` : ""}</small>
+                  </li>
+                );
+              })}
+            </ol>
+          </section>
+        )}
+        {trace.toolCalls.length > 0 && (
+          <section aria-label="实际调用">
+            <h4>实际调用</h4>
+            <ul>
+              {trace.toolCalls.map((toolCall, index) => {
+                const duration = durationLabel(toolCall.durationMs);
+                return (
+                  <li key={`${toolCall.category}-${index}`}>
+                    <span>{toolCall.label}</span>
+                    <small>{publicStatusLabel(toolCall.outcome)}{duration ? ` · ${duration}` : ""}</small>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+        {trace.techniques.length > 0 && (
+          <section aria-label="实际使用的技法">
+            <h4>实际使用的技法</h4>
+            <p>{trace.techniques.join("、")}</p>
+          </section>
+        )}
+        {trace.reasoningSource === "provider_summary" && trace.reasoningSummary && (
+          <section aria-label="推理摘要">
+            <h4>推理摘要</h4>
+            <p>{trace.reasoningSummary}</p>
+          </section>
+        )}
+      </div>
+    </details>
+  );
+}
+
+function RectificationMessageRow({ message }: Readonly<{ message: RectificationChatMessageView }>) {
+  if (message.state !== "thinking" || !message.text) return <ChatMessageRow message={message} />;
+
+  return (
+    <article className="message message-assistant" aria-label="Jyotisha 正在分析">
+      <AgentAvatar />
+      <div className="message-content">
+        <div className="message-bubble">
+          <AgentActivityStatus state="working" label={message.text} />
+        </div>
+      </div>
+    </article>
+  );
+}
 
 export function toggleRectificationFeedback(
   current: "up" | "down" | undefined,
@@ -55,7 +165,7 @@ export function rectificationV4ChatMessages(
   data: RectificationV4ApiResponse | null,
   processing: boolean,
   pendingConsultationQuestion?: string | null,
-): readonly ChatMessageView[] {
+): readonly RectificationChatMessageView[] {
   if (!data) {
     return [{
       role: "assistant",
@@ -65,7 +175,13 @@ export function rectificationV4ChatMessages(
     }];
   }
 
-  const messages: ChatMessageView[] = [];
+  const messages: RectificationChatMessageView[] = [];
+  const analysis = data.case.deploymentMode === "v5_agent"
+    ? (data as RectificationV4ApiResponse & {
+      readonly analysis?: readonly RectificationAnalysisItem[];
+    }).analysis ?? []
+    : [];
+  const analysisBySourceTurnId = new Map(analysis.map((item) => [item.sourceTurnId, item.trace]));
   if (pendingConsultationQuestion?.trim()) {
     messages.push({
       role: "assistant",
@@ -75,12 +191,14 @@ export function rectificationV4ChatMessages(
     });
   }
 
+  let previousTurnId: string | null = null;
   for (const turn of data.turns) {
     messages.push({
       role: "assistant",
       text: turn.question,
       renderKey: `rectification-question-${turn.id}`,
       state: "settled",
+      analysisTrace: previousTurnId ? analysisBySourceTurnId.get(previousTurnId) : undefined,
     });
     if (turn.answer) {
       messages.push({
@@ -90,16 +208,20 @@ export function rectificationV4ChatMessages(
         state: "settled",
       });
     }
+    previousTurnId = turn.id;
   }
 
   const caseValue = data.case;
   const primary = caseValue.latestSnapshot?.clusters[0];
+  const latestTurnTrace = analysisBySourceTurnId.get(data.turns.at(-1)?.id ?? "");
+  const terminalTrace = caseValue.currentQuestion ? undefined : latestTurnTrace;
   if (caseValue.acceptedRange) {
     messages.push({
       role: "assistant",
       text: `候选范围已保存为 ${caseValue.acceptedRange.start}–${caseValue.acceptedRange.end}。这是校正得到的候选范围，原出生时间没有被自动改写。`,
       renderKey: `rectification-accepted-${caseValue.version}`,
       state: "settled",
+      analysisTrace: terminalTrace,
     });
   } else if (caseValue.status === "range_ready" && primary) {
     messages.push({
@@ -107,6 +229,7 @@ export function rectificationV4ChatMessages(
       text: `根据目前这些经历，可以先把范围稳定缩小到 ${primary.startTime}–${primary.endTime}。这是候选范围，不是已确认的出生分钟；你可以保存它，也可以继续补充经历。`,
       renderKey: `rectification-range-${caseValue.version}`,
       state: "settled",
+      analysisTrace: terminalTrace,
     });
   }
 
@@ -116,13 +239,14 @@ export function rectificationV4ChatMessages(
       text: caseValue.currentQuestion.prompt,
       renderKey: `rectification-current-${caseValue.currentQuestion.id}`,
       state: "settled",
+      analysisTrace: latestTurnTrace,
     });
   }
 
   if (processing) {
     messages.push({
       role: "assistant",
-      text: "",
+      text: rectificationPhaseLabel(data.job?.phase ?? caseValue.phase),
       renderKey: `rectification-processing-${data.job?.id ?? caseValue.version}`,
       state: "thinking",
     });
@@ -132,6 +256,7 @@ export function rectificationV4ChatMessages(
       text: "进度已经保存。准备好后，我们可以从这里继续。",
       renderKey: `rectification-paused-${caseValue.version}`,
       state: "settled",
+      analysisTrace: terminalTrace,
     });
   } else if (caseValue.status === "abandoned") {
     messages.push({
@@ -139,6 +264,7 @@ export function rectificationV4ChatMessages(
       text: "这次校正已经结束，原出生时间没有被改写。",
       renderKey: `rectification-abandoned-${caseValue.version}`,
       state: "settled",
+      analysisTrace: terminalTrace,
     });
   }
 
@@ -254,9 +380,12 @@ export function RectificationV4Panel(props: RectificationV4PanelProps) {
             });
             return (
               <div className="rectification-message-entry" key={message.renderKey}>
-                <ChatMessageRow message={regenerating
+                <RectificationMessageRow message={regenerating
                   ? { ...message, text: "", state: "thinking" }
                   : message} />
+                {message.role === "assistant" && message.state === "settled" && message.analysisTrace && (
+                  <RectificationAnalysisDetails trace={message.analysisTrace} />
+                )}
                 {showActions && !regenerating && (
                   <div className="rectification-message-actions" aria-label="Agent 回答操作">
                     <button

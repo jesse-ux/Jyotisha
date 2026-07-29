@@ -20,3 +20,15 @@ Only server-reported available layers may be described as used. Missing, blocked
 - D60 is reference-only and must never drive candidate selection or the public conclusion.
 - Never expose private scores, weights, contribution values, internal technique traces, or tool/model names in the user-facing message.
 - No technique result can override `canConfirmExactMinute === false` or authorize an automatic profile birth-time write.
+
+
+## Public execution receipt
+
+The analysis receipt reports observed execution, not the complete capability catalog. A technique or diagnostic may be named only when persisted server artifacts prove it ran in that Turn.
+
+- Candidate-minute scanning and stability diagnostics are shown only on turns that executed them.
+- A Reasoner diagnostic is shown as an Agent read only when its persisted tool trace records the call; precomputed diagnostics are not Agent tool calls.
+- Technique labels are derived through a server allowlist from actual contribution/technique metadata. Never expose rule IDs, raw layers, scores, weights, contribution values, matrices, arguments, or candidate minutes.
+- Unsupported, unavailable, skipped, blocked, reference-only, and research-only layers are omitted rather than shown as missing work.
+- D60 is omitted from the receipt and must not drive candidate selection, stability claims, or public conclusions.
+- Provider-explicit reasoning content is not technique evidence. It may appear only as a separately labeled, server-filtered summary and never as hidden chain-of-thought.

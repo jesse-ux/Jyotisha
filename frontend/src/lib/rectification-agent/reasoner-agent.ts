@@ -20,11 +20,39 @@ import {
 
 const skillPath = process.env.RECTIFICATION_SKILL_PATH?.trim() || path.resolve(process.cwd(), "..", "skills", "birth-time-rectification");
 type Usage = Readonly<{ inputTokens?: number; outputTokens?: number }>;
-type GeneratedDecision = Readonly<{ object: unknown; totalUsage?: Usage | Promise<Usage> }>;
+type GeneratedDecision = Readonly<{
+  object: unknown;
+  totalUsage?: Usage | Promise<Usage>;
+  reasoningSummary?: string | null;
+  reasoningSource?: "provider_summary" | null;
+}>;
 export type RectificationReasonerGenerator = (
   prompt: string,
   phase: "initial" | "after_diagnostic",
 ) => Promise<GeneratedDecision>;
+
+const unsafeReasoningPattern = /(?:[0-9a-f]{8}-[0-9a-f-]{27,}|(?:[01]\d|2[0-3]):[0-5]\d|(?:凌晨|清晨|上午|中午|下午|傍晚|晚上)?[零〇一二两三四五六七八九十百\d]{1,4}[点时](?:[零〇一二两三四五六七八九十百\d]{1,4}分?)?|opportunity(?:id)?|snapshot(?:id)?|event(?:id)?|tool[ _-]?call|score|diagnostic|rule[ _-]?id|贡献矩阵|内部字段|权重|保留率|比例|百分之|分数|得分|阈值|边际|cluster|D\d{1,2})/iu;
+
+function compactText(value: string): string {
+  return value.replace(/\s+/gu, "").toLocaleLowerCase();
+}
+
+export function sanitizeReasoningSummary(value: unknown, sensitiveTexts: readonly string[] = []): string | null {
+  if (typeof value !== "string") return null;
+  const text = value.replace(/\s+/gu, " ").trim();
+  if (!text || unsafeReasoningPattern.test(text)) return null;
+  const compact = compactText(text);
+  for (const sensitiveText of sensitiveTexts) {
+    const source = compactText(sensitiveText);
+    if (source.length < 2) continue;
+    const overlapLength = Math.min(4, source.length);
+    for (let index = 0; index <= source.length - overlapLength; index += 1) {
+      if (compact.includes(source.slice(index, index + overlapLength))) return null;
+    }
+  }
+  const sentences = text.match(/[^。！？!?]+[。！？!?]?/gu)?.slice(0, 2).join("").trim() ?? text;
+  return sentences.slice(0, 240).trim() || null;
+}
 
 function diagnosticPayload(diagnostic: RectificationDiagnostic, summary: DiagnosticsSummary) {
   switch (diagnostic) {
@@ -95,6 +123,7 @@ export async function runBoundedReasoner(input: Readonly<{
   inputTokenCount: number | null;
   outputTokenCount: number | null;
   latencyMs: number;
+  reasoningSummary: string | null;
 }>> {
   const started = Date.now();
   const deploymentSha = process.env.DEPLOYMENT_SHA?.trim() || null;
@@ -116,6 +145,7 @@ export async function runBoundedReasoner(input: Readonly<{
       inputTokenCount: usageObserved ? inputTokenCount : null,
       outputTokenCount: usageObserved ? outputTokenCount : null,
       latencyMs: Date.now() - started,
+      reasoningSummary: null,
     };
   };
   if (input.enabled === false) return fallback("deployment_mode_legacy");
@@ -160,13 +190,30 @@ export async function runBoundedReasoner(input: Readonly<{
     tools: { run_rectification_diagnostics: diagnosticsTool },
     instructions: "Choose one server-owned action. Never create an event id, candidate, score, date, question, calculation input, or birth minute. Ask only by opportunityId. Candidate ranges may only use currentSnapshotId. You may request or call one diagnostic, then must return a final non-diagnostic action. Return strict structured output.",
   }) : null;
+  const isOpenAiProvider = model?.mode === "openai";
   const generate: RectificationReasonerGenerator = input.generateDecision ?? (async (prompt) => {
     if (!agent) throw new Error("reasoner_model_unavailable");
-    return agent.generate(prompt, {
+    let reasoningSummary = "";
+    const stream = await agent.stream(prompt, {
       abortSignal: AbortSignal.timeout(input.timeoutMs ?? 20_000),
       maxSteps: maxToolCalls + 2,
+      providerOptions: isOpenAiProvider
+        ? { openai: { reasoningEffort: "high", reasoningSummary: "auto" } }
+        : undefined,
       structuredOutput: { schema: rectificationDecisionSchema, jsonPromptInjection: "inline" },
     });
+    for await (const chunk of stream.fullStream) {
+      const isOpenAiSummary = isOpenAiProvider && chunk.type === "reasoning-delta";
+      if (isOpenAiSummary && reasoningSummary.length < 2_000) {
+        reasoningSummary += chunk.payload.text.slice(0, 2_000 - reasoningSummary.length);
+      }
+    }
+    return {
+      object: await stream.object,
+      totalUsage: stream.totalUsage,
+      reasoningSummary,
+      reasoningSource: reasoningSummary ? "provider_summary" : null,
+    };
   });
   const addUsage = async (result: GeneratedDecision) => {
     if (!result.totalUsage) return;
@@ -176,11 +223,22 @@ export async function runBoundedReasoner(input: Readonly<{
     usageObserved = true;
   };
   const baseState = buildReasonerState(input);
+  const sensitiveTexts = [
+    baseState.latestAnswer,
+    ...baseState.recentTurns.flatMap((turn) => [turn.question, turn.answer]),
+    ...baseState.recentEvents.flatMap((event) => [event.summary, event.date]),
+    ...(baseState.currentTarget ? [baseState.currentTarget.summary, baseState.currentTarget.date] : []),
+    ...baseState.opportunities.flatMap((opportunity) => opportunity.anchors),
+  ];
+  let reasoningSummary: string | null = null;
 
   recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "reasoner", outcome: "started", modelId, toolName: null, decisionAction: null, durationMs: null, errorCode: null, deploymentSha });
   try {
     const first = await generate(JSON.stringify(baseState), "initial");
     await addUsage(first);
+    reasoningSummary = first.reasoningSource === "provider_summary"
+      ? sanitizeReasoningSummary(first.reasoningSummary, sensitiveTexts)
+      : null;
     let decision = rectificationDecisionSchema.parse(first.object);
     if (decision.action === "run_diagnostic") {
       const result = await readDiagnostic(decision.diagnostic);
@@ -190,6 +248,9 @@ export async function runBoundedReasoner(input: Readonly<{
         diagnosticResult: { diagnostic: decision.diagnostic, result },
       }), "after_diagnostic");
       await addUsage(second);
+      reasoningSummary = second.reasoningSource === "provider_summary"
+        ? sanitizeReasoningSummary(second.reasoningSummary, sensitiveTexts) ?? reasoningSummary
+        : reasoningSummary;
       decision = rectificationDecisionSchema.parse(second.object);
       if (decision.action === "run_diagnostic") return fallback("reasoner_returned_nonfinal_diagnostic");
     }
@@ -200,6 +261,7 @@ export async function runBoundedReasoner(input: Readonly<{
       inputTokenCount: usageObserved ? inputTokenCount : null,
       outputTokenCount: usageObserved ? outputTokenCount : null,
       latencyMs,
+      reasoningSummary,
     };
   } catch (error) {
     const reason = error instanceof DOMException && error.name === "TimeoutError" ? "reasoner_timeout"

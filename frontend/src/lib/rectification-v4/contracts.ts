@@ -270,11 +270,49 @@ export const rectificationV4JobSchema = z.object({
 }).strict();
 export type RectificationV4Job = z.infer<typeof rectificationV4JobSchema>;
 
+export const rectificationAnalysisStageSchema = z.object({
+  phase: z.enum([
+    "extracting_evidence",
+    "scoring_candidates",
+    "checking_robustness",
+    "planning_question",
+    "reasoning",
+    "rendering",
+  ]),
+  label: z.string().trim().min(1).max(120),
+  status: z.enum(["completed", "failed"]),
+  durationMs: z.number().int().min(0).max(300_000).nullable(),
+}).strict();
+
+export const rectificationAnalysisToolCallSchema = z.object({
+  category: z.enum(["candidate_engine", "diagnostic", "agent_diagnostic"]),
+  label: z.string().trim().min(1).max(120),
+  outcome: z.enum(["succeeded", "failed", "rejected"]),
+  durationMs: z.number().int().min(0).max(300_000).nullable(),
+}).strict();
+
+export const rectificationAnalysisTraceSchema = z.object({
+  status: z.enum(["completed", "failed", "legacy"]),
+  stages: z.array(rectificationAnalysisStageSchema).max(12),
+  toolCalls: z.array(rectificationAnalysisToolCallSchema).max(16),
+  techniques: z.array(z.string().trim().min(1).max(120)).max(24),
+  reasoningSummary: z.string().trim().min(1).max(500).nullable(),
+  reasoningSource: z.enum(["provider_summary", "none"]),
+}).strict();
+export type RectificationAnalysisTrace = z.infer<typeof rectificationAnalysisTraceSchema>;
+
+export const rectificationAnalysisItemSchema = z.object({
+  sourceTurnId: z.string().uuid(),
+  trace: rectificationAnalysisTraceSchema,
+}).strict();
+export type RectificationAnalysisItem = z.infer<typeof rectificationAnalysisItemSchema>;
+
 export const rectificationV4ApiResponseSchema = z.object({
   case: rectificationV4CaseSchema,
   job: rectificationV4JobSchema.nullable(),
   events: z.array(lifeEventRevisionSchema),
   turns: z.array(rectificationV4TurnSchema),
+  analysis: z.array(rectificationAnalysisItemSchema).optional(),
 }).strict();
 export type RectificationV4ApiResponse = z.infer<typeof rectificationV4ApiResponseSchema>;
 

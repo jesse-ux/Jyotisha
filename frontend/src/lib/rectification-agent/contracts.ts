@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { clockTimeSchema, evidenceDomainSchema, rectificationDeploymentModeSchema } from "../rectification-v4/contracts.ts";
+import { clockTimeSchema, evidenceDomainSchema, rectificationAnalysisTraceSchema, rectificationDeploymentModeSchema } from "../rectification-v4/contracts.ts";
 
 const uuid = z.string().uuid();
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
@@ -253,6 +253,11 @@ export const publicMessageSchema = z.object({
   question: nonblank(1_000).nullable(),
 }).strict();
 export type PublicMessage = z.infer<typeof publicMessageSchema>;
+
+export const storedPublicMessageSchema = publicMessageSchema.extend({
+  analysisTrace: rectificationAnalysisTraceSchema.optional(),
+}).strict();
+export type StoredPublicMessage = z.infer<typeof storedPublicMessageSchema>;
 
 export const agentRunSchema = z.object({
   id: uuid,

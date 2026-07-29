@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
-import type { RectificationV4CandidateEngine } from "../rectification-v4/candidate-engine.ts";
+import type { CandidateEngineResult, RectificationV4CandidateEngine } from "../rectification-v4/candidate-engine.ts";
 import { buildCandidateClusters } from "../rectification-v4/candidate-clusters.ts";
-import type { CandidateSnapshot, RectificationV4Question } from "../rectification-v4/contracts.ts";
+import type { CandidateSnapshot, RectificationAnalysisTrace, RectificationV4Question } from "../rectification-v4/contracts.ts";
 import { evaluateDecisionGate } from "../rectification-v4/decision-gate.ts";
 import { reconcileV4Evidence } from "../rectification-v4/extraction.ts";
 import { extractEventWithModel } from "./event-extractor-agent.ts";
@@ -21,12 +21,54 @@ import {
   type AgentRun,
   type CandidateFeatureSnapshot,
   type DiagnosticsSummary,
-  type PublicMessage,
+  type StoredPublicMessage,
   type ValidatedDecision,
 } from "./contracts.ts";
 
 function hash(value: unknown): string {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+const analysisPhaseLabels = {
+  extracting_evidence: "整理用户经历",
+  scoring_candidates: "扫描候选分钟",
+  checking_robustness: "检查候选稳定性",
+  planning_question: "生成语义问题机会",
+  reasoning: "选择下一步动作",
+  rendering: "生成安全回复",
+} as const;
+
+const diagnosticLabels = {
+  leave_one_event_out: "留一事件稳定性",
+  leave_one_domain_out: "留一领域稳定性",
+  date_sensitivity: "日期敏感性",
+  neighbor_stability: "相邻分钟稳定性",
+  candidate_split: "候选分裂诊断",
+} as const;
+
+type AnalysisPhase = keyof typeof analysisPhaseLabels;
+
+export function publicRectificationTechniques(result: CandidateEngineResult | null): string[] {
+  if (!result) return [];
+  const techniques = new Set<string>();
+  const add = (value: string) => {
+    const normalized = value.toLocaleLowerCase();
+    if (normalized.includes("vim")) techniques.add("Vimshottari Dasha");
+    if (normalized.includes("narayana")) techniques.add("Narayana Dasha");
+    if (normalized.includes("controlled_transit")) techniques.add("木星/土星受控行运");
+    if (normalized.includes("ashtakavarga")) techniques.add("Ashtakavarga");
+    if (normalized.includes("shadbala")) techniques.add("Shadbala 已验证分量");
+    for (const layer of ["D2", "D4", "D9", "D10", "D11", "D24", "D30"] as const) {
+      if (new RegExp(`(?:^|[^0-9])${layer}(?:$|[^0-9])`, "i").test(value)) techniques.add(layer);
+    }
+  };
+  for (const candidate of Object.values(result.contributionMatrix)) {
+    for (const contribution of Object.values(candidate)) {
+      contribution.rule_ids.forEach(add);
+      contribution.technique_layers.forEach(add);
+    }
+  }
+  return [...techniques];
 }
 
 export async function processRectificationAgentTurn(input: Readonly<{
@@ -41,14 +83,33 @@ export async function processRectificationAgentTurn(input: Readonly<{
   diagnostics: DiagnosticsSummary | null;
   featureSnapshot: CandidateFeatureSnapshot | null;
   validatedDecision: ValidatedDecision;
-  publicMessage: PublicMessage;
+  publicMessage: StoredPublicMessage;
   nextQuestion: RectificationV4Question | null;
   agentRun: AgentRun;
   status: "awaiting_answer" | "range_ready" | "paused";
   phase: "collecting_evidence" | "complete";
 }>> {
   const { claimed, now } = input;
-  await input.onPhase?.("extracting_evidence");
+  const stages: RectificationAnalysisTrace["stages"] = [];
+  let activePhase: AnalysisPhase | null = null;
+  let activePhaseStarted = 0;
+  const finishPhase = (status: "completed" | "failed" = "completed") => {
+    if (!activePhase) return;
+    stages.push({
+      phase: activePhase,
+      label: analysisPhaseLabels[activePhase],
+      status,
+      durationMs: Math.max(0, Date.now() - activePhaseStarted),
+    });
+    activePhase = null;
+  };
+  const enterPhase = async (phase: AnalysisPhase) => {
+    finishPhase();
+    activePhase = phase;
+    activePhaseStarted = Date.now();
+    await input.onPhase?.(phase);
+  };
+  await enterPhase("extracting_evidence");
   const asOfDate = now.toISOString().slice(0, 10);
   let reconciliation = claimed.turn.answer ? reconcileV4Evidence({
     caseId: claimed.case.id,
@@ -88,11 +149,16 @@ export async function processRectificationAgentTurn(input: Readonly<{
   let snapshot: CandidateSnapshot | null = null;
   let diagnostics: DiagnosticsSummary | null = null;
   let featureSnapshot: CandidateFeatureSnapshot | null = null;
+  let engineResult: CandidateEngineResult | null = null;
+  const analysisToolCalls: RectificationAnalysisTrace["toolCalls"] = [];
 
   if (scoreable.length >= 3 && domains.size >= 2) {
-    await input.onPhase?.("scoring_candidates");
+    await enterPhase("scoring_candidates");
+    const engineStarted = Date.now();
     const scored = await input.engine.score({ calculationSpec: claimed.case.calculationSpec, events: scoreable });
-    await input.onPhase?.("checking_robustness");
+    engineResult = scored;
+    analysisToolCalls.push({ category: "candidate_engine", label: "候选分钟扫描与稳定性诊断", outcome: "succeeded", durationMs: Date.now() - engineStarted });
+    await enterPhase("checking_robustness");
     const clusters = buildCandidateClusters(scored.candidates);
     const robustness = {
       neighborSupportMinutes: scored.robustness.neighborSupportMinutes,
@@ -191,7 +257,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     createdAt: now.toISOString(),
   });
 
-  await input.onPhase?.("planning_question");
+  await enterPhase("planning_question");
   const opportunities = buildQuestionOpportunities({
     caseId: claimed.case.id,
     events,
@@ -201,7 +267,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     targetDisposition: reconciliation.targetDisposition,
     retryTargetEventIds: reconciliation.unansweredTargetEventId ? [reconciliation.unansweredTargetEventId] : [],
   });
-  await input.onPhase?.("reasoning");
+  await enterPhase("reasoning");
   const reasoned = await runBoundedReasoner({
     caseValue: claimed.case,
     snapshot,
@@ -259,7 +325,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     selectedOpportunity,
   };
 
-  await input.onPhase?.("rendering");
+  await enterPhase("rendering");
   const legacyProjection = projectLegacyV4Turn({
     events,
     newEvents: extracted,
@@ -268,7 +334,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     snapshot,
   });
   const agentVisible = claimed.case.deploymentMode === "v5_agent";
-  const publicMessage = agentVisible
+  const renderedMessage = agentVisible
     ? await renderPublicTurn({
       caseValue: claimed.case,
       latestAnswer: claimed.turn.answer,
@@ -279,6 +345,25 @@ export async function processRectificationAgentTurn(input: Readonly<{
       validated: validatedDecision,
     })
     : legacyProjection.publicMessage;
+  finishPhase();
+  for (const call of reasoned.toolCalls) {
+    analysisToolCalls.push({
+      category: "agent_diagnostic",
+      label: call.diagnostic ? diagnosticLabels[call.diagnostic] : "只读诊断",
+      outcome: call.outcome,
+      durationMs: call.durationMs,
+    });
+  }
+  const reasoningSummary = reasoned.mode === "agent" && !fallbackReason ? reasoned.reasoningSummary : null;
+  const analysisTrace: RectificationAnalysisTrace = {
+    status: claimed.case.deploymentMode === "v4_legacy" ? "legacy" : "completed",
+    stages,
+    toolCalls: analysisToolCalls,
+    techniques: publicRectificationTechniques(engineResult),
+    reasoningSummary,
+    reasoningSource: reasoningSummary ? "provider_summary" : "none",
+  };
+  const publicMessage: StoredPublicMessage = { ...renderedMessage, analysisTrace };
   const nextQuestion = agentVisible && selectedOpportunity ? {
     id: randomUUID(),
     domain: selectedOpportunity.domain,

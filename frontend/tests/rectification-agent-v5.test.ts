@@ -361,17 +361,27 @@ test("shadow mode persists V5 artifacts while preserving the legacy visible repl
       });
       assert.ok(queued?.job);
       await worker.runOnce();
+      const loaded = await service.loadCase(userId, created.case.id);
       return {
         message: [...store.publicMessages.values()][0],
-        question: (await service.loadCase(userId, created.case.id))?.case.currentQuestion,
+        question: loaded?.case.currentQuestion,
+        analysis: loaded?.analysis ?? [],
         agentRuns: store.agentRuns.size,
       };
     });
   }
   const legacy = await run("v4_legacy");
   const shadow = await run("v5_shadow");
-  assert.deepEqual(shadow.message, legacy.message);
+  const visibleMessage = (message: NonNullable<typeof legacy.message>) => ({
+    acknowledgement: message.acknowledgement,
+    candidateUpdate: message.candidateUpdate,
+    limitation: message.limitation,
+    question: message.question,
+  });
+  assert.deepEqual(visibleMessage(shadow.message!), visibleMessage(legacy.message!));
   assert.equal(shadow.question?.prompt, legacy.question?.prompt);
+  assert.deepEqual(legacy.analysis, []);
+  assert.deepEqual(shadow.analysis, []);
   assert.equal(shadow.agentRuns, 1);
 });
 

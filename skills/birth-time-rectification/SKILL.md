@@ -17,6 +17,7 @@ Before choosing an action, read the contracts in `references/`. Treat `assets/re
 - The server owns event reconciliation, candidate-minute scanning, event contributions, snapshots, diagnostics, stability gates, jobs, replay, persistence, and final decision validation.
 - The agent may select one active server opportunity, call at most one allowed read-only diagnostic, offer an already-gated candidate range, or stop for low confidence.
 - The agent never creates events, dates, scores, candidate minutes, or profile updates.
+- The persisted “分析过程” is a server-owned execution receipt, not hidden chain-of-thought. It may list only stages, tools, and techniques that actually ran, plus a provider-explicit reasoning summary after server-side safety filtering.
 - `canConfirmExactMinute` is always `false`. Never write `profiles.active_birth_time` automatically.
 
 ## Seventeen conversation boundaries
@@ -61,3 +62,15 @@ A user who answers with a different complete event may have that event saved wit
 ## Public language
 
 Use a brief acknowledgement tied to the user's actual event, an optional gated candidate update, an optional limitation, and at most one question. Do not repeat an unchanged range, over-interpret the event, or turn sparse/conflicting evidence into certainty.
+
+
+## Analysis process receipt
+
+The collapsible “分析过程” shown with an assistant message is a durable projection of server execution artifacts. It must remain attached to the correct Turn after refresh; the browser must not infer history from timestamps or manufacture missing phases.
+
+- Show only phases that actually ran and only tools or techniques confirmed by persisted server artifacts.
+- Never present an unavailable, skipped, reference-only, or merely supported technique as executed.
+- A provider reasoning summary may be shown only when the provider explicitly returned displayable reasoning content and the server accepted it through the public safety filter. Never synthesize a replacement summary or expose hidden chain-of-thought.
+- Do not expose scores, weights, contribution matrices, internal IDs or field names, candidate minutes, tool arguments/results, prompts, sensitive answer text, or model/provider internals.
+- D60 is neither displayed nor allowed to drive a conclusion.
+- Historical records without a receipt remain readable. `v4_legacy` and `v5_shadow` retain their existing visible-reply behavior and gain trace display only when compatible persisted artifacts actually exist.

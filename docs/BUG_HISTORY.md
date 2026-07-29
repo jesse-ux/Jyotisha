@@ -1692,3 +1692,19 @@
 - 相关记录：BUG-090、BUG-091、BUG-092、BUG-093
 - 复发自：无
 - 修复版本：`birth-time-rectification-v6` / `rectification-agent-v6-1`
+
+
+## BUG-095 | 生时校正“思考中”无法证明实际执行步骤且刷新后不可溯源
+
+- 状态：resolved
+- 首次发现：2026-07-29
+- 最近更新：2026-07-29
+- 影响面：V4/V5 生时校正运行状态、历史助手消息、候选计算与诊断的测试可观测性
+- 用户现象：页面只显示“正在核对星盘信息……”动画，无法判断本轮实际执行了哪些阶段、工具和技法；任务结束或刷新后也无法回看。
+- 根因：Job 只保存一个会被后续步骤覆盖的当前 `phase`，不能还原阶段历史；已持久化的 Public Message 与 Agent Run 工具记录没有被 Case API 投影到对应 Turn；UI 的 thinking 状态只是客户端进度动画，不是模型 reasoning，也不是服务端执行收据。
+- 修复：将“分析过程”定义为与 Turn 关联、可持久化和刷新后可恢复的服务端执行收据；只投影实际发生的阶段、工具调用和 allowlist 技法。供应商显式返回的 reasoning 内容只有通过服务端来源校验与安全过滤后才可作为可选摘要，缺失或不安全时直接省略，不伪造且不读取 hidden chain-of-thought。
+- 安全边界：不公开分数、权重、贡献矩阵、内部 ID/字段、候选分钟、工具参数或原始结果、Prompt、模型内部信息和用户敏感原文；D60 不展示且不驱动结论；未执行、不可用或仅供参考的技法不得显示为已执行。
+- 兼容边界：历史无收据记录继续读取；`v4_legacy` 与 `v5_shadow` 保持原有用户可见回复，shadow 仅持久化新产物而不展示分析轨迹；completed-job replay、原子 completion、`canConfirmExactMinute === false` 和禁止自动写入 `profiles.active_birth_time` 保持不变。
+- 防复发：API 与组件测试必须锁定 Turn 关联、刷新恢复、运行中真实 phase、仅展示实际工具/技法、无安全 reasoning 时不补写摘要，以及旧记录、legacy、shadow 的兼容行为。
+- 相关记录：BUG-011、BUG-086、BUG-087、BUG-094
+- 修复版本：`birth-time-rectification-v6` / `rectification-agent-v6-1`

@@ -1,13 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { validatedDecisionSchema, type ValidatedDecision } from "../rectification-agent/contracts.ts";
+import { storedPublicMessageSchema, validatedDecisionSchema, type ValidatedDecision } from "../rectification-agent/contracts.ts";
 import {
   candidateSnapshotSchema,
   lifeEventRevisionSchema,
+  rectificationAnalysisItemSchema,
   rectificationV4CaseSchema,
   rectificationV4JobSchema,
   rectificationV4TurnSchema,
   type CandidateSnapshot,
   type LifeEventRevision,
+  type RectificationAnalysisItem,
   type RectificationV4Case,
   type RectificationV4Job,
   type RectificationV4Turn,
@@ -21,6 +23,24 @@ import { RectificationV4StoreError } from "./store.ts";
 import { evidenceSetHash, rectificationFingerprint } from "./fingerprints.ts";
 
 type Row = Record<string, unknown>;
+
+export function projectAnalysisMessages(
+  publicMessageRows: readonly Readonly<Row>[],
+  jobRows: readonly Readonly<Row>[],
+): readonly RectificationAnalysisItem[] {
+  const turnByJob = new Map(jobRows.map((row) => [String(row.id), row.turn_id]));
+  return [...publicMessageRows]
+    .sort((left, right) => timestamp(left.created_at).localeCompare(timestamp(right.created_at)))
+    .flatMap((row) => {
+      const message = storedPublicMessageSchema.safeParse(row.message);
+      if (!message.success || !message.data.analysisTrace) return [];
+      const item = rectificationAnalysisItemSchema.safeParse({
+        sourceTurnId: turnByJob.get(String(row.job_id)),
+        trace: message.data.analysisTrace,
+      });
+      return item.success ? [item.data] : [];
+    });
+}
 
 function timestamp(value: unknown): string {
   return value instanceof Date ? value.toISOString() : String(value);
@@ -183,6 +203,21 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
     return ((data ?? []) as Row[]).map(turnValue);
   }
 
+  async function loadAnalysisMessagesByCase(userId: string, caseId: string): Promise<readonly RectificationAnalysisItem[]> {
+    if (!await loadCaseById(userId, caseId)) throw new RectificationV4StoreError("not_found");
+    const { data, error } = await supabase.from("birth_time_rectification_public_messages")
+      .select("job_id,message,created_at").eq("case_id", caseId).eq("user_id", userId)
+      .order("created_at", { ascending: true });
+    if (error) throw storeError(error);
+    const rows = (data ?? []) as Row[];
+    if (rows.length === 0) return [];
+    const jobIds = rows.map((row) => String(row.job_id));
+    const { data: jobData, error: jobError } = await supabase.from("birth_time_rectification_v4_jobs")
+      .select("id,turn_id").eq("case_id", caseId).eq("user_id", userId).in("id", jobIds);
+    if (jobError) throw storeError(jobError);
+    return projectAnalysisMessages(rows, (jobData ?? []) as Row[]);
+  }
+
   async function rpc(name: string, args: Row): Promise<unknown> {
     const { data, error } = await supabase.rpc(name, args);
     if (error) throw storeError(error);
@@ -200,6 +235,7 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
     loadCase: loadCaseById,
     loadEvents: loadEventsByCase,
     loadTurns: loadTurnsByCase,
+    loadAnalysisMessages: loadAnalysisMessagesByCase,
     async loadLatestValidatedDecision(userId, caseId): Promise<ValidatedDecision | null> {
       const { data, error } = await supabase.from("birth_time_rectification_agent_runs")
         .select("validated_decision_json").eq("case_id", caseId).eq("user_id", userId)
