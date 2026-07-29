@@ -21,6 +21,11 @@ function text(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
+function calendarDate(value: unknown): string | null {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString().slice(0, 10);
+  return text(value);
+}
+
 export function finiteBirthNumber(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
@@ -66,7 +71,7 @@ export async function resolveMissingBirthTimezoneOffset(
   if (existingOffset !== null) return value;
   const latitude = finiteBirthNumber(profile.latitude);
   const longitude = finiteBirthNumber(profile.longitude);
-  const birthDate = text(valueFor(profile, "birth_date", "date"));
+  const birthDate = calendarDate(valueFor(profile, "birth_date", "date"));
   const timezoneId = text(valueFor(profile, "timezone_id", "timezoneId"));
   if (latitude === null || longitude === null || !birthDate || !timezoneId) return value;
 

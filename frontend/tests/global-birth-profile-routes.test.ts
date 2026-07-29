@@ -77,7 +77,7 @@ test("shared timezone resolver supports camelCase browser profiles and preserves
 
 test("journey entry and stored-case loader resolve nullable offsets before strict chart parsing", async () => {
   const resolved = await resolveMissingBirthTimezoneOffset({
-    birth_date: "1955-02-24",
+    birth_date: new Date("1955-02-24T00:00:00.000Z"),
     reported_birth_time: null,
     birth_time_source: "period_only",
     birth_time_period: "evening",

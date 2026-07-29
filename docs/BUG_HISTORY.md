@@ -1708,3 +1708,19 @@
 - 防复发：API 与组件测试必须锁定 Turn 关联、刷新恢复、运行中真实 phase、仅展示实际工具/技法、无安全 reasoning 时不补写摘要，以及旧记录、legacy、shadow 的兼容行为。
 - 相关记录：BUG-011、BUG-086、BUG-087、BUG-094
 - 修复版本：`birth-time-rectification-v6` / `rectification-agent-v6-1`
+
+## BUG-096 | PostgreSQL 日期对象导致生时纠正 Case 创建误报资料格式错误
+
+- 状态：resolved
+- 首次发现：2026-07-29
+- 最近更新：2026-07-29
+- 影响面：staging 自托管 PostgreSQL 出生资料读取、历史时区偏移补全与生时纠正 Case 创建
+- 用户现象：已完成出生资料的账号启动生时纠正时返回 400，并显示“出生资料或提交内容格式不正确”。
+- 触发条件：数据库驱动将 `birth_date` 返回为 JavaScript `Date`，且历史资料的 `timezone_offset` 为空、需要根据日期和时区 ID 补全。
+- 根因：共享 `resolveMissingBirthTimezoneOffset()` 只把非空字符串识别为出生日期；合法 `Date` 被当成缺失值，补全提前返回，随后严格出生资料解析以 `Historical timezone offset must be resolved before parsing` 拒绝请求。
+- 修复：共享时区补全 resolver 在读取出生日期时同时接受有效 `Date` 与既有字符串，并统一归一化为 `YYYY-MM-DD`；不放宽后续 Zod 校验，也不改变生时纠正计算规格。
+- 验证：路由回归夹具改为 PostgreSQL 实际返回形态的 `Date`；聚焦测试、前端全量测试、lint、TypeScript、生产构建和 Python V5 服务测试通过，staging 精确 SHA smoke 随本次发布执行。
+- 防复发：所有从 PostgreSQL 进入纯日期字符串合同的共享边界必须先覆盖 `string | Date` 驱动返回类型；Case 创建继续要求历史时区偏移在严格解析前完成。
+- 相关记录：BUG-076、BUG-091、BUG-095
+- 复发自：无
+- 修复版本：待本次 staging 修复提交与部署验收
