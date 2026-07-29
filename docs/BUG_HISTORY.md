@@ -1676,3 +1676,19 @@
 - 防复发：跨语言持久化指纹必须使用已知向量验证 JSON 数字规范化，不能只在各自语言内断言自洽。
 - 相关记录：BUG-087、BUG-092
 - 修复版本：`rectification-v5-matrix-scoring-1`（仅修复输入规范化，算法版本不变）
+
+## BUG-094 | V5 Agent 消息操作栏在 V4 面板切换后消失
+
+- 状态：resolved
+- 首次发现：2026-07-29
+- 最近更新：2026-07-29
+- 影响面：生时校正 V5 Agent 对话、助手消息反馈与当前问题重新生成
+- 用户现象：助手消息气泡下不再显示点赞、点踩、复制和重新生成操作。
+- 触发条件：生时校正页面使用 `RectificationV4Panel` 渲染 V5 Agent 会话。
+- 根因：旧对话组件中的消息操作栏没有迁入 V4/V5 共用面板，同时新 V4 API 没有与当前语义问题绑定的重新生成命令。
+- 修复：复用现有消息操作栏样式，仅为 `v5_agent` 的稳定助手消息恢复操作；重新生成只重写当前已验证 Semantic Question Opportunity 的自然语言实现，并通过用户、Case 版本、当前目标和 action ID 原子校验，不重跑事件提取、候选评分、诊断或 Job。
+- 验证：组件资格与反馈互斥测试、V4 service 幂等重放与数据不变量测试、Renderer 安全回落测试、迁移契约测试，以及 staging 精确 SHA 部署和浏览器验收。
+- 防复发：测试锁定 V5 Agent 操作栏、仅当前问题可重跑、legacy/shadow 不启用新 Renderer、重跑不改变 turns/events/snapshots/profile 且 completed Job 不被改写。
+- 相关记录：BUG-090、BUG-091、BUG-092、BUG-093
+- 复发自：无
+- 修复版本：`birth-time-rectification-v6` / `rectification-agent-v6-1`

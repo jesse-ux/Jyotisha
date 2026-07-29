@@ -77,6 +77,7 @@ test("the v4 rectification chat renders persisted turns as alternating message h
   assert.match(source, /for \(const turn of data\.turns\)/);
   assert.match(source, /role: "assistant"[\s\S]*?text: turn\.question/);
   assert.match(source, /role: "user"[\s\S]*?text: turn\.answer/);
-  assert.match(source, /messages\.map\(\(message\) => <ChatMessageRow/);
+  assert.match(source, /messages\.map\(\(message\) => \{/);
+  assert.match(source, /<ChatMessageRow message=/);
   assert.doesNotMatch(source, /rectification-progress-details|evidenceRecap\.map/);
 });

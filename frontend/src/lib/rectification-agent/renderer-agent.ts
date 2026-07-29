@@ -1,5 +1,6 @@
 import path from "node:path";
 import { Agent } from "@mastra/core/agent";
+import { z } from "zod";
 import { defaultLanguageModel, resolveLanguageModel } from "@/mastra/model";
 import type { CandidateSnapshot, LifeEventRevision, PendingEvidence, RectificationV4Case } from "../rectification-v4/contracts.ts";
 import { publicMessageSchema, type PublicMessage, type QuestionOpportunity, type ValidatedDecision } from "./contracts.ts";
@@ -14,6 +15,7 @@ const multiQuestionMoves = /(?:另外|还有|同时再说|并且告诉我|顺便
 const cannedQuestion = /(?:承接[“\"']?.{0,80}[”\"']?，?请再说一件|接下来请继续讲另一件|我会顺着你的叙述继续核对)/;
 const exactClockMinute = /(?:[01]?\d|2[0-3])[:：][0-5]\d|(?:[零〇一二两三四五六七八九十]{1,3}|(?:[01]?\d|2[0-3]))点(?:[零〇一二两三四五六七八九十]{1,3}|[0-5]?\d)分/;
 const exactMinuteClaim = /(?:唯一|准确|精确|确切|确认|确定|代表).{0,12}(?:出生|生时)?(?:时间|时刻|分钟)|(?:出生|生时)(?:时间|时刻|分钟)?.{0,12}(?:唯一|准确|精确|确切|确认|确定|代表|就是)/;
+const questionRealizationSchema = z.object({ question: z.string().trim().min(1).max(1_000) }).strict();
 
 function agentFor(modelId: string | null): { id: string; agent: Agent } | null {
   const selected = (modelId ? resolveLanguageModel(modelId) : null) ?? defaultLanguageModel();
@@ -197,5 +199,44 @@ export async function renderPublicTurn(input: Readonly<{
     recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "renderer", outcome: "failed", modelId: selected.id, toolName: null, decisionAction: input.validated.decision.action, durationMs: Date.now() - started, errorCode: "renderer_failed", deploymentSha });
     recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "fallback", outcome: "succeeded", modelId: selected.id, toolName: null, decisionAction: input.validated.decision.action, durationMs: Date.now() - started, errorCode: "renderer_failed", deploymentSha });
     return fallback;
+  }
+}
+
+export async function regenerateQuestionRealization(input: Readonly<{
+  caseValue: RectificationV4Case;
+  currentPrompt: string;
+  latestAnswer: string;
+  acceptedEvents: readonly LifeEventRevision[];
+  opportunity: QuestionOpportunity;
+  timeoutMs?: number;
+}>): Promise<string> {
+  const selected = agentFor(input.caseValue.narrationModelId);
+  if (!selected) return input.currentPrompt;
+  try {
+    const result = await selected.agent.generate(JSON.stringify({
+      task: "Rewrite the current question naturally without changing its semantic target. Return one question only.",
+      currentPrompt: input.currentPrompt,
+      latestAnswer: input.latestAnswer,
+      recentEvents: input.acceptedEvents.slice(-5).map((event) => ({
+        summary: event.summary,
+        date: event.dateRange.label,
+        subject: event.subject,
+      })),
+      selectedOpportunity: {
+        kind: input.opportunity.kind,
+        goal: input.opportunity.goal,
+        requestedFields: input.opportunity.requestedFields,
+        anchors: input.opportunity.anchors,
+        contextFacts: input.opportunity.contextFacts,
+        forbiddenMoves: input.opportunity.forbiddenMoves,
+      },
+    }), {
+      abortSignal: AbortSignal.timeout(input.timeoutMs ?? 15_000),
+      structuredOutput: { schema: questionRealizationSchema, jsonPromptInjection: "inline" },
+    });
+    const question = questionRealizationSchema.parse(result.object).question;
+    return validateQuestionRealization(question, input.opportunity).valid ? question : input.currentPrompt;
+  } catch {
+    return input.currentPrompt;
   }
 }

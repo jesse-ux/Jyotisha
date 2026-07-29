@@ -69,6 +69,14 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
         .filter((turn) => turn.caseId === caseId)
         .sort((left, right) => left.caseVersion - right.caseVersion || left.createdAt.localeCompare(right.createdAt));
     },
+    async loadLatestValidatedDecision(userId, caseId) {
+      const caseValue = cases.get(caseId);
+      if (!caseValue || caseValue.userId !== userId) return null;
+      const latest = [...agentRuns.values()]
+        .filter((run) => run.caseId === caseId)
+        .sort((left, right) => right.caseVersion - left.caseVersion || right.createdAt.localeCompare(left.createdAt))[0];
+      return latest ? validatedDecisions.get(latest.jobId) ?? latest.validatedDecision : null;
+    },
     async createCase(input) {
       const replay = actionResults.get(`${input.case.userId}:${input.actionId}`);
       if (replay) return owned(input.case.userId, replay.caseId);
@@ -90,6 +98,29 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
       events.set(input.case.id, []);
       actionResults.set(`${input.case.userId}:${input.actionId}`, { caseId: input.case.id, jobId: null });
       return input.case;
+    },
+    async replaceCurrentQuestion(input) {
+      const key = `${input.userId}:${input.actionId}`;
+      const replay = actionResults.get(key);
+      if (replay) return owned(input.userId, replay.caseId);
+      const current = owned(input.userId, input.caseId);
+      if (current.version !== input.expectedCaseVersion) throw new RectificationV4StoreError("stale_version");
+      if (current.deploymentMode !== "v5_agent"
+        || !["awaiting_answer", "range_ready"].includes(current.status)
+        || !current.currentQuestion) throw new RectificationV4StoreError("invalid_state");
+      const updated: RectificationV4Case = {
+        ...current,
+        version: current.version + 1,
+        currentQuestion: {
+          ...input.question,
+          domain: current.currentQuestion.domain,
+          targetEventId: current.currentQuestion.targetEventId,
+        },
+        updatedAt: input.now,
+      };
+      cases.set(current.id, updated);
+      actionResults.set(key, { caseId: current.id, jobId: null });
+      return updated;
     },
     async submitAnswer(input) {
       const key = `${input.userId}:${input.actionId}`;

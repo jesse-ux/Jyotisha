@@ -148,3 +148,72 @@ test("legacy cases are not hard-switched to V5 even when flags change later", as
     assert.equal(run.fallbackReason, "deployment_mode_legacy");
   });
 });
+
+test("V5 Agent regenerate rewrites only the current semantic question and replays the same action once", async () => withMode("v5_agent", async () => {
+  const store = createRectificationV4MemoryStore();
+  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const userId = randomUUID();
+  const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+  const queued = await service.answer({
+    userId,
+    caseId: created.case.id,
+    actionId: randomUUID(),
+    expectedCaseVersion: created.case.version,
+    answer: "2020年4月去石油化工研究院实习做研究员",
+  });
+  assert.ok(queued?.job);
+  const worker = createRectificationV4Worker({
+    store,
+    now: fixedNow,
+    engine: { async score() { throw new Error("engine must not run before enough events"); } },
+  });
+  assert.equal(await worker.runOnce(), true);
+
+  const before = await service.loadCase(userId, created.case.id);
+  assert.ok(before?.case.currentQuestion);
+  const actionId = randomUUID();
+  const regenerated = await service.regenerateQuestion({
+    userId,
+    caseId: created.case.id,
+    actionId,
+    expectedCaseVersion: before.case.version,
+  });
+  assert.ok(regenerated?.case.currentQuestion);
+  assert.equal(regenerated.case.version, before.case.version + 1);
+  assert.notEqual(regenerated.case.currentQuestion.id, before.case.currentQuestion.id);
+  assert.equal(regenerated.case.currentQuestion.domain, before.case.currentQuestion.domain);
+  assert.equal(regenerated.case.currentQuestion.targetEventId, before.case.currentQuestion.targetEventId);
+  assert.equal(regenerated.case.evidenceSetHash, before.case.evidenceSetHash);
+  assert.deepEqual(regenerated.events, before.events);
+  assert.deepEqual(regenerated.turns, before.turns);
+  assert.deepEqual(regenerated.case.latestSnapshot, before.case.latestSnapshot);
+  assert.equal(store.jobs.size, 1);
+
+  const replayed = await service.regenerateQuestion({
+    userId,
+    caseId: created.case.id,
+    actionId,
+    expectedCaseVersion: before.case.version,
+  });
+  assert.equal(replayed?.case.version, regenerated.case.version);
+  assert.equal(replayed?.case.currentQuestion?.id, regenerated.case.currentQuestion.id);
+  assert.equal(store.jobs.size, 1);
+  assert.equal(regenerated.case.latestSnapshot?.canConfirmExactMinute ?? false, false);
+}));
+
+test("legacy and shadow cases cannot call the V5 Agent question renderer", async () => {
+  for (const mode of ["v4_legacy", "v5_shadow"] as const) {
+    await withMode(mode, async () => {
+      const store = createRectificationV4MemoryStore();
+      const service = createRectificationV4CaseService(store, { now: fixedNow });
+      const userId = randomUUID();
+      const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+      assert.equal(await service.regenerateQuestion({
+        userId,
+        caseId: created.case.id,
+        actionId: randomUUID(),
+        expectedCaseVersion: created.case.version,
+      }), null);
+    });
+  }
+});

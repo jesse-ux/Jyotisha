@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Check, Copy, RotateCcw, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useRectificationV4 } from "@/hooks/use-rectification-v4";
 import type { ChatMessageView } from "@/lib/chat-message-view";
@@ -28,6 +28,28 @@ type RectificationV4PanelProps = Readonly<{
   onPendingChange?: (pending: boolean) => void;
   onContinueOriginalQuestion?: (continuation: RectificationV4Continuation) => void;
 }>;
+
+export function toggleRectificationFeedback(
+  current: "up" | "down" | undefined,
+  requested: "up" | "down",
+): "up" | "down" | undefined {
+  return current === requested ? undefined : requested;
+}
+
+export function canRegenerateRectificationMessage(input: Readonly<{
+  message: ChatMessageView;
+  currentMessageKey: string | null;
+  deploymentMode: RectificationV4ApiResponse["case"]["deploymentMode"] | null;
+  busy: boolean;
+  canAnswer: boolean;
+}>): boolean {
+  return input.deploymentMode === "v5_agent"
+    && input.message.role === "assistant"
+    && input.message.state === "settled"
+    && input.message.renderKey === input.currentMessageKey
+    && !input.busy
+    && input.canAnswer;
+}
 
 export function rectificationV4ChatMessages(
   data: RectificationV4ApiResponse | null,
@@ -129,6 +151,9 @@ export function RectificationV4Panel(props: RectificationV4PanelProps) {
     onPendingChange: props.onPendingChange,
   });
   const [draft, setDraft] = useState("");
+  const [feedback, setFeedback] = useState<Record<string, "up" | "down" | undefined>>({});
+  const [copiedMessageKey, setCopiedMessageKey] = useState<string | null>(null);
+  const [regeneratingMessageKey, setRegeneratingMessageKey] = useState<string | null>(null);
   const composer = useRef<HTMLTextAreaElement>(null);
   const conversationEnd = useRef<HTMLDivElement>(null);
   const caseValue = controller.data?.case;
@@ -145,6 +170,10 @@ export function RectificationV4Panel(props: RectificationV4PanelProps) {
     && !processing
     && !controller.pending
     && ["awaiting_answer", "range_ready"].includes(caseValue?.status ?? "");
+  const currentMessageKey = caseValue?.currentQuestion
+    ? `rectification-current-${caseValue.currentQuestion.id}`
+    : null;
+  const busy = processing || controller.pending || regeneratingMessageKey !== null;
   const canAcceptRange = caseValue?.status === "range_ready"
     && Boolean(caseValue.latestSnapshot?.canAcceptRange)
     && !caseValue.acceptedRange;
@@ -174,6 +203,27 @@ export function RectificationV4Panel(props: RectificationV4PanelProps) {
     if (result) setDraft("");
   }
 
+  async function copyMessage(message: ChatMessageView) {
+    try {
+      await navigator.clipboard.writeText(message.text);
+      setCopiedMessageKey(message.renderKey);
+      window.setTimeout(() => setCopiedMessageKey((current) => (
+        current === message.renderKey ? null : current
+      )), 1_500);
+    } catch {
+      // Clipboard permission failures must not interrupt the conversation.
+    }
+  }
+
+  async function regenerateMessage(messageKey: string) {
+    setRegeneratingMessageKey(messageKey);
+    try {
+      await controller.regenerate();
+    } finally {
+      setRegeneratingMessageKey((current) => current === messageKey ? null : current);
+    }
+  }
+
   function continueOriginalQuestion() {
     if (!caseValue?.acceptedRange || !handoff) return;
     props.onContinueOriginalQuestion?.({
@@ -189,7 +239,71 @@ export function RectificationV4Panel(props: RectificationV4PanelProps) {
     <>
       <section className="conversation" aria-label="生时校正对话" aria-busy={processing || controller.pending}>
         <div className="message-list" aria-live="polite">
-          {messages.map((message) => <ChatMessageRow key={message.renderKey} message={message} />)}
+          {messages.map((message) => {
+            const showActions = caseValue?.deploymentMode === "v5_agent"
+              && message.role === "assistant"
+              && message.state === "settled"
+              && Boolean(message.text);
+            const regenerating = regeneratingMessageKey === message.renderKey;
+            const canRegenerate = canRegenerateRectificationMessage({
+              message,
+              currentMessageKey,
+              deploymentMode: caseValue?.deploymentMode ?? null,
+              busy,
+              canAnswer,
+            });
+            return (
+              <div className="rectification-message-entry" key={message.renderKey}>
+                <ChatMessageRow message={regenerating
+                  ? { ...message, text: "", state: "thinking" }
+                  : message} />
+                {showActions && !regenerating && (
+                  <div className="rectification-message-actions" aria-label="Agent 回答操作">
+                    <button
+                      aria-label="赞"
+                      aria-pressed={feedback[message.renderKey] === "up"}
+                      className={feedback[message.renderKey] === "up" ? "is-active" : ""}
+                      title="赞"
+                      type="button"
+                      onClick={() => setFeedback((current) => ({
+                        ...current,
+                        [message.renderKey]: toggleRectificationFeedback(current[message.renderKey], "up"),
+                      }))}
+                    >
+                      <ThumbsUp aria-hidden="true" />
+                    </button>
+                    <button
+                      aria-label="踩"
+                      aria-pressed={feedback[message.renderKey] === "down"}
+                      className={feedback[message.renderKey] === "down" ? "is-active" : ""}
+                      title="踩"
+                      type="button"
+                      onClick={() => setFeedback((current) => ({
+                        ...current,
+                        [message.renderKey]: toggleRectificationFeedback(current[message.renderKey], "down"),
+                      }))}
+                    >
+                      <ThumbsDown aria-hidden="true" />
+                    </button>
+                    <button aria-label="复制回答" title="复制" type="button" onClick={() => void copyMessage(message)}>
+                      {copiedMessageKey === message.renderKey
+                        ? <Check aria-hidden="true" />
+                        : <Copy aria-hidden="true" />}
+                    </button>
+                    <button
+                      aria-label="重新生成回答"
+                      disabled={!canRegenerate}
+                      title={canRegenerate ? "重新生成" : "只能重新生成当前问题"}
+                      type="button"
+                      onClick={() => void regenerateMessage(message.renderKey)}
+                    >
+                      <RotateCcw aria-hidden="true" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
           {controller.error && <p className="error-message" role="alert">{controller.error}</p>}
           <div ref={conversationEnd} />
         </div>

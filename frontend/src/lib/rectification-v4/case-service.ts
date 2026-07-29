@@ -8,6 +8,7 @@ import type {
 import { rectificationAgentV5Protocol, rectificationV4AlgorithmVersion, rectificationV4Protocol } from "./contracts.ts";
 import { selectRectificationDeploymentMode } from "../rectification-agent/feature-policy.ts";
 import { CURRENT_RECTIFICATION_PROMPT_VERSION, CURRENT_RECTIFICATION_SKILL_VERSION } from "../rectification-agent/contracts.ts";
+import { regenerateQuestionRealization } from "../rectification-agent/renderer-agent.ts";
 import { calculationSpecHash, evidenceSetHash } from "./fingerprints.ts";
 import { openingQuestion } from "./opening-question.ts";
 import type { RectificationV4Store } from "./store.ts";
@@ -86,6 +87,40 @@ export function createRectificationV4CaseService(store: RectificationV4Store, op
         now: now().toISOString(),
       });
       return response(input.userId, saved.case, saved.job.id);
+    },
+
+    async regenerateQuestion(input: {
+      readonly userId: string;
+      readonly caseId: string;
+      readonly actionId: string;
+      readonly expectedCaseVersion: number;
+    }) {
+      const current = await store.loadCase(input.userId, input.caseId);
+      if (!current?.currentQuestion || current.deploymentMode !== "v5_agent") return null;
+      const validated = await store.loadLatestValidatedDecision(input.userId, input.caseId);
+      const opportunity = validated?.selectedOpportunity;
+      if (!opportunity) return null;
+      const [events, turns] = await Promise.all([
+        store.loadEvents(input.userId, input.caseId),
+        store.loadTurns(input.userId, input.caseId),
+      ]);
+      const prompt = await regenerateQuestionRealization({
+        caseValue: current,
+        currentPrompt: current.currentQuestion.prompt,
+        latestAnswer: turns.at(-1)?.answer ?? "",
+        acceptedEvents: events,
+        opportunity,
+      });
+      const nextQuestion = {
+        ...current.currentQuestion,
+        id: randomUUID(),
+        prompt,
+      };
+      return response(input.userId, await store.replaceCurrentQuestion({
+        ...input,
+        question: nextQuestion,
+        now: now().toISOString(),
+      }));
     },
 
     async reviseEvent(input: {

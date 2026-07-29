@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { validatedDecisionSchema, type ValidatedDecision } from "../rectification-agent/contracts.ts";
 import {
   candidateSnapshotSchema,
   lifeEventRevisionSchema,
@@ -199,6 +200,14 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
     loadCase: loadCaseById,
     loadEvents: loadEventsByCase,
     loadTurns: loadTurnsByCase,
+    async loadLatestValidatedDecision(userId, caseId): Promise<ValidatedDecision | null> {
+      const { data, error } = await supabase.from("birth_time_rectification_agent_runs")
+        .select("validated_decision_json").eq("case_id", caseId).eq("user_id", userId)
+        .order("case_version", { ascending: false }).order("created_at", { ascending: false })
+        .limit(1).maybeSingle();
+      if (error) throw storeError(error);
+      return data ? validatedDecisionSchema.parse((data as Row).validated_decision_json) : null;
+    },
     async createCase(input) {
       const id = String(await rpc("create_birth_time_rectification_v5_case", {
         p_user_id: input.case.userId,
@@ -219,6 +228,19 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
         p_now: input.case.createdAt,
       }));
       const value = await loadCaseById(input.case.userId, id);
+      if (!value) throw new RectificationV4StoreError("not_found");
+      return value;
+    },
+    async replaceCurrentQuestion(input) {
+      const id = String(await rpc("replace_birth_time_rectification_v4_current_question", {
+        p_user_id: input.userId,
+        p_case_id: input.caseId,
+        p_action_id: input.actionId,
+        p_expected_version: input.expectedCaseVersion,
+        p_question: input.question,
+        p_now: input.now,
+      }));
+      const value = await loadCaseById(input.userId, id);
       if (!value) throw new RectificationV4StoreError("not_found");
       return value;
     },

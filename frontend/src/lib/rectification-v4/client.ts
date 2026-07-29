@@ -63,6 +63,12 @@ export function answerRectificationV4(caseId: string, expectedCaseVersion: numbe
   });
 }
 
+export function regenerateRectificationV4Question(caseId: string, expectedCaseVersion: number) {
+  return post(`/api/rectification/v4/cases/${caseId}/regenerate`, {
+    actionId: globalThis.crypto.randomUUID(), expectedCaseVersion,
+  });
+}
+
 export function transitionRectificationV4(
   caseId: string,
   expectedCaseVersion: number,

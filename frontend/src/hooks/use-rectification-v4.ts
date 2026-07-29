@@ -16,6 +16,7 @@ import {
   loadRectificationV4,
   loadRectificationV4Handoff,
   loadRectificationV4Job,
+  regenerateRectificationV4Question,
   transitionRectificationV4,
 } from "@/lib/rectification-v4/client";
 
@@ -135,6 +136,9 @@ export function useRectificationV4(input: {
     clearError: () => setError(""),
     answer: (answer: string, modelId?: string | null) => data
       ? mutate(() => answerRectificationV4(data.case.id, data.case.version, answer, modelId))
+      : Promise.resolve(null),
+    regenerate: () => data
+      ? mutate(() => regenerateRectificationV4Question(data.case.id, data.case.version))
       : Promise.resolve(null),
     pause: () => data
       ? mutate(() => transitionRectificationV4(data.case.id, data.case.version, "pause"))

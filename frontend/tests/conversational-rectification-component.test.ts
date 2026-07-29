@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { rectificationV4ChatMessages } from "../src/components/rectification-v4-panel.tsx";
+import {
+  canRegenerateRectificationMessage,
+  rectificationV4ChatMessages,
+  toggleRectificationFeedback,
+} from "../src/components/rectification-v4-panel.tsx";
 import type { RectificationV4ApiResponse } from "../src/lib/rectification-v4/contracts.ts";
 
 const id = "00000000-0000-4000-8000-000000000901";
@@ -87,6 +91,11 @@ test("v4 rectification reuses the ordinary session message list, composer, and m
   assert.match(component, /className="composer"/);
   assert.match(component, /<Textarea/);
   assert.match(component, /<ModelSelector/);
+  assert.match(component, /aria-label="赞"/);
+  assert.match(component, /aria-label="踩"/);
+  assert.match(component, /aria-label="重新生成回答"/);
+  assert.match(component, /caseValue\?\.deploymentMode === "v5_agent"/);
+  assert.match(component, /controller\.regenerate\(\)/);
   assert.match(component, /controller\.answer\(answer, props\.selectedModelId \|\| null\)/);
   assert.match(wrapper, /<RectificationV4Panel \{\.\.\.props\} \/>/);
   assert.match(page, /\{!rectificationSurfaceOpen && \(\s*<div className=\{`conversation/);
@@ -94,6 +103,42 @@ test("v4 rectification reuses the ordinary session message list, composer, and m
   assert.doesNotMatch(page, /is-rectification/);
   assert.doesNotMatch(component, /rectification-chat/);
   assert.doesNotMatch(css, /\.rectification-chat/);
+});
+
+test("V5 Agent feedback is mutually exclusive and regenerate is limited to the current settled assistant question", () => {
+  assert.equal(toggleRectificationFeedback(undefined, "up"), "up");
+  assert.equal(toggleRectificationFeedback("up", "up"), undefined);
+  assert.equal(toggleRectificationFeedback("up", "down"), "down");
+
+  const message = rectificationV4ChatMessages(response(), false).at(-1)!;
+  assert.equal(canRegenerateRectificationMessage({
+    message,
+    currentMessageKey: `rectification-current-${questionId}`,
+    deploymentMode: "v5_agent",
+    busy: false,
+    canAnswer: true,
+  }), true);
+  assert.equal(canRegenerateRectificationMessage({
+    message,
+    currentMessageKey: message.renderKey,
+    deploymentMode: "v5_shadow",
+    busy: false,
+    canAnswer: true,
+  }), false);
+  assert.equal(canRegenerateRectificationMessage({
+    message,
+    currentMessageKey: message.renderKey,
+    deploymentMode: "v5_agent",
+    busy: true,
+    canAnswer: true,
+  }), false);
+  assert.equal(canRegenerateRectificationMessage({
+    message: { ...message, role: "user" },
+    currentMessageKey: message.renderKey,
+    deploymentMode: "v5_agent",
+    busy: false,
+    canAnswer: true,
+  }), false);
 });
 
 test("turn history and the context-aware next question render as one chat timeline", () => {

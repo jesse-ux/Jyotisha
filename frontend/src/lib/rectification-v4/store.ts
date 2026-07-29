@@ -45,7 +45,16 @@ export interface RectificationV4Store {
   loadCase(userId: string, caseId: string): Promise<RectificationV4Case | null>;
   loadEvents(userId: string, caseId: string): Promise<readonly LifeEventRevision[]>;
   loadTurns(userId: string, caseId: string): Promise<readonly RectificationV4Turn[]>;
+  loadLatestValidatedDecision(userId: string, caseId: string): Promise<ValidatedDecision | null>;
   createCase(input: { readonly case: RectificationV4Case; readonly actionId: string }): Promise<RectificationV4Case>;
+  replaceCurrentQuestion(input: {
+    readonly userId: string;
+    readonly caseId: string;
+    readonly actionId: string;
+    readonly expectedCaseVersion: number;
+    readonly question: RectificationV4Question;
+    readonly now: string;
+  }): Promise<RectificationV4Case>;
   submitAnswer(input: {
     readonly userId: string;
     readonly caseId: string;
