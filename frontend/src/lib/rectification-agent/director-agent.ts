@@ -11,9 +11,16 @@ const domains: EvidenceDomain[] = ["education", "relocation", "relationship", "c
 const kinds: EventKind[] = ["education_milestone", "relocation", "relationship_start", "relationship_end", "relationship_change", "career_change", "finance_change", "self_health_event", "family_health_event", "family_bereavement", "family_event", "other"];
 const privatePattern = /(?:[0-9a-f]{8}-[0-9a-f-]{27,}|opportunity(?:id)?|snapshot(?:id)?|event(?:id)?|targetEventId|score|评分|得分|权重|rule[_ -]?id|贡献矩阵|tool[_ -]?call|cluster[_ -]?id)/iu;
 const exactMinutePattern = /(?:\b(?:[01]?\d|2[0-3]):[0-5]\d\b|(?:凌晨|清晨|上午|中午|下午|傍晚|晚上)?\s*[零〇一二两三四五六七八九十百\d]{1,4}\s*[点时]\s*[零〇一二两三四五六七八九十百\d]{1,4}\s*分)/u;
+const declinedPattern = /(?:不想说|不方便说|不想回答|跳过|这个不说|换个方向|不聊这个)/u;
 type Generated = Readonly<{ object: unknown; totalUsage?: { inputTokens?: number; outputTokens?: number } | Promise<{ inputTokens?: number; outputTokens?: number }> }>;
 const regeneratedQuestionSchema = z.object({ question: z.string().trim().min(8).max(500) }).strict();
 export type RectificationDirectorGenerator = (prompt: string, phase: "evidence" | "final" | "after_diagnostic" | "repair") => Promise<Generated>;
+
+function summarizeEarlierTurns(turns: readonly RectificationV4Turn[]): string | null {
+  const older = turns.slice(0, -12);
+  if (!older.length) return null;
+  return older.map((turn, index) => `${index + 1}. 问：${turn.question.slice(0, 240)}\n答：${turn.answer.slice(0, 500)}`).join("\n").slice(-12_000);
+}
 
 function diagnosticResult(kind: RectificationDiagnostic, value: DiagnosticsSummary) {
   switch (kind) {
@@ -31,11 +38,11 @@ export function buildRectificationCaseDossier(input: Readonly<{ caseValue: Recti
   const recent = input.turns.slice(-12);
   return rectificationCaseDossierSchema.parse({
     case: { candidateWindow: input.caseValue.calculationSpec.candidateRange, birthDate: input.caseValue.calculationSpec.birthDate, location: { latitude: input.caseValue.calculationSpec.latitude, longitude: input.caseValue.calculationSpec.longitude, timezoneId: input.caseValue.calculationSpec.timezoneId ?? null, timezoneOffsetHours: input.caseValue.calculationSpec.timezoneOffsetHours }, birthTimeSource: input.caseValue.calculationSpec.birthTimeSource ?? null, algorithmVersion: input.caseValue.algorithmVersion },
-    conversation: { recentRawTurns: recent.map(({ question, answer }) => ({ question, answer })), earlierConversationSummary: input.turns.length > 12 ? `更早还有 ${input.turns.length - 12} 轮；完整事实以事件账本为准。` : null },
+    conversation: { recentRawTurns: recent.map(({ question, answer }) => ({ question, answer })), earlierConversationSummary: summarizeEarlierTurns(input.turns) },
     eventLedger: input.events.map((event) => ({ eventId: event.eventId, revision: event.revision, summary: event.summary, rawText: event.rawText, domain: event.domain, eventKind: event.eventKind, subject: event.subject, relatedPerson: event.relatedPerson, dateRange: event.dateRange, scoreability: event.scoreability, status: latest.get(event.eventId) === event.revision ? "active" : "superseded" })),
-    interviewState: { currentTargetEventId: input.currentTargetEventId, declinedDomains: [], unresolvedTargets: [...new Set([...(input.currentTargetEventId && ["unresolved", "answered_other_event"].includes(input.targetDisposition) ? [input.currentTargetEventId] : []), ...(input.pendingEvidence ?? []).flatMap((item) => item.targetEventId ? [item.targetEventId] : [])])], askedTopics: input.turns.slice(-50).map((turn) => turn.question), turnCount: input.turns.length, targetDisposition: input.targetDisposition },
+    interviewState: { currentTargetEventId: input.currentTargetEventId, declinedDomains: [...new Set(input.turns.flatMap((turn) => turn.questionDomain && declinedPattern.test(turn.answer) ? [turn.questionDomain] : []))], unresolvedTargets: [...new Set([...(input.currentTargetEventId && ["unresolved", "answered_other_event"].includes(input.targetDisposition) ? [input.currentTargetEventId] : []), ...(input.pendingEvidence ?? []).flatMap((item) => item.targetEventId ? [item.targetEventId] : [])])], pendingEvidence: (input.pendingEvidence ?? []).filter((item) => !item.resolvedAt).map(({ rawText, reasonCode, targetEventId, createdAt }) => ({ rawText, reasonCode, targetEventId, createdAt })), askedTopics: input.turns.slice(-50).map((turn) => turn.question), turnCount: input.turns.length, targetDisposition: input.targetDisposition },
     candidateState: { hasSnapshot: Boolean(input.snapshot), publicRangeAllowed: input.snapshot?.canAcceptRange ?? false, rangeChanged: input.previousSnapshot?.clusters[0]?.startTime !== input.snapshot?.clusters[0]?.startTime || input.previousSnapshot?.clusters[0]?.endTime !== input.snapshot?.clusters[0]?.endTime, topClusters: (input.snapshot?.clusters ?? []).slice(0, 4).map((cluster) => ({ rank: cluster.rank, widthMinutes: cluster.widthMinutes, stability: input.snapshot?.canAcceptRange ? "stable" : "unstable" })), contrasts: (input.diagnostics?.candidateSplits ?? []).map((split) => ({ techniqueLayers: split.techniqueLayers, relevantEventIds: split.eventIds })), eventDiagnostics: (input.diagnostics?.eventDateSensitivity ?? []).map((item) => ({ eventId: item.eventId, winnerRetentionRate: item.winnerRetentionRate, scoreVariance: item.scoreVariance })), gateReasons: input.snapshot?.gateReasons ?? [], currentSnapshotId: input.snapshot?.id ?? null },
-    capabilities: { supportedDomains: domains, supportedEventKinds: kinds, maxQuestionsPerTurn: 1, maxDiagnosticsPerRun: 1, forbiddenPublicClaims: ["exact_birth_minute", "private_scores", "internal_ids", "technique_trace"] },
+    capabilities: { supportedDomains: domains, supportedEventKinds: kinds, maxQuestionsPerTurn: 1, maxDiagnosticsPerRun: 2, forbiddenPublicClaims: ["exact_birth_minute", "private_scores", "internal_ids", "technique_trace"] },
   });
 }
 
@@ -130,6 +137,7 @@ export async function runRectificationDirector(input: Readonly<{ caseValue: Rect
   let inputTokens = 0, outputTokens = 0;
   let usageObserved = false;
   const toolCalls: ToolCallTrace[] = [];
+  const diagnosticResults: Array<{ diagnostic: RectificationDiagnostic; result: ReturnType<typeof diagnosticResult> }> = [];
   const addUsage = async (generated: Generated) => {
     if (!generated.totalUsage) return;
     const usage = await generated.totalUsage;
@@ -141,11 +149,12 @@ export async function runRectificationDirector(input: Readonly<{ caseValue: Rect
     const first = await generate(JSON.stringify({ task: input.phase === "evidence" ? "Interpret the latest answer and propose every explicit event. The action is provisional." : "Choose the final action and public response. evidenceProposals must be empty because staging is complete.", latestAnswer: input.latestAnswer, dossier: input.dossier }), input.phase);
     await addUsage(first);
     let candidate = rectificationTurnPlanSchema.parse(first.object);
-    if (input.phase === "final" && candidate.action.type === "request_diagnostic") {
+    while (input.phase === "final" && candidate.action.type === "request_diagnostic" && toolCalls.length < input.dossier.capabilities.maxDiagnosticsPerRun) {
       const toolStarted = Date.now();
       const result = diagnosticResult(candidate.action.diagnostic, input.diagnostics);
+      diagnosticResults.push({ diagnostic: candidate.action.diagnostic, result });
       toolCalls.push({ tool: "run_rectification_diagnostics", diagnostic: candidate.action.diagnostic, outcome: "succeeded", durationMs: Date.now() - toolStarted, errorCode: null });
-      const second = await generate(JSON.stringify({ task: "Use the diagnostic result and return a final non-diagnostic action with no evidence proposals.", latestAnswer: input.latestAnswer, dossier: input.dossier, diagnosticResult: result }), "after_diagnostic");
+      const second = await generate(JSON.stringify({ task: "Use the diagnostic results and return a final non-diagnostic action with no evidence proposals.", latestAnswer: input.latestAnswer, dossier: input.dossier, diagnosticResults }), "after_diagnostic");
       await addUsage(second);
       candidate = rectificationTurnPlanSchema.parse(second.object);
     }

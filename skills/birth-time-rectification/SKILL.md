@@ -12,10 +12,10 @@ Before choosing an action, read the contracts in `references/`. Treat `assets/re
 ## Product boundary
 
 - Current skill version: `birth-time-rectification-v6`.
-- Current prompt version: `rectification-director-v1`.
+- Current prompt version: `rectification-director-v2`.
 - The scoring algorithm remains `rectification-v5-matrix-scoring-1`; the V6 label describes the conversation contract, not a replacement scoring engine.
 - The server owns event reconciliation, the real Python scan of every minute in the candidate window, the event contribution matrix, Candidate Snapshots, LOEO/LODO, date sensitivity, neighbor stability, candidate split, jobs, replay, persistence, and final decision validation.
-- The Director reads the complete event ledger plus the latest 10–12 raw turns, may propose multiple grounded events or revisions, chooses one interview focus, writes the public reply and at most one natural question, and may call at most one allowed read-only diagnostic.
+- The Director reads the complete event ledger plus the latest 10–12 raw turns, may propose multiple grounded events or revisions, chooses one interview focus, writes the public reply and at most one natural question, and may call up to two allowed read-only diagnostics.
 - Event proposals are not facts until the server validates their source span, declared date, target revision, subject, classification, and scoreability. The Director never creates scores, candidate minutes, Case state, database mutations, or profile updates.
 - VedAstro is a read-only post-validation gate for `v5_agent` only. It runs only after the local stability and range-eligibility gates pass, compares the server-provided primary and runner-up, and never replaces V5 local scoring or lets SearchEvents choose the final candidate.
 - Candidate windows are inclusive. When `start_time > end_time`, the Python scan continues across midnight into the next calendar day; equal endpoints mean one candidate minute, and a window may not exceed 1,440 minutes.
@@ -55,7 +55,7 @@ Before choosing an action, read the contracts in `references/`. Treat `assets/re
 
 1. Read the complete Case Dossier: recent raw turns, full revision ledger, current target disposition, pending evidence, candidate contrasts, event sensitivity, and range gate.
 2. Propose every explicit event in the latest answer. Use exact source spans and declared date text; propose `revise` only with a server-issued event ID already present in the Dossier.
-3. After the server stages valid revisions and recomputes diagnostics, choose the single most useful focus. Do not rotate through domains or ask for finer dates unless the diagnostics show value.
+3. After the server stages valid revisions and recomputes diagnostics, choose the single most useful focus. The Dossier includes unresolved Pending Evidence and prior declined domains; use up to two read-only diagnostics when one result is not enough. Do not rotate through domains or ask for finer dates unless the diagnostics show value.
 4. Write one short natural question and the public reply in the same TurnPlan. Do not expose internal IDs, scores, contribution details, tools, or candidate minutes.
 5. If server validation rejects the TurnPlan, repair it once. If it still fails, accept the generic safety fallback. Offer a range only when the current server Snapshot allows it; otherwise stop honestly at low confidence when no useful question remains.
 

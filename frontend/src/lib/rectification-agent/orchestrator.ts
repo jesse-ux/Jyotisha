@@ -156,7 +156,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
   let reconciliation;
   if (claimed.case.deploymentMode !== "v4_legacy" && claimed.turn.answer) {
     const dossier = buildRectificationCaseDossier({
-      caseValue: claimed.case, turns: claimed.turns, events: claimed.events, snapshot: claimed.case.latestSnapshot,
+      caseValue: claimed.case, turns: claimed.turns, events: claimed.events, pendingEvidence: claimed.pendingEvidence, snapshot: claimed.case.latestSnapshot,
       previousSnapshot: claimed.case.latestSnapshot, diagnostics: null, targetDisposition: provisionalDisposition,
       currentTargetEventId: claimed.turn.questionTargetEventId,
     });
@@ -354,7 +354,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
   if (claimed.case.deploymentMode !== "v4_legacy") {
     await enterPhase("planning_question");
     const dossier = buildRectificationCaseDossier({
-      caseValue: claimed.case, turns: claimed.turns, events, pendingEvidence: reconciliation.pending,
+      caseValue: claimed.case, turns: claimed.turns, events, pendingEvidence: [...claimed.pendingEvidence, ...reconciliation.pending],
       snapshot, previousSnapshot: claimed.case.latestSnapshot, diagnostics,
       targetDisposition: reconciliation.targetDisposition, currentTargetEventId: claimed.turn.questionTargetEventId,
     });

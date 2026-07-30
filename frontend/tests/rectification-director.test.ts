@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { diagnosticsSummarySchema, type RectificationTurnPlan } from "../src/lib/rectification-agent/contracts.ts";
 import { buildRectificationCaseDossier, regenerateDirectorQuestion, runRectificationDirector, validateRectificationTurnPlan } from "../src/lib/rectification-agent/director-agent.ts";
-import type { CalculationSpec, LifeEventRevision, RectificationV4Case, RectificationV4Turn } from "../src/lib/rectification-v4/contracts.ts";
+import type { CalculationSpec, LifeEventRevision, PendingEvidence, RectificationV4Case, RectificationV4Turn } from "../src/lib/rectification-v4/contracts.ts";
 import { stageAgentEvidenceProposals } from "../src/lib/rectification-v4/extraction.ts";
 import { calculationSpecHash } from "../src/lib/rectification-v4/fingerprints.ts";
 
@@ -68,7 +68,7 @@ function event(overrides: Partial<LifeEventRevision> = {}): LifeEventRevision {
   };
 }
 
-function turn(index: number): RectificationV4Turn {
+function turn(index: number, overrides: Partial<RectificationV4Turn> = {}): RectificationV4Turn {
   return {
     id: randomUUID(),
     caseId,
@@ -81,6 +81,7 @@ function turn(index: number): RectificationV4Turn {
     modelId: null,
     actionId: randomUUID(),
     createdAt: now,
+    ...overrides,
   };
 }
 
@@ -110,11 +111,12 @@ function plan(overrides: Partial<RectificationTurnPlan> = {}): RectificationTurn
   };
 }
 
-function dossier(events: readonly LifeEventRevision[] = [], turns: readonly RectificationV4Turn[] = []) {
+function dossier(events: readonly LifeEventRevision[] = [], turns: readonly RectificationV4Turn[] = [], pendingEvidence: readonly PendingEvidence[] = []) {
   return buildRectificationCaseDossier({
     caseValue,
     turns,
     events,
+    pendingEvidence,
     snapshot: null,
     diagnostics: null,
     targetDisposition: "not_applicable",
@@ -141,7 +143,7 @@ const diagnostics = diagnosticsSummarySchema.parse({
   createdAt: now,
 });
 
-test("dossier keeps twelve raw turns and the complete revision ledger", () => {
+test("dossier keeps recent raw turns, useful earlier context, refusals, pending evidence, and the complete revision ledger", () => {
   const sharedEventId = randomUUID();
   const events = Array.from({ length: 15 }, (_, index) => event({
     eventId: index < 2 ? sharedEventId : randomUUID(),
@@ -150,9 +152,21 @@ test("dossier keeps twelve raw turns and the complete revision ledger", () => {
     summary: `事件${index}`,
     rawText: `事件${index}`,
   }));
-  const value = dossier(events, Array.from({ length: 14 }, (_, index) => turn(index)));
+  const targetEventId = events.at(-1)!.eventId;
+  const turns = Array.from({ length: 14 }, (_, index) => turn(index));
+  turns[1] = turn(1, { questionDomain: "relationship", questionTargetEventId: targetEventId, answer: "这件事不方便说，换个方向。" });
+  const pending: PendingEvidence = {
+    id: randomUUID(), caseId, turnId: turns[0]!.id, rawText: "后来搬过一次家", reasonCode: "date_unresolved",
+    targetEventId, resolvedEventId: null, createdAt: now, resolvedAt: null,
+  };
+  const value = dossier(events, turns, [pending]);
   assert.equal(value.conversation.recentRawTurns.length, 12);
   assert.equal(value.conversation.recentRawTurns[0]?.question, "问题2");
+  assert.match(value.conversation.earlierConversationSummary ?? "", /问题0/);
+  assert.match(value.conversation.earlierConversationSummary ?? "", /不方便说/);
+  assert.deepEqual(value.interviewState.declinedDomains, ["relationship"]);
+  assert.equal(value.interviewState.pendingEvidence[0]?.reasonCode, "date_unresolved");
+  assert.equal(value.interviewState.pendingEvidence[0]?.targetEventId, targetEventId);
   assert.equal(value.eventLedger.length, 15);
   assert.equal(value.eventLedger[0]?.status, "superseded");
   assert.equal(value.eventLedger[1]?.status, "active");
@@ -204,29 +218,50 @@ test("revisions keep the server-owned event id and append revision history", () 
   assert.equal(staged.revisions[0]?.revision, 2);
   assert.equal(staged.revisions[0]?.dateRange.start, "2016-10-01");
   assert.equal(staged.revisions[0]?.dateRange.end, "2016-10-31");
+  assert.equal(staged.revisions[0]?.summary, "大学入学");
 });
 
-test("declined targets cannot be reopened and a diagnostic is closed in one tool loop", async () => {
+test("revisions cannot replace an existing event with unrelated model content", () => {
+  const target = event({ eventId: "00000000-0000-4000-8000-000000000708" });
+  const rawText = "2018年9月搬到北京。";
+  const staged = stageAgentEvidenceProposals({
+    caseId,
+    rawText,
+    sourceTurnId: randomUUID(),
+    asOfDate: "2026-07-30",
+    existing: [target],
+    proposals: [{ operation: "revise", targetEventId: target.eventId, sourceSpan: "2018年9月搬到北京", dateText: "2018年9月", proposedSummary: "2018年9月创办公司", proposedDomain: "relocation", proposedEventKind: "relocation", proposedSubject: "self", proposedRelatedPerson: null, confidence: "high" }],
+    now: new Date(now),
+  });
+  assert.equal(staged.revisions.length, 0);
+  assert.equal(staged.pending.length, 1);
+  assert.equal(staged.pending[0]?.targetEventId, target.eventId);
+});
+
+test("declined targets cannot be reopened and diagnostics stay in a bounded tool loop", async () => {
   const target = event({ eventId: "00000000-0000-4000-8000-000000000706" });
   const targetDossier = buildRectificationCaseDossier({ caseValue, turns: [], events: [target], snapshot: null, diagnostics: null, targetDisposition: "declined", currentTargetEventId: target.eventId });
   const reopened = plan({ targetDisposition: "declined", action: { type: "ask_question", focus: { mode: "clarify_existing_event", targetEventId: target.eventId, domain: target.domain, requestedFacts: ["month"], rationaleCodes: ["retry"] }, question: "再说说那件事？", optionalQuickReplies: [] } });
   assert.ok(validateRectificationTurnPlan({ plan: reopened, dossier: targetDossier, latestAnswer: "不想说", phase: "final" }).issues.includes("declined_target_reopened"));
 
   const phases: string[] = [];
+  const prompts: string[] = [];
   const result = await runRectificationDirector({
     caseValue,
     dossier: dossier(),
     latestAnswer: "",
     phase: "final",
     diagnostics,
-    generatePlan: async (_prompt, phase) => {
+    generatePlan: async (prompt, phase) => {
       phases.push(phase);
-      return { object: phase === "final" ? plan({ action: { type: "request_diagnostic", diagnostic: "candidate_split" } }) : plan() };
+      prompts.push(prompt);
+      return { object: phases.length <= 2 ? plan({ action: { type: "request_diagnostic", diagnostic: phases.length === 1 ? "candidate_split" : "date_sensitivity" } }) : plan() };
     },
   });
   assert.equal(result.mode, "agent");
-  assert.deepEqual(phases, ["final", "after_diagnostic"]);
-  assert.equal(result.toolCalls.length, 1);
+  assert.deepEqual(phases, ["final", "after_diagnostic", "after_diagnostic"]);
+  assert.equal(result.toolCalls.length, 2);
+  assert.deepEqual(JSON.parse(prompts[2]!).diagnosticResults.map((item: { diagnostic: string }) => item.diagnostic), ["candidate_split", "date_sensitivity"]);
   assert.equal(result.plan.action.type, "ask_question");
 });
 

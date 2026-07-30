@@ -44,6 +44,14 @@ function normalizeKind(domain: EvidenceDomain, value: string, summary: string): 
   return ({ education: "education_milestone", relocation: "relocation", career: "career_change", finance: "finance_change", health_pressure: "self_health_event", family: "family_event", other: "other" } as const)[domain];
 }
 
+function isSameEventRevision(target: LifeEventRevision, extracted: ExtractedLifeEventEvidence): boolean {
+  return target.domain === extracted.domain
+    && target.eventKind === extracted.eventKind
+    && target.subject === extracted.subject
+    && target.relatedPerson === extracted.relatedPerson
+    && (target.summary.includes(extracted.eventSummary) || target.rawText.includes(extracted.eventSummary));
+}
+
 function pendingEvidence(input: {
   caseId: string;
   turnId: string;
@@ -261,21 +269,21 @@ export function stageAgentEvidenceProposals(input: Readonly<{
     }
     const target = proposal.targetEventId ? active.find((event) => event.eventId === proposal.targetEventId) : null;
     const parsedDate = parseDeclaredDateText(proposal.dateText.normalize("NFKC"), input.asOfDate);
-    if (!target || !parsedDate) {
+    if (!target || !parsedDate || !isSameEventRevision(target, extracted)) {
       pending.push(pendingEvidence({ caseId: input.caseId, turnId: input.sourceTurnId, rawText: input.rawText, reasonCode: "event_unparsed", targetEventId: proposal.targetEventId, now: input.now }));
       continue;
     }
     revisions.push(appendEventRevision([...input.existing, ...revisions], {
       eventId: target.eventId,
-      domain: extracted.domain as EvidenceDomain,
-      eventKind: normalizeKind(extracted.domain as EvidenceDomain, extracted.eventKind, extracted.eventSummary),
-      subject: extracted.subject as EventSubject,
-      relatedPerson: extracted.relatedPerson as RelatedPerson | null,
-      summary: proposal.proposedSummary,
+      domain: target.domain,
+      eventKind: target.eventKind,
+      subject: target.subject,
+      relatedPerson: target.relatedPerson,
+      summary: extracted.eventSummary,
       rawText: input.rawText,
       dateRange: dateRangeFromDeclared(parsedDate.value, parsedDate.precision),
       ...eventDateProvenance(target),
-      scoreability: extracted.scoreability as Scoreability,
+      scoreability: target.scoreability,
     }, { now: input.now }));
   }
   return {

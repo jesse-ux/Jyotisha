@@ -118,6 +118,7 @@ function makeClaimed(events: readonly LifeEventRevision[]): ClaimedRectification
     turn,
     turns: [turn],
     events,
+    pendingEvidence: [],
     attemptedRefinementEventIds: [],
     job: {
       id: randomUUID(),

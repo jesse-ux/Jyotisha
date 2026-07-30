@@ -258,6 +258,7 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
         turn: turns.get(job.turnId)!,
         turns: caseTurns,
         events: events.get(job.caseId) ?? [],
+        pendingEvidence: [...pendingEvidence.values()].filter((item) => item.caseId === job.caseId && !item.resolvedAt),
         attemptedRefinementEventIds: [...new Set(
           [...turns.values()]
             .filter((turn) => turn.caseId === job.caseId && turn.questionTargetEventId)

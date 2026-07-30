@@ -3,12 +3,14 @@ import { storedPublicMessageSchema, validatedDecisionSchema, type ValidatedDecis
 import {
   candidateSnapshotSchema,
   lifeEventRevisionSchema,
+  pendingEvidenceSchema,
   rectificationAnalysisItemSchema,
   rectificationV4CaseSchema,
   rectificationV4JobSchema,
   rectificationV4TurnSchema,
   type CandidateSnapshot,
   type LifeEventRevision,
+  type PendingEvidence,
   type RectificationAnalysisItem,
   type RectificationV4Case,
   type RectificationV4Job,
@@ -169,6 +171,20 @@ function turnValue(row: Row): RectificationV4Turn {
   });
 }
 
+function pendingEvidenceValue(row: Row): PendingEvidence {
+  return pendingEvidenceSchema.parse({
+    id: row.id,
+    caseId: row.case_id,
+    turnId: row.turn_id,
+    rawText: row.raw_text,
+    reasonCode: row.reason_code,
+    targetEventId: row.target_event_id,
+    resolvedEventId: row.resolved_event_id,
+    createdAt: timestamp(row.created_at),
+    resolvedAt: row.resolved_at ? timestamp(row.resolved_at) : null,
+  });
+}
+
 export function createRectificationV4SupabaseStore(supabase: SupabaseClient): RectificationV4Store {
   async function rowById(table: string, id: string): Promise<Row | null> {
     const { data, error } = await supabase.from(table).select("*").eq("id", id).maybeSingle();
@@ -208,6 +224,14 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
       .order("case_version", { ascending: true });
     if (error) throw storeError(error);
     return ((data ?? []) as Row[]).map(turnValue);
+  }
+
+  async function loadPendingEvidenceByCase(userId: string, caseId: string): Promise<readonly PendingEvidence[]> {
+    const { data, error } = await supabase.from("birth_time_rectification_pending_evidence")
+      .select("*").eq("case_id", caseId).eq("user_id", userId).is("resolved_at", null)
+      .order("created_at", { ascending: true });
+    if (error) throw storeError(error);
+    return ((data ?? []) as Row[]).map(pendingEvidenceValue);
   }
 
   async function loadAnalysisMessagesByCase(userId: string, caseId: string): Promise<readonly RectificationAnalysisItem[]> {
@@ -375,11 +399,12 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
       if (!jobRow) throw new RectificationV4StoreError("not_found");
       const userId = String(jobRow.user_id);
       const caseId = String(jobRow.case_id);
-      const [caseResult, turnRow, events, turns] = await Promise.all([
+      const [caseResult, turnRow, events, turns, pendingEvidence] = await Promise.all([
         loadCaseById(userId, caseId),
         rowById("birth_time_rectification_v4_turns", String(jobRow.turn_id)),
         loadEventsByCase(userId, caseId),
         loadTurnsByCase(userId, caseId),
+        loadPendingEvidenceByCase(userId, caseId),
       ]);
       if (!caseResult || !turnRow) throw new RectificationV4StoreError("not_found");
       return {
@@ -388,6 +413,7 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
         turn: turnValue(turnRow),
         turns,
         events,
+        pendingEvidence,
         attemptedRefinementEventIds: [...new Set(
           turns.flatMap((turn) => turn.questionTargetEventId ? [turn.questionTargetEventId] : []),
         )],

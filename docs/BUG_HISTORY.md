@@ -1802,3 +1802,35 @@
 - 防复发：正常 Agent 路径不得重新依赖 Opportunity 枚举或领域正则决定访谈内容；Director 合同测试必须覆盖多事件提议、修订目标验证、拒绝/不知道后的换焦点、range gate、内部信息泄露与一次 repair；Python 测试必须断言 `event_kind` 从输入穿透到规则 trace。
 - 相关记录：BUG-095、BUG-097、BUG-099
 - 修复版本：staging
+
+## BUG-102 | Director Dossier 丢失早期语境、历史 Pending Evidence 与拒答领域
+
+- 状态：resolved
+- 首次发现：2026-07-30
+- 最近更新：2026-07-30
+- 影响面：V5 Agent Director 的长期会话理解、拒答保护、未解析证据续接与候选诊断循环
+- 用户现象：Director 已经替代正常路径的 Opportunity/Renderer，但超过十二轮的会话只收到“更早还有 N 轮”，`declinedDomains` 固定为空，历史未解决 Pending Evidence 未进入本轮 Dossier；一次只读诊断不足时无法继续观察后再决定下一问。
+- 触发条件：Case 超过十二轮、用户曾拒绝某个问题领域、前序 Turn 留下未解决证据，或 Director 连续需要两类候选诊断。
+- 根因：Dossier Builder 使用计数占位代替早期问答摘要，并未从 Turn 账本派生拒答领域；Job claim 合同也没有携带未解决 Pending Evidence。Director 的诊断处理使用单次 `if`，与 Dossier 声明的一次预算绑定。
+- 修复：Dossier 现在保留最近十二轮原文，并把更早问答压缩为有内容的受限摘要；从历史 Turn 派生拒答领域；Memory/Supabase Job claim 加载未解决 Pending Evidence 并与本轮新增项一并交给 Director。只读诊断改为最多两次的有界循环，公开回复、数据库状态、候选范围门禁与原子提交仍由服务器控制。Prompt 版本升级为 `rectification-director-v2`。
+- 验证：Director 回归测试覆盖早期语境、拒答领域、Pending Evidence 和两次诊断循环；TypeScript 类型检查、相关 ESLint 与目标测试通过。
+- 安全边界：Pending Evidence 仅作为私有 Dossier 输入，公开文本仍经过内部信息、精确分钟、单问题和候选范围门禁校验；工具循环保持只读且最多两次。
+- 防复发：Dossier 测试必须断言早期语境不是计数占位、拒答领域和未解决证据可见；诊断测试必须断言循环有上限且最终返回非诊断动作。
+- 相关记录：BUG-099、BUG-101
+- 修复版本：local follow-up
+
+## BUG-103 | Director revise 可跨事件覆盖既有 Event ID
+
+- 状态：resolved
+- 首次发现：2026-07-30
+- 最近更新：2026-07-30
+- 影响面：V5 Agent 事件修订暂存、事件账本身份连续性与后续候选评分
+- 用户现象：模型可把“大学入学”的既有 Event ID 修订成“搬家”或其他无关事件，并把未受原文约束的 `proposedSummary` 写入账本。
+- 触发条件：`revise` proposal 引用真实 Target ID 和回答中的日期/Span，但声明了不同 Domain、Kind、Subject、Related Person，或 Span 与原事件语义锚点不连续。
+- 根因：服务器只验证 Target ID 存在、Span/日期来自最新回答，没有验证 Revision 的事件身份连续性；持久化 Summary 直接采用模型提议文本。
+- 修复：`stageAgentEvidenceProposals()` 仅接受 Domain、Kind、Subject、Related Person 与 Target 一致，且最新原文事件摘要仍命中 Target 摘要或原始文本的修订；不连续的提议转为 Pending Evidence，不覆盖原 Event ID。合法修订的 Summary 改用服务器从已验证 Source Span 提取的事件摘要，身份字段与 Scoreability 继续沿用 Target。
+- 验证：新增回归测试证明合法日期修订保留 Event ID 并使用原文摘要，跨领域且含虚构 Summary 的 revise 不产生 Revision、只产生 Pending Evidence。
+- 安全边界：Agent 仍可创建新事件；跨事件内容必须走 `create`，不能借 `revise` 篡改既有账本身份。
+- 防复发：Revision 测试必须同时覆盖合法日期更正和跨事件覆盖拒绝，不能只断言 Target ID 存在。
+- 相关记录：BUG-101、BUG-102
+- 修复版本：local follow-up

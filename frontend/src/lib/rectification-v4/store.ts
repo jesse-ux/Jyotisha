@@ -18,6 +18,7 @@ export type ClaimedRectificationV4Job = Readonly<{
   turn: RectificationV4Turn;
   turns: readonly RectificationV4Turn[];
   events: readonly LifeEventRevision[];
+  pendingEvidence: readonly PendingEvidence[];
   attemptedRefinementEventIds: readonly string[];
 }>;
 

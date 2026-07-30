@@ -6,7 +6,7 @@ const hash = z.string().regex(/^[a-f0-9]{64}$/);
 const nonblank = (max: number) => z.string().trim().min(1).max(max);
 
 export const CURRENT_RECTIFICATION_SKILL_VERSION = "birth-time-rectification-v6" as const;
-export const CURRENT_RECTIFICATION_PROMPT_VERSION = "rectification-director-v1" as const;
+export const CURRENT_RECTIFICATION_PROMPT_VERSION = "rectification-director-v2" as const;
 
 export const rectificationDiagnosticSchema = z.enum([
   "leave_one_event_out",
@@ -124,6 +124,12 @@ export const rectificationCaseDossierSchema = z.object({
     currentTargetEventId: uuid.nullable(),
     declinedDomains: z.array(evidenceDomainSchema),
     unresolvedTargets: z.array(uuid),
+    pendingEvidence: z.array(z.object({
+      rawText: nonblank(4_000),
+      reasonCode: z.enum(["date_unresolved", "event_unparsed"]),
+      targetEventId: uuid.nullable(),
+      createdAt: z.string().datetime({ offset: true }),
+    }).strict()).max(100),
     askedTopics: z.array(z.string()).max(50),
     turnCount: z.number().int().nonnegative(),
     targetDisposition: targetDispositionSchema,
