@@ -208,7 +208,8 @@ test("外地上大学不会被换词提升为迁居问题", () => {
   const relocation = opportunities.find((item) => item.kind === "ask_new_event" && item.domain === "relocation");
   assert.ok(relocation);
   assert.doesNotMatch(relocation.fallbackPrompt, /搬到新城市|长期离乡|以.*为(?:时间)?参照/);
-  assert.match(relocation.fallbackPrompt, /除了.*离家去外地上大学.*搬家或迁居/);
+  assert.match(relocation.fallbackPrompt, /离家去外地上大学.*真正改变居住地点/);
+  assert.match(relocation.fallbackPrompt, /没有|记不清|换一类经历/);
 
   const repeated = "以“离家去外地上大学”为时间参照，你哪次搬到新城市或长期离乡的年月最确定？";
   assert.equal(validateQuestionRealization(repeated, relocation).valid, false);
@@ -432,4 +433,51 @@ test("V6 迁移只更新未完成 Case 版本且不写 active_birth_time", () =>
   assert.match(migration, /alter column prompt_version set default 'rectification-agent-v6-1'/);
   assert.match(migration, /where status in \('awaiting_answer', 'processing', 'paused'\)/);
   assert.doesNotMatch(migration, /profiles\s*\.\s*active_birth_time|active_birth_time/i);
+});
+
+test("新事件机会提供具体回忆线索和退出方式，不把离家上大学换词重问成迁居", () => {
+  const university = event({ summary: "离家去外地上大学", rawText: "2016年9月离家去外地上大学" });
+  const opportunities = buildQuestionOpportunities({
+    caseId,
+    events: [university],
+    turns: [turn()],
+    snapshot: null,
+    diagnostics: null,
+  });
+  const career = opportunities.find((item) => item.kind === "ask_new_event" && item.domain === "career");
+  const relocation = opportunities.find((item) => item.kind === "ask_new_event" && item.domain === "relocation");
+  assert.ok(career);
+  assert.ok(relocation);
+  assert.ok(career.utility > relocation.utility);
+  assert.match(career.fallbackPrompt, /第一次正式入职|离职|换岗|创业|职责明显增加/);
+  assert.match(career.fallbackPrompt, /没有|记不清|换一类经历/);
+  assert.equal((career.fallbackPrompt.match(/[?？]/g) ?? []).length, 1);
+  assert.doesNotMatch(career.fallbackPrompt, /\b20\d{2}\b|\d+岁|A\/B\/C\/D/);
+  assert.ok(career.contextFacts.some((fact) => /不得假定/.test(fact)));
+  assert.ok(career.contextFacts.some((fact) => /没有、记不清、不想回答或换方向/.test(fact)));
+  assert.equal(validateQuestionRealization(career.fallbackPrompt, career).valid, true);
+});
+
+test("研究院实习后的迁居机会以存在性问题主动引导，不要求用户自己发明事件", () => {
+  const internship = event({
+    domain: "career",
+    eventKind: "career_change",
+    summary: "去石油化工研究院实习做研究员",
+    rawText: "2020年4月去石油化工研究院实习做研究员",
+    dateRange: { start: "2020-04-01", end: "2020-04-30", precision: "month", label: "2020年4月" },
+  });
+  const relocation = buildQuestionOpportunities({
+    caseId,
+    events: [internship],
+    turns: [],
+    snapshot: null,
+    diagnostics: null,
+  }).find((item) => item.kind === "ask_new_event" && item.domain === "relocation");
+  assert.ok(relocation);
+  assert.match(relocation.fallbackPrompt, /有没有一件/);
+  assert.match(relocation.fallbackPrompt, /独立搬家|住校|另一座城市长期生活/);
+  assert.match(relocation.fallbackPrompt, /大概是哪年哪月/);
+  assert.match(relocation.fallbackPrompt, /没有|记不清|换一类经历/);
+  assert.doesNotMatch(relocation.fallbackPrompt, /你还记得哪次独立搬家|请继续讲另一件/);
+  assert.equal(validateQuestionRealization(relocation.fallbackPrompt, relocation).valid, true);
 });

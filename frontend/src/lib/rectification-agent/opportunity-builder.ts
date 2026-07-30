@@ -10,18 +10,61 @@ const forbiddenMoves: SemanticQuestionOpportunity["forbiddenMoves"] = [
 ];
 
 const domainPolicy: Readonly<Record<Exclude<EvidenceDomain, "family" | "other">, Readonly<{
-  goal: string;
+  goal: (anchor: string | null) => string;
   fallbackPrompt: (anchor: string | null) => string;
-  keywords: RegExp;
+  recallCues: string;
+  signals: RegExp;
   recallEase: number;
   privacyCost: number;
 }>>> = {
-  education: { goal: "收集一件有大致日期的教育转折。", fallbackPrompt: (anchor) => anchor ? `除了“${anchor}”，你还记得哪次入学、毕业或专业变化大概发生在哪年哪月？` : "你还记得哪次入学、毕业或专业变化大概发生在哪年哪月？", keywords: /大学|学校|入学|毕业|考试|专业|读书/, recallEase: .82, privacyCost: .03 },
-  relocation: { goal: "收集一件有大致日期的迁居经历。", fallbackPrompt: (anchor) => anchor ? `除了“${anchor}”，你还记得哪次独立搬家或迁居大概发生在哪年哪月？` : "你还记得哪次搬家或迁居大概发生在哪年哪月？", keywords: /搬家|搬到|搬去|迁居|迁到|迁往|移居|定居|长期居住/, recallEase: .78, privacyCost: .04 },
-  relationship: { goal: "在用户愿意的前提下收集一件有大致日期的关系转折。", fallbackPrompt: (anchor) => anchor ? `除了“${anchor}”，如果你愿意，哪次关系变化的大概年月还记得？` : "如果你愿意，哪次关系变化的大概年月还记得？", keywords: /恋爱|关系|结婚|离婚|分手|伴侣|对象/, recallEase: .62, privacyCost: .22 },
-  career: { goal: "收集一件有大致日期的职业转折。", fallbackPrompt: (anchor) => anchor ? `除了“${anchor}”，哪次工作或职责明显变化的年月你还记得？` : "哪次工作或职责明显变化的年月你还记得？", keywords: /工作|实习|公司|研究院|职业|入职|离职|创业|负责/, recallEase: .85, privacyCost: .03 },
-  finance: { goal: "在用户愿意的前提下收集一件有大致日期的财务转折。", fallbackPrompt: (anchor) => anchor ? `除了“${anchor}”，如果方便，哪次财务状况明显变化的年月你还记得？` : "如果方便，哪次财务状况明显变化的年月你还记得？", keywords: /收入|负债|投资|资产|财务|买房|卖房/, recallEase: .6, privacyCost: .18 },
-  health_pressure: { goal: "在用户愿意的前提下收集一件本人有大致日期的健康转折。", fallbackPrompt: (anchor) => anchor ? `除了“${anchor}”，如果方便，你本人哪次健康变化的大概年月还记得？` : "如果方便，你本人哪次健康变化的大概年月还记得？", keywords: /住院|手术|事故|健康|生病|确诊|康复/, recallEase: .58, privacyCost: .28 },
+  education: {
+    goal: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}引导用户回忆一件学习路径变化，用复读、转学、换专业、毕业或重要考试等非穷举线索，不预设一定发生。`,
+    fallbackPrompt: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}有没有一件学习路径明显变化的经历，比如复读、转学、换专业、毕业或重要考试改变去向；如果有，大概是哪年哪月，没有或记不清也可以换一类经历？`,
+    recallCues: "复读、转学、换专业、毕业或重要考试改变去向",
+    signals: /大学|学校|入学|升学|毕业|考试|专业|读书|复读|转学/,
+    recallEase: .82,
+    privacyCost: .03,
+  },
+  relocation: {
+    goal: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}引导用户回忆一件真正改变居住基地的经历，用搬家、住校或到另一座城市长期生活等非穷举线索，不把当前事件换词重问。`,
+    fallbackPrompt: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}有没有一件真正改变居住地点的经历，比如独立搬家、住校或到另一座城市长期生活；如果有，大概是哪年哪月，没有或记不清也可以换一类经历？`,
+    recallCues: "独立搬家、住校或到另一座城市长期生活",
+    signals: /搬家|搬到|搬去|迁居|迁到|迁往|移居|定居|住校|长期居住|生活基地|离家|外地|异地/,
+    recallEase: .78,
+    privacyCost: .04,
+  },
+  relationship: {
+    goal: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}在用户愿意的前提下，引导回忆一件关系状态变化，用关系确立、分开、结婚或共同生活等非穷举线索，不预设一定发生。`,
+    fallbackPrompt: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}如果你愿意，有没有一件关系状态明显变化的经历，比如关系确立、分开、结婚或开始共同生活；如果有，大概是哪年哪月，没有或不想回答可以换一类经历？`,
+    recallCues: "关系确立、分开、结婚或开始共同生活",
+    signals: /恋爱|关系|结婚|离婚|分手|伴侣|对象|共同生活/,
+    recallEase: .62,
+    privacyCost: .22,
+  },
+  career: {
+    goal: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}引导用户回忆一件工作状态变化，用第一次正式入职、离职、换岗、创业或职责增加等非穷举线索，不预设一定发生。`,
+    fallbackPrompt: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}有没有一件工作状态明显变化的经历，比如第一次正式入职、离职、换岗、创业或职责明显增加；如果有，大概是哪年哪月，没有或记不清也可以换一类经历？`,
+    recallCues: "第一次正式入职、离职、换岗、创业或职责明显增加",
+    signals: /工作|实习|公司|研究院|职业|入职|离职|创业|负责|换岗|职责/,
+    recallEase: .85,
+    privacyCost: .03,
+  },
+  finance: {
+    goal: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}在用户愿意的前提下，引导回忆一件财务结构变化，用收入来源、负债、购房或重大投资等非穷举线索，不预设一定发生。`,
+    fallbackPrompt: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}如果方便，有没有一件财务结构明显变化的经历，比如收入来源改变、开始或还清大额负债、购房或重大投资；如果有，大概是哪年哪月，没有或不想回答可以换一类经历？`,
+    recallCues: "收入来源改变、开始或还清大额负债、购房或重大投资",
+    signals: /收入|负债|投资|资产|财务|买房|卖房|购房/,
+    recallEase: .6,
+    privacyCost: .18,
+  },
+  health_pressure: {
+    goal: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}在用户愿意的前提下，引导回忆一件本人健康或高压状态变化，用手术、住院、事故、确诊或明显恢复等非穷举线索，不预设一定发生。`,
+    fallbackPrompt: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}如果方便，你本人有没有一件健康或高压状态明显变化的经历，比如手术、住院、事故、确诊或明显恢复；如果有，大概是哪年哪月，没有或不想回答可以换一类经历？`,
+    recallCues: "手术、住院、事故、确诊或明显恢复",
+    signals: /住院|手术|事故|健康|生病|确诊|康复|高压|恢复/,
+    recallEase: .58,
+    privacyCost: .28,
+  },
 };
 
 function stableUuid(value: string): string {
@@ -182,22 +225,32 @@ export function buildQuestionOpportunities(input: Readonly<{
   for (const [domain, policy] of Object.entries(domainPolicy) as [Exclude<EvidenceDomain, "family" | "other">, (typeof domainPolicy)[Exclude<EvidenceDomain, "family" | "other">]][]) {
     if (refusedDomains.has(domain)) continue;
     const covered = scoreableDomains.has(domain);
-    const themeBonus = latestEvent
-      ? latestEvent.domain === domain ? .22 : 0
-      : policy.keywords.test(latestContext) ? .22 : 0;
+    const latestEventText = latestEvent ? `${latestEvent.summary} ${latestEvent.rawText}` : latestContext;
+    const semanticOverlap = Boolean(latestEvent && latestEvent.domain !== domain && policy.signals.test(latestEventText));
+    const latestDomainContinuity = latestEvent?.domain === domain ? .22 : 0;
+    const pendingThemeBonus = !latestEvent && policy.signals.test(latestContext) ? .12 : 0;
     const alreadyAsked = input.turns.some((turn) => turn.questionDomain === domain && !turn.questionTargetEventId);
     const latestAnchor = latestEvent ? anchorFor(latestEvent) : null;
     opportunities.push(opportunity(input.caseId, {
-      kind: "ask_new_event", domain, targetEventId: null, goal: policy.goal,
+      kind: "ask_new_event", domain, targetEventId: null, goal: policy.goal(latestAnchor),
       requestedFields: ["new_dated_event"], anchors: latestAnchor ? [latestAnchor] : [],
-      contextFacts: [`已有 ${scoreableCount} 件可评分事件。`, `该领域${covered ? "已有覆盖" : "尚未覆盖"}。`, "需要另一件独立事件，不要把最新事件换词重问。"],
+      contextFacts: [
+        `已有 ${scoreableCount} 件可评分事件。`,
+        `该领域${covered ? "已有覆盖" : "尚未覆盖"}。`,
+        `可使用${policy.recallCues}作为非穷举回忆线索。`,
+        "这是存在性询问，不得假定用户一定经历过该事件。",
+        "只询问一件带大致年月的新事件，不要求用户逐项回答例子。",
+        "允许用户回答没有、记不清、不想回答或换方向。",
+        "不得发明年龄或日期窗口，只能引用 anchors 中已确认的经历。",
+        ...(semanticOverlap ? ["该领域与最新事件语义重叠，必须降低优先级，避免把同一经历换词重问。"] : []),
+      ],
       fallbackPrompt: policy.fallbackPrompt(latestAnchor), reason: covered ? "继续收集可区分候选的独立事件。" : "补足证据领域覆盖。",
-      expectedInformationGain: covered ? .54 + themeBonus : .65 + themeBonus / 2,
+      expectedInformationGain: covered ? .54 + latestDomainContinuity + pendingThemeBonus : .65 + pendingThemeBonus,
       dateSensitivity: input.snapshot ? .5 : .35,
       candidateSplitRelevance: input.diagnostics?.candidateSplits.length ? .58 : .42,
       domainCoverageGain: covered ? 0 : scoreableDomains.size < 2 ? 1 : .15,
-      recallEase: policy.recallEase, novelty: alreadyAsked ? .35 : .9,
-      repetitionPenalty: alreadyAsked ? .3 : 0, privacyCost: policy.privacyCost,
+      recallEase: policy.recallEase, novelty: semanticOverlap ? .45 : alreadyAsked ? .35 : .9,
+      repetitionPenalty: (alreadyAsked ? .3 : 0) + (semanticOverlap ? .2 : 0), privacyCost: policy.privacyCost,
     }));
   }
 

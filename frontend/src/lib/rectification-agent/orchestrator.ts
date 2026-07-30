@@ -413,6 +413,8 @@ export async function processRectificationAgentTurn(input: Readonly<{
     snapshot,
   });
   const agentVisible = claimed.case.deploymentMode === "v5_agent";
+  let rendererRealization: "model_validated" | "server_fallback" | null = null;
+  let rendererFallbackReason: "model_unavailable" | "question_rejected" | "model_failed" | null = null;
   const renderedMessage = agentVisible
     ? await renderPublicTurn({
       caseValue: claimed.case,
@@ -422,9 +424,25 @@ export async function processRectificationAgentTurn(input: Readonly<{
       snapshot,
       previousSnapshot: claimed.case.latestSnapshot,
       validated: validatedDecision,
+      onRealization: (outcome) => {
+        rendererRealization = outcome.mode;
+        rendererFallbackReason = outcome.reason;
+      },
     })
     : legacyProjection.publicMessage;
   finishPhase();
+  if (agentVisible && rendererRealization) {
+    stages.push({
+      phase: "rendering",
+      label: rendererRealization === "model_validated"
+        ? "自然语言问题已通过安全校验"
+        : rendererFallbackReason === "question_rejected"
+          ? "模型问题未通过安全校验，已使用服务器安全问题"
+          : "模型回复不可用，已使用服务器安全问题",
+      status: "completed",
+      durationMs: null,
+    });
+  }
   for (const call of reasoned.toolCalls) {
     analysisToolCalls.push({
       category: "agent_diagnostic",

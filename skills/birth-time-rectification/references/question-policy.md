@@ -8,6 +8,15 @@ The builder produces several candidates and publishes at most five active opport
 
 Use the latest answer and latest accepted event as the current topic. Do not let keywords from older turns pull the conversation back to a stale domain, and do not give an uncovered domain both a coverage reward and a second topic reward from the same older event. Once the minimum domain coverage is already present, continuity and information gain should outweigh collecting another domain merely because it is missing.
 
+### New-event existence and recall cues
+
+- Ask whether a relevant event exists before asking for its details. Use an existence form such as “过去是否有过……” or “如果有……”, not a presuppositional form that implies the user must have had that event.
+- Offer 2–5 concrete recall cues as non-exhaustive examples. Make it explicit that they are examples, allow any other relevant event, and allow the user to say that none occurred.
+- Recall cues may name ordinary event types supported by the selected domain, but must not assert that any cue happened to this user.
+- Do not invent an age, life stage, year, month, date range, or relative time window. A time or age may appear only when it already comes from accepted user evidence or another server-owned fact allowed by the opportunity contract.
+- Compare every new-event opportunity with the latest accepted event even when their domain labels differ. If they overlap semantically in subject, action, transition, or outcome, apply a utility penalty before ranking. If the candidate is merely a cross-domain paraphrase of the latest event, suppress it instead of asking the same event again with different words.
+- Domain coverage must not override semantic continuity or duplicate-event protection. A missing domain is not sufficient reason to ask a semantically overlapping question.
+
 ## One-turn rule
 
 - Ask one question only.
@@ -17,7 +26,14 @@ Use the latest answer and latest accepted event as the current topic. Do not let
 - Do not invent an event or date.
 - Do not expose IDs, fields, scores, tools, models, or technique traces.
 - Reject canned realizations such as `承接……请再说一件……`; a deterministic fallback must still read as one short contextual question.
-- Validate the question semantically. Natural wording such as “下一次明显变化大概发生在什么时候” must not be rejected only because it omits a fixed phrase such as `哪次` or `哪件`.
+- Validate the question semantically rather than by fixed phrases. For a follow-up about an already accepted event, natural wording must not be rejected only because it omits a token such as `哪次` or `哪件`; a new-event question must still satisfy the existence form above.
+
+## Renderer validation and fallback trace
+
+- Analysis history must make each Renderer path auditable after persistence and reload: model question accepted by validation, model question rejected by validation, or server deterministic fallback used.
+- Record only safe categorical provenance, including the validation outcome, whether server fallback was used, and a bounded reason category such as model unavailable, model failure, or question rejected. Do not store the raw model prompt, rejected prose, hidden reasoning, private scores, or user event text in the trace.
+- A Renderer rejection followed by a successful fallback is not equivalent to a model-rendered success. Preserve both facts in the same turn's analysis receipt.
+- The deterministic fallback must remain server-owned and must obey the same existence, recall-cue, non-assumption, anti-invention, and semantic-overlap rules as a model realization.
 
 ## Target disposition
 
