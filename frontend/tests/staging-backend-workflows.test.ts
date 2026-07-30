@@ -153,6 +153,62 @@ test("live staging sync preserves env, state, incoming files, and encrypted back
   }
 });
 
+test("live staging sync repairs a non-writable deploy tree without preserving foreign ownership", () => {
+  const root = mkdtempSync(join(tmpdir(), "jyotisha-live-sync-permissions-"));
+  const source = join(root, "source");
+  const destination = join(root, "destination");
+  const destinationDeploy = join(destination, "deploy");
+  const mockBin = join(root, "bin");
+  const dockerLog = join(root, "docker.log");
+  mkdirSync(join(source, "deploy"), { recursive: true });
+  mkdirSync(destinationDeploy, { recursive: true });
+  mkdirSync(mockBin);
+  writeFileSync(join(source, "deploy", "current.txt"), "new\n");
+  writeFileSync(join(destinationDeploy, "stale.txt"), "old\n");
+  writeFileSync(
+    join(mockBin, "docker"),
+    [
+      "#!/usr/bin/env bash",
+      "set -euo pipefail",
+      "printf '%s\\n' \"$*\" >\"$DOCKER_LOG\"",
+      'chmod -R u+rwX "$REPAIR_DESTINATION"',
+      "",
+    ].join("\n"),
+  );
+  chmodSync(join(mockBin, "docker"), 0o755);
+  chmodSync(destinationDeploy, 0o555);
+
+  try {
+    const result = spawnSync(
+      "bash",
+      [fileURLToPath(syncScript), source, destination],
+      {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${mockBin}:${process.env.PATH ?? ""}`,
+          DOCKER_LOG: dockerLog,
+          REPAIR_DESTINATION: destinationDeploy,
+        },
+      },
+    );
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(existsSync(join(destinationDeploy, "stale.txt")), false);
+    assert.equal(
+      readFileSync(join(destinationDeploy, "current.txt"), "utf8"),
+      "new\n",
+    );
+    const invocation = readFileSync(dockerLog, "utf8");
+    assert.match(invocation, /--network none --read-only --user 0:0/);
+    assert.match(invocation, /--cap-drop ALL --cap-add CHOWN/);
+    assert.match(invocation, /postgres:17-alpine chown -R/);
+    assert.match(read(syncScript), /--no-owner --no-group/);
+  } finally {
+    if (existsSync(destinationDeploy)) chmodSync(destinationDeploy, 0o755);
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("all staging mutations share Actions serialization and one host lock", () => {
   const deployment = read(deployWorkflow);
   const migration = read(migrationWorkflow);
