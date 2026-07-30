@@ -17,8 +17,12 @@ SCOREABLE_EVENT_KINDS: dict[str, frozenset[str]] = {
     "health_pressure": frozenset({"self_health_event"}),
 }
 DATE_PRECISIONS = frozenset({"day", "month", "quarter", "year", "range"})
-_REQUEST_FIELDS = frozenset({"birth_date", "start_time", "end_time", "lat", "lon", "tz", "events"})
-_EVENT_FIELDS = frozenset({"id", "domain", "event_kind", "date_start", "date_end", "precision", "summary"})
+_BIRTH_TIME_SOURCES = frozenset({"hospital_record", "family_exact", "approximate", "period_only", "unknown", "legacy_import"})
+_LOCAL_TIME_STATUSES = frozenset({"resolved", "not_provided", "ambiguous", "nonexistent"})
+_REQUEST_PROVENANCE_FIELDS = frozenset({"birth_time_source", "timezone_id", "timezone_source", "local_time_status"})
+_EVENT_PROVENANCE_FIELDS = frozenset({"date_source", "date_reliability", "date_corroboration", "date_conflict_status"})
+_REQUEST_FIELDS = frozenset({"birth_date", "start_time", "end_time", "lat", "lon", "tz", "events"}) | _REQUEST_PROVENANCE_FIELDS
+_EVENT_FIELDS = frozenset({"id", "domain", "event_kind", "date_start", "date_end", "precision", "summary"}) | _EVENT_PROVENANCE_FIELDS
 _CLOCK = re.compile(r"(?:[01]\d|2[0-3]):[0-5]\d\Z")
 
 
@@ -30,6 +34,10 @@ class LifeEvent(TypedDict):
     date_end: str
     precision: DatePrecision
     summary: NotRequired[str]
+    date_source: NotRequired[str | None]
+    date_reliability: NotRequired[str | None]
+    date_corroboration: NotRequired[str | None]
+    date_conflict_status: NotRequired[str | None]
 
 
 class RectificationRequest(TypedDict):
@@ -40,6 +48,10 @@ class RectificationRequest(TypedDict):
     lon: float
     tz: float
     events: list[LifeEvent]
+    birth_time_source: NotRequired[str | None]
+    timezone_id: NotRequired[str | None]
+    timezone_source: NotRequired[str | None]
+    local_time_status: NotRequired[str | None]
 
 
 JsonObject = dict[str, Any]
@@ -64,6 +76,24 @@ def _calendar_date(value: Any, label: str) -> date:
         raise ValueError(f"{label} must be a valid YYYY-MM-DD value") from exc
 
 
+def _copy_nullable_text(
+    source: dict[str, Any], target: dict[str, Any], name: str, label: str, maximum: int,
+    allowed: frozenset[str] | None = None,
+) -> None:
+    if name not in source:
+        return
+    value = source[name]
+    if value is None:
+        target[name] = None
+        return
+    if not isinstance(value, str) or not value.strip() or len(value.strip()) > maximum:
+        raise ValueError(f"{label} must be null or a non-empty string up to {maximum} characters")
+    cleaned = value.strip()
+    if allowed is not None and cleaned not in allowed:
+        raise ValueError(f"{label} is invalid")
+    target[name] = cleaned
+
+
 def normalize_rectification_request(body: Any, *, today: date | None = None) -> RectificationRequest:
     if not isinstance(body, dict):
         raise ValueError("request body must be an object")
@@ -77,9 +107,6 @@ def normalize_rectification_request(body: Any, *, today: date | None = None) -> 
         raise ValueError("start_time must be HH:MM")
     if not isinstance(end_time, str) or not _CLOCK.fullmatch(end_time):
         raise ValueError("end_time must be HH:MM")
-    if start_time > end_time:
-        raise ValueError("start_time must not exceed end_time")
-
     events = body.get("events")
     if not isinstance(events, list) or not 1 <= len(events) <= 100:
         raise ValueError("events must contain between 1 and 100 items")
@@ -112,7 +139,7 @@ def normalize_rectification_request(body: Any, *, today: date | None = None) -> 
         summary = raw_event.get("summary", "")
         if not isinstance(summary, str) or len(summary) > 1_000:
             raise ValueError(f"events[{index}].summary must be a string up to 1000 characters")
-        cleaned_events.append({
+        cleaned_event: dict[str, Any] = {
             "id": event_id,
             "domain": cast(str, domain),
             "event_kind": cast(str, event_kind),
@@ -120,9 +147,14 @@ def normalize_rectification_request(body: Any, *, today: date | None = None) -> 
             "date_end": end_day.isoformat(),
             "precision": cast(DatePrecision, precision),
             "summary": summary.strip(),
-        })
+        }
+        _copy_nullable_text(raw_event, cleaned_event, "date_source", f"events[{index}].date_source", 120)
+        _copy_nullable_text(raw_event, cleaned_event, "date_reliability", f"events[{index}].date_reliability", 120)
+        _copy_nullable_text(raw_event, cleaned_event, "date_corroboration", f"events[{index}].date_corroboration", 1_000)
+        _copy_nullable_text(raw_event, cleaned_event, "date_conflict_status", f"events[{index}].date_conflict_status", 120)
+        cleaned_events.append(cast(LifeEvent, cleaned_event))
 
-    return {
+    cleaned_request: dict[str, Any] = {
         "birth_date": birth_day.isoformat(),
         "start_time": start_time,
         "end_time": end_time,
@@ -131,3 +163,8 @@ def normalize_rectification_request(body: Any, *, today: date | None = None) -> 
         "tz": _bounded_number(body, "tz", -14, 14),
         "events": cleaned_events,
     }
+    _copy_nullable_text(body, cleaned_request, "birth_time_source", "birth_time_source", 120, _BIRTH_TIME_SOURCES)
+    _copy_nullable_text(body, cleaned_request, "timezone_id", "timezone_id", 120)
+    _copy_nullable_text(body, cleaned_request, "timezone_source", "timezone_source", 80)
+    _copy_nullable_text(body, cleaned_request, "local_time_status", "local_time_status", 120, _LOCAL_TIME_STATUSES)
+    return cast(RectificationRequest, cleaned_request)

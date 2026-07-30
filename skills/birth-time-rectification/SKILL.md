@@ -14,11 +14,22 @@ Before choosing an action, read the contracts in `references/`. Treat `assets/re
 - Current skill version: `birth-time-rectification-v6`.
 - Current prompt version: `rectification-agent-v6-1`.
 - The scoring algorithm remains `rectification-v5-matrix-scoring-1`; the V6 label describes the conversation contract, not a replacement scoring engine.
-- The server owns event reconciliation, candidate-minute scanning, event contributions, snapshots, diagnostics, stability gates, jobs, replay, persistence, and final decision validation.
+- The server owns event reconciliation, the real Python scan of every minute in the candidate window, the event contribution matrix, Candidate Snapshots, LOEO/LODO, date sensitivity, neighbor stability, candidate split, jobs, replay, persistence, and final decision validation.
 - The agent may select one active server opportunity, call at most one allowed read-only diagnostic, offer an already-gated candidate range, or stop for low confidence.
 - The agent never creates events, dates, scores, candidate minutes, or profile updates.
+- VedAstro is a read-only post-validation gate for `v5_agent` only. It runs only after the local stability and range-eligibility gates pass, compares the server-provided primary and runner-up, and never replaces V5 local scoring or lets SearchEvents choose the final candidate.
+- Candidate windows are inclusive. When `start_time > end_time`, the Python scan continues across midnight into the next calendar day; equal endpoints mean one candidate minute, and a window may not exceed 1,440 minutes.
 - The persisted “分析过程” is a server-owned execution receipt, not hidden chain-of-thought. It may list only stages, tools, and techniques that actually ran, plus a provider-explicit reasoning summary after server-side safety filtering.
 - `canConfirmExactMinute` is always `false`. Never write `profiles.active_birth_time` automatically.
+- A missing, timed-out, failed, or non-discriminating VedAstro result blocks public range disclosure but must not discard the Job or its durable local artifacts. Never expose raw provider payloads or internal provider/technique traces.
+
+## Implementation truth and reference gap
+
+- The current decision path is server-owned: minute scan -> event contribution matrix -> Snapshot -> LOEO/LODO/date sensitivity/neighbor stability/candidate split -> deterministic public gate. The reference skill remains methodology and audit input; it is not a second scoring authority.
+- The public range gate includes LODO and an active-domain technique policy. Missing required or unclassified layers block publication; `KP_cusps` is optional, while D60 is reference-only and cannot score, gate, or support a conclusion.
+- Event source, raw wording, Turn, and revision lineage are provenance for audit only. Provenance never adds or removes points and is not a confidence multiplier.
+- LOEO and LODO are same-Case sensitivity checks, not an independent holdout. Per-Case independent holdout is deferred until a prospective sticky partition and calibration contract exist; never describe it as implemented or validated.
+- Continue to reject manual `supports/conflicts` pseudo-scoring, arbitrary external repository loading, a unique-minute answer, and automatic profile writes.
 
 ## Seventeen conversation boundaries
 
@@ -33,7 +44,7 @@ Before choosing an action, read the contracts in `references/`. Treat `assets/re
 9. Do not use empty stock phrases such as “这个信息很有用” or repetitive “已记录” openings.
 10. Do not assign life meaning to an ordinary experience or claim an unconfirmed turning point.
 11. The agent selects a server-generated semantic opportunity; it does not create candidate results or an unrestricted question route.
-12. Show a candidate range only after the deterministic stability gate passes.
+12. Show a candidate range only after the deterministic stability gate, including LODO and required-technique availability, passes.
 13. Never confirm, imply, or display a unique or representative birth minute as the answer.
 14. Stop with an honest low-confidence result when evidence is sparse, conflicting, or unstable; do not prolong the interview indefinitely.
 15. Family events are background/context evidence by default, not the user's own scoreable event.

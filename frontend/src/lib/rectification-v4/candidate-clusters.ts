@@ -24,6 +24,9 @@ export function buildCandidateClusters(
     if (group && nextMinute(group.at(-1)!.time, candidate.time)) group.push(candidate);
     else groups.push([candidate]);
   }
+  if (groups.length > 1 && nextMinute(groups.at(-1)!.at(-1)!.time, groups[0]![0]!.time)) {
+    groups[0] = [...groups.pop()!, ...groups[0]!];
+  }
   return groups.map((group) => {
     const peakScore = Math.max(...group.map((candidate) => candidate.score));
     const peakCandidate = group.find((candidate) => candidate.score === peakScore)!;

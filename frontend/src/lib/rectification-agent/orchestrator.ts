@@ -17,16 +17,49 @@ import { recordRectificationAgentTelemetry } from "./telemetry.ts";
 import {
   candidateFeatureSnapshotSchema,
   diagnosticsSummarySchema,
+  vedAstroPostValidationSchema,
   validateRectificationDecision,
   type AgentRun,
   type CandidateFeatureSnapshot,
   type DiagnosticsSummary,
   type StoredPublicMessage,
   type ValidatedDecision,
+  type VedAstroPostValidation,
 } from "./contracts.ts";
 
 function hash(value: unknown): string {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+function vedAstroCandidateTimes(snapshot: CandidateSnapshot): readonly [string, string] | null {
+  const primary = snapshot.clusters[0]?.representativeTime;
+  if (!primary) return null;
+  const runnerUp = snapshot.clusters[1]?.representativeTime
+    ?? [...snapshot.candidates].sort((left, right) => right.score - left.score).find((candidate) => candidate.time !== primary)?.time;
+  return runnerUp && runnerUp !== primary ? [primary, runnerUp] : null;
+}
+
+function blockedVedAstroValidation(now: Date, blocker: string, candidateTimes: readonly [string, string] | null): VedAstroPostValidation {
+  const safe = {
+    contractVersion: "vedastro-post-validation-v1" as const,
+    provider: "vedastro_official" as const,
+    status: "blocked" as const,
+    providerStatus: "unavailable",
+    blockers: [blocker],
+    primaryCandidateTime: candidateTimes?.[0] ?? null,
+    runnerUpCandidateTime: candidateTimes?.[1] ?? null,
+    eligibleEventCount: 0,
+    selectedEventCount: 0,
+    unsupportedEventCount: 0,
+    candidateMetrics: [],
+    minuteSensitiveValidation: { comparisonReady: false, discriminated: false, discriminatedLayers: [] },
+    canConfirmExactMinute: false as const,
+  };
+  return vedAstroPostValidationSchema.parse({
+    ...safe,
+    validationHash: hash(safe),
+    validatedAt: now.toISOString(),
+  });
 }
 
 const analysisPhaseLabels = {
@@ -163,6 +196,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     const robustness = {
       neighborSupportMinutes: scored.robustness.neighborSupportMinutes,
       leaveOneOutRetentionRate: scored.robustness.leaveOneOutRetentionRate,
+      leaveOneDomainOutRetentionRate: scored.robustness.leaveOneDomainOutRetentionRate,
       dateSensitivityRetentionRate: scored.robustness.dateSensitivityRetentionRate,
       calculationSpecHashMatched: scored.calculationSpecHash === claimed.case.calculationSpecHash,
     };
@@ -170,7 +204,8 @@ export async function processRectificationAgentTurn(input: Readonly<{
       clusters,
       robustness,
       scoreableEventCount: scoreable.length,
-      scoreableDomainCount: domains.size,
+      scoreableDomains: [...domains],
+      missingTechniqueLayers: scored.missingLayers,
     });
     snapshot = {
       id: scored.resultId,
@@ -184,7 +219,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
       robustness,
       canConfirmExactMinute: false,
       canAcceptRange: gate.canAcceptRange,
-      gateReasons: [...gate.reasons, ...scored.missingLayers.map((layer) => `missing_layer:${layer}`)],
+      gateReasons: [...gate.reasons],
       createdAt: now.toISOString(),
     };
     diagnostics = diagnosticsSummarySchema.parse({
@@ -236,6 +271,50 @@ export async function processRectificationAgentTurn(input: Readonly<{
       })),
       createdAt: now.toISOString(),
     });
+  }
+
+  if (snapshot?.canAcceptRange && diagnostics && claimed.case.deploymentMode === "v5_agent") {
+    const candidateTimes = vedAstroCandidateTimes(snapshot);
+    const validationStarted = Date.now();
+    let externalValidation: VedAstroPostValidation;
+    let outcome: "succeeded" | "failed" | "rejected";
+    if (!candidateTimes) {
+      externalValidation = blockedVedAstroValidation(now, "vedastro_runner_up_candidate_missing", null);
+      outcome = "rejected";
+    } else if (!input.engine.validateWithVedAstro) {
+      externalValidation = blockedVedAstroValidation(now, "vedastro_validator_unavailable", candidateTimes);
+      outcome = "failed";
+    } else {
+      try {
+        externalValidation = await input.engine.validateWithVedAstro({
+          calculationSpec: claimed.case.calculationSpec,
+          events: scoreable,
+          candidateTimes,
+        });
+        outcome = externalValidation.status === "pass" ? "succeeded" : "rejected";
+      } catch {
+        externalValidation = blockedVedAstroValidation(now, "vedastro_validation_failed", candidateTimes);
+        outcome = "failed";
+      }
+    }
+    diagnostics = diagnosticsSummarySchema.parse({ ...diagnostics, externalValidation });
+    analysisToolCalls.push({
+      category: "diagnostic",
+      label: "VedAstro 事后校验",
+      outcome,
+      durationMs: Date.now() - validationStarted,
+    });
+    if (externalValidation.status !== "pass") {
+      snapshot = {
+        ...snapshot,
+        canAcceptRange: false,
+        gateReasons: [...new Set([
+          ...snapshot.gateReasons,
+          "vedastro_validation_not_passed",
+          ...externalValidation.blockers,
+        ])].slice(0, 20),
+      };
+    }
   }
 
   const safeDiagnostics = diagnostics ?? diagnosticsSummarySchema.parse({

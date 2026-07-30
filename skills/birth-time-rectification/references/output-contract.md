@@ -37,7 +37,9 @@ Reject multi-question transitions such as “另外”, “还有”, “同时�
 1. it differs materially from the previous Snapshot's primary range; or
 2. it is the first Snapshot to pass the public stability gate.
 
-The no-repeat rule takes precedence: it must be `null` for an unchanged range, insufficient event/domain coverage, an internal unstable Snapshot, or a repeated equivalent calculation. Never state or imply a unique or representative birth minute.
+The no-repeat rule takes precedence: it must be `null` for an unchanged range, insufficient event/domain coverage, LOEO or LODO retention below `0.8`, failed date/neighbor stability, a missing active-domain required or unclassified technique layer, an internal unstable Snapshot, or a repeated equivalent calculation. In `v5_agent`, it must also be `null` when the required VedAstro primary/runner-up post-validation is missing, timed out, failed, tied, incomplete, or unable to distinguish the pair. Missing optional `KP_cusps` and reference-only D60 do not block by themselves. Never state or imply a unique or representative birth minute.
+
+Do not describe LOEO/LODO as an independent holdout, prospective validation, or calibrated accuracy result. Per-Case independent holdout remains deferred until sticky partitioning and calibration exist.
 
 ## Deterministic fallback
 
@@ -57,4 +59,4 @@ The public projection may contain only:
 
 Do not infer missing phases from the final Job phase, and do not label a capability as executed merely because the deployment supports it. If no safe provider summary exists, omit it; never create a substitute or expose hidden chain-of-thought.
 
-The receipt must exclude scores, weights, contribution matrices, internal IDs and field names, candidate minutes, tool arguments or raw results, prompts, model/provider internals, and sensitive user wording. D60 is never displayed. Historical messages without a receipt remain valid, and `v4_legacy`/`v5_shadow` keep their established visible reply semantics.
+The receipt must exclude scores, weights, contribution matrices, internal IDs and field names, candidate minutes, tool arguments or raw results, prompts, model/provider internals, raw VedAstro requests/responses, internal provider or technique traces, and sensitive user wording. It may state only that an allowlisted read-only post-validation ran and whether the public gate passed. Provenance may support audit linkage only and must never be rendered as added evidence strength. D60 is never displayed. Historical messages without a receipt remain valid, and `v4_legacy`/`v5_shadow` keep their established visible reply semantics.

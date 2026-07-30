@@ -4,6 +4,7 @@ import unittest
 from datetime import date
 from unittest.mock import patch
 
+from scripts.active_rectification_event_engine import _candidate_datetimes
 from scripts.rectification.api_service import diagnostics, score_candidates
 from scripts.rectification.contracts import normalize_rectification_request
 from scripts.rectification.scoring_service import (
@@ -23,11 +24,18 @@ from scripts.jyotish_api_server import (
 EVENT_ID = "00000000-0000-4000-8000-000000000001"
 
 
-def request(*, precision: str = "month", event_kind: str = "education_milestone", domain: str = "education"):
+def request(
+    *,
+    precision: str = "month",
+    event_kind: str = "education_milestone",
+    domain: str = "education",
+    start_time: str = "05:13",
+    end_time: str = "05:15",
+):
     return {
         "birth_date": "1997-08-08",
-        "start_time": "05:13",
-        "end_time": "05:15",
+        "start_time": start_time,
+        "end_time": end_time,
         "lat": 36.419,
         "lon": 114.213,
         "tz": 8,
@@ -50,6 +58,52 @@ class RectificationV5ServicesTest(unittest.TestCase):
             sha256(calculation_spec(normalized)),
             "f05fe0f56ef9ba2b18ec3c6c54f1649f06f1ae5a926491a5c5f676d718d92865",
         )
+
+    def test_cross_midnight_range_preserves_next_day_datetimes_and_typescript_hash(self):
+        normalized = normalize_rectification_request(
+            request(start_time="23:00", end_time="03:59"),
+            today=date(2026, 7, 28),
+        )
+
+        candidates = _candidate_datetimes(normalized)
+
+        self.assertEqual(len(candidates), 300)
+        self.assertEqual(candidates[0].isoformat(), "1997-08-08T23:00:00")
+        self.assertEqual(candidates[60].isoformat(), "1997-08-09T00:00:00")
+        self.assertEqual(candidates[-1].isoformat(), "1997-08-09T03:59:00")
+        self.assertEqual(
+            sha256(calculation_spec(normalized)),
+            "b0d5c5ec7f56edbfa2b2e1041b4aa3b648c6cb0681f3f502c7b7910c2894b205",
+        )
+
+    def test_candidate_range_boundaries_stay_bounded_and_equal_is_one_minute(self):
+        full_day = normalize_rectification_request(
+            request(start_time="00:00", end_time="23:59"),
+            today=date(2026, 7, 28),
+        )
+        equal = normalize_rectification_request(
+            request(start_time="05:13", end_time="05:13"),
+            today=date(2026, 7, 28),
+        )
+
+        self.assertEqual(len(_candidate_datetimes(full_day)), 1_440)
+        self.assertEqual(len(_candidate_datetimes(equal)), 1)
+        with self.assertRaisesRegex(ValueError, "end_time must be HH:MM"):
+            normalize_rectification_request(
+                request(start_time="00:00", end_time="24:00"),
+                today=date(2026, 7, 28),
+            )
+
+    def test_daytime_candidate_range_remains_on_birth_date(self):
+        normalized = normalize_rectification_request(request(), today=date(2026, 7, 28))
+
+        candidates = _candidate_datetimes(normalized)
+
+        self.assertEqual([value.isoformat() for value in candidates], [
+            "1997-08-08T05:13:00",
+            "1997-08-08T05:14:00",
+            "1997-08-08T05:15:00",
+        ])
 
     def test_shared_validator_rejects_family_and_non_self_health_scoring(self):
         with self.assertRaisesRegex(ValueError, "domain is not scoreable"):

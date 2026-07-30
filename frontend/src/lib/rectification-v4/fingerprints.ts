@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { CalculationSpec, LifeEventRevision } from "./contracts.ts";
-import { latestEventRevisions } from "./evidence-ledger.ts";
+import { eventDateProvenance, latestEventRevisions } from "./evidence-ledger.ts";
 
 function canonical(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonical);
@@ -28,6 +28,7 @@ export function evidenceSetHash(revisions: readonly LifeEventRevision[]): string
     subject: event.subject,
     relatedPerson: event.relatedPerson,
     dateRange: event.dateRange,
+    ...eventDateProvenance(event),
     scoreability: event.scoreability,
   })));
 }
