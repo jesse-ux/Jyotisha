@@ -188,6 +188,38 @@ export const candidateSplitSchema = z.object({
   eventIds: z.array(uuid).max(100),
 }).strict();
 
+export const vedAstroCandidateMetricSchema = z.object({
+  role: z.enum(["primary", "runner_up"]),
+  requestedEventCount: z.number().int().nonnegative().max(20),
+  successfulEventCount: z.number().int().nonnegative().max(20),
+  matchedEventCount: z.number().int().nonnegative().max(20),
+  eventHitCount: z.number().int().nonnegative(),
+  signalLift: z.number().finite(),
+}).strict();
+
+export const vedAstroPostValidationSchema = z.object({
+  contractVersion: z.literal("vedastro-post-validation-v1"),
+  provider: z.literal("vedastro_official"),
+  status: z.enum(["pass", "blocked", "not_validated"]),
+  providerStatus: nonblank(80),
+  blockers: z.array(nonblank(120)).max(20),
+  primaryCandidateTime: clockTimeSchema.nullable(),
+  runnerUpCandidateTime: clockTimeSchema.nullable(),
+  eligibleEventCount: z.number().int().nonnegative().max(100),
+  selectedEventCount: z.number().int().nonnegative().max(20),
+  unsupportedEventCount: z.number().int().nonnegative().max(100),
+  candidateMetrics: z.array(vedAstroCandidateMetricSchema).max(2),
+  minuteSensitiveValidation: z.object({
+    comparisonReady: z.boolean(),
+    discriminated: z.boolean(),
+    discriminatedLayers: z.array(nonblank(80)).max(10),
+  }).strict(),
+  validationHash: hash,
+  validatedAt: z.string().datetime({ offset: true }),
+  canConfirmExactMinute: z.literal(false),
+}).strict();
+export type VedAstroPostValidation = z.infer<typeof vedAstroPostValidationSchema>;
+
 export const diagnosticsSummarySchema = z.object({
   id: uuid,
   caseId: uuid,
@@ -203,6 +235,7 @@ export const diagnosticsSummarySchema = z.object({
   mostDiscriminatingLayers: z.array(nonblank(80)).max(40),
   eventDateSensitivity: z.array(eventDateSensitivitySchema).max(100),
   candidateSplits: z.array(candidateSplitSchema).max(20),
+  externalValidation: vedAstroPostValidationSchema.optional(),
   calculationHash: hash,
   createdAt: z.string().datetime({ offset: true }),
 }).strict();

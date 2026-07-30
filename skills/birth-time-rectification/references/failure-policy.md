@@ -17,14 +17,15 @@ A month-dated event is not a failure. Refine it only when date-sensitivity diagn
 - LODO retention below `0.8` blocks the public range, as does LOEO below `0.8`.
 - A missing active-domain required layer or an unclassified missing layer blocks publication. Missing optional layers such as `KP_cusps`, or reference-only D60, do not make the calculation fail and must not be presented as completed evidence.
 - LOEO/LODO are same-Case sensitivity checks. Until prospective sticky partitioning and calibration exist, the absence of per-Case independent holdout is a deferred safety boundary, not a passed validation.
+- For `v5_agent`, a missing, timed-out, exceptional, incomplete, tied, or non-discriminating minute-sensitive VedAstro snapshot blocks public range disclosure. SearchEvents failure blocks validation completeness; SearchEvents disagreement is diagnostic only and must not veto, choose, or reverse the local V5 candidate.
 
 ## System failures
 
-Preserve the existing Job and persistence guarantees: claim/lease, idempotency, completed-job replay, and atomic completion. A renderer or extraction failure must not cause partial artifact writes, duplicate completion, profile mutation, or a different replay result.
+Preserve the existing Job and persistence guarantees: claim/lease, idempotency, completed-job replay, and atomic completion. A renderer, extraction, or VedAstro post-validation failure must not cause partial artifact writes, duplicate completion, profile mutation, a different replay result, or loss of completed local scoring artifacts.
 
 Do not recover a failed gate by loading an arbitrary external repository, adding provenance-based weight, inventing manual `supports/conflicts` scores, choosing a unique minute, or writing a profile birth time.
 
-Never log raw sensitive answers to ordinary telemetry. Persist user text only in the approved Turn/evidence stores required by the product contract.
+Never log raw sensitive answers to ordinary telemetry. Persist user text only in the approved Turn/evidence stores required by the product contract. Never expose or persist raw VedAstro provider payloads in public output or the analysis receipt.
 
 
 ## Analysis receipt failures

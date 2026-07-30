@@ -6,7 +6,7 @@ import { createRectificationV4CaseService } from "../src/lib/rectification-v4/ca
 import type { CalculationSpec, CandidateMinute } from "../src/lib/rectification-v4/contracts.ts";
 import { createRectificationV4MemoryStore } from "../src/lib/rectification-v4/memory-store.ts";
 import { createRectificationV4Worker } from "../src/lib/rectification-v4/worker.ts";
-import { v5EngineResult, withV5Mode } from "./rectification-v5-test-support.ts";
+import { passingVedAstroValidation, v5EngineResult, withV5Mode } from "./rectification-v5-test-support.ts";
 
 const now = () => new Date("2026-07-26T08:00:00.000Z");
 const spec: CalculationSpec = {
@@ -61,6 +61,9 @@ test("V5 golden replay persists the full artifact chain, returns ranges only, an
           supportingEventIds: candidate.score >= 97 ? ids : [],
           conflictingEventIds: candidate.score < 97 ? ids : [],
         })));
+      },
+      async validateWithVedAstro({ candidateTimes }) {
+        return passingVedAstroValidation(candidateTimes);
       },
     },
   });

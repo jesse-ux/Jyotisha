@@ -148,6 +148,8 @@ _VEDASTRO_RECTIFICATION_DOMAIN_MAP = {
 
 
 def _rectification_event_date_range(event):
+    if event.get('date_start') and event.get('date_end'):
+        return str(event['date_start']), str(event['date_end'])
     value = str(event.get('date') or '')
     precision = str(event.get('precision') or '')
     if precision == 'day':
@@ -173,7 +175,7 @@ def _rectification_event_representative_date(start_date, end_date):
 
 
 def _select_vedastro_rectification_events(events):
-    precision_rank = {'year': 1, 'month': 2, 'day': 3}
+    precision_rank = {'range': 1, 'year': 2, 'quarter': 3, 'month': 4, 'day': 5}
     selected_by_domain = {}
     eligible_event_count = 0
     unsupported_events = []
@@ -294,6 +296,23 @@ def _safe_vedastro_minute_snapshot_summary(candidate_time, report):
     }
 
 
+def _vedastro_minute_snapshot_is_complete(report, summary):
+    if (
+        not isinstance(report, dict)
+        or report.get('source') != 'vedastro_official'
+        or summary.get('status') != 'ok'
+        or not summary.get('available')
+    ):
+        return False
+    layers = summary.get('layers') if isinstance(summary.get('layers'), dict) else {}
+    return all(
+        isinstance(layers.get(name), dict)
+        and layers[name].get('status') == 'ok'
+        and bool(layers[name].get('fingerprint'))
+        for name in _VEDASTRO_MINUTE_SENSITIVE_LAYERS
+    )
+
+
 def _compare_vedastro_minute_snapshots(candidate_snapshots):
     comparison_ready = len(candidate_snapshots) == 2 and all(
         item.get('available') for item in candidate_snapshots
@@ -322,6 +341,18 @@ def _compare_vedastro_minute_snapshots(candidate_snapshots):
         'discriminated_layers': discriminated_layers,
         'differences': differences,
     }
+
+
+def _safe_vedastro_adapter_call(call, *args, **kwargs):
+    try:
+        result = call(*args, **kwargs)
+    except TimeoutError:
+        return {'available': False, 'status': 'timeout', '_failure_kind': 'timeout'}
+    except Exception:
+        return {'available': False, 'status': 'exception', '_failure_kind': 'exception'}
+    if not isinstance(result, dict):
+        return {'available': False, 'status': 'invalid_response', '_failure_kind': 'exception'}
+    return result
 
 
 def _rectification_candidate_ready_for_external_validation(result):
@@ -1633,6 +1664,7 @@ API_COMMAND_MAP = {
     'rectification-v5-candidate-features': '/api/rectification/v5/candidate-features',
     'rectification-v5-score': '/api/rectification/v5/score',
     'rectification-v5-diagnostics': '/api/rectification/v5/diagnostics',
+    'rectification-v5-vedastro-validate': '/api/rectification/v5/vedastro-validate',
     'case-validation': '/api/case_validation',
     'divisional-yoga': '/api/divisional_yoga',
     'deep-varga-avastha': '/api/deep_varga_avastha',
@@ -1671,6 +1703,7 @@ TECHNIQUE_EXAMPLE_ENDPOINTS = {
     '/api/rectification/v5/candidate-features',
     '/api/rectification/v5/score',
     '/api/rectification/v5/diagnostics',
+    '/api/rectification/v5/vedastro-validate',
     '/api/relationship',
     '/api/remedies',
     '/api/sade_sati',
@@ -2126,6 +2159,8 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
                 self._json(self._compute_rectification_v5_score(body))
             elif path == '/api/rectification/v5/diagnostics':
                 self._json(self._compute_rectification_v5_diagnostics(body))
+            elif path == '/api/rectification/v5/vedastro-validate':
+                self._json(self._compute_rectification_v5_vedastro_validate(body))
             elif path == '/api/dynamic_rectification_opportunities':
                 result = self._compute_dynamic_rectification_opportunities(body)
                 self._json(result)
@@ -7570,6 +7605,154 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             **diagnostics(self._rectification_v5_request(body)),
         }
 
+    def _compute_rectification_v5_vedastro_validate(self, body):
+        if not isinstance(body, dict):
+            raise BadRequest('request body must be an object')
+        candidate_times = body.get('candidate_times')
+        if (
+            not isinstance(candidate_times, list)
+            or len(candidate_times) != 2
+            or any(not isinstance(value, str) or not re.fullmatch(r'(?:[01]\d|2[0-3]):[0-5]\d', value) for value in candidate_times)
+            or candidate_times[0] == candidate_times[1]
+        ):
+            raise BadRequest('candidate_times must contain exactly two distinct HH:MM values: primary then runner-up')
+
+        request_body = dict(body)
+        request_body.pop('candidate_times', None)
+        request = self._rectification_v5_request(request_body)
+        from scripts.active_rectification_event_engine import _candidate_datetimes
+        allowed_candidate_times = {value.strftime('%H:%M') for value in _candidate_datetimes(request)}
+        if any(value not in allowed_candidate_times for value in candidate_times):
+            raise BadRequest('candidate_times must fall within the V5 candidate range')
+
+        birth_day = datetime.strptime(request['birth_date'], '%Y-%m-%d')
+        selected_events, eligible_event_count, unsupported_events = _select_vedastro_rectification_events(
+            request['events']
+        )
+        adapter = _load_local_module('vedastro_service_adapter')
+        minute_cache = {}
+        range_scan_cache = {}
+        minute_reports = []
+        minute_raw_reports = []
+        candidate_validations = []
+        raw_reports = []
+
+        for role, candidate_time in zip(('primary', 'runner_up'), candidate_times):
+            hour, minute = candidate_time.split(':', 1)
+            candidate_case = {
+                'year': birth_day.year,
+                'month': birth_day.month,
+                'day': birth_day.day,
+                'hour': int(hour),
+                'minute': int(minute),
+                'second': 0,
+                'lat': request['lat'],
+                'lon': request['lon'],
+                'tz': request['tz'],
+            }
+            if candidate_time not in minute_cache:
+                minute_cache[candidate_time] = _safe_vedastro_adapter_call(
+                    adapter.run_rectification_minute_snapshot_for_case,
+                    candidate_case,
+                    case_id=f'rectification_v5_{role}_{candidate_time.replace(":", "")}',
+                )
+            minute_report = minute_cache[candidate_time]
+            minute_raw_reports.append(minute_report)
+            raw_reports.append(minute_report)
+            minute_reports.append(_safe_vedastro_minute_snapshot_summary(candidate_time, minute_report))
+
+            event_scans = []
+            for event, adapter_domain, mapping_mode, start_date, end_date in selected_events:
+                cache_key = (candidate_time, adapter_domain, start_date, end_date)
+                if cache_key not in range_scan_cache:
+                    range_scan_cache[cache_key] = _safe_vedastro_adapter_call(
+                        adapter.run_range_scan_for_case,
+                        candidate_case,
+                        adapter_domain,
+                        start_date,
+                        end_date,
+                        case_id=f'rectification_v5_{role}_{candidate_time.replace(":", "")}',
+                    )
+                report = range_scan_cache[cache_key]
+                raw_reports.append(report)
+                event_scans.append(_safe_vedastro_range_scan_summary(
+                    event,
+                    adapter_domain,
+                    mapping_mode,
+                    start_date,
+                    end_date,
+                    report,
+                ))
+            candidate_validations.append({
+                'role': role,
+                'candidate_time': candidate_time,
+                'metric': _vedastro_candidate_metric(event_scans),
+                'events': event_scans,
+            })
+
+        minute_comparison = _compare_vedastro_minute_snapshots(minute_reports)
+        minute_snapshots_verified = bool(
+            minute_comparison['comparison_ready']
+            and all(
+                _vedastro_minute_snapshot_is_complete(report, summary)
+                for report, summary in zip(minute_raw_reports, minute_reports)
+            )
+        )
+        scans_succeeded = bool(selected_events) and all(
+            item['metric']['successful_event_count'] == item['metric']['requested_event_count']
+            for item in candidate_validations
+        )
+        search_events_primary_supports_local_winner = bool(
+            scans_succeeded
+            and _vedastro_metric_key(candidate_validations[0]['metric'])
+            > _vedastro_metric_key(candidate_validations[1]['metric'])
+        )
+
+        blockers = []
+        failure_kinds = {report.get('_failure_kind') for report in raw_reports}
+        if 'timeout' in failure_kinds or any(report.get('status') == 'timeout' for report in raw_reports):
+            blockers.append('vedastro_timeout')
+        if 'exception' in failure_kinds:
+            blockers.append('vedastro_exception')
+        if not minute_snapshots_verified or not scans_succeeded:
+            blockers.append('vedastro_official_response_missing')
+        if minute_snapshots_verified and not minute_comparison['discriminated']:
+            blockers.append('vedastro_minute_sensitive_layers_not_discriminated')
+        if not selected_events:
+            blockers.append('vedastro_supported_events_missing')
+        blockers = list(dict.fromkeys(blockers))
+        passed = not blockers
+
+        return {
+            'success': True,
+            'endpoint': 'rectification_v5_vedastro_validate',
+            'status': 'pass' if passed else 'fail',
+            'passed': passed,
+            'can_confirm_exact_minute': False,
+            'candidate_times': {
+                'primary': candidate_times[0],
+                'runner_up': candidate_times[1],
+            },
+            'blockers': blockers,
+            'minute_sensitive_validation': {
+                'status': 'pass' if minute_snapshots_verified and minute_comparison['discriminated'] else 'fail',
+                'candidates': minute_reports,
+                **minute_comparison,
+            },
+            'event_validation': {
+                'status': 'pass' if scans_succeeded else 'fail',
+                'eligible_event_count': eligible_event_count,
+                'supported_event_count': len(selected_events),
+                'selection_policy': (
+                    'one_strongest_event_per_native_adapter_domain; '
+                    'direct_mapping_before_proxy; higher_precision_before_lower_precision; newest_on_equal_precision'
+                ),
+                'unsupported_events': unsupported_events,
+                'search_events_primary_supports_local_winner': search_events_primary_supports_local_winner,
+                'candidates': candidate_validations,
+            },
+        }
+
     def _compute_active_rectification_events_v4(self, body):
         """Compatibility projection; validation and calculations are owned by V5 services."""
         from scripts.rectification.api_service import score_candidates
@@ -8445,6 +8628,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/rectification/v5/candidate-features': self._compute_rectification_v5_candidate_features,
             '/api/rectification/v5/score': self._compute_rectification_v5_score,
             '/api/rectification/v5/diagnostics': self._compute_rectification_v5_diagnostics,
+            '/api/rectification/v5/vedastro-validate': self._compute_rectification_v5_vedastro_validate,
             '/api/relationship': self._compute_relationship,
             '/api/remedies': self._compute_remedies,
             '/api/sade_sati': self._compute_sade_sati,
@@ -8574,6 +8758,7 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/rectification/v5/candidate-features': 'Scan immutable candidate static features once per calculation specification',
             '/api/rectification/v5/score': 'Build the V5 event-by-candidate contribution matrix and score candidate ranges',
             '/api/rectification/v5/diagnostics': 'Run V5 stability diagnostics over the server-owned contribution matrix',
+            '/api/rectification/v5/vedastro-validate': 'Validate one V5 primary/runner-up pair with safe official VedAstro summaries',
             '/api/relationship': 'Compute relationship and spouse-status evidence',
             '/api/remedies': 'Generate low-risk remedies from doshas/strength/dasha',
             '/api/sade_sati': 'Compute Sade Sati status and phase',
@@ -8649,6 +8834,12 @@ class JyotishAPIHandler(BaseHTTPRequestHandler):
             '/api/rectification/v5/diagnostics': {
                 'birth_date': '1997-08-08', 'start_time': '05:00', 'end_time': '05:03',
                 'lat': 36.419, 'lon': 114.213, 'tz': 8,
+                'events': [{'id': '00000000-0000-4000-8000-000000000001', 'domain': 'education', 'event_kind': 'education_milestone', 'date_start': '2016-09-01', 'date_end': '2016-09-30', 'precision': 'month', 'summary': '大学入学'}],
+            },
+            '/api/rectification/v5/vedastro-validate': {
+                'birth_date': '1997-08-08', 'start_time': '05:00', 'end_time': '05:03',
+                'lat': 36.419, 'lon': 114.213, 'tz': 8,
+                'candidate_times': ['05:01', '05:02'],
                 'events': [{'id': '00000000-0000-4000-8000-000000000001', 'domain': 'education', 'event_kind': 'education_milestone', 'date_start': '2016-09-01', 'date_end': '2016-09-30', 'precision': 'month', 'summary': '大学入学'}],
             },
             '/api/relationship': {'planets': SAMPLE_PLANETS, 'asc_sign': 'Aries', 'dasha_info': {'maha_dasha': 'Venus', 'antar_dasha': 'Jupiter'}},

@@ -17,9 +17,11 @@ Before choosing an action, read the contracts in `references/`. Treat `assets/re
 - The server owns event reconciliation, the real Python scan of every minute in the candidate window, the event contribution matrix, Candidate Snapshots, LOEO/LODO, date sensitivity, neighbor stability, candidate split, jobs, replay, persistence, and final decision validation.
 - The agent may select one active server opportunity, call at most one allowed read-only diagnostic, offer an already-gated candidate range, or stop for low confidence.
 - The agent never creates events, dates, scores, candidate minutes, or profile updates.
+- VedAstro is a read-only post-validation gate for `v5_agent` only. It runs only after the local stability and range-eligibility gates pass, compares the server-provided primary and runner-up, and never replaces V5 local scoring or lets SearchEvents choose the final candidate.
 - Candidate windows are inclusive. When `start_time > end_time`, the Python scan continues across midnight into the next calendar day; equal endpoints mean one candidate minute, and a window may not exceed 1,440 minutes.
 - The persisted “分析过程” is a server-owned execution receipt, not hidden chain-of-thought. It may list only stages, tools, and techniques that actually ran, plus a provider-explicit reasoning summary after server-side safety filtering.
 - `canConfirmExactMinute` is always `false`. Never write `profiles.active_birth_time` automatically.
+- A missing, timed-out, failed, or non-discriminating VedAstro result blocks public range disclosure but must not discard the Job or its durable local artifacts. Never expose raw provider payloads or internal provider/technique traces.
 
 ## Implementation truth and reference gap
 

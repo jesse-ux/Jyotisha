@@ -14,6 +14,7 @@ import { createRectificationV4CaseService } from "../src/lib/rectification-v4/ca
 import type { CandidateEngineResult } from "../src/lib/rectification-v4/candidate-engine.ts";
 import type {
   CalculationSpec,
+  CandidateMinute,
   LifeEventRevision,
   RectificationAnalysisTrace,
   RectificationV4Case,
@@ -24,9 +25,19 @@ import { createRectificationV4MemoryStore } from "../src/lib/rectification-v4/me
 import { projectAnalysisMessages } from "../src/lib/rectification-v4/supabase-store.ts";
 import type { ClaimedRectificationV4Job } from "../src/lib/rectification-v4/store.ts";
 import { createRectificationV4Worker } from "../src/lib/rectification-v4/worker.ts";
-import { v5EngineResult, withV5Mode } from "./rectification-v5-test-support.ts";
+import { passingVedAstroValidation, v5EngineResult, withV5Mode } from "./rectification-v5-test-support.ts";
 
 const now = "2026-07-29T00:00:00.000Z";
+const rangeReadyCandidates: CandidateMinute[] = [
+  { time: "05:13", score: 100, supportingEventIds: [], conflictingEventIds: [] },
+  { time: "05:14", score: 99, supportingEventIds: [], conflictingEventIds: [] },
+  { time: "05:15", score: 98, supportingEventIds: [], conflictingEventIds: [] },
+  { time: "05:16", score: 60, supportingEventIds: [], conflictingEventIds: [] },
+  { time: "05:17", score: 97.8, supportingEventIds: [], conflictingEventIds: [] },
+  { time: "05:18", score: 97.7, supportingEventIds: [], conflictingEventIds: [] },
+  { time: "05:19", score: 97.6, supportingEventIds: [], conflictingEventIds: [] },
+];
+
 const spec: CalculationSpec = {
   version: "rectification-calculation-spec-v4",
   birthDate: "1997-08-08",
@@ -258,7 +269,7 @@ test("scoring trace records one real engine call and only matrix-confirmed techn
     engine: {
       score: async ({ calculationSpec, events }) => {
         scoreCalls += 1;
-        const base = v5EngineResult(calculationSpec, events);
+        const base = v5EngineResult(calculationSpec, events, rangeReadyCandidates);
         const contributionMatrix: CandidateEngineResult["contributionMatrix"] = Object.fromEntries(
           Object.entries(base.contributionMatrix).map(([eventId, candidates]) => [
             eventId,
@@ -287,6 +298,87 @@ test("scoring trace records one real engine call and only matrix-confirmed techn
   assert.equal(trace.techniques.includes("D9"), false);
   assert.equal(trace.techniques.includes("D10"), false);
   assert.deepEqual(analysisToolLabels(trace, "agent_diagnostic"), []);
+});
+
+test("VedAstro post-validation runs only after the local range gate and blocks publication on safe failure", async () => {
+  const claimed = makeClaimed([
+    event("education", "education_milestone", "离家去外地上大学", "2016-09"),
+    event("relocation", "relocation", "搬到北京长期居住", "2018-08"),
+    event("career", "career_change", "开始负责商业巡演公司", "2023-09"),
+    event("relationship", "relationship_start", "开始一段长期关系", "2021-05"),
+    event("finance", "finance_change", "收入结构发生明显变化", "2024-02"),
+  ]);
+  let validationCalls = 0;
+  const blocked = await processRectificationAgentTurn({
+    claimed,
+    engine: {
+      score: async ({ calculationSpec, events }) => v5EngineResult(calculationSpec, events, rangeReadyCandidates),
+      validateWithVedAstro: async ({ candidateTimes }) => {
+        validationCalls += 1;
+        assert.deepEqual(candidateTimes, ["05:13", "05:14"]);
+        return passingVedAstroValidation(candidateTimes, {
+          status: "blocked",
+          providerStatus: "timeout",
+          blockers: ["vedastro_timeout"],
+          minuteSensitiveValidation: { comparisonReady: false, discriminated: false, discriminatedLayers: [] },
+        });
+      },
+    },
+    now: new Date(now),
+  });
+  assert.equal(validationCalls, 1);
+  assert.equal(blocked.snapshot?.canAcceptRange, false);
+  assert.equal(blocked.snapshot?.canConfirmExactMinute, false);
+  assert.ok(blocked.snapshot?.gateReasons.includes("vedastro_validation_not_passed"));
+  assert.equal(blocked.diagnostics?.externalValidation?.status, "blocked");
+  assert.deepEqual(analysisToolLabels(blocked.publicMessage.analysisTrace!, "diagnostic"), ["VedAstro 事后校验"]);
+
+  validationCalls = 0;
+  const localGateBlocked = await processRectificationAgentTurn({
+    claimed,
+    engine: {
+      score: async ({ calculationSpec, events }) => {
+        const result = v5EngineResult(calculationSpec, events, rangeReadyCandidates);
+        return { ...result, robustness: { ...result.robustness, leaveOneDomainOutRetentionRate: 0 } };
+      },
+      validateWithVedAstro: async ({ candidateTimes }) => {
+        validationCalls += 1;
+        return passingVedAstroValidation(candidateTimes);
+      },
+    },
+    now: new Date(now),
+  });
+  assert.equal(validationCalls, 0);
+  assert.equal(localGateBlocked.snapshot?.canAcceptRange, false);
+  assert.equal(localGateBlocked.diagnostics?.externalValidation, undefined);
+});
+
+test("legacy and shadow modes never call VedAstro post-validation", async () => {
+  const events = [
+    event("education", "education_milestone", "离家去外地上大学", "2016-09"),
+    event("relocation", "relocation", "搬到北京长期居住", "2018-08"),
+    event("career", "career_change", "开始负责商业巡演公司", "2023-09"),
+    event("relationship", "relationship_start", "开始一段长期关系", "2021-05"),
+    event("finance", "finance_change", "收入结构发生明显变化", "2024-02"),
+  ];
+  for (const deploymentMode of ["v4_legacy", "v5_shadow"] as const) {
+    const base = makeClaimed(events);
+    let validationCalls = 0;
+    const result = await processRectificationAgentTurn({
+      claimed: { ...base, case: { ...base.case, deploymentMode } },
+      engine: {
+        score: async ({ calculationSpec, events: scoreEvents }) => v5EngineResult(calculationSpec, scoreEvents),
+        validateWithVedAstro: async ({ candidateTimes }) => {
+          validationCalls += 1;
+          return passingVedAstroValidation(candidateTimes);
+        },
+      },
+      now: new Date(now),
+    });
+    assert.equal(validationCalls, 0, deploymentMode);
+    assert.equal(result.diagnostics?.externalValidation, undefined, deploymentMode);
+    assert.equal(result.snapshot?.canConfirmExactMinute, false, deploymentMode);
+  }
 });
 
 test("read-only Agent diagnostics are traced only when the reasoner actually requests one", async () => {

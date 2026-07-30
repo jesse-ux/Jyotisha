@@ -21,6 +21,13 @@ Only server-reported available layers may be described as used. Missing, blocked
 
 LOEO/LODO reuse the same Case matrix after subtracting one event or domain. They are not prospective or independent holdout validation. Per-Case independent holdout remains deferred because no sticky train/holdout partition or calibrated acceptance threshold exists; do not claim it is complete.
 
+## VedAstro post-validation
+
+- This read-only check is available only in `v5_agent`, after the local stability and range-eligibility gates pass, and only for the server-selected primary and runner-up. It does not rescore candidates or replace `rectification-v5-matrix-scoring-1`.
+- Minute-sensitive snapshots may test whether the pair is distinguishable. SearchEvents is bounded supporting evidence only and must never select or reverse the final candidate.
+- Missing, timed-out, exceptional, incomplete, tied, or non-discriminating provider results fail closed for public range disclosure. They do not invalidate or delete the local Snapshot, diagnostics, or Job artifacts.
+- VedAstro can never authorize a unique-minute claim or profile write. Public output and receipts must exclude raw provider requests/responses and internal provider or technique traces.
+
 ## Technique boundaries
 
 - Dasha and dated evidence can frame comparison only when present in server results.

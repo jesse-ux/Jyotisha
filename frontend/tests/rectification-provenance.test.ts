@@ -87,3 +87,50 @@ test("candidate engine forwards present provenance without inventing missing fie
   assert.equal(event.date_reliability, null);
   assert.equal(Object.hasOwn(event, "date_corroboration"), false);
 });
+
+test("candidate engine sends only the selected pair and persists a safe VedAstro projection", async () => {
+  let body: Record<string, unknown> | null = null;
+  const engine = createRectificationV4CandidateEngine({
+    apiBase: "http://example.test",
+    fetchImpl: async (input, init) => {
+      assert.equal(String(input), "http://example.test/api/rectification/v5/vedastro-validate");
+      body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      return new Response(JSON.stringify({
+        status: "pass",
+        passed: true,
+        can_confirm_exact_minute: false,
+        candidate_times: { primary: "05:13", runner_up: "05:14" },
+        blockers: [],
+        minute_sensitive_validation: {
+          comparison_ready: true,
+          discriminated: true,
+          discriminated_layers: ["D9"],
+          raw_response: { secret: true },
+        },
+        event_validation: {
+          eligible_event_count: 1,
+          supported_event_count: 1,
+          unsupported_events: [{ event_id: "private", summary: "must not persist" }],
+          candidates: [
+            { role: "primary", metric: { requested_event_count: 1, successful_event_count: 1, matched_event_count: 1, event_hit_count: 2, signal_lift: 3 }, events: [{ raw_response: "secret" }] },
+            { role: "runner_up", metric: { requested_event_count: 1, successful_event_count: 1, matched_event_count: 1, event_hit_count: 1, signal_lift: 1 } },
+          ],
+        },
+        raw_request: { api_key: "secret" },
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    },
+  });
+  assert.ok(engine.validateWithVedAstro);
+  const validation = await engine.validateWithVedAstro({
+    calculationSpec: legacySpec,
+    events: [baseEvent],
+    candidateTimes: ["05:13", "05:14"],
+  });
+  const captured = body as unknown as Record<string, unknown>;
+  assert.deepEqual(captured.candidate_times, ["05:13", "05:14"]);
+  assert.equal(validation.status, "pass");
+  assert.equal(validation.canConfirmExactMinute, false);
+  assert.deepEqual(validation.minuteSensitiveValidation.discriminatedLayers, ["D9"]);
+  const serialized = JSON.stringify(validation);
+  assert.doesNotMatch(serialized, /raw_request|raw_response|api_key|must not persist|secret/);
+});

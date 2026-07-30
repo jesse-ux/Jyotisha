@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { CandidateEngineResult } from "../src/lib/rectification-v4/candidate-engine.ts";
+import { vedAstroPostValidationSchema, type VedAstroPostValidation } from "../src/lib/rectification-agent/contracts.ts";
 import type { CalculationSpec, CandidateMinute, LifeEventRevision } from "../src/lib/rectification-v4/contracts.ts";
 import { rectificationV4AlgorithmVersion } from "../src/lib/rectification-v4/contracts.ts";
 import { calculationSpecHash } from "../src/lib/rectification-v4/fingerprints.ts";
@@ -70,6 +71,33 @@ export function v5EngineResult(
     ])),
     missingLayers: ["KP_cusps"],
   };
+}
+
+export function passingVedAstroValidation(
+  candidateTimes: readonly [string, string],
+  overrides: Partial<VedAstroPostValidation> = {},
+): VedAstroPostValidation {
+  return vedAstroPostValidationSchema.parse({
+    contractVersion: "vedastro-post-validation-v1",
+    provider: "vedastro_official",
+    status: "pass",
+    providerStatus: "pass",
+    blockers: [],
+    primaryCandidateTime: candidateTimes[0],
+    runnerUpCandidateTime: candidateTimes[1],
+    eligibleEventCount: 5,
+    selectedEventCount: 3,
+    unsupportedEventCount: 0,
+    candidateMetrics: [
+      { role: "primary", requestedEventCount: 3, successfulEventCount: 3, matchedEventCount: 3, eventHitCount: 5, signalLift: 4 },
+      { role: "runner_up", requestedEventCount: 3, successfulEventCount: 3, matchedEventCount: 2, eventHitCount: 3, signalLift: 2 },
+    ],
+    minuteSensitiveValidation: { comparisonReady: true, discriminated: true, discriminatedLayers: ["D9"] },
+    validationHash: "a".repeat(64),
+    validatedAt: "2026-07-30T00:00:00.000Z",
+    canConfirmExactMinute: false,
+    ...overrides,
+  });
 }
 
 export async function withV5Mode<T>(mode: "v4_legacy" | "v5_shadow" | "v5_agent", run: () => Promise<T>): Promise<T> {
