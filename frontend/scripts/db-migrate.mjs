@@ -6,6 +6,12 @@ import pg from "pg";
 
 const { Client } = pg;
 const migrationFilenamePattern = /^\d{14}_[a-z0-9_]+\.sql$/;
+const retiredMigrationChecksums = new Map([
+  [
+    "20260727010000_admin_users.sql",
+    "785f4fdc65db1028623cc7b5a2571217b913ef9e55f5a17b01658a71612976de",
+  ],
+]);
 
 class SafeMigrationError extends Error {}
 
@@ -81,16 +87,21 @@ async function readLedger(client) {
   return new Map(result.rows.map((row) => [row.filename, row.checksum]));
 }
 
-function assertLedgerFilesPresent(ledger, files) {
+export function assertLedgerFilesPresent(ledger, files) {
   const reviewedFilenames = new Set(files.map((file) => file.filename));
-  for (const filename of ledger.keys()) {
-    if (!reviewedFilenames.has(filename)) {
-      if (!migrationFilenamePattern.test(filename)) {
-        throw new SafeMigrationError(
-          "migration ledger contains an invalid filename",
-        );
-      }
+  for (const [filename, recordedChecksum] of ledger) {
+    if (reviewedFilenames.has(filename)) continue;
+    if (!migrationFilenamePattern.test(filename)) {
+      throw new SafeMigrationError(
+        "migration ledger contains an invalid filename",
+      );
+    }
+    const retiredChecksum = retiredMigrationChecksums.get(filename);
+    if (retiredChecksum === undefined) {
       throw new SafeMigrationError(`migration file missing: ${filename}`);
+    }
+    if (recordedChecksum !== retiredChecksum) {
+      throw new SafeMigrationError(`migration checksum mismatch: ${filename}`);
     }
   }
 }

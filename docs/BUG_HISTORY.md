@@ -1772,3 +1772,17 @@
 - 防复发：新事件问题和 Renderer 分析收据必须作为服务端合同测试，而不是只测试最终展示文案；领域名称不同不得绕过同一事件的语义去重。
 - 相关记录：BUG-087、BUG-095、BUG-097
 - 修复版本：`birth-time-rectification-v6` / `rectification-agent-v6-1`
+
+## BUG-100 | Staging migration 账本中的遗失历史文件阻塞安全发布
+
+- 状态：resolved
+- 首次发现：2026-07-30
+- 最近更新：2026-07-30
+- 影响面：staging migration check、exact-SHA 应用发布
+- 用户现象：生时纠正 V6 修复已经通过质量门并合入 `main`，但 staging 在切换镜像前报 `migration file missing: 20260727010000_admin_users.sql`，因此仍运行旧版本。
+- 根因：staging 的 append-only migration 账本包含 `20260727010000_admin_users.sql`，而该历史文件已不在任何受审仓库历史中；现有 runner 要求每一条账本记录都对应当前文件，因此安全停止。
+- 修复：在 migration runner 中加入一条静态 retired migration 记录，固定校验该文件已观测到的 SHA-256；只有文件名和 checksum 同时完全匹配时才允许继续。checksum 漂移、其他遗失 migration 或非法文件名仍然失败关闭；不删除账本记录，也不动态信任数据库返回值。
+- 验证：新增无数据库单元测试覆盖 retired migration 正确 checksum 通过、错误 checksum 拒绝、未声明遗失 migration 继续拒绝；staging 发布仍须通过原 migration check、exact digest 和 exact SHA 门禁。
+- 防复发：历史 migration 文件不得从受审仓库删除；若必须兼容已遗失记录，只能用代码审查过的静态 filename + checksum，并保留 fail-closed 测试。
+- 相关记录：BUG-099
+- 修复版本：staging migration integrity compatibility
