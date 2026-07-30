@@ -1,0 +1,166 @@
+import path from "node:path";
+import { Agent } from "@mastra/core/agent";
+import { z } from "zod";
+import { defaultLanguageModel, resolveLanguageModel } from "@/mastra/model";
+import type { CandidateSnapshot, EvidenceDomain, EventKind, LifeEventRevision, PendingEvidence, RectificationV4Case, RectificationV4Turn } from "../rectification-v4/contracts.ts";
+import type { TargetDisposition } from "../rectification-v4/extraction.ts";
+import { rectificationCaseDossierSchema, rectificationTurnPlanSchema, type DiagnosticsSummary, type RectificationCaseDossier, type RectificationDiagnostic, type RectificationTurnPlan, type ToolCallTrace } from "./contracts.ts";
+
+const skillPath = process.env.RECTIFICATION_SKILL_PATH?.trim() || path.resolve(process.cwd(), "..", "skills", "birth-time-rectification");
+const domains: EvidenceDomain[] = ["education", "relocation", "relationship", "career", "finance", "health_pressure", "family", "other"];
+const kinds: EventKind[] = ["education_milestone", "relocation", "relationship_start", "relationship_end", "relationship_change", "career_change", "finance_change", "self_health_event", "family_health_event", "family_bereavement", "family_event", "other"];
+const privatePattern = /(?:[0-9a-f]{8}-[0-9a-f-]{27,}|opportunity(?:id)?|snapshot(?:id)?|event(?:id)?|targetEventId|score|评分|得分|权重|rule[_ -]?id|贡献矩阵|tool[_ -]?call|cluster[_ -]?id)/iu;
+const exactMinutePattern = /(?:\b(?:[01]?\d|2[0-3]):[0-5]\d\b|(?:凌晨|清晨|上午|中午|下午|傍晚|晚上)?\s*[零〇一二两三四五六七八九十百\d]{1,4}\s*[点时]\s*[零〇一二两三四五六七八九十百\d]{1,4}\s*分)/u;
+type Generated = Readonly<{ object: unknown; totalUsage?: { inputTokens?: number; outputTokens?: number } | Promise<{ inputTokens?: number; outputTokens?: number }> }>;
+const regeneratedQuestionSchema = z.object({ question: z.string().trim().min(8).max(500) }).strict();
+export type RectificationDirectorGenerator = (prompt: string, phase: "evidence" | "final" | "after_diagnostic" | "repair") => Promise<Generated>;
+
+function diagnosticResult(kind: RectificationDiagnostic, value: DiagnosticsSummary) {
+  switch (kind) {
+    case "leave_one_event_out": return { retentionRate: value.leaveOneEventOutRetentionRate, unstableEventIds: value.unstableEventIds };
+    case "leave_one_domain_out": return { retentionRate: value.leaveOneDomainOutRetentionRate };
+    case "date_sensitivity": return { retentionRate: value.dateSensitivityRetentionRate, events: value.eventDateSensitivity };
+    case "neighbor_stability": return { supportMinutes: value.neighborSupportMinutes, clusterMassRatio: value.clusterMassRatio };
+    case "candidate_split": return { marginPercent: value.primarySecondaryMarginPercent, splits: value.candidateSplits };
+  }
+}
+
+export function buildRectificationCaseDossier(input: Readonly<{ caseValue: RectificationV4Case; turns: readonly RectificationV4Turn[]; events: readonly LifeEventRevision[]; pendingEvidence?: readonly PendingEvidence[]; snapshot: CandidateSnapshot | null; previousSnapshot?: CandidateSnapshot | null; diagnostics: DiagnosticsSummary | null; targetDisposition: TargetDisposition; currentTargetEventId: string | null }>): RectificationCaseDossier {
+  const latest = new Map<string, number>();
+  input.events.forEach((event) => latest.set(event.eventId, Math.max(latest.get(event.eventId) ?? 0, event.revision)));
+  const recent = input.turns.slice(-12);
+  return rectificationCaseDossierSchema.parse({
+    case: { candidateWindow: input.caseValue.calculationSpec.candidateRange, birthDate: input.caseValue.calculationSpec.birthDate, location: { latitude: input.caseValue.calculationSpec.latitude, longitude: input.caseValue.calculationSpec.longitude, timezoneId: input.caseValue.calculationSpec.timezoneId ?? null, timezoneOffsetHours: input.caseValue.calculationSpec.timezoneOffsetHours }, birthTimeSource: input.caseValue.calculationSpec.birthTimeSource ?? null, algorithmVersion: input.caseValue.algorithmVersion },
+    conversation: { recentRawTurns: recent.map(({ question, answer }) => ({ question, answer })), earlierConversationSummary: input.turns.length > 12 ? `更早还有 ${input.turns.length - 12} 轮；完整事实以事件账本为准。` : null },
+    eventLedger: input.events.map((event) => ({ eventId: event.eventId, revision: event.revision, summary: event.summary, rawText: event.rawText, domain: event.domain, eventKind: event.eventKind, subject: event.subject, relatedPerson: event.relatedPerson, dateRange: event.dateRange, scoreability: event.scoreability, status: latest.get(event.eventId) === event.revision ? "active" : "superseded" })),
+    interviewState: { currentTargetEventId: input.currentTargetEventId, declinedDomains: [], unresolvedTargets: [...new Set([...(input.currentTargetEventId && ["unresolved", "answered_other_event"].includes(input.targetDisposition) ? [input.currentTargetEventId] : []), ...(input.pendingEvidence ?? []).flatMap((item) => item.targetEventId ? [item.targetEventId] : [])])], askedTopics: input.turns.slice(-50).map((turn) => turn.question), turnCount: input.turns.length, targetDisposition: input.targetDisposition },
+    candidateState: { hasSnapshot: Boolean(input.snapshot), publicRangeAllowed: input.snapshot?.canAcceptRange ?? false, rangeChanged: input.previousSnapshot?.clusters[0]?.startTime !== input.snapshot?.clusters[0]?.startTime || input.previousSnapshot?.clusters[0]?.endTime !== input.snapshot?.clusters[0]?.endTime, topClusters: (input.snapshot?.clusters ?? []).slice(0, 4).map((cluster) => ({ rank: cluster.rank, widthMinutes: cluster.widthMinutes, stability: input.snapshot?.canAcceptRange ? "stable" : "unstable" })), contrasts: (input.diagnostics?.candidateSplits ?? []).map((split) => ({ techniqueLayers: split.techniqueLayers, relevantEventIds: split.eventIds })), eventDiagnostics: (input.diagnostics?.eventDateSensitivity ?? []).map((item) => ({ eventId: item.eventId, winnerRetentionRate: item.winnerRetentionRate, scoreVariance: item.scoreVariance })), gateReasons: input.snapshot?.gateReasons ?? [], currentSnapshotId: input.snapshot?.id ?? null },
+    capabilities: { supportedDomains: domains, supportedEventKinds: kinds, maxQuestionsPerTurn: 1, maxDiagnosticsPerRun: 1, forbiddenPublicClaims: ["exact_birth_minute", "private_scores", "internal_ids", "technique_trace"] },
+  });
+}
+
+function fallback(dossier: RectificationCaseDossier, latestAnswer: string): RectificationTurnPlan {
+  if (dossier.candidateState.publicRangeAllowed && dossier.candidateState.currentSnapshotId) return { contractVersion: "rectification-turn-plan-v1", targetDisposition: dossier.interviewState.targetDisposition, evidenceProposals: [], action: { type: "offer_candidate_range", snapshotId: dossier.candidateState.currentSnapshotId }, publicReply: { acknowledgement: "现有事件已经完成本轮复核。", candidateCommentary: "候选范围已通过当前稳定性门槛，可以作为工作范围查看。", limitation: "这仍不是对某个精确出生分钟的确认。" } };
+  const keepTarget = Boolean(dossier.interviewState.currentTargetEventId && ["unresolved", "answered_other_event"].includes(dossier.interviewState.targetDisposition));
+  const latestGroundedEvent = [...dossier.eventLedger].reverse().find((event) => event.status === "active" && (event.rawText === latestAnswer || latestAnswer.includes(event.summary)));
+  const safeSummary = latestGroundedEvent && !privatePattern.test(latestGroundedEvent.summary) && !exactMinutePattern.test(latestGroundedEvent.summary)
+    ? latestGroundedEvent.summary.slice(0, 120)
+    : null;
+  return { contractVersion: "rectification-turn-plan-v1", targetDisposition: dossier.interviewState.targetDisposition, evidenceProposals: [], action: { type: "ask_question", focus: { mode: keepTarget ? "clarify_existing_event" : "collect_independent_event", targetEventId: keepTarget ? dossier.interviewState.currentTargetEventId : null, domain: null, requestedFacts: keepTarget ? ["day_or_period"] : ["independent_event", "year"], rationaleCodes: [keepTarget ? "unresolved_current_event" : "need_independent_dated_event"] }, question: keepTarget ? "关于刚才那件事，你还记得它大约发生在哪一年或哪个阶段吗？" : "你还能想到一件发生在你本人身上、时间大致确定的重要经历吗？", optionalQuickReplies: [] }, publicReply: { acknowledgement: safeSummary ? `你提到的“${safeSummary}”已经纳入本轮事件线索。` : latestAnswer.trim() ? "我已按你刚才的描述继续整理事件线索。" : "我们先从真实经历建立事件线索。", candidateCommentary: null, limitation: "在证据通过稳定性门槛前，我不会把某个具体分钟当成确定出生时间。" } };
+}
+
+export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; dossier: RectificationCaseDossier; latestAnswer: string; phase: "evidence" | "final" }>): Readonly<{ plan: RectificationTurnPlan | null; issues: readonly string[] }> {
+  const parsed = rectificationTurnPlanSchema.safeParse(input.plan);
+  if (!parsed.success) return { plan: null, issues: ["turn_plan_schema_invalid"] };
+  const plan = parsed.data;
+  const issues: string[] = [];
+  const known = new Set(input.dossier.eventLedger.map((event) => event.eventId));
+  plan.evidenceProposals.forEach((proposal) => {
+    if (!input.latestAnswer.includes(proposal.sourceSpan)) issues.push("evidence_source_not_in_latest_answer");
+    if (proposal.dateText && !input.latestAnswer.includes(proposal.dateText)) issues.push("evidence_date_not_in_latest_answer");
+    if (proposal.operation === "create" && proposal.targetEventId) issues.push("create_must_not_target_event");
+    if (proposal.operation === "revise" && (!proposal.targetEventId || !known.has(proposal.targetEventId))) issues.push("revision_target_invalid");
+  });
+  const currentTarget = input.dossier.interviewState.currentTargetEventId;
+  if (input.phase === "final") {
+    if (plan.evidenceProposals.length) issues.push("final_plan_contains_evidence");
+    if (plan.targetDisposition !== input.dossier.interviewState.targetDisposition) issues.push("final_target_disposition_changed");
+  } else if (!currentTarget && plan.targetDisposition !== "not_applicable") {
+    issues.push("target_disposition_requires_target");
+  } else if (currentTarget) {
+    const revisedCurrentTarget = plan.evidenceProposals.some((proposal) => proposal.operation === "revise" && proposal.targetEventId === currentTarget);
+    const createdOtherEvent = plan.evidenceProposals.some((proposal) => proposal.operation === "create");
+    if (plan.targetDisposition === "not_applicable") issues.push("target_disposition_missing");
+    if (plan.targetDisposition === "resolved" && !revisedCurrentTarget) issues.push("resolved_target_not_revised");
+    if (plan.targetDisposition === "answered_other_event" && !createdOtherEvent) issues.push("other_event_not_proposed");
+  }
+  const publicText = [plan.publicReply.acknowledgement, plan.publicReply.candidateCommentary, plan.publicReply.limitation, plan.action.type === "ask_question" ? plan.action.question : null].filter(Boolean).join(" ");
+  if (privatePattern.test(publicText)) issues.push("private_detail_exposed");
+  if (exactMinutePattern.test(publicText)) issues.push("exact_minute_claimed");
+  if (plan.action.type === "ask_question") {
+    if ((plan.action.question.match(/[?？]/g) ?? []).length > 1) issues.push("multiple_questions");
+    if (plan.action.focus.targetEventId && !known.has(plan.action.focus.targetEventId)) issues.push("focus_target_invalid");
+    if (["unknown", "declined", "direction_change"].includes(plan.targetDisposition) && plan.action.focus.targetEventId === input.dossier.interviewState.currentTargetEventId) issues.push("declined_target_reopened");
+  }
+  if (plan.action.type === "offer_candidate_range" && (!input.dossier.candidateState.publicRangeAllowed || plan.action.snapshotId !== input.dossier.candidateState.currentSnapshotId)) issues.push("candidate_range_gate_failed");
+  return { plan: issues.length ? null : plan, issues };
+}
+
+export async function regenerateDirectorQuestion(input: Readonly<{
+  caseValue: RectificationV4Case;
+  currentQuestion: string;
+  latestAnswer: string;
+  acceptedEvents: readonly LifeEventRevision[];
+  focus: Extract<RectificationTurnPlan["action"], { type: "ask_question" }>["focus"];
+  generateQuestion?: (prompt: string, phase: "regenerate" | "repair") => Promise<Generated>;
+}>): Promise<string> {
+  const model = (input.caseValue.orchestrationModelId ? resolveLanguageModel(input.caseValue.orchestrationModelId) : null) ?? defaultLanguageModel();
+  const agent = model ? new Agent({ id: `rectification-director-regenerate-${model.id}`, name: "Birth Time Rectification Director", model: model.model, skills: [skillPath], instructions: "Rewrite one natural interview question while preserving the supplied structured focus. Do not expose internal ids, scores, tools, or a birth minute. Return only structured output." }) : null;
+  const generate = input.generateQuestion ?? (async (prompt: string) => {
+    if (!agent) throw new Error("director_model_unavailable");
+    return agent.generate(prompt, { structuredOutput: { schema: regeneratedQuestionSchema, jsonPromptInjection: "inline" } });
+  });
+  const validate = (value: unknown) => {
+    const parsed = regeneratedQuestionSchema.safeParse(value);
+    if (!parsed.success) return { question: null, issues: ["question_schema_invalid"] };
+    const issues: string[] = [];
+    if ((parsed.data.question.match(/[?？]/g) ?? []).length > 1) issues.push("multiple_questions");
+    if (privatePattern.test(parsed.data.question)) issues.push("private_detail_exposed");
+    if (exactMinutePattern.test(parsed.data.question)) issues.push("exact_minute_claimed");
+    return { question: issues.length ? null : parsed.data.question, issues };
+  };
+  try {
+    const context = { task: "Rewrite the current question without changing its structured focus.", currentQuestion: input.currentQuestion, latestAnswer: input.latestAnswer, focus: input.focus, acceptedEvents: input.acceptedEvents.map(({ summary, domain, eventKind, dateRange }) => ({ summary, domain, eventKind, dateRange })) };
+    let result = validate((await generate(JSON.stringify(context), "regenerate")).object);
+    if (!result.question) result = validate((await generate(JSON.stringify({ ...context, task: "Repair the rejected rewrite once.", validationIssues: result.issues }), "repair")).object);
+    return result.question ?? input.currentQuestion;
+  } catch {
+    return input.currentQuestion;
+  }
+}
+
+export async function runRectificationDirector(input: Readonly<{ caseValue: RectificationV4Case; dossier: RectificationCaseDossier; latestAnswer: string; phase: "evidence" | "final"; diagnostics: DiagnosticsSummary; timeoutMs?: number; generatePlan?: RectificationDirectorGenerator }>) {
+  const started = Date.now();
+  const model = (input.caseValue.orchestrationModelId ? resolveLanguageModel(input.caseValue.orchestrationModelId) : null) ?? defaultLanguageModel();
+  const agent = model ? new Agent({ id: `rectification-director-${model.id}`, name: "Birth Time Rectification Director", model: model.model, skills: [skillPath], instructions: "Direct the interview from the complete dossier. Propose every explicit event in the latest answer, choose the current focus, and write the public reply plus at most one natural question. Never write scores, internal ids, profile values, candidate minutes, status, phase, or database mutations. Return strict structured output." }) : null;
+  const generate = input.generatePlan ?? (async (prompt: string) => {
+    if (!agent) throw new Error("director_model_unavailable");
+    return agent.generate(prompt, { abortSignal: AbortSignal.timeout(input.timeoutMs ?? 25_000), structuredOutput: { schema: rectificationTurnPlanSchema, jsonPromptInjection: "inline" } });
+  });
+  let inputTokens = 0, outputTokens = 0;
+  let usageObserved = false;
+  const toolCalls: ToolCallTrace[] = [];
+  const addUsage = async (generated: Generated) => {
+    if (!generated.totalUsage) return;
+    const usage = await generated.totalUsage;
+    inputTokens += Math.max(0, Math.trunc(usage.inputTokens ?? 0));
+    outputTokens += Math.max(0, Math.trunc(usage.outputTokens ?? 0));
+    usageObserved = true;
+  };
+  try {
+    const first = await generate(JSON.stringify({ task: input.phase === "evidence" ? "Interpret the latest answer and propose every explicit event. The action is provisional." : "Choose the final action and public response. evidenceProposals must be empty because staging is complete.", latestAnswer: input.latestAnswer, dossier: input.dossier }), input.phase);
+    await addUsage(first);
+    let candidate = rectificationTurnPlanSchema.parse(first.object);
+    if (input.phase === "final" && candidate.action.type === "request_diagnostic") {
+      const toolStarted = Date.now();
+      const result = diagnosticResult(candidate.action.diagnostic, input.diagnostics);
+      toolCalls.push({ tool: "run_rectification_diagnostics", diagnostic: candidate.action.diagnostic, outcome: "succeeded", durationMs: Date.now() - toolStarted, errorCode: null });
+      const second = await generate(JSON.stringify({ task: "Use the diagnostic result and return a final non-diagnostic action with no evidence proposals.", latestAnswer: input.latestAnswer, dossier: input.dossier, diagnosticResult: result }), "after_diagnostic");
+      await addUsage(second);
+      candidate = rectificationTurnPlanSchema.parse(second.object);
+    }
+    if (input.phase === "final" && candidate.action.type === "request_diagnostic") throw new Error("director_final_plan_not_final");
+    let validated = validateRectificationTurnPlan({ plan: candidate, dossier: input.dossier, latestAnswer: input.latestAnswer, phase: input.phase });
+    if (!validated.plan) {
+      const repaired = await generate(JSON.stringify({ task: "Repair the rejected plan once. Preserve grounded facts, return one safe final plan, and address every validation issue.", latestAnswer: input.latestAnswer, dossier: input.dossier, rejectedPlan: candidate, validationIssues: validated.issues }), "repair");
+      await addUsage(repaired);
+      candidate = rectificationTurnPlanSchema.parse(repaired.object);
+      if (candidate.action.type === "request_diagnostic") throw new Error("director_repair_requested_diagnostic");
+      validated = validateRectificationTurnPlan({ plan: candidate, dossier: input.dossier, latestAnswer: input.latestAnswer, phase: input.phase });
+    }
+    if (!validated.plan) throw new Error(`director_plan_rejected:${validated.issues.join(",")}`);
+    return { plan: validated.plan, mode: "agent" as const, fallbackReason: null, toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
+  } catch (error) {
+    return { plan: fallback(input.dossier, input.latestAnswer), mode: "deterministic_fallback" as const, fallbackReason: error instanceof Error ? error.message.slice(0, 120) : "director_failed", toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
+  }
+}

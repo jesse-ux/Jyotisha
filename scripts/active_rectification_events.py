@@ -57,6 +57,7 @@ class CandidateEvidence(TypedDict):
 class LifeEvent(TypedDict):
     id: str
     domain: EventDomain
+    event_kind: NotRequired[str]
     date: str
     precision: EventPrecision
     summary: NotRequired[str]

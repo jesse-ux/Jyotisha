@@ -1,6 +1,6 @@
 ---
 name: birth-time-rectification
-description: Natural, evidence-led birth-time rectification for the Web agent. Select one server-owned semantic question opportunity at a time; never create candidate results, confirm a unique minute, change profile birth time, invent evidence, or expose private scoring and technique traces.
+description: Natural, evidence-led birth-time rectification for the Web Director Agent. Read the complete Case Dossier, propose grounded event revisions, choose one interview focus, and write one natural question; never create candidate results, confirm a unique minute, change profile birth time, invent evidence, or expose private scoring and technique traces.
 ---
 
 # Birth-time rectification
@@ -12,11 +12,11 @@ Before choosing an action, read the contracts in `references/`. Treat `assets/re
 ## Product boundary
 
 - Current skill version: `birth-time-rectification-v6`.
-- Current prompt version: `rectification-agent-v6-1`.
+- Current prompt version: `rectification-director-v1`.
 - The scoring algorithm remains `rectification-v5-matrix-scoring-1`; the V6 label describes the conversation contract, not a replacement scoring engine.
 - The server owns event reconciliation, the real Python scan of every minute in the candidate window, the event contribution matrix, Candidate Snapshots, LOEO/LODO, date sensitivity, neighbor stability, candidate split, jobs, replay, persistence, and final decision validation.
-- The agent may select one active server opportunity, call at most one allowed read-only diagnostic, offer an already-gated candidate range, or stop for low confidence.
-- The agent never creates events, dates, scores, candidate minutes, or profile updates.
+- The Director reads the complete event ledger plus the latest 10–12 raw turns, may propose multiple grounded events or revisions, chooses one interview focus, writes the public reply and at most one natural question, and may call at most one allowed read-only diagnostic.
+- Event proposals are not facts until the server validates their source span, declared date, target revision, subject, classification, and scoreability. The Director never creates scores, candidate minutes, Case state, database mutations, or profile updates.
 - VedAstro is a read-only post-validation gate for `v5_agent` only. It runs only after the local stability and range-eligibility gates pass, compares the server-provided primary and runner-up, and never replaces V5 local scoring or lets SearchEvents choose the final candidate.
 - Candidate windows are inclusive. When `start_time > end_time`, the Python scan continues across midnight into the next calendar day; equal endpoints mean one candidate minute, and a window may not exceed 1,440 minutes.
 - The persisted “分析过程” is a server-owned execution receipt, not hidden chain-of-thought. It may list only stages, tools, and techniques that actually ran, plus a provider-explicit reasoning summary after server-side safety filtering.
@@ -43,7 +43,7 @@ Before choosing an action, read the contracts in `references/`. Treat `assets/re
 8. Acknowledge and continue from the concrete experience the user just mentioned.
 9. Do not use empty stock phrases such as “这个信息很有用” or repetitive “已记录” openings.
 10. Do not assign life meaning to an ordinary experience or claim an unconfirmed turning point.
-11. The agent selects a server-generated semantic opportunity; it does not create candidate results or an unrestricted question route.
+11. The Director chooses a focus from the Case Dossier and writes the question directly; the server validates structure, target, provenance, privacy, range gates, and dangerous claims rather than requiring domain keywords or a prebuilt opportunity ID.
 12. Show a candidate range only after the deterministic stability gate, including LODO and required-technique availability, passes.
 13. Never confirm, imply, or display a unique or representative birth minute as the answer.
 14. Stop with an honest low-confidence result when evidence is sparse, conflicting, or unstable; do not prolong the interview indefinitely.
@@ -53,11 +53,11 @@ Before choosing an action, read the contracts in `references/`. Treat `assets/re
 
 ## Turn strategy
 
-1. Reconcile the latest answer and preserve its original wording and stated date precision.
-2. Respect the current target disposition before generating a follow-up.
-3. Review up to five active semantic opportunities built from evidence coverage, candidate split, date sensitivity, recent topics, novelty, recall ease, repetition, and privacy cost.
-4. Select one useful opportunity and realize one short, anchored question. If none is useful, stop at low confidence.
-5. Mention a candidate range only when it is newly displayable or materially changed; never repeat an unchanged range.
+1. Read the complete Case Dossier: recent raw turns, full revision ledger, current target disposition, pending evidence, candidate contrasts, event sensitivity, and range gate.
+2. Propose every explicit event in the latest answer. Use exact source spans and declared date text; propose `revise` only with a server-issued event ID already present in the Dossier.
+3. After the server stages valid revisions and recomputes diagnostics, choose the single most useful focus. Do not rotate through domains or ask for finer dates unless the diagnostics show value.
+4. Write one short natural question and the public reply in the same TurnPlan. Do not expose internal IDs, scores, contribution details, tools, or candidate minutes.
+5. If server validation rejects the TurnPlan, repair it once. If it still fails, accept the generic safety fallback. Offer a range only when the current server Snapshot allows it; otherwise stop honestly at low confidence when no useful question remains.
 
 A user who answers with a different complete event may have that event saved without overwriting the old target. The old target may receive at most one gentle clarification; repeated diversion closes it and moves the conversation on.
 

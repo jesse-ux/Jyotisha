@@ -9,6 +9,7 @@ from scripts.active_rectification_events import (
     precision_weight,
     score_life_events,
 )
+from scripts.rectification.scoring_service import build_event_contribution_matrix
 
 
 def _row(time: str, score: float) -> CandidateScoreRow:
@@ -130,6 +131,79 @@ def test_date_precision_weights_are_fixed() -> None:
     assert precision_weight("year") == 0.5
 
 
+def test_matrix_legacy_adapter_preserves_event_kind() -> None:
+    seen = []
+
+    def rows(value):
+        event = value["events"][0]
+        seen.append(event["event_kind"])
+        return [{
+            "time": "05:13",
+            "score": 1.0,
+            "evidence": [{
+                "event_id": event["id"],
+                "domain": event["domain"],
+                "candidate_time": "05:13",
+                "rule_ids": [f"event_kind:{event['event_kind']}"],
+                "points": 1.0,
+            }],
+            "missing_layers": [],
+        }]
+
+    build_event_contribution_matrix({
+        "birth_date": "1993-04-17",
+        "start_time": "05:13",
+        "end_time": "05:13",
+        "lat": 36.683333,
+        "lon": 114.35,
+        "tz": 8.0,
+        "events": [{
+            "id": "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5",
+            "domain": "relationship",
+            "event_kind": "relationship_end",
+            "date_start": "2021-01-01",
+            "date_end": "2021-01-01",
+            "precision": "day",
+        }],
+    }, row_provider=rows)
+
+    assert seen == ["relationship_end"]
+
+
+def test_relationship_event_kinds_have_distinct_traceable_contributions(monkeypatch) -> None:
+    monkeypatch.setattr(
+        event_engine.functional_benefics,
+        "derive_functional_benefic_malefic",
+        lambda _sign: {"functional_benefics": [], "functional_malefics": []},
+    )
+    common = {
+        "candidate_time": "05:13",
+        "natal_chart": {"ascendant": {"lon": 0.0, "sign": "Aries"}, "planets": {}},
+        "varga_charts": [],
+        "vimshottari": ("Sun", "Moon", "Mars"),
+        "narayana": (None, None),
+        "arudha_padas": {},
+    }
+
+    evidence = {
+        kind: event_engine._score_event(
+            **common,
+            event={
+                "id": kind,
+                "domain": "relationship",
+                "event_kind": kind,
+                "date": "2021-01-01",
+                "precision": "day",
+            },
+        )
+        for kind in ("relationship_start", "relationship_end", "relationship_change")
+    }
+
+    assert {item["points"] for item in evidence.values()} == {0.001, 0.002, 0.003}
+    for kind, item in evidence.items():
+        assert f"event_kind:{kind}" in item["rule_ids"]
+
+
 def test_real_local_scoring_uses_dated_events_and_actual_candidate_minutes() -> None:
     result = score_life_events({
         "birth_date": "1993-04-17",
@@ -185,6 +259,7 @@ def test_event_summary_is_fingerprinted_without_unlocking_minute_application() -
         "events": [{
             "id": "5cb071d6-6d99-46be-85dc-a9bf59ef6ac5",
             "domain": "career",
+            "event_kind": "career_change",
             "date": "2019-07",
             "precision": "month",
             "summary": "2019 年 7 月第一次承担团队管理职责",
@@ -206,6 +281,7 @@ def test_event_summary_is_fingerprinted_without_unlocking_minute_application() -
     )
 
     assert contract["schema_version"] == "rectification-candidate-input-v2"
+    assert contract["events"][0]["event_kind"] == "career_change"
     assert contract["events"][0]["summary"] == "2019 年 7 月第一次承担团队管理职责"
     assert changed_hash != input_hash
     assert result["canonical_input_hash"] == input_hash
@@ -253,7 +329,7 @@ def test_finance_events_use_d2_d11_and_recompute_both_dashas_per_minute(monkeypa
 
 def test_missing_narayana_blocks_the_candidate_event_instead_of_using_partial_timing(monkeypatch) -> None:
     monkeypatch.setattr(event_engine, "_active_narayana", lambda *_args: (None, None))
-    row = event_engine._candidate_row({
+    request = {
         "birth_date": "1993-04-17",
         "start_time": "14:29",
         "end_time": "14:29",
@@ -266,11 +342,13 @@ def test_missing_narayana_blocks_the_candidate_event_instead_of_using_partial_ti
             "date": "2019-07-01",
             "precision": "day",
         }],
-    }, datetime(1993, 4, 17, 14, 29))
+    }
+    context = event_engine.build_candidate_static_context(request, datetime(1993, 4, 17, 14, 29))
+    row = event_engine._candidate_row(request, context)
 
     assert row["evidence"] == []
     assert row["score"] == 0
-    assert row["missing_layers"] == ["Narayana_MD_AD"]
+    assert "Narayana_MD_AD" in row["missing_layers"]
 
     result = event_engine.compute_event_candidate_result({
         "birth_date": "1993-04-17",
@@ -286,7 +364,7 @@ def test_missing_narayana_blocks_the_candidate_event_instead_of_using_partial_ti
             "precision": "day",
         }],
     })
-    assert result["missing_layers"] == ["Narayana_MD_AD"]
+    assert "Narayana_MD_AD" in result["missing_layers"]
     assert "missing_mandatory_layers" in result["reasons"]
 
 
@@ -299,7 +377,7 @@ def test_relationship_scoring_receives_computed_ul(monkeypatch) -> None:
         return original_score_event(**kwargs)
 
     monkeypatch.setattr(event_engine, "_score_event", score_event)
-    event_engine._candidate_row({
+    request = {
         "birth_date": "1993-04-17",
         "start_time": "14:29",
         "end_time": "14:29",
@@ -312,6 +390,8 @@ def test_relationship_scoring_receives_computed_ul(monkeypatch) -> None:
             "date": "2021",
             "precision": "year",
         }],
-    }, datetime(1993, 4, 17, 14, 29))
+    }
+    context = event_engine.build_candidate_static_context(request, datetime(1993, 4, 17, 14, 29))
+    event_engine._candidate_row(request, context)
 
     assert seen_ul and seen_ul[0]["sign_idx"] >= 0

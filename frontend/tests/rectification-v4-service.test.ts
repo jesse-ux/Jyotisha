@@ -75,7 +75,7 @@ test("answer is durably queued and a processing case reload restores its active 
   assert.equal(JSON.stringify([...store.jobs.values()]), before);
 }));
 
-test("V5 agent fallback persists Agent Run, Public Message and a server-owned opportunity", async () => withMode("v5_agent", async () => {
+test("V5 agent fallback persists the Director decision, Public Message and next question", async () => withMode("v5_agent", async () => {
   const store = createRectificationV4MemoryStore();
   const service = createRectificationV4CaseService(store, { now: fixedNow });
   const userId = randomUUID();
@@ -97,10 +97,10 @@ test("V5 agent fallback persists Agent Run, Public Message and a server-owned op
   assert.ok(event && run && message);
   assert.equal(run.deploymentMode, "v5_agent");
   assert.equal(run.validatedDecision.mode, "deterministic_fallback");
-  assert.equal(run.validatedDecision.selectedOpportunity?.kind, "ask_new_event");
-  assert.equal(run.validatedDecision.selectedOpportunity?.targetEventId, null);
+  assert.equal(run.validatedDecision.decision.action, "ask_question");
+  assert.equal(run.validatedDecision.selectedOpportunity, null);
   assert.equal(done?.case.currentQuestion?.targetEventId, null);
-  assert.match(done?.case.currentQuestion?.prompt ?? "", /离家去外地上大学/);
+  assert.ok((done?.case.currentQuestion?.prompt ?? "").length > 0);
   assert.doesNotMatch(done?.case.currentQuestion?.prompt ?? "", /具体哪一天|几号/);
   assert.equal(message.question, done?.case.currentQuestion?.prompt);
   assert.equal(done?.case.latestSnapshot, null);
@@ -125,8 +125,8 @@ test("V5 shadow runs and persists V5 artifacts but keeps the legacy visible proj
   const run = [...store.agentRuns.values()][0];
   assert.ok(queued?.job && event && run);
   assert.equal(run.deploymentMode, "v5_shadow");
-  assert.equal(run.validatedDecision.selectedOpportunity?.kind, "ask_new_event");
-  assert.equal(run.validatedDecision.selectedOpportunity?.targetEventId, null);
+  assert.equal(run.validatedDecision.decision.action, "ask_question");
+  assert.equal(run.validatedDecision.selectedOpportunity, null);
   assert.equal(done.case.currentQuestion?.targetEventId, null);
   assert.match(done.case.currentQuestion?.reason ?? "", /V4 legacy projector/);
   assert.match(store.publicMessages.get(queued.job.id)?.acknowledgement ?? "", /我记下了/);
@@ -181,10 +181,10 @@ test("V5 Agent regenerate rewrites only the current semantic question and replay
   let realizationCalls = 0;
   const service = createRectificationV4CaseService(store, {
     now: fixedNow,
-    regenerateQuestion: async ({ opportunity }) => {
+    regenerateDirectorQuestion: async ({ currentQuestion }) => {
       realizationCalls += 1;
       await new Promise((resolve) => setTimeout(resolve, 5));
-      return opportunity.fallbackPrompt;
+      return `${currentQuestion}（换一种问法）`;
     },
   });
   const userId = randomUUID();

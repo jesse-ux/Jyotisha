@@ -66,8 +66,9 @@ def _legacy_request(request: RectificationRequest, event: LifeEvent, sampled_dat
         "lon": request["lon"],
         "tz": request["tz"],
         "events": [{
-            "id": event["id"], "domain": event["domain"], "date": sampled_date,
-            "precision": "day", "summary": event.get("summary", ""),
+            "id": event["id"], "domain": event["domain"],
+            "event_kind": event.get("event_kind", event["domain"]),
+            "date": sampled_date, "precision": "day", "summary": event.get("summary", ""),
         }],
     }
 

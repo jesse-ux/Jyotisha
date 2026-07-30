@@ -1786,3 +1786,19 @@
 - 防复发：历史 migration 文件不得从受审仓库删除；若必须兼容已遗失记录，只能用代码审查过的静态 filename + checksum，并保留 fail-closed 测试。
 - 相关记录：BUG-099
 - 修复版本：staging migration integrity compatibility
+
+## BUG-101 | 正常访谈被 Opportunity 模板与 Renderer 回退主导，事件种类在 Python bridge 丢失
+
+- 状态：resolved
+- 首次发现：2026-07-30
+- 最近更新：2026-07-30
+- 影响面：V5 Agent 生时纠正常访谈、事件修订暂存、公开问题生成、Python 候选评分语义
+- 用户现象：模型虽然参与推理，但下一步焦点、问题类别和公开回复仍主要由服务器硬编码的 Builder、Opportunity 分类与正则 Renderer 决定；同一轮难以自然识别多件事件，关系开始、结束或变化进入 Python 评分后又退化为通用 relationship 领域。
+- 触发条件：正常 `v5_agent` 路径依次调用 `buildQuestionOpportunities()`、`runBoundedReasoner()` 与 `renderPublicTurn()`；事件通过 TypeScript/Python bridge 时只传 `domain`，没有保留 canonical `event_kind`。
+- 根因：Agent 只在服务器预先枚举的机会中选择，无法基于完整 Case Dossier 自主理解当前访谈焦点并生成下一句；公开回复失败时继续由领域正则模板接管。与此同时 Python legacy request 把领域值当作事件种类，抹平关系事件的 start/end/change 语义。
+- 修复：新增 Director 两阶段合同：服务器提供完整 Case Dossier，Director 可在一轮提出多个 create/revise evidence proposal；服务器验证原文、日期、目标和 opaque ID 后生成 revisions 并重算评分/诊断，Director 再自主选择焦点并直接生成自然问题与公开回复。服务器继续控制 status、phase、snapshot/range gate、内部 ID、精确分钟与单问题安全边界；输出失败只允许同一 Director 做一次安全 repair，再进入通用 fallback。`v5_shadow` 保留 legacy 可见投影与确定性证据行为，只持久化 Director artifacts。Python bridge 与评分 trace 继续传递 canonical `event_kind`，并为 relationship start/end/change 保留可验证的最小区分。
+- 验证：TypeScript 相关套件 114/114 通过，其中 Director 专项 7/7；TypeScript `tsc --noEmit` 与修改文件 ESLint 通过；Python `tests/test_active_rectification_events.py` 14/14 通过。
+- 安全边界：模型不得公开内部 ID、分数、贡献矩阵、工具信息或精确分钟；proposal 必须引用最新回答中的原文与日期文本，所有持久化 revision、候选重算、门禁判断和原子提交仍由服务器拥有。
+- 防复发：正常 Agent 路径不得重新依赖 Opportunity 枚举或领域正则决定访谈内容；Director 合同测试必须覆盖多事件提议、修订目标验证、拒绝/不知道后的换焦点、range gate、内部信息泄露与一次 repair；Python 测试必须断言 `event_kind` 从输入穿透到规则 trace。
+- 相关记录：BUG-095、BUG-097、BUG-099
+- 修复版本：staging

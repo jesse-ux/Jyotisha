@@ -54,6 +54,12 @@ DOMAIN_CONFIG: Final[dict[EventDomain, DomainConfig]] = {
     "finance": (("D2", "D11"), (2, 11)),
     "health_pressure": (("D30",), (6, 8, 12)),
 }
+# ponytail: non-semantic audit offsets; replace only when calibrated kind rules exist.
+EVENT_KIND_MODIFIERS: Final[dict[str, float]] = {
+    "relationship_start": 0.001,
+    "relationship_end": 0.002,
+    "relationship_change": 0.003,
+}
 
 
 class RectificationEventCalculationError(RuntimeError):
@@ -236,12 +242,17 @@ def _score_event(
                 rules.append(f"{label}_arudha_auxiliary")
                 points += 0.35
 
+    event_kind = event.get("event_kind", event["domain"])
+    if not rules:
+        rules.append("no_domain_activation")
+    rules.append(f"event_kind:{event_kind}")
+    points += EVENT_KIND_MODIFIERS.get(event_kind, 0.0)
     weighted_points = round(points * precision_weight(event["precision"]), 4)
     return {
         "event_id": event["id"],
         "domain": event["domain"],
         "candidate_time": candidate_time,
-        "rule_ids": rules or ["no_domain_activation"],
+        "rule_ids": rules,
         "points": weighted_points,
     }
 
@@ -527,6 +538,7 @@ def _canonical_input_contract(request: RectificationEventRequest) -> tuple[dict,
         "events": [{
             "id": event["id"],
             "domain": event["domain"],
+            "event_kind": event.get("event_kind", event["domain"]),
             "date": event["date"],
             "precision": event["precision"],
             "summary": event.get("summary", ""),

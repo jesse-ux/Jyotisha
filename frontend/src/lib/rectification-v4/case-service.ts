@@ -8,6 +8,7 @@ import type {
 import { rectificationAgentV5Protocol, rectificationV4AlgorithmVersion, rectificationV4Protocol } from "./contracts.ts";
 import { selectRectificationDeploymentMode } from "../rectification-agent/feature-policy.ts";
 import { CURRENT_RECTIFICATION_PROMPT_VERSION, CURRENT_RECTIFICATION_SKILL_VERSION } from "../rectification-agent/contracts.ts";
+import { regenerateDirectorQuestion } from "../rectification-agent/director-agent.ts";
 import { regenerateQuestionRealization } from "../rectification-agent/renderer-agent.ts";
 import { calculationSpecHash, evidenceSetHash } from "./fingerprints.ts";
 import { openingQuestion } from "./opening-question.ts";
@@ -20,10 +21,12 @@ export function createRectificationV4CaseService(
   options: {
     readonly now?: () => Date;
     readonly regenerateQuestion?: typeof regenerateQuestionRealization;
+    readonly regenerateDirectorQuestion?: typeof regenerateDirectorQuestion;
   } = {},
 ) {
   const now = options.now ?? (() => new Date());
   const realizeQuestion = options.regenerateQuestion ?? regenerateQuestionRealization;
+  const redirectQuestion = options.regenerateDirectorQuestion ?? regenerateDirectorQuestion;
 
   async function response(userId: string, caseValue: RectificationV4Case, jobId?: string): Promise<RectificationV4ApiResponse> {
     const [events, turns, analysis, job] = await Promise.all([
@@ -123,19 +126,30 @@ export function createRectificationV4CaseService(
           const current = await store.loadCase(input.userId, input.caseId);
           if (!current?.currentQuestion || current.deploymentMode !== "v5_agent") return null;
           const validated = await store.loadLatestValidatedDecision(input.userId, input.caseId);
-          const opportunity = validated?.selectedOpportunity;
-          if (!opportunity) return null;
+          if (!validated || validated.decision.action !== "ask_question") return null;
           const [events, turns] = await Promise.all([
             store.loadEvents(input.userId, input.caseId),
             store.loadTurns(input.userId, input.caseId),
           ]);
-          const prompt = await realizeQuestion({
-            caseValue: current,
-            currentPrompt: current.currentQuestion.prompt,
-            latestAnswer: turns.at(-1)?.answer ?? "",
-            acceptedEvents: events,
-            opportunity,
-          });
+          let prompt: string;
+          if (validated.selectedOpportunity) {
+            prompt = await realizeQuestion({
+              caseValue: current,
+              currentPrompt: current.currentQuestion.prompt,
+              latestAnswer: turns.at(-1)?.answer ?? "",
+              acceptedEvents: events,
+              opportunity: validated.selectedOpportunity,
+            });
+          } else {
+            if (!("focus" in validated.decision)) return null;
+            prompt = await redirectQuestion({
+              caseValue: current,
+              currentQuestion: current.currentQuestion.prompt,
+              latestAnswer: turns.at(-1)?.answer ?? "",
+              acceptedEvents: events,
+              focus: validated.decision.focus,
+            });
+          }
           return store.replaceCurrentQuestion({
             ...input,
             question: { ...current.currentQuestion, id: randomUUID(), prompt },

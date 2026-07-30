@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { clockTimeSchema, evidenceDomainSchema, rectificationAnalysisTraceSchema, rectificationDeploymentModeSchema } from "../rectification-v4/contracts.ts";
+import { clockTimeSchema, eventKindSchema, eventSubjectSchema, evidenceDomainSchema, relatedPersonSchema, rectificationAnalysisTraceSchema, rectificationDeploymentModeSchema } from "../rectification-v4/contracts.ts";
 
 const uuid = z.string().uuid();
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
 const nonblank = (max: number) => z.string().trim().min(1).max(max);
 
 export const CURRENT_RECTIFICATION_SKILL_VERSION = "birth-time-rectification-v6" as const;
-export const CURRENT_RECTIFICATION_PROMPT_VERSION = "rectification-agent-v6-1" as const;
+export const CURRENT_RECTIFICATION_PROMPT_VERSION = "rectification-director-v1" as const;
 
 export const rectificationDiagnosticSchema = z.enum([
   "leave_one_event_out",
@@ -17,12 +17,144 @@ export const rectificationDiagnosticSchema = z.enum([
 ]);
 export type RectificationDiagnostic = z.infer<typeof rectificationDiagnosticSchema>;
 
-export const rectificationDecisionSchema = z.discriminatedUnion("action", [
+export const targetDispositionSchema = z.enum([
+  "resolved",
+  "unknown",
+  "declined",
+  "direction_change",
+  "answered_other_event",
+  "unresolved",
+  "not_applicable",
+]);
+
+export const evidenceProposalSchema = z.object({
+  operation: z.enum(["create", "revise", "ignore"]),
+  targetEventId: uuid.nullable(),
+  sourceSpan: nonblank(4_000),
+  dateText: nonblank(80).nullable(),
+  proposedSummary: nonblank(1_000),
+  proposedDomain: evidenceDomainSchema,
+  proposedEventKind: eventKindSchema,
+  proposedSubject: eventSubjectSchema,
+  proposedRelatedPerson: relatedPersonSchema.nullable(),
+  confidence: z.enum(["high", "medium", "low"]),
+}).strict();
+export type EvidenceProposal = z.infer<typeof evidenceProposalSchema>;
+
+export const rectificationFocusSchema = z.object({
+  mode: z.enum([
+    "clarify_existing_event",
+    "collect_independent_event",
+    "pair_related_event",
+    "resolve_conflict",
+    "distinguish_candidate_clusters",
+  ]),
+  targetEventId: uuid.nullable(),
+  domain: evidenceDomainSchema.nullable(),
+  requestedFacts: z.array(z.enum([
+    "year",
+    "month",
+    "day_or_period",
+    "subject",
+    "event_type",
+    "event_stage",
+    "independent_event",
+    "paired_event",
+  ])).max(3),
+  rationaleCodes: z.array(nonblank(80)).max(8),
+}).strict();
+export type RectificationFocus = z.infer<typeof rectificationFocusSchema>;
+
+const directorActionSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("ask_question"),
+    focus: rectificationFocusSchema,
+    question: nonblank(240),
+    optionalQuickReplies: z.array(z.object({ label: nonblank(40), value: nonblank(120) }).strict()).max(4),
+  }).strict(),
+  z.object({ type: z.literal("request_diagnostic"), diagnostic: rectificationDiagnosticSchema }).strict(),
+  z.object({ type: z.literal("offer_candidate_range"), snapshotId: uuid }).strict(),
+  z.object({ type: z.literal("stop_low_confidence"), reasonCodes: z.array(nonblank(80)).min(1).max(8) }).strict(),
+]);
+
+export const rectificationTurnPlanSchema = z.object({
+  contractVersion: z.literal("rectification-turn-plan-v1"),
+  targetDisposition: targetDispositionSchema,
+  evidenceProposals: z.array(evidenceProposalSchema).max(8),
+  action: directorActionSchema,
+  publicReply: z.object({
+    acknowledgement: nonblank(1_000),
+    candidateCommentary: nonblank(1_000).nullable(),
+    limitation: nonblank(1_000).nullable(),
+  }).strict(),
+}).strict();
+export type RectificationTurnPlan = z.infer<typeof rectificationTurnPlanSchema>;
+
+export const rectificationCaseDossierSchema = z.object({
+  case: z.object({
+    candidateWindow: z.object({ start: clockTimeSchema, end: clockTimeSchema }).strict(),
+    birthDate: nonblank(10),
+    location: z.object({
+      latitude: z.number().finite(),
+      longitude: z.number().finite(),
+      timezoneId: z.string().nullable(),
+      timezoneOffsetHours: z.number().finite(),
+    }).strict(),
+    birthTimeSource: z.string().nullable(),
+    algorithmVersion: nonblank(120),
+  }).strict(),
+  conversation: z.object({
+    recentRawTurns: z.array(z.object({ question: z.string(), answer: z.string() }).strict()).max(12),
+    earlierConversationSummary: z.string().nullable(),
+  }).strict(),
+  eventLedger: z.array(z.object({
+    eventId: uuid,
+    revision: z.number().int().positive(),
+    summary: nonblank(1_000),
+    rawText: nonblank(4_000),
+    domain: evidenceDomainSchema,
+    eventKind: eventKindSchema,
+    subject: eventSubjectSchema,
+    relatedPerson: relatedPersonSchema.nullable(),
+    dateRange: z.object({ start: nonblank(10), end: nonblank(10), precision: nonblank(20), label: nonblank(80) }).strict(),
+    scoreability: nonblank(40),
+    status: z.enum(["active", "superseded", "pending"]),
+  }).strict()),
+  interviewState: z.object({
+    currentTargetEventId: uuid.nullable(),
+    declinedDomains: z.array(evidenceDomainSchema),
+    unresolvedTargets: z.array(uuid),
+    askedTopics: z.array(z.string()).max(50),
+    turnCount: z.number().int().nonnegative(),
+    targetDisposition: targetDispositionSchema,
+  }).strict(),
+  candidateState: z.object({
+    hasSnapshot: z.boolean(),
+    publicRangeAllowed: z.boolean(),
+    rangeChanged: z.boolean(),
+    topClusters: z.array(z.object({ rank: z.number().int(), widthMinutes: z.number().int(), stability: z.enum(["stable", "unstable"]) }).strict()).max(4),
+    contrasts: z.array(z.object({ techniqueLayers: z.array(z.string()), relevantEventIds: z.array(uuid) }).strict()).max(8),
+    eventDiagnostics: z.array(z.object({ eventId: uuid, winnerRetentionRate: z.number(), scoreVariance: z.number() }).strict()).max(100),
+    gateReasons: z.array(z.string()).max(20),
+    currentSnapshotId: uuid.nullable(),
+  }).strict(),
+  capabilities: z.object({
+    supportedDomains: z.array(evidenceDomainSchema),
+    supportedEventKinds: z.array(eventKindSchema),
+    maxQuestionsPerTurn: z.literal(1),
+    maxDiagnosticsPerRun: z.number().int().min(0).max(2),
+    forbiddenPublicClaims: z.array(z.string()),
+  }).strict(),
+}).strict();
+export type RectificationCaseDossier = z.infer<typeof rectificationCaseDossierSchema>;
+
+export const rectificationDecisionSchema = z.union([
   z.object({
     action: z.literal("ask_question"),
     opportunityId: uuid,
     narrativeFocus: z.array(z.enum(["latest_event", "candidate_change", "date_precision", "uncertainty"])).max(3),
   }).strict(),
+  z.object({ action: z.literal("ask_question"), focus: rectificationFocusSchema, question: nonblank(240) }).strict(),
   z.object({ action: z.literal("run_diagnostic"), diagnostic: rectificationDiagnosticSchema }).strict(),
   z.object({ action: z.literal("offer_candidate_range"), snapshotId: uuid }).strict(),
   z.object({ action: z.literal("stop_low_confidence"), reasonCodes: z.array(nonblank(80)).min(1).max(8) }).strict(),
@@ -336,7 +468,7 @@ export function validateRectificationDecision(input: Readonly<{
   const issues: string[] = [];
   if (input.caseId && input.diagnostics.caseId !== input.caseId) issues.push("diagnostics_case_mismatch");
   if ((input.toolCallCount ?? 0) > (input.maxToolCalls ?? 2)) issues.push("tool_call_budget_exceeded");
-  if (decision.action === "ask_question") {
+  if (decision.action === "ask_question" && "opportunityId" in decision) {
     const opportunity = input.opportunities.find((item) => item.opportunityId === decision.opportunityId && item.active);
     if (!opportunity) issues.push("opportunity_not_active");
     if (opportunity?.kind === "clarify_event_subject" && !opportunity.targetEventId) issues.push("subject_clarification_requires_target_event");

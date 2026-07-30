@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { extractLifeEventEvidence, type ExtractedLifeEventEvidence } from "../conversational-rectification/evidence-extractor.ts";
+import { extractLifeEventEvidence, parseDeclaredDateText, validatedModelAssistedEvidence, type ExtractedLifeEventEvidence } from "../conversational-rectification/evidence-extractor.ts";
+import type { EvidenceProposal } from "../rectification-agent/contracts.ts";
 import type {
   EventKind,
   EvidenceDomain,
@@ -214,4 +215,73 @@ export function reconcileV4Evidence(input: {
 
 export function extractV4EventRevisions(input: Omit<Parameters<typeof reconcileV4Evidence>[0], "caseId"> & { readonly caseId?: string }): readonly LifeEventRevision[] {
   return reconcileV4Evidence({ ...input, caseId: input.caseId ?? "00000000-0000-4000-8000-000000000000" }).revisions;
+}
+
+
+export function stageAgentEvidenceProposals(input: Readonly<{
+  caseId: string;
+  rawText: string;
+  sourceTurnId: string;
+  asOfDate: string;
+  existing: readonly LifeEventRevision[];
+  proposals: readonly EvidenceProposal[];
+  now?: Date;
+}>): ReconciledV4Evidence {
+  const revisions: LifeEventRevision[] = [];
+  const pending: PendingEvidence[] = [];
+  const active = latestEventRevisions(input.existing);
+  for (const proposal of input.proposals) {
+    if (proposal.operation === "ignore") continue;
+    if (!input.rawText.includes(proposal.sourceSpan) || !proposal.dateText || !input.rawText.includes(proposal.dateText)) {
+      pending.push(pendingEvidence({ caseId: input.caseId, turnId: input.sourceTurnId, rawText: input.rawText, reasonCode: proposal.dateText ? "event_unparsed" : "date_unresolved", targetEventId: proposal.targetEventId, now: input.now }));
+      continue;
+    }
+    const extracted = validatedModelAssistedEvidence({
+      rawText: input.rawText,
+      sourceTurnId: input.sourceTurnId,
+      asOfDate: input.asOfDate,
+      extraction: {
+        sourceSpan: proposal.sourceSpan,
+        summary: proposal.proposedSummary,
+        domain: proposal.proposedDomain,
+        eventKind: proposal.proposedEventKind,
+        subject: proposal.proposedSubject,
+        relatedPerson: proposal.proposedRelatedPerson,
+        dateText: proposal.dateText,
+      },
+    });
+    if (!extracted?.dateValue || extracted.datePrecision === "unknown") {
+      pending.push(pendingEvidence({ caseId: input.caseId, turnId: input.sourceTurnId, rawText: input.rawText, reasonCode: "event_unparsed", targetEventId: proposal.targetEventId, now: input.now }));
+      continue;
+    }
+    if (proposal.operation === "create") {
+      const revision = newRevision(extracted, [...input.existing, ...revisions], input.now);
+      if (revision && !revisions.some((value) => value.eventId === revision.eventId)) revisions.push(revision);
+      continue;
+    }
+    const target = proposal.targetEventId ? active.find((event) => event.eventId === proposal.targetEventId) : null;
+    const parsedDate = parseDeclaredDateText(proposal.dateText.normalize("NFKC"), input.asOfDate);
+    if (!target || !parsedDate) {
+      pending.push(pendingEvidence({ caseId: input.caseId, turnId: input.sourceTurnId, rawText: input.rawText, reasonCode: "event_unparsed", targetEventId: proposal.targetEventId, now: input.now }));
+      continue;
+    }
+    revisions.push(appendEventRevision([...input.existing, ...revisions], {
+      eventId: target.eventId,
+      domain: extracted.domain as EvidenceDomain,
+      eventKind: normalizeKind(extracted.domain as EvidenceDomain, extracted.eventKind, extracted.eventSummary),
+      subject: extracted.subject as EventSubject,
+      relatedPerson: extracted.relatedPerson as RelatedPerson | null,
+      summary: proposal.proposedSummary,
+      rawText: input.rawText,
+      dateRange: dateRangeFromDeclared(parsedDate.value, parsedDate.precision),
+      ...eventDateProvenance(target),
+      scoreability: extracted.scoreability as Scoreability,
+    }, { now: input.now }));
+  }
+  return {
+    revisions,
+    pending,
+    unansweredTargetEventId: null,
+    targetDisposition: revisions.length ? "resolved" : "unresolved",
+  };
 }

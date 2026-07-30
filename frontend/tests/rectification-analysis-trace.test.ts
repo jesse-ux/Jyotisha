@@ -253,7 +253,10 @@ test("below the scoring gate does not claim candidate scanning, diagnostics, or 
   assert.equal(result.snapshot, null);
   assert.equal(trace.stages.some((stage) => stage.phase === "scoring_candidates"), false);
   assert.equal(trace.stages.some((stage) => stage.phase === "checking_robustness"), false);
-  assert.equal(trace.stages.some((stage) => /安全校验|服务器安全问题/.test(stage.label)), true);
+  assert.equal(
+    trace.stages.some((stage) => stage.phase === "rendering" && stage.status === "completed"),
+    true,
+  );
   assert.deepEqual(trace.toolCalls, []);
   assert.deepEqual(trace.techniques, []);
 });

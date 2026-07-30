@@ -3,7 +3,8 @@ import type { CandidateEngineResult, RectificationV4CandidateEngine } from "../r
 import { buildCandidateClusters } from "../rectification-v4/candidate-clusters.ts";
 import type { CandidateSnapshot, RectificationAnalysisTrace, RectificationV4Question } from "../rectification-v4/contracts.ts";
 import { evaluateDecisionGate } from "../rectification-v4/decision-gate.ts";
-import { reconcileV4Evidence } from "../rectification-v4/extraction.ts";
+import { reconcileV4Evidence, stageAgentEvidenceProposals } from "../rectification-v4/extraction.ts";
+import { buildRectificationCaseDossier, runRectificationDirector } from "./director-agent.ts";
 import { extractEventWithModel } from "./event-extractor-agent.ts";
 import { evidenceSetHash } from "../rectification-v4/fingerprints.ts";
 import { latestEventRevisions, scoreableEvents } from "../rectification-v4/evidence-ledger.ts";
@@ -11,7 +12,6 @@ import { projectLegacyV4Turn } from "../rectification-v4/legacy-projector.ts";
 import type { ClaimedRectificationV4Job } from "../rectification-v4/store.ts";
 import { deterministicDecision } from "./fallback-policy.ts";
 import { buildQuestionOpportunities } from "./opportunity-builder.ts";
-import { renderPublicTurn } from "./renderer-agent.ts";
 import { runBoundedReasoner } from "./reasoner-agent.ts";
 import { recordRectificationAgentTelemetry } from "./telemetry.ts";
 import {
@@ -144,36 +144,51 @@ export async function processRectificationAgentTurn(input: Readonly<{
   };
   await enterPhase("extracting_evidence");
   const asOfDate = now.toISOString().slice(0, 10);
-  let reconciliation = claimed.turn.answer ? reconcileV4Evidence({
-    caseId: claimed.case.id,
-    answer: claimed.turn.answer,
-    sourceTurnId: claimed.turn.id,
-    asOfDate,
-    existing: claimed.events,
-    targetEventId: claimed.turn.questionTargetEventId,
-    now,
-  }) : { revisions: [], pending: [], unansweredTargetEventId: null, targetDisposition: "not_applicable" as const };
-  const needsAssistance = claimed.case.deploymentMode !== "v4_legacy" && (
+  const provisionalDisposition = claimed.turn.questionTargetEventId ? "unresolved" as const : "not_applicable" as const;
+  const provisionalDiagnostics = diagnosticsSummarySchema.parse({
+    id: randomUUID(), caseId: claimed.case.id, snapshotId: claimed.case.latestSnapshot?.id ?? randomUUID(),
+    primaryClusterRetentionRate: 0, leaveOneEventOutRetentionRate: 0, leaveOneDomainOutRetentionRate: 0,
+    dateSensitivityRetentionRate: 0, neighborSupportMinutes: 0, primarySecondaryMarginPercent: 0,
+    clusterMassRatio: 0, unstableEventIds: [], mostDiscriminatingLayers: [], eventDateSensitivity: [],
+    candidateSplits: [], calculationHash: hash(claimed.events), createdAt: now.toISOString(),
+  });
+  let evidenceDirector: Awaited<ReturnType<typeof runRectificationDirector>> | null = null;
+  let reconciliation;
+  if (claimed.case.deploymentMode !== "v4_legacy" && claimed.turn.answer) {
+    const dossier = buildRectificationCaseDossier({
+      caseValue: claimed.case, turns: claimed.turns, events: claimed.events, snapshot: claimed.case.latestSnapshot,
+      previousSnapshot: claimed.case.latestSnapshot, diagnostics: null, targetDisposition: provisionalDisposition,
+      currentTargetEventId: claimed.turn.questionTargetEventId,
+    });
+    evidenceDirector = await runRectificationDirector({
+      caseValue: claimed.case, dossier, latestAnswer: claimed.turn.answer, phase: "evidence", diagnostics: provisionalDiagnostics,
+    });
+    reconciliation = claimed.case.deploymentMode === "v5_agent" && evidenceDirector.mode === "agent" && evidenceDirector.plan.evidenceProposals.length
+      ? stageAgentEvidenceProposals({ caseId: claimed.case.id, rawText: claimed.turn.answer, sourceTurnId: claimed.turn.id, asOfDate, existing: claimed.events, proposals: evidenceDirector.plan.evidenceProposals, now })
+      : reconcileV4Evidence({ caseId: claimed.case.id, answer: claimed.turn.answer, sourceTurnId: claimed.turn.id, asOfDate, existing: claimed.events, targetEventId: claimed.turn.questionTargetEventId, now });
+    if (claimed.case.deploymentMode === "v5_agent" && evidenceDirector.mode === "agent") {
+      const proposedDisposition = evidenceDirector.plan.targetDisposition;
+      const currentTarget = claimed.turn.questionTargetEventId;
+      const revisedCurrentTarget = Boolean(currentTarget && reconciliation.revisions.some((event) => event.eventId === currentTarget));
+      const addedOtherEvent = reconciliation.revisions.some((event) => event.eventId !== currentTarget);
+      const stagedDispositionIsValid = proposedDisposition !== "resolved" && proposedDisposition !== "answered_other_event"
+        || proposedDisposition === "resolved" && revisedCurrentTarget
+        || proposedDisposition === "answered_other_event" && addedOtherEvent;
+      if (stagedDispositionIsValid) reconciliation = { ...reconciliation, targetDisposition: proposedDisposition };
+    }
+  } else {
+    reconciliation = claimed.turn.answer ? reconcileV4Evidence({
+      caseId: claimed.case.id, answer: claimed.turn.answer, sourceTurnId: claimed.turn.id, asOfDate,
+      existing: claimed.events, targetEventId: claimed.turn.questionTargetEventId, now,
+    }) : { revisions: [], pending: [], unansweredTargetEventId: null, targetDisposition: "not_applicable" as const };
+  }
+  const needsAssistance = claimed.case.deploymentMode === "v4_legacy" && (
     reconciliation.pending.some((event) => event.reasonCode === "event_unparsed")
     || reconciliation.revisions.some((event) => event.scoreability === "pending_review" || event.scoreability === "unsupported")
   );
   if (needsAssistance) {
-    const assisted = await extractEventWithModel({
-      rawText: claimed.turn.answer,
-      sourceTurnId: claimed.turn.id,
-      asOfDate,
-      modelId: claimed.case.orchestrationModelId,
-    });
-    if (assisted) reconciliation = reconcileV4Evidence({
-      caseId: claimed.case.id,
-      answer: claimed.turn.answer,
-      sourceTurnId: claimed.turn.id,
-      asOfDate,
-      existing: claimed.events,
-      targetEventId: claimed.turn.questionTargetEventId,
-      assistedEvidence: [assisted],
-      now,
-    });
+    const assisted = await extractEventWithModel({ rawText: claimed.turn.answer, sourceTurnId: claimed.turn.id, asOfDate, modelId: claimed.case.orchestrationModelId });
+    if (assisted) reconciliation = reconcileV4Evidence({ caseId: claimed.case.id, answer: claimed.turn.answer, sourceTurnId: claimed.turn.id, asOfDate, existing: claimed.events, targetEventId: claimed.turn.questionTargetEventId, assistedEvidence: [assisted], now });
   }
   const extracted = reconciliation.revisions;
   const events = latestEventRevisions([...claimed.events, ...extracted]);
@@ -336,6 +351,95 @@ export async function processRectificationAgentTurn(input: Readonly<{
     createdAt: now.toISOString(),
   });
 
+  if (claimed.case.deploymentMode !== "v4_legacy") {
+    await enterPhase("planning_question");
+    const dossier = buildRectificationCaseDossier({
+      caseValue: claimed.case, turns: claimed.turns, events, pendingEvidence: reconciliation.pending,
+      snapshot, previousSnapshot: claimed.case.latestSnapshot, diagnostics,
+      targetDisposition: reconciliation.targetDisposition, currentTargetEventId: claimed.turn.questionTargetEventId,
+    });
+    await enterPhase("reasoning");
+    const directed = await runRectificationDirector({
+      caseValue: claimed.case, dossier, latestAnswer: claimed.turn.answer, phase: "final", diagnostics: safeDiagnostics,
+    });
+    const plan = directed.plan;
+    const action = plan.action;
+    if (action.type === "request_diagnostic") {
+      throw new Error("rectification_director_diagnostic_loop_incomplete");
+    }
+    const decision = action.type === "ask_question"
+      ? { action: "ask_question" as const, focus: action.focus, question: action.question }
+      : action.type === "offer_candidate_range"
+        ? { action: "offer_candidate_range" as const, snapshotId: action.snapshotId }
+        : { action: "stop_low_confidence" as const, reasonCodes: action.reasonCodes };
+    const validatedDecision: ValidatedDecision = {
+      decision,
+      mode: directed.mode,
+      validationIssues: directed.fallbackReason ? [directed.fallbackReason] : [],
+      selectedOpportunity: null,
+    };
+    await enterPhase("rendering");
+    finishPhase();
+    for (const call of directed.toolCalls) analysisToolCalls.push({
+      category: "agent_diagnostic", label: call.diagnostic ? diagnosticLabels[call.diagnostic] : "只读诊断",
+      outcome: call.outcome, durationMs: call.durationMs,
+    });
+    const publicMessage: StoredPublicMessage = {
+      acknowledgement: plan.publicReply.acknowledgement,
+      candidateUpdate: plan.publicReply.candidateCommentary,
+      limitation: plan.publicReply.limitation,
+      question: action.type === "ask_question" ? action.question : null,
+      analysisTrace: {
+        status: "completed", stages, toolCalls: analysisToolCalls, techniques: publicRectificationTechniques(engineResult),
+        reasoningSummary: null, reasoningSource: "none",
+      },
+    };
+    const targetEvent = action.type === "ask_question" && action.focus.targetEventId
+      ? events.find((event) => event.eventId === action.focus.targetEventId) ?? null
+      : null;
+    const nextQuestion: RectificationV4Question | null = action.type === "ask_question" ? {
+      id: randomUUID(),
+      domain: action.focus.domain ?? targetEvent?.domain ?? "other",
+      targetEventId: action.focus.targetEventId,
+      prompt: action.question,
+      recallCost: "medium",
+      reason: action.focus.rationaleCodes.join(",").slice(0, 240) || "agent_directed_focus",
+    } : null;
+    const status = action.type === "offer_candidate_range" ? "range_ready" as const
+      : action.type === "stop_low_confidence" ? "paused" as const
+        : "awaiting_answer" as const;
+    const totalInput = [evidenceDirector?.inputTokenCount, directed.inputTokenCount].filter((value): value is number => value !== null && value !== undefined).reduce((sum, value) => sum + value, 0);
+    const totalOutput = [evidenceDirector?.outputTokenCount, directed.outputTokenCount].filter((value): value is number => value !== null && value !== undefined).reduce((sum, value) => sum + value, 0);
+    const fallbackReason = [evidenceDirector?.fallbackReason, directed.fallbackReason].filter(Boolean).join(";").slice(0, 120) || null;
+    const agentRun: AgentRun = {
+      id: randomUUID(), caseId: claimed.case.id, jobId: claimed.job.id, caseVersion: claimed.case.version,
+      modelId: claimed.case.orchestrationModelId, skillVersion: claimed.case.skillVersion, promptVersion: claimed.case.promptVersion,
+      deploymentMode: claimed.case.deploymentMode, deploymentSha: process.env.DEPLOYMENT_SHA?.trim() || null,
+      decision, validatedDecision, toolCalls: [...directed.toolCalls], fallbackReason,
+      inputTokenCount: totalInput || null, outputTokenCount: totalOutput || null,
+      latencyMs: Math.min(300_000, (evidenceDirector?.latencyMs ?? 0) + directed.latencyMs), createdAt: now.toISOString(),
+    };
+    if (claimed.case.deploymentMode === "v5_shadow") {
+      const legacy = projectLegacyV4Turn({
+        events,
+        newEvents: extracted,
+        attemptedRefinementEventIds: claimed.attemptedRefinementEventIds,
+        latestAnswer: claimed.turn.answer,
+        snapshot,
+      });
+      return {
+        newEventRevisions: extracted, pendingEvidence: [...reconciliation.pending], snapshot, diagnostics, featureSnapshot,
+        validatedDecision, publicMessage: { ...legacy.publicMessage, analysisTrace: publicMessage.analysisTrace },
+        nextQuestion: legacy.nextQuestion, agentRun, status: legacy.status, phase: legacy.phase,
+      };
+    }
+    return {
+      newEventRevisions: extracted, pendingEvidence: [...reconciliation.pending], snapshot, diagnostics, featureSnapshot,
+      validatedDecision, publicMessage, nextQuestion, agentRun, status,
+      phase: status === "awaiting_answer" ? "collecting_evidence" as const : "complete" as const,
+    };
+  }
+
   await enterPhase("planning_question");
   const opportunities = buildQuestionOpportunities({
     caseId: claimed.case.id,
@@ -394,7 +498,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
   }
   const finalDecision = validation.decision;
   if (!finalDecision) throw new Error("rectification_v5_fallback_validation_failed");
-  const selectedOpportunity = finalDecision.action === "ask_question"
+  const selectedOpportunity = finalDecision.action === "ask_question" && "opportunityId" in finalDecision
     ? opportunities.find((item) => item.opportunityId === finalDecision.opportunityId) ?? null
     : null;
   const validatedDecision: ValidatedDecision = {
@@ -412,37 +516,8 @@ export async function processRectificationAgentTurn(input: Readonly<{
     latestAnswer: claimed.turn.answer,
     snapshot,
   });
-  const agentVisible = claimed.case.deploymentMode === "v5_agent";
-  let rendererRealization: "model_validated" | "server_fallback" | null = null;
-  let rendererFallbackReason: "model_unavailable" | "question_rejected" | "model_failed" | null = null;
-  const renderedMessage = agentVisible
-    ? await renderPublicTurn({
-      caseValue: claimed.case,
-      latestAnswer: claimed.turn.answer,
-      acceptedEvents: extracted,
-      pendingEvidence: reconciliation.pending,
-      snapshot,
-      previousSnapshot: claimed.case.latestSnapshot,
-      validated: validatedDecision,
-      onRealization: (outcome) => {
-        rendererRealization = outcome.mode;
-        rendererFallbackReason = outcome.reason;
-      },
-    })
-    : legacyProjection.publicMessage;
+  const renderedMessage = legacyProjection.publicMessage;
   finishPhase();
-  if (agentVisible && rendererRealization) {
-    stages.push({
-      phase: "rendering",
-      label: rendererRealization === "model_validated"
-        ? "自然语言问题已通过安全校验"
-        : rendererFallbackReason === "question_rejected"
-          ? "模型问题未通过安全校验，已使用服务器安全问题"
-          : "模型回复不可用，已使用服务器安全问题",
-      status: "completed",
-      durationMs: null,
-    });
-  }
   for (const call of reasoned.toolCalls) {
     analysisToolCalls.push({
       category: "agent_diagnostic",
@@ -453,7 +528,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
   }
   const reasoningSummary = reasoned.mode === "agent" && !fallbackReason ? reasoned.reasoningSummary : null;
   const analysisTrace: RectificationAnalysisTrace = {
-    status: claimed.case.deploymentMode === "v4_legacy" ? "legacy" : "completed",
+    status: "legacy",
     stages,
     toolCalls: analysisToolCalls,
     techniques: publicRectificationTechniques(engineResult),
@@ -461,28 +536,9 @@ export async function processRectificationAgentTurn(input: Readonly<{
     reasoningSource: reasoningSummary ? "provider_summary" : "none",
   };
   const publicMessage: StoredPublicMessage = { ...renderedMessage, analysisTrace };
-  const nextQuestion = agentVisible && selectedOpportunity ? {
-    id: randomUUID(),
-    domain: selectedOpportunity.domain,
-    targetEventId: selectedOpportunity.targetEventId,
-    prompt: publicMessage.question ?? selectedOpportunity.fallbackPrompt,
-    recallCost: selectedOpportunity.privacyCost >= .2
-      ? "high" as const
-      : selectedOpportunity.recallEase < .6
-        ? "medium" as const
-        : "low" as const,
-    reason: selectedOpportunity.reason,
-  } : agentVisible ? null : legacyProjection.nextQuestion;
-  const status = agentVisible
-    ? finalDecision.action === "offer_candidate_range"
-      ? "range_ready" as const
-      : finalDecision.action === "stop_low_confidence"
-        ? "paused" as const
-        : "awaiting_answer" as const
-    : legacyProjection.status;
-  const phase = agentVisible
-    ? status === "awaiting_answer" ? "collecting_evidence" as const : "complete" as const
-    : legacyProjection.phase;
+  const nextQuestion = legacyProjection.nextQuestion;
+  const status = legacyProjection.status;
+  const phase = legacyProjection.phase;
 
   const agentRun: AgentRun = {
     id: randomUUID(),
