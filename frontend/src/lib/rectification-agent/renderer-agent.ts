@@ -15,7 +15,7 @@ const multiQuestionMoves = /(?:另外|还有|同时再说|并且告诉我|顺便
 const cannedQuestion = /(?:承接[“\"']?.{0,80}[”\"']?，?请再说一件|接下来请继续讲另一件|我会顺着你的叙述继续核对|以[“\"']?.{0,80}[”\"']?为(?:时间)?参照|搬到新城市|长期离乡)/;
 const exactClockMinute = /(?:[01]?\d|2[0-3])[:：][0-5]\d|(?:[零〇一二两三四五六七八九十]{1,3}|(?:[01]?\d|2[0-3]))点(?:[零〇一二两三四五六七八九十]{1,3}|[0-5]?\d)分/;
 const exactMinuteClaim = /(?:唯一|准确|精确|确切|确认|确定|代表).{0,12}(?:出生|生时)?(?:时间|时刻|分钟)|(?:出生|生时)(?:时间|时刻|分钟)?.{0,12}(?:唯一|准确|精确|确切|确认|确定|代表|就是)/;
-const distinctEventMove = /(?:除了|另一(?:件|次)|下(?:一|1)次|之后|后来|此后|还记得)/;
+const distinctEventMove = /(?:除了|之外|另一(?:件|次)|下(?:一|1)次|之后|后来|此后|还记得)/;
 const explicitAnchorReference = /(?:这次经历|这段经历|刚才那段|刚才这段|你刚说的|你刚提到的|刚说的|刚提到的|前面那段|这件事)/;
 const newEventDomainTerms: Readonly<Partial<Record<QuestionOpportunity["domain"], RegExp>>> = {
   education: /(?:入学|升学|毕业|学校|大学|专业|考试|读书)/,
@@ -37,7 +37,7 @@ function agentFor(modelId: string | null): { id: string; agent: Agent } | null {
     name: "Birth Time Rectification Response Renderer",
     model: selected.model,
     skills: [skillPath],
-    instructions: "Write concise natural Simplified Chinese. Realize exactly one question from the supplied semantic opportunity. Do not invent events or dates, switch targets, interpret the life meaning of an experience, expose ids/scores/techniques, mention a representative minute, or claim an exact birth minute. Avoid canned acknowledgement. Return strict JSON only.",
+    instructions: "Write concise natural Simplified Chinese. Realize exactly one question from the supplied semantic opportunity. For a new event, use the supplied recall cues as optional examples, ask whether one such event happened instead of assuming it did, and preserve the user's ability to say no, forget, decline, or change direction. Do not invent events, ages, date windows or dates, switch targets, interpret the life meaning of an experience, expose ids/scores/techniques, mention a representative minute, or claim an exact birth minute. Avoid canned acknowledgement. Return strict JSON only.",
   });
   agents.set(selected.id, agent);
   return { id: selected.id, agent };
@@ -193,6 +193,10 @@ export async function renderPublicTurn(input: Readonly<{
   previousSnapshot: CandidateSnapshot | null;
   validated: ValidatedDecision;
   timeoutMs?: number;
+  onRealization?: (outcome: Readonly<{
+    mode: "model_validated" | "server_fallback";
+    reason: "model_unavailable" | "question_rejected" | "model_failed" | null;
+  }>) => void;
 }>): Promise<PublicMessage> {
   const started = Date.now();
   const deploymentSha = process.env.DEPLOYMENT_SHA?.trim() || null;
@@ -200,6 +204,7 @@ export async function renderPublicTurn(input: Readonly<{
   const selected = agentFor(input.caseValue.narrationModelId);
   if (!selected) {
     recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "fallback", outcome: "succeeded", modelId: input.caseValue.narrationModelId, toolName: null, decisionAction: input.validated.decision.action, durationMs: Date.now() - started, errorCode: "renderer_model_unavailable", deploymentSha });
+    input.onRealization?.({ mode: "server_fallback", reason: "model_unavailable" });
     return fallback;
   }
   recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "renderer", outcome: "started", modelId: selected.id, toolName: null, decisionAction: input.validated.decision.action, durationMs: null, errorCode: null, deploymentSha });
@@ -226,13 +231,16 @@ export async function renderPublicTurn(input: Readonly<{
     if (questionValidation && !questionValidation.valid) {
       recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "renderer", outcome: "rejected", modelId: selected.id, toolName: null, decisionAction: input.validated.decision.action, durationMs: Date.now() - started, errorCode: questionValidation.issues[0] ?? "renderer_question_rejected", deploymentSha });
       recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "fallback", outcome: "succeeded", modelId: selected.id, toolName: null, decisionAction: input.validated.decision.action, durationMs: Date.now() - started, errorCode: "renderer_question_rejected", deploymentSha });
+      input.onRealization?.({ mode: "server_fallback", reason: "question_rejected" });
       return message;
     }
     recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "renderer", outcome: "succeeded", modelId: selected.id, toolName: null, decisionAction: input.validated.decision.action, durationMs: Date.now() - started, errorCode: null, deploymentSha });
+    input.onRealization?.({ mode: "model_validated", reason: null });
     return message;
   } catch {
     recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "renderer", outcome: "failed", modelId: selected.id, toolName: null, decisionAction: input.validated.decision.action, durationMs: Date.now() - started, errorCode: "renderer_failed", deploymentSha });
     recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "fallback", outcome: "succeeded", modelId: selected.id, toolName: null, decisionAction: input.validated.decision.action, durationMs: Date.now() - started, errorCode: "renderer_failed", deploymentSha });
+    input.onRealization?.({ mode: "server_fallback", reason: "model_failed" });
     return fallback;
   }
 }
