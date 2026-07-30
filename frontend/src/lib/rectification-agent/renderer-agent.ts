@@ -132,7 +132,7 @@ export function candidateUpdateFor(input: Readonly<{
   const previous = primaryRange(input.previousSnapshot);
   const firstStable = !input.previousSnapshot?.canAcceptRange;
   const changed = previous !== current;
-  if (!firstStable && !changed) return null;
+  if (input.decisionAction !== "offer_candidate_range" && !firstStable && !changed) return null;
   return `目前通过稳定性门的候选范围是 ${current}；它仍是待验证范围，不代表其中某一分钟已被确认。`;
 }
 

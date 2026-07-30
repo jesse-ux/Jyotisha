@@ -433,6 +433,7 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
         p_completion_payload_hash: rectificationFingerprint(completionPayload),
         p_event_revisions: input.newEventRevisions,
         p_pending_evidence: input.pendingEvidence,
+        p_resolved_pending_evidence: input.resolvedPendingEvidence,
         p_snapshot: input.snapshot,
         p_diagnostics: input.diagnostics,
         p_feature_snapshot: input.featureSnapshot,

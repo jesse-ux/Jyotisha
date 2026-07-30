@@ -28,7 +28,7 @@ export const targetDispositionSchema = z.enum([
 ]);
 
 export const evidenceProposalSchema = z.object({
-  operation: z.enum(["create", "revise", "ignore"]),
+  operation: z.enum(["create", "revise_date", "reclassify", "ignore"]),
   targetEventId: uuid.nullable(),
   sourceSpan: nonblank(4_000),
   dateText: nonblank(80).nullable(),

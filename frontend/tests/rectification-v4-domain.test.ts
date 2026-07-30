@@ -5,7 +5,7 @@ import { buildQuestionOpportunities } from "../src/lib/rectification-agent/oppor
 import { buildCandidateClusters } from "../src/lib/rectification-v4/candidate-clusters.ts";
 import { dateRangeFromDeclared, sampledDates } from "../src/lib/rectification-v4/date-range.ts";
 import { evaluateDecisionGate } from "../src/lib/rectification-v4/decision-gate.ts";
-import { appendEventRevision, latestEventRevisions } from "../src/lib/rectification-v4/evidence-ledger.ts";
+import { appendEventRevision, latestEventRevisions, scoreableEvents } from "../src/lib/rectification-v4/evidence-ledger.ts";
 import { extractV4EventRevisions } from "../src/lib/rectification-v4/extraction.ts";
 import { openingQuestion } from "../src/lib/rectification-v4/opening-question.ts";
 
@@ -25,17 +25,30 @@ test("declared month, quarter and year retain boundaries instead of invented mid
   assert.equal(sampledDates(dateRangeFromDeclared("2024-02", "month")).includes("2024-02-15"), false);
 });
 
-test("relationship start and end remain separate self/partner events", () => {
+test("relationship end fails closed while start and change reuse relationship scoring", () => {
   const start = revision({
     eventId: randomUUID(), domain: "relationship", eventKind: "relationship_start", subject: "self", relatedPerson: "partner",
     summary: "关系开始", rawText: "2024年5月开始", dateRange: dateRangeFromDeclared("2024-05", "month"), scoreability: "scoreable",
+  });
+  const change = revision({
+    eventId: randomUUID(), domain: "relationship", eventKind: "relationship_change", subject: "self", relatedPerson: "partner",
+    summary: "关系变化", rawText: "2024年6月关系发生变化", dateRange: dateRangeFromDeclared("2024-06", "month"), scoreability: "scoreable",
   });
   const end = revision({
     eventId: randomUUID(), domain: "relationship", eventKind: "relationship_end", subject: "self", relatedPerson: "partner",
     summary: "关系结束", rawText: "2024年8月结束", dateRange: dateRangeFromDeclared("2024-08", "month"), scoreability: "scoreable",
   });
-  assert.notEqual(start.eventId, end.eventId);
-  assert.deepEqual([start.eventKind, end.eventKind], ["relationship_start", "relationship_end"]);
+
+  assert.equal(start.scoreability, "scoreable");
+  assert.equal(change.scoreability, "scoreable");
+  assert.equal(end.scoreability, "pending_review");
+
+  const legacyScoreableEnd = { ...end, scoreability: "scoreable" as const };
+  assert.doesNotThrow(() => scoreableEvents([start, change, legacyScoreableEnd]));
+  assert.deepEqual(scoreableEvents([start, change, legacyScoreableEnd]).map((event) => event.eventKind).sort(), [
+    "relationship_change",
+    "relationship_start",
+  ]);
 });
 
 test("family health and bereavement stay context-only while self health is scoreable", () => {

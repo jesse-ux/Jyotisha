@@ -174,9 +174,15 @@ test("Renderer 对切换目标、多问题、出生分钟和内部信息统一�
 
 test("稳定候选范围相同不重复提示，实际变化才提示且不确认唯一分钟", () => {
   const previous = snapshot(["05:00", "05:30"]);
-  const same = snapshot(["05:00", "05:30"]);
+  const same = snapshot(["05:00", "05:30"], { clusters: [
+    { rank: 1, startTime: "05:00", endTime: "05:30", representativeTime: "05:13", widthMinutes: 31, peakScore: 10, scoreMass: 1 },
+    { rank: 2, startTime: "05:40", endTime: "05:45", representativeTime: "05:42", widthMinutes: 6, peakScore: 8, scoreMass: .4 },
+  ] });
   const changed = snapshot(["05:12", "05:18"]);
   assert.equal(candidateUpdateFor({ snapshot: same, previousSnapshot: previous, decisionAction: "ask_question" }), null);
+  const offered = candidateUpdateFor({ snapshot: same, previousSnapshot: previous, decisionAction: "offer_candidate_range" });
+  assert.match(offered ?? "", /05:00–05:30/);
+  assert.doesNotMatch(offered ?? "", /05:13|05:40|05:42|05:45/);
   const update = candidateUpdateFor({ snapshot: changed, previousSnapshot: previous, decisionAction: "ask_question" });
   assert.ok(update);
   assert.match(update, /05:12.*05:18/);

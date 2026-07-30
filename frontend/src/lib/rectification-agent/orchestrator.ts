@@ -3,8 +3,9 @@ import type { CandidateEngineResult, RectificationV4CandidateEngine } from "../r
 import { buildCandidateClusters } from "../rectification-v4/candidate-clusters.ts";
 import type { CandidateSnapshot, RectificationAnalysisTrace, RectificationV4Question } from "../rectification-v4/contracts.ts";
 import { evaluateDecisionGate } from "../rectification-v4/decision-gate.ts";
-import { reconcileV4Evidence, stageAgentEvidenceProposals } from "../rectification-v4/extraction.ts";
+import { reconcileV4Evidence, stageAgentEvidenceProposals, type ReconciledV4Evidence, type TargetDisposition } from "../rectification-v4/extraction.ts";
 import { buildRectificationCaseDossier, runRectificationDirector } from "./director-agent.ts";
+import { candidateUpdateFor } from "./renderer-agent.ts";
 import { extractEventWithModel } from "./event-extractor-agent.ts";
 import { evidenceSetHash } from "../rectification-v4/fingerprints.ts";
 import { latestEventRevisions, scoreableEvents } from "../rectification-v4/evidence-ledger.ts";
@@ -63,12 +64,12 @@ function blockedVedAstroValidation(now: Date, blocker: string, candidateTimes: r
 }
 
 const analysisPhaseLabels = {
-  extracting_evidence: "整理用户经历",
-  scoring_candidates: "扫描候选分钟",
-  checking_robustness: "检查候选稳定性",
-  planning_question: "生成语义问题机会",
-  reasoning: "选择下一步动作",
-  rendering: "生成安全回复",
+  extracting_evidence: "整理并验证事件提议",
+  scoring_candidates: "重算候选评分",
+  checking_robustness: "验证候选稳定性",
+  planning_question: "准备 Director 完整档案",
+  reasoning: "Director 选择访谈焦点",
+  rendering: "验证并保存公开回复",
 } as const;
 
 const diagnosticLabels = {
@@ -80,6 +81,25 @@ const diagnosticLabels = {
 } as const;
 
 type AnalysisPhase = keyof typeof analysisPhaseLabels;
+
+const closedTargetDispositions = new Set<TargetDisposition>(["unknown", "declined", "direction_change"]);
+
+export function mergeDirectorReconciliation(input: Readonly<{
+  server: ReconciledV4Evidence;
+  staged: ReconciledV4Evidence;
+  proposedDisposition: TargetDisposition;
+  currentTargetEventId: string | null;
+}>): ReconciledV4Evidence {
+  if (closedTargetDispositions.has(input.server.targetDisposition)) {
+    return { ...input.staged, pending: [], unansweredTargetEventId: null, targetDisposition: input.server.targetDisposition };
+  }
+  const revisedCurrentTarget = Boolean(input.currentTargetEventId && input.staged.revisions.some((event) => event.eventId === input.currentTargetEventId));
+  const addedOtherEvent = input.staged.revisions.some((event) => event.eventId !== input.currentTargetEventId);
+  const valid = input.proposedDisposition !== "resolved" && input.proposedDisposition !== "answered_other_event"
+    || input.proposedDisposition === "resolved" && revisedCurrentTarget
+    || input.proposedDisposition === "answered_other_event" && addedOtherEvent;
+  return valid ? { ...input.staged, targetDisposition: input.proposedDisposition } : input.staged;
+}
 
 export function publicRectificationTechniques(result: CandidateEngineResult | null): string[] {
   if (!result) return [];
@@ -163,18 +183,17 @@ export async function processRectificationAgentTurn(input: Readonly<{
     evidenceDirector = await runRectificationDirector({
       caseValue: claimed.case, dossier, latestAnswer: claimed.turn.answer, phase: "evidence", diagnostics: provisionalDiagnostics,
     });
+    const serverReconciliation = reconcileV4Evidence({ caseId: claimed.case.id, answer: claimed.turn.answer, sourceTurnId: claimed.turn.id, asOfDate, existing: claimed.events, targetEventId: claimed.turn.questionTargetEventId, now });
     reconciliation = claimed.case.deploymentMode === "v5_agent" && evidenceDirector.mode === "agent" && evidenceDirector.plan.evidenceProposals.length
       ? stageAgentEvidenceProposals({ caseId: claimed.case.id, rawText: claimed.turn.answer, sourceTurnId: claimed.turn.id, asOfDate, existing: claimed.events, proposals: evidenceDirector.plan.evidenceProposals, now })
-      : reconcileV4Evidence({ caseId: claimed.case.id, answer: claimed.turn.answer, sourceTurnId: claimed.turn.id, asOfDate, existing: claimed.events, targetEventId: claimed.turn.questionTargetEventId, now });
+      : serverReconciliation;
     if (claimed.case.deploymentMode === "v5_agent" && evidenceDirector.mode === "agent") {
-      const proposedDisposition = evidenceDirector.plan.targetDisposition;
-      const currentTarget = claimed.turn.questionTargetEventId;
-      const revisedCurrentTarget = Boolean(currentTarget && reconciliation.revisions.some((event) => event.eventId === currentTarget));
-      const addedOtherEvent = reconciliation.revisions.some((event) => event.eventId !== currentTarget);
-      const stagedDispositionIsValid = proposedDisposition !== "resolved" && proposedDisposition !== "answered_other_event"
-        || proposedDisposition === "resolved" && revisedCurrentTarget
-        || proposedDisposition === "answered_other_event" && addedOtherEvent;
-      if (stagedDispositionIsValid) reconciliation = { ...reconciliation, targetDisposition: proposedDisposition };
+      reconciliation = mergeDirectorReconciliation({
+        server: serverReconciliation,
+        staged: reconciliation,
+        proposedDisposition: evidenceDirector.plan.targetDisposition,
+        currentTargetEventId: claimed.turn.questionTargetEventId,
+      });
     }
   } else {
     reconciliation = claimed.turn.answer ? reconcileV4Evidence({
@@ -386,7 +405,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     });
     const publicMessage: StoredPublicMessage = {
       acknowledgement: plan.publicReply.acknowledgement,
-      candidateUpdate: plan.publicReply.candidateCommentary,
+      candidateUpdate: candidateUpdateFor({ snapshot, previousSnapshot: claimed.case.latestSnapshot, decisionAction: decision.action }) ?? plan.publicReply.candidateCommentary,
       limitation: plan.publicReply.limitation,
       question: action.type === "ask_question" ? action.question : null,
       analysisTrace: {

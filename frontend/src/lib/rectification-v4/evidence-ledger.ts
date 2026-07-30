@@ -46,7 +46,7 @@ export function appendEventRevision(
     ...input,
     id: options.id ?? randomUUID(),
     revision: (prior?.revision ?? 0) + 1,
-    scoreability: input.scoreability ?? scoreabilityFor(input.domain),
+    scoreability: scoreabilityFor(input.domain, input.eventKind, input.scoreability),
     supersedesRevisionId: prior?.id ?? null,
     createdAt: (options.now ?? new Date()).toISOString(),
   };
@@ -55,5 +55,12 @@ export function appendEventRevision(
 }
 
 export function scoreableEvents(revisions: readonly LifeEventRevision[]): readonly LifeEventRevision[] {
-  return latestEventRevisions(revisions).filter((event) => event.scoreability === "scoreable");
+  return latestEventRevisions(revisions).filter((event) =>
+    scoreabilityFor(event.domain, event.eventKind, event.scoreability) === "scoreable");
+}
+
+export function hasPolicyInvalidScoreableEvents(revisions: readonly LifeEventRevision[]): boolean {
+  return latestEventRevisions(revisions).some((event) =>
+    event.scoreability === "scoreable"
+    && scoreabilityFor(event.domain, event.eventKind, event.scoreability) !== "scoreable");
 }

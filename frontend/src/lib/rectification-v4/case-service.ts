@@ -11,6 +11,7 @@ import { CURRENT_RECTIFICATION_PROMPT_VERSION, CURRENT_RECTIFICATION_SKILL_VERSI
 import { regenerateDirectorQuestion } from "../rectification-agent/director-agent.ts";
 import { regenerateQuestionRealization } from "../rectification-agent/renderer-agent.ts";
 import { calculationSpecHash, evidenceSetHash } from "./fingerprints.ts";
+import { hasPolicyInvalidScoreableEvents } from "./evidence-ledger.ts";
 import { openingQuestion } from "./opening-question.ts";
 import type { RectificationV4Store } from "./store.ts";
 
@@ -198,8 +199,10 @@ export function createRectificationV4CaseService(
       readonly endTime: string;
     }) {
       const current = await store.loadCase(input.userId, input.caseId);
+      if (!current) return null;
+      const events = await store.loadEvents(input.userId, input.caseId);
       const primary = current?.latestSnapshot?.clusters[0];
-      if (!current || !current.latestSnapshot?.canAcceptRange || !primary
+      if (hasPolicyInvalidScoreableEvents(events) || !current.latestSnapshot?.canAcceptRange || !primary
         || primary.startTime !== input.startTime || primary.endTime !== input.endTime) return null;
       return response(input.userId, await store.transitionCase({
         ...input,

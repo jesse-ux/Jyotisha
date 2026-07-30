@@ -170,7 +170,7 @@ def test_matrix_legacy_adapter_preserves_event_kind() -> None:
     assert seen == ["relationship_end"]
 
 
-def test_relationship_event_kinds_have_distinct_traceable_contributions(monkeypatch) -> None:
+def test_relationship_event_kinds_reuse_activation_without_fake_offsets(monkeypatch) -> None:
     monkeypatch.setattr(
         event_engine.functional_benefics,
         "derive_functional_benefic_malefic",
@@ -199,7 +199,7 @@ def test_relationship_event_kinds_have_distinct_traceable_contributions(monkeypa
         for kind in ("relationship_start", "relationship_end", "relationship_change")
     }
 
-    assert {item["points"] for item in evidence.values()} == {0.001, 0.002, 0.003}
+    assert {item["points"] for item in evidence.values()} == {0.0}
     for kind, item in evidence.items():
         assert f"event_kind:{kind}" in item["rule_ids"]
 

@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { createRectificationV4CaseService } from "../src/lib/rectification-v4/case-service.ts";
-import type { CalculationSpec } from "../src/lib/rectification-v4/contracts.ts";
+import type { CalculationSpec, CandidateSnapshot, LifeEventRevision, PendingEvidence } from "../src/lib/rectification-v4/contracts.ts";
 import { createRectificationV4MemoryStore } from "../src/lib/rectification-v4/memory-store.ts";
-import { createRectificationV4Worker } from "../src/lib/rectification-v4/worker.ts";
+import { createRectificationV4Worker, resolvedPendingEvidence } from "../src/lib/rectification-v4/worker.ts";
 
 const fixedNow = () => new Date("2026-07-28T12:00:00.000Z");
 const spec: CalculationSpec = {
@@ -259,3 +259,125 @@ test("legacy and shadow cases cannot call the V5 Agent question renderer", async
     });
   }
 });
+
+
+test("worker closes only the uniquely matched historical pending evidence", async () => withMode("v4_legacy", async () => {
+  const store = createRectificationV4MemoryStore();
+  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const userId = randomUUID();
+  const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+  const pending: PendingEvidence = {
+    id: randomUUID(),
+    caseId: created.case.id,
+    turnId: randomUUID(),
+    rawText: "后来搬家一次，但记不清时间了",
+    reasonCode: "date_unresolved",
+    targetEventId: null,
+    resolvedEventId: null,
+    createdAt: "2026-07-27T12:00:00.000Z",
+    resolvedAt: null,
+  };
+  store.pendingEvidence.set(pending.id, pending);
+
+  const queued = await service.answer({
+    userId, caseId: created.case.id, actionId: randomUUID(), expectedCaseVersion: 0,
+    answer: "2018年9月搬家到北京",
+  });
+  assert.ok(queued?.job);
+  const worker = createRectificationV4Worker({
+    store, now: fixedNow,
+    engine: { async score() { throw new Error("engine must not run before enough events"); } },
+  });
+  assert.equal(await worker.runOnce(), true);
+
+  const resolved = store.pendingEvidence.get(pending.id);
+  assert.ok(resolved?.resolvedEventId);
+  assert.equal(resolved.resolvedAt, fixedNow().toISOString());
+  const events = await store.loadEvents(userId, created.case.id);
+  assert.ok(events.some((event) => event.eventId === resolved.resolvedEventId && event.domain === "relocation"));
+}));
+
+test("worker leaves ambiguous historical pending evidence unresolved", async () => withMode("v4_legacy", async () => {
+  const store = createRectificationV4MemoryStore();
+  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const userId = randomUUID();
+  const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+  const pending = ["后来搬家一次，但记不清时间了", "以前也搬家，时间忘了"].map((rawText): PendingEvidence => ({
+    id: randomUUID(), caseId: created.case.id, turnId: randomUUID(), rawText,
+    reasonCode: "date_unresolved", targetEventId: null, resolvedEventId: null,
+    createdAt: "2026-07-27T12:00:00.000Z", resolvedAt: null,
+  }));
+  for (const item of pending) store.pendingEvidence.set(item.id, item);
+
+  await service.answer({
+    userId, caseId: created.case.id, actionId: randomUUID(), expectedCaseVersion: 0,
+    answer: "2018年9月搬家到北京",
+  });
+  const worker = createRectificationV4Worker({
+    store, now: fixedNow,
+    engine: { async score() { throw new Error("engine must not run before enough events"); } },
+  });
+  assert.equal(await worker.runOnce(), true);
+  assert.ok(pending.every((item) => store.pendingEvidence.get(item.id)?.resolvedAt === null));
+}));
+
+test("date pending evidence closes only after the event date changes", () => {
+  const eventId = randomUUID();
+  const original: LifeEventRevision = {
+    id: randomUUID(), eventId, revision: 1, domain: "relationship", eventKind: "relationship_start",
+    subject: "self", relatedPerson: "partner", summary: "关系开始", rawText: "2020年关系开始",
+    dateRange: { start: "2020-01-01", end: "2020-12-31", precision: "year", label: "2020年" },
+    scoreability: "scoreable", supersedesRevisionId: null, createdAt: "2026-07-27T12:00:00.000Z",
+  };
+  const pending: PendingEvidence = {
+    id: randomUUID(), caseId: randomUUID(), turnId: randomUUID(), rawText: "时间还不确定",
+    reasonCode: "date_unresolved", targetEventId: eventId, resolvedEventId: null,
+    createdAt: "2026-07-27T12:00:00.000Z", resolvedAt: null,
+  };
+  const reclassified: LifeEventRevision = {
+    ...original, id: randomUUID(), revision: 2, eventKind: "relationship_end", summary: "关系结束",
+    scoreability: "pending_review", supersedesRevisionId: original.id, createdAt: "2026-07-28T12:00:00.000Z",
+  };
+  assert.deepEqual(resolvedPendingEvidence([pending], [reclassified], [original], "2026-07-30"), []);
+
+  const dated: LifeEventRevision = {
+    ...reclassified, id: randomUUID(), revision: 3,
+    dateRange: { start: "2020-04-01", end: "2020-04-30", precision: "month", label: "2020年4月" },
+    supersedesRevisionId: reclassified.id,
+  };
+  assert.deepEqual(resolvedPendingEvidence([pending], [dated], [original, reclassified], "2026-07-30"), [{
+    pendingEvidenceId: pending.id,
+    resolvedEventId: eventId,
+  }]);
+});
+
+test("legacy scoreable relationship-end snapshots cannot be accepted", async () => withMode("v5_agent", async () => {
+  const store = createRectificationV4MemoryStore();
+  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const userId = randomUUID();
+  const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+  const revision: LifeEventRevision = {
+    id: randomUUID(), eventId: randomUUID(), revision: 1, domain: "relationship", eventKind: "relationship_end",
+    subject: "self", relatedPerson: "partner", summary: "关系结束", rawText: "2020年关系结束",
+    dateRange: { start: "2020-01-01", end: "2020-12-31", precision: "year", label: "2020年" },
+    scoreability: "scoreable", supersedesRevisionId: null, createdAt: fixedNow().toISOString(),
+  };
+  const revised = await store.reviseEvent({
+    userId, caseId: created.case.id, actionId: randomUUID(), expectedCaseVersion: created.case.version,
+    revision, jobId: randomUUID(), now: fixedNow().toISOString(),
+  });
+  const snapshot: CandidateSnapshot = {
+    id: randomUUID(), caseId: created.case.id, caseVersion: revised.case.version,
+    evidenceSetHash: revised.case.evidenceSetHash, calculationSpecHash: revised.case.calculationSpecHash,
+    algorithmVersion: "rectification-v5-matrix-scoring-1",
+    candidates: [{ time: "05:12", score: 10, supportingEventIds: [revision.eventId], conflictingEventIds: [] }],
+    clusters: [{ rank: 1, startTime: "05:12", endTime: "05:18", representativeTime: "05:13", widthMinutes: 7, peakScore: 10, scoreMass: 1 }],
+    robustness: { neighborSupportMinutes: 7, leaveOneOutRetentionRate: .8, leaveOneDomainOutRetentionRate: .8, dateSensitivityRetentionRate: .8, calculationSpecHashMatched: true },
+    canConfirmExactMinute: false, canAcceptRange: true, gateReasons: [], createdAt: fixedNow().toISOString(),
+  };
+  store.cases.set(created.case.id, { ...revised.case, latestSnapshot: snapshot });
+  assert.equal(await service.acceptRange({
+    userId, caseId: created.case.id, actionId: randomUUID(), expectedCaseVersion: revised.case.version,
+    startTime: "05:12", endTime: "05:18",
+  }), null);
+}));

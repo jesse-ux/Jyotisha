@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 const sql = readFileSync(new URL("../supabase/migrations/20260726020000_birth_time_rectification_v4.sql", import.meta.url), "utf8");
 const conversationalSql = readFileSync(new URL("../supabase/migrations/20260727010000_rectification_v4_conversational_turns.sql", import.meta.url), "utf8");
 const regenerationSql = readFileSync(new URL("../supabase/migrations/20260729020000_rectification_v4_current_question_regeneration.sql", import.meta.url), "utf8");
+const pendingResolutionSql = readFileSync(new URL("../supabase/migrations/20260730020000_pending_evidence_resolution.sql", import.meta.url), "utf8");
 
 test("v4 migration creates canonical append-only storage and leased jobs", () => {
   for (const table of [
@@ -57,4 +58,18 @@ test("current-question regeneration is service-role-only, atomic, idempotent, an
   assert.match(regenerationSql, /grant execute on function public\.replace_birth_time_rectification_v4_current_question\([\s\S]*to service_role/i);
   assert.doesNotMatch(regenerationSql, /insert into public\.birth_time_rectification_v4_(?:turns|events|jobs|candidate_snapshots)/i);
   assert.doesNotMatch(regenerationSql, /update\s+public\.profiles/i);
+});
+
+
+test("pending evidence resolution is atomic, ownership-checked, target-safe, and replay-consistent", () => {
+  assert.match(pendingResolutionSql, /update public\.birth_time_rectification_v4_cases[\s\S]*set latest_snapshot_id = null[\s\S]*birth_time_rectification_v4_event_revisions[\s\S]*event_kind = 'relationship_end'[\s\S]*scoreability = 'scoreable'/i);
+  assert.match(pendingResolutionSql, /p_resolved_pending_evidence jsonb/i);
+  assert.match(pendingResolutionSql, /jsonb_typeof\(p_resolved_pending_evidence\)[\s\S]*'array'/i);
+  assert.match(pendingResolutionSql, /case_id is distinct from v_case\.id[\s\S]*user_id is distinct from v_case\.user_id/i);
+  assert.match(pendingResolutionSql, /target_event_id is not null[\s\S]*target_event_id is distinct from v_resolved_event_id/i);
+  assert.match(pendingResolutionSql, /resolved_at is not null[\s\S]*rectification_v5_pending_evidence_already_resolved/i);
+  assert.match(pendingResolutionSql, /birth_time_rectification_v4_events[\s\S]*case_id = v_case\.id[\s\S]*user_id = v_case\.user_id/i);
+  assert.match(pendingResolutionSql, /update public\.birth_time_rectification_pending_evidence[\s\S]*resolved_event_id = v_resolved_event_id[\s\S]*resolved_at = p_now/i);
+  assert.match(pendingResolutionSql, /v_was_completed[\s\S]*rectification_v5_replay_payload_mismatch/i);
+  assert.match(pendingResolutionSql, /revoke all on function public\.complete_birth_time_rectification_v5_job\([\s\S]*grant execute[\s\S]*to service_role/i);
 });

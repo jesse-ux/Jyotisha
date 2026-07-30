@@ -10,7 +10,7 @@ export type DomainScorerPolicy = Readonly<{
 export const domainScorerRegistry: Readonly<Record<EvidenceDomain, DomainScorerPolicy>> = {
   education: { domain: "education", defaultScoreability: "scoreable", supportedKinds: ["education_milestone"], techniqueLayers: ["D24", "vimshottari", "narayana"] },
   relocation: { domain: "relocation", defaultScoreability: "scoreable", supportedKinds: ["relocation"], techniqueLayers: ["D4", "vimshottari", "narayana"] },
-  relationship: { domain: "relationship", defaultScoreability: "scoreable", supportedKinds: ["relationship_start", "relationship_end", "relationship_change"], techniqueLayers: ["D9", "UL", "vimshottari", "narayana"] },
+  relationship: { domain: "relationship", defaultScoreability: "scoreable", supportedKinds: ["relationship_start", "relationship_change"], techniqueLayers: ["D9", "UL", "vimshottari", "narayana"] },
   career: { domain: "career", defaultScoreability: "scoreable", supportedKinds: ["career_change"], techniqueLayers: ["D10", "A10", "vimshottari", "narayana"] },
   finance: { domain: "finance", defaultScoreability: "scoreable", supportedKinds: ["finance_change"], techniqueLayers: ["D2", "D11", "vimshottari", "narayana"] },
   health_pressure: { domain: "health_pressure", defaultScoreability: "scoreable", supportedKinds: ["self_health_event"], techniqueLayers: ["D30", "vimshottari", "narayana"] },
@@ -18,8 +18,9 @@ export const domainScorerRegistry: Readonly<Record<EvidenceDomain, DomainScorerP
   other: { domain: "other", defaultScoreability: "pending_review", supportedKinds: ["other"], techniqueLayers: [] },
 };
 
-export function scoreabilityFor(domain: EvidenceDomain): Scoreability {
-  return domainScorerRegistry[domain].defaultScoreability;
+export function scoreabilityFor(domain: EvidenceDomain, eventKind: EventKind, requested?: Scoreability): Scoreability {
+  if (domain === "relationship" && eventKind === "relationship_end") return "pending_review";
+  return requested ?? domainScorerRegistry[domain].defaultScoreability;
 }
 
 export function assertScorerSupports(event: Pick<LifeEventRevision, "domain" | "eventKind" | "scoreability" | "subject">): void {

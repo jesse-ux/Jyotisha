@@ -1,9 +1,59 @@
 import { randomUUID } from "node:crypto";
+import { extractLifeEventEvidence } from "../conversational-rectification/evidence-extractor.ts";
 import { processRectificationAgentTurn } from "../rectification-agent/orchestrator.ts";
 import type { RectificationV4CandidateEngine } from "./candidate-engine.ts";
-import type { RectificationV4Question } from "./contracts.ts";
+import type { LifeEventRevision, PendingEvidence, RectificationV4Question } from "./contracts.ts";
+import { latestEventRevisions } from "./evidence-ledger.ts";
 import { evidenceSetHash } from "./fingerprints.ts";
-import type { RectificationV4Store } from "./store.ts";
+import type { RectificationV4Store, ResolvedPendingEvidence } from "./store.ts";
+
+function sameDate(left: LifeEventRevision, right: LifeEventRevision): boolean {
+  return left.dateRange.start === right.dateRange.start
+    && left.dateRange.end === right.dateRange.end
+    && left.dateRange.precision === right.dateRange.precision;
+}
+
+export function resolvedPendingEvidence(
+  pendingEvidence: readonly PendingEvidence[],
+  revisions: readonly LifeEventRevision[],
+  existingRevisions: readonly LifeEventRevision[],
+  asOfDate: string,
+): readonly ResolvedPendingEvidence[] {
+  const latestRevisionByEvent = new Map(latestEventRevisions(revisions).map((revision) => [revision.eventId, revision]));
+  const existingByEvent = new Map(latestEventRevisions(existingRevisions).map((revision) => [revision.eventId, revision]));
+  const resolves = (pending: PendingEvidence, revision: LifeEventRevision) => pending.reasonCode !== "date_unresolved"
+    || !existingByEvent.get(revision.eventId)
+    || !sameDate(existingByEvent.get(revision.eventId)!, revision);
+  const resolved: ResolvedPendingEvidence[] = pendingEvidence.flatMap((pending) => {
+    const revision = pending.targetEventId ? latestRevisionByEvent.get(pending.targetEventId) : null;
+    return revision && resolves(pending, revision)
+      ? [{ pendingEvidenceId: pending.id, resolvedEventId: revision.eventId }]
+      : [];
+  });
+  const untargeted = pendingEvidence.filter((pending) => !pending.targetEventId && pending.reasonCode === "date_unresolved");
+  const candidates = new Map(untargeted.map((pending) => {
+    const semantics = extractLifeEventEvidence({
+      rawText: pending.rawText,
+      sourceTurnId: pending.turnId,
+      asOfDate,
+    });
+    return [pending.id, [...latestRevisionByEvent.values()].filter((revision) => semantics.some((event) =>
+      event.domain === revision.domain
+      && event.eventKind === revision.eventKind
+      && event.subject === revision.subject
+      && event.relatedPerson === revision.relatedPerson,
+    ))] as const;
+  }));
+  for (const pending of untargeted) {
+    const matches = candidates.get(pending.id) ?? [];
+    if (matches.length !== 1) continue;
+    const revision = matches[0]!;
+    if (!resolves(pending, revision)) continue;
+    const competingPending = untargeted.filter((other) => candidates.get(other.id)?.some((match) => match.eventId === revision.eventId));
+    if (competingPending.length === 1) resolved.push({ pendingEvidenceId: pending.id, resolvedEventId: revision.eventId });
+  }
+  return resolved;
+}
 
 export function createRectificationV4Worker(input: {
   readonly store: RectificationV4Store;
@@ -21,6 +71,7 @@ export function createRectificationV4Worker(input: {
         claimed, engine: input.engine, now: now(),
         onPhase: (phase) => input.store.updateJobPhase({ workerId, jobId: claimed.job.id, phase, now: now().toISOString() }),
       });
+      const completedAt = now().toISOString();
       await input.store.completeJob({
         workerId, jobId: claimed.job.id, expectedCaseVersion: claimed.case.version,
         inputEvidenceSetHash: claimed.case.evidenceSetHash,
@@ -28,6 +79,12 @@ export function createRectificationV4Worker(input: {
         calculationSpecHash: claimed.case.calculationSpecHash,
         newEventRevisions: result.newEventRevisions,
         pendingEvidence: result.pendingEvidence,
+        resolvedPendingEvidence: resolvedPendingEvidence(
+          claimed.pendingEvidence,
+          result.newEventRevisions,
+          claimed.events,
+          completedAt.slice(0, 10),
+        ),
         snapshot: result.snapshot,
         diagnostics: result.diagnostics,
         featureSnapshot: result.featureSnapshot,
@@ -37,7 +94,7 @@ export function createRectificationV4Worker(input: {
         nextQuestion: result.nextQuestion,
         status: result.status,
         phase: result.phase,
-      }, now().toISOString());
+      }, completedAt);
       return true;
     } catch (error) {
       const restoreQuestion: RectificationV4Question | null = claimed.turn.questionId && claimed.turn.questionDomain ? {

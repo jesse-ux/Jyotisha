@@ -274,6 +274,20 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
         || current.evidenceSetHash !== input.inputEvidenceSetHash
         || current.calculationSpecHash !== input.calculationSpecHash) throw new RectificationV4StoreError("stale_job");
       const nextEvents = [...(events.get(current.id) ?? []), ...input.newEventRevisions];
+      const eventIds = new Set(nextEvents.map((event) => event.eventId));
+      const resolutionIds = new Set<string>();
+      for (const resolution of input.resolvedPendingEvidence) {
+        const pending = pendingEvidence.get(resolution.pendingEvidenceId);
+        if (resolutionIds.has(resolution.pendingEvidenceId)
+          || !pending
+          || pending.caseId !== current.id
+          || pending.resolvedAt
+          || !eventIds.has(resolution.resolvedEventId)
+          || (pending.targetEventId !== null && pending.targetEventId !== resolution.resolvedEventId)) {
+          throw new RectificationV4StoreError("invalid_state");
+        }
+        resolutionIds.add(resolution.pendingEvidenceId);
+      }
       events.set(current.id, nextEvents);
       if (input.diagnostics) diagnostics.set(input.diagnostics.id, input.diagnostics);
       if (input.featureSnapshot) featureSnapshots.set(input.featureSnapshot.id, input.featureSnapshot);
@@ -281,6 +295,10 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
       publicMessages.set(input.jobId, input.publicMessage);
       validatedDecisions.set(input.jobId, input.validatedDecision);
       for (const item of input.pendingEvidence) pendingEvidence.set(item.id, item);
+      for (const resolution of input.resolvedPendingEvidence) {
+        const pending = pendingEvidence.get(resolution.pendingEvidenceId)!;
+        pendingEvidence.set(pending.id, { ...pending, resolvedEventId: resolution.resolvedEventId, resolvedAt: now });
+      }
       const updated: RectificationV4Case = {
         ...current,
         version: current.version + 1,

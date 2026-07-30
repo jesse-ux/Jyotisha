@@ -4,7 +4,8 @@ import test from "node:test";
 
 import { diagnosticsSummarySchema, type RectificationTurnPlan } from "../src/lib/rectification-agent/contracts.ts";
 import { buildRectificationCaseDossier, regenerateDirectorQuestion, runRectificationDirector, validateRectificationTurnPlan } from "../src/lib/rectification-agent/director-agent.ts";
-import type { CalculationSpec, LifeEventRevision, PendingEvidence, RectificationV4Case, RectificationV4Turn } from "../src/lib/rectification-v4/contracts.ts";
+import { mergeDirectorReconciliation } from "../src/lib/rectification-agent/orchestrator.ts";
+import type { CalculationSpec, CandidateSnapshot, LifeEventRevision, PendingEvidence, RectificationV4Case, RectificationV4Turn } from "../src/lib/rectification-v4/contracts.ts";
 import { stageAgentEvidenceProposals } from "../src/lib/rectification-v4/extraction.ts";
 import { calculationSpecHash } from "../src/lib/rectification-v4/fingerprints.ts";
 
@@ -210,7 +211,7 @@ test("revisions keep the server-owned event id and append revision history", () 
     sourceTurnId: randomUUID(),
     asOfDate: "2026-07-30",
     existing: [target],
-    proposals: [{ operation: "revise", targetEventId: target.eventId, sourceSpan: "2016年10月大学入学", dateText: "2016年10月", proposedSummary: "2016年10月大学入学", proposedDomain: "education", proposedEventKind: "education_milestone", proposedSubject: "self", proposedRelatedPerson: null, confidence: "high" }],
+    proposals: [{ operation: "revise_date", targetEventId: target.eventId, sourceSpan: "2016年10月", dateText: "2016年10月", proposedSummary: "2016年10月大学入学", proposedDomain: "education", proposedEventKind: "education_milestone", proposedSubject: "self", proposedRelatedPerson: null, confidence: "high" }],
     now: new Date(now),
   });
   assert.equal(staged.revisions.length, 1);
@@ -218,10 +219,10 @@ test("revisions keep the server-owned event id and append revision history", () 
   assert.equal(staged.revisions[0]?.revision, 2);
   assert.equal(staged.revisions[0]?.dateRange.start, "2016-10-01");
   assert.equal(staged.revisions[0]?.dateRange.end, "2016-10-31");
-  assert.equal(staged.revisions[0]?.summary, "大学入学");
+  assert.equal(staged.revisions[0]?.summary, target.summary);
 });
 
-test("revisions cannot replace an existing event with unrelated model content", () => {
+test("date revisions ignore model attempts to replace event identity", () => {
   const target = event({ eventId: "00000000-0000-4000-8000-000000000708" });
   const rawText = "2018年9月搬到北京。";
   const staged = stageAgentEvidenceProposals({
@@ -230,12 +231,92 @@ test("revisions cannot replace an existing event with unrelated model content", 
     sourceTurnId: randomUUID(),
     asOfDate: "2026-07-30",
     existing: [target],
-    proposals: [{ operation: "revise", targetEventId: target.eventId, sourceSpan: "2018年9月搬到北京", dateText: "2018年9月", proposedSummary: "2018年9月创办公司", proposedDomain: "relocation", proposedEventKind: "relocation", proposedSubject: "self", proposedRelatedPerson: null, confidence: "high" }],
+    proposals: [{ operation: "revise_date", targetEventId: target.eventId, sourceSpan: "2018年9月", dateText: "2018年9月", proposedSummary: "2018年9月创办公司", proposedDomain: "relocation", proposedEventKind: "relocation", proposedSubject: "self", proposedRelatedPerson: null, confidence: "high" }],
     now: new Date(now),
   });
-  assert.equal(staged.revisions.length, 0);
-  assert.equal(staged.pending.length, 1);
-  assert.equal(staged.pending[0]?.targetEventId, target.eventId);
+  assert.equal(staged.revisions.length, 1);
+  assert.equal(staged.pending.length, 0);
+  assert.equal(staged.revisions[0]?.eventId, target.eventId);
+  assert.equal(staged.revisions[0]?.domain, target.domain);
+  assert.equal(staged.revisions[0]?.eventKind, target.eventKind);
+  assert.equal(staged.revisions[0]?.subject, target.subject);
+  assert.equal(staged.revisions[0]?.summary, target.summary);
+});
+
+
+test("server-closed target dispositions cannot be overwritten by the Director", () => {
+  const target = event();
+  const pending: PendingEvidence = {
+    id: randomUUID(), caseId, turnId: randomUUID(), rawText: "不想说了，换一个。", reasonCode: "event_unparsed",
+    targetEventId: target.eventId, resolvedEventId: null, createdAt: now, resolvedAt: null,
+  };
+  for (const targetDisposition of ["unknown", "declined", "direction_change"] as const) {
+    const merged = mergeDirectorReconciliation({
+      server: { revisions: [], pending: [], unansweredTargetEventId: null, targetDisposition },
+      staged: { revisions: [], pending: [pending], unansweredTargetEventId: target.eventId, targetDisposition: "unresolved" },
+      proposedDisposition: "unresolved",
+      currentTargetEventId: target.eventId,
+    });
+    assert.equal(merged.targetDisposition, targetDisposition);
+    assert.equal(merged.unansweredTargetEventId, null);
+    assert.deepEqual(merged.pending, []);
+  }
+});
+
+test("target date-only replies inherit identity and missing year", () => {
+  const target = event();
+  const cases = [
+    ["2020年4月", "2020-04-01", "2020-04-30"],
+    ["4月", "2016-04-01", "2016-04-30"],
+    ["8月8号", "2016-08-08", "2016-08-08"],
+    ["上半年", "2016-01-01", "2016-06-30"],
+    ["10月至12月", "2016-10-01", "2016-12-31"],
+  ] as const;
+  for (const [rawText, start, end] of cases) {
+    const staged = stageAgentEvidenceProposals({
+      caseId, rawText, sourceTurnId: randomUUID(), asOfDate: "2026-07-30", existing: [target],
+      proposals: [{ operation: "revise_date", targetEventId: target.eventId, sourceSpan: rawText, dateText: rawText, proposedSummary: "模型不得改写", proposedDomain: "other", proposedEventKind: "other", proposedSubject: "family", proposedRelatedPerson: "mother", confidence: "high" }],
+      now: new Date(now),
+    });
+    assert.equal(staged.pending.length, 0, rawText);
+    assert.equal(staged.revisions.length, 1, rawText);
+    assert.equal(staged.revisions[0]?.eventId, target.eventId, rawText);
+    assert.equal(staged.revisions[0]?.domain, target.domain, rawText);
+    assert.equal(staged.revisions[0]?.eventKind, target.eventKind, rawText);
+    assert.equal(staged.revisions[0]?.subject, target.subject, rawText);
+    assert.equal(staged.revisions[0]?.summary, target.summary, rawText);
+    assert.equal(staged.revisions[0]?.dateRange.start, start, rawText);
+    assert.equal(staged.revisions[0]?.dateRange.end, end, rawText);
+  }
+});
+
+test("explicit event-kind correction appends a revision to the same event", () => {
+  const target = event({ domain: "relationship", eventKind: "relationship_start", subject: "self", relatedPerson: "partner", summary: "关系开始", rawText: "2020年关系开始" });
+  const rawText = "不是关系开始，是分手";
+  const staged = stageAgentEvidenceProposals({
+    caseId, rawText, sourceTurnId: randomUUID(), asOfDate: "2026-07-30", existing: [target],
+    proposals: [{ operation: "reclassify", targetEventId: target.eventId, sourceSpan: rawText, dateText: null, proposedSummary: "分手", proposedDomain: "relationship", proposedEventKind: "relationship_end", proposedSubject: "self", proposedRelatedPerson: "partner", confidence: "high" }],
+    now: new Date(now),
+  });
+  assert.equal(staged.pending.length, 0);
+  assert.equal(staged.revisions[0]?.eventId, target.eventId);
+  assert.equal(staged.revisions[0]?.revision, 2);
+  assert.equal(staged.revisions[0]?.eventKind, "relationship_end");
+});
+
+test("explicit subject correction is grounded and enters pending review", () => {
+  const target = event({ domain: "health_pressure", eventKind: "self_health_event", subject: "self", relatedPerson: null, summary: "手术", rawText: "2020年我做了手术" });
+  const rawText = "这次是母亲手术，不是我";
+  const staged = stageAgentEvidenceProposals({
+    caseId, rawText, sourceTurnId: randomUUID(), asOfDate: "2026-07-30", existing: [target],
+    proposals: [{ operation: "reclassify", targetEventId: target.eventId, sourceSpan: rawText, dateText: null, proposedSummary: "母亲手术", proposedDomain: "family", proposedEventKind: "family_health_event", proposedSubject: "family", proposedRelatedPerson: "mother", confidence: "high" }],
+    now: new Date(now),
+  });
+  assert.equal(staged.pending.length, 0);
+  assert.equal(staged.revisions[0]?.eventId, target.eventId);
+  assert.equal(staged.revisions[0]?.subject, "family");
+  assert.equal(staged.revisions[0]?.relatedPerson, "mother");
+  assert.equal(staged.revisions[0]?.scoreability, "pending_review");
 });
 
 test("declined targets cannot be reopened and diagnostics stay in a bounded tool loop", async () => {
@@ -243,6 +324,8 @@ test("declined targets cannot be reopened and diagnostics stay in a bounded tool
   const targetDossier = buildRectificationCaseDossier({ caseValue, turns: [], events: [target], snapshot: null, diagnostics: null, targetDisposition: "declined", currentTargetEventId: target.eventId });
   const reopened = plan({ targetDisposition: "declined", action: { type: "ask_question", focus: { mode: "clarify_existing_event", targetEventId: target.eventId, domain: target.domain, requestedFacts: ["month"], rationaleCodes: ["retry"] }, question: "再说说那件事？", optionalQuickReplies: [] } });
   assert.ok(validateRectificationTurnPlan({ plan: reopened, dossier: targetDossier, latestAnswer: "不想说", phase: "final" }).issues.includes("declined_target_reopened"));
+  const reopenedWithoutId = plan({ targetDisposition: "declined", action: { type: "ask_question", focus: { mode: "clarify_existing_event", targetEventId: null, domain: target.domain, requestedFacts: ["month"], rationaleCodes: ["retry"] }, question: "再说说那件事？", optionalQuickReplies: [] } });
+  assert.ok(validateRectificationTurnPlan({ plan: reopenedWithoutId, dossier: targetDossier, latestAnswer: "不想说", phase: "final" }).issues.includes("declined_target_reopened"));
 
   const phases: string[] = [];
   const prompts: string[] = [];
@@ -305,4 +388,38 @@ test("manual question regeneration preserves focus and repairs unsafe text once"
   });
   assert.equal(question, "除了这段经历，你还想从哪件事继续？");
   assert.deepEqual(phases, ["regenerate", "repair"]);
+});
+
+
+test("public reply rejects technique names and multiple independent questions without rejecting one natural question", () => {
+  for (const technique of ["D2", "D4", "D9", "D10", "D11", "D24", "D30", "KP", "Vimshottari", "Narayana", "Shadbala", "Ashtakavarga"]) {
+    const issues = validateRectificationTurnPlan({
+      plan: plan({ publicReply: { acknowledgement: `${technique} 更支持这段经历。`, candidateCommentary: null, limitation: null } }),
+      dossier: dossier(), latestAnswer: "", phase: "final",
+    }).issues;
+    assert.ok(issues.includes("private_detail_exposed"), technique);
+  }
+  const multiple = plan({ action: { type: "ask_question", focus: { mode: "collect_independent_event", targetEventId: null, domain: null, requestedFacts: ["independent_event"], rationaleCodes: ["test"] }, question: "你记得它发生在哪一年。那时发生了什么。", optionalQuickReplies: [] } });
+  assert.ok(validateRectificationTurnPlan({ plan: multiple, dossier: dossier(), latestAnswer: "", phase: "final" }).issues.includes("multiple_questions"));
+  const single = plan({ action: { type: "ask_question", focus: { mode: "collect_independent_event", targetEventId: null, domain: null, requestedFacts: ["independent_event"], rationaleCodes: ["test"] }, question: "你还记得一件时间大致确定的重要经历吗？", optionalQuickReplies: [] } });
+  assert.deepEqual(validateRectificationTurnPlan({ plan: single, dossier: dossier(), latestAnswer: "", phase: "final" }).issues, []);
+});
+
+test("candidate range requires the current approved snapshot id", () => {
+  const snapshot: CandidateSnapshot = {
+    id: diagnostics.snapshotId, caseId, caseVersion: 3, evidenceSetHash: "e".repeat(64), calculationSpecHash: "c".repeat(64), algorithmVersion: "rectification-v5-matrix-scoring-1",
+    candidates: [{ time: "05:12", score: 10, supportingEventIds: [], conflictingEventIds: [] }],
+    clusters: [{ rank: 1, startTime: "05:12", endTime: "05:18", representativeTime: "05:13", widthMinutes: 7, peakScore: 10, scoreMass: 1 }],
+    robustness: { neighborSupportMinutes: 7, leaveOneOutRetentionRate: .8, leaveOneDomainOutRetentionRate: .8, dateSensitivityRetentionRate: .8, calculationSpecHashMatched: true },
+    canConfirmExactMinute: false, canAcceptRange: true, gateReasons: [], createdAt: now,
+  };
+  const approvedDossier = buildRectificationCaseDossier({ caseValue, turns: [], events: [], snapshot, diagnostics, targetDisposition: "not_applicable", currentTargetEventId: null });
+  const accepted = plan({ action: { type: "offer_candidate_range", snapshotId: snapshot.id } });
+  assert.deepEqual(validateRectificationTurnPlan({ plan: accepted, dossier: approvedDossier, latestAnswer: "", phase: "final" }).issues, []);
+  const wrongSnapshot = plan({ action: { type: "offer_candidate_range", snapshotId: randomUUID() } });
+  assert.ok(validateRectificationTurnPlan({ plan: wrongSnapshot, dossier: approvedDossier, latestAnswer: "", phase: "final" }).issues.includes("candidate_range_gate_failed"));
+  const legacyRelationshipEnd = event({ domain: "relationship", eventKind: "relationship_end", scoreability: "scoreable" });
+  const staleDossier = buildRectificationCaseDossier({ caseValue, turns: [], events: [legacyRelationshipEnd], snapshot, diagnostics, targetDisposition: "not_applicable", currentTargetEventId: null });
+  assert.equal(staleDossier.candidateState.publicRangeAllowed, false);
+  assert.ok(validateRectificationTurnPlan({ plan: accepted, dossier: staleDossier, latestAnswer: "", phase: "final" }).issues.includes("candidate_range_gate_failed"));
 });

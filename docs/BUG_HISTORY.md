@@ -1834,3 +1834,18 @@
 - 防复发：Revision 测试必须同时覆盖合法日期更正和跨事件覆盖拒绝，不能只断言 Target ID 存在。
 - 相关记录：BUG-101、BUG-102
 - 修复版本：local follow-up
+
+## BUG-104 | Director 可覆盖拒答、日期简答失效、Pending 误关闭与旧候选快照越权
+
+- 状态：resolved
+- 首次发现：2026-07-30
+- 最近更新：2026-07-30
+- 影响面：V5 Agent Director/Orchestrator、事件 Revision、Pending Evidence 生命周期、Event Kind 评分边界、公开候选范围与回复安全校验
+- 用户现象：明确的“不想说/记不清/换一个”可能被模型覆盖回未解决并继续追问；仅回答月份、日期或时间段无法修订当前事件；自然纠正事件类型或人物会失败；历史 Pending Evidence 可能永久残留或被无关 Revision 错误关闭；旧 `relationship_end` 评分快照仍可能公开或接受；技术层名称可能出现在公开回复。
+- 根因：模型处置优先级高于服务器确定性关闭状态；日期 Revision 复用了创建事件的完整语义要求；修订合同没有区分日期修订与重新分类；Pending completion 没有原子关闭合同，也未按缺口类型验证修订；`relationship_end` 缺少独立评分规则却保留旧 scoreable Snapshot；公开文本过滤只覆盖部分技术层。
+- 修复：服务器关闭状态不可被 Director 覆盖，且关闭后禁止用空 Target ID 的澄清/冲突 Focus 重开原事件；Evidence operation 拆为 `create/revise_date/reclassify/ignore`，日期简答继承 Target 身份与缺失年份，显式纠正追加同 Event ID Revision，人物变化进入 `pending_review`；V5 completion 增加 ownership/target/replay 安全的 Pending resolution，并且 `date_unresolved` 只在日期确实变化后关闭；`relationship_end` 强制 `pending_review`，迁移清除由旧 scoreable 关系结束事件支持的最新 Snapshot，Dossier 与 acceptRange 双重拒绝旧快照；公开回复禁止全部 D-number 技术层、KP、Vimshottari、Narayana、Shadbala 与 Ashtakavarga，只允许公开已批准 Snapshot 的首个范围 Cluster。
+- 验证：Director、V6 Agent、V4 Domain/Service/Migration 与 Python Event Engine 回归覆盖明确拒答、空 Target ID 绕过、日期简答、事件重新分类、Pending 原子关闭与原因匹配、旧快照失效、技术层泄漏、多事件提取和 Event Kind trace；真实 PostgreSQL migration 应用测试通过。
+- 安全边界：服务器继续拥有事实验证、事件身份、Scoreability、候选范围和持久化权限；Agent 只提出结构化计划。禁止公开内部 ID、评分、技术 trace、代表分钟或第二 Cluster，禁止自动写入 Profile 出生时间。
+- 防复发：拒答保护必须有 Orchestrator/Director 级回归；Pending resolution 必须验证缺口已被对应 Revision 补齐；评分政策变化必须同时处理历史 Snapshot；公开技术层过滤按完整技术命名空间测试。
+- 相关记录：BUG-099、BUG-102、BUG-103
+- 修复版本：`birth-time-rectification-v6` / `rectification-director-v2`

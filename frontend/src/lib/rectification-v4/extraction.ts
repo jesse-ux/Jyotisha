@@ -4,6 +4,7 @@ import type { EvidenceProposal } from "../rectification-agent/contracts.ts";
 import type {
   EventKind,
   EvidenceDomain,
+  EventDateRange,
   EventSubject,
   LifeEventRevision,
   PendingEvidence,
@@ -44,14 +45,6 @@ function normalizeKind(domain: EvidenceDomain, value: string, summary: string): 
   return ({ education: "education_milestone", relocation: "relocation", career: "career_change", finance: "finance_change", health_pressure: "self_health_event", family: "family_event", other: "other" } as const)[domain];
 }
 
-function isSameEventRevision(target: LifeEventRevision, extracted: ExtractedLifeEventEvidence): boolean {
-  return target.domain === extracted.domain
-    && target.eventKind === extracted.eventKind
-    && target.subject === extracted.subject
-    && target.relatedPerson === extracted.relatedPerson
-    && (target.summary.includes(extracted.eventSummary) || target.rawText.includes(extracted.eventSummary));
-}
-
 function pendingEvidence(input: {
   caseId: string;
   turnId: string;
@@ -71,6 +64,97 @@ function pendingEvidence(input: {
     createdAt: (input.now ?? new Date()).toISOString(),
     resolvedAt: null,
   };
+}
+
+
+function inferredTargetDateRange(dateText: string, target: LifeEventRevision, asOfDate: string): EventDateRange | null {
+  const normalized = dateText.normalize("NFKC").trim();
+  const parsed = parseDeclaredDateText(normalized, asOfDate);
+  if (parsed) return dateRangeFromDeclared(parsed.value, parsed.precision);
+  const year = target.dateRange.start.slice(0, 4);
+  const partial = normalized.match(/^(\d{1,2})\s*月(?:\s*(\d{1,2})\s*(?:日|号))?$/u);
+  if (partial) {
+    const completed = parseDeclaredDateText(`${year}年${partial[1]}月${partial[2] ? `${partial[2]}号` : ""}`, asOfDate);
+    if (!completed) return null;
+    return { ...dateRangeFromDeclared(completed.value, completed.precision), label: normalized };
+  }
+  if (normalized === "上半年" || normalized === "下半年") {
+    return normalized === "上半年"
+      ? { start: `${year}-01-01`, end: `${year}-06-30`, precision: "range", label: normalized }
+      : { start: `${year}-07-01`, end: `${year}-12-31`, precision: "range", label: normalized };
+  }
+  const monthRange = normalized.match(/^(\d{1,2})\s*月\s*(?:至|到|[-–—])\s*(\d{1,2})\s*月$/u);
+  if (!monthRange) return null;
+  const startMonth = Number(monthRange[1]);
+  const endMonth = Number(monthRange[2]);
+  if (startMonth < 1 || endMonth > 12 || startMonth > endMonth) return null;
+  const endDay = new Date(Date.UTC(Number(year), endMonth, 0)).getUTCDate();
+  return {
+    start: `${year}-${String(startMonth).padStart(2, "0")}-01`,
+    end: `${year}-${String(endMonth).padStart(2, "0")}-${String(endDay).padStart(2, "0")}`,
+    precision: "range",
+    label: normalized,
+  };
+}
+
+const kindDomain: Readonly<Record<EventKind, EvidenceDomain>> = {
+  education_milestone: "education",
+  relocation: "relocation",
+  relationship_start: "relationship",
+  relationship_end: "relationship",
+  relationship_change: "relationship",
+  career_change: "career",
+  finance_change: "finance",
+  self_health_event: "health_pressure",
+  family_health_event: "family",
+  family_bereavement: "family",
+  family_event: "family",
+  other: "other",
+};
+
+const kindEvidence: Readonly<Record<EventKind, RegExp>> = {
+  education_milestone: /(?:入学|毕业|升学|退学|考试|学业)/u,
+  relocation: /(?:搬家|搬到|迁居|迁往|住校|移居)/u,
+  relationship_start: /(?:开始|恋爱|在一起|交往|结婚)/u,
+  relationship_end: /(?:分手|离婚|结束|分开|断联|破裂)/u,
+  relationship_change: /(?:关系变化|感情变化|复合)/u,
+  career_change: /(?:工作|入职|离职|换岗|创业|升职|实习)/u,
+  finance_change: /(?:收入|亏损|投资|负债|财务|破产)/u,
+  self_health_event: /(?:我|本人|自己).*(?:生病|手术|住院|健康)/u,
+  family_health_event: /(?:家人|父亲|母亲|爸爸|妈妈|祖父母|伴侣).*(?:生病|手术|住院|健康)/u,
+  family_bereavement: /(?:去世|离世|过世|丧亲)/u,
+  family_event: /(?:家人|家庭|父亲|母亲|爸爸|妈妈|兄弟|姐妹)/u,
+  other: /(?:其他|别的)/u,
+};
+
+function groundedReclassification(target: LifeEventRevision, proposal: EvidenceProposal): boolean {
+  const explicitCorrection = /(?:不是|并非|不对|错了)/u.test(proposal.sourceSpan)
+    && /(?:而是|其实是|实际是|应该是|发生在.+身上|是)/u.test(proposal.sourceSpan);
+  if (!explicitCorrection) return false;
+  const changed = target.domain !== proposal.proposedDomain
+    || target.eventKind !== proposal.proposedEventKind
+    || target.subject !== proposal.proposedSubject
+    || target.relatedPerson !== proposal.proposedRelatedPerson;
+  if (!changed || kindDomain[proposal.proposedEventKind] !== proposal.proposedDomain) return false;
+  if (target.eventKind !== proposal.proposedEventKind && !kindEvidence[proposal.proposedEventKind].test(proposal.sourceSpan)) return false;
+  if (!proposal.sourceSpan.includes(proposal.proposedSummary)) return false;
+  if (target.subject !== proposal.proposedSubject) {
+    const subjectPattern = proposal.proposedSubject === "self" ? /(?:我|本人|自己)/u
+      : proposal.proposedSubject === "family" ? /(?:家人|父亲|母亲|爸爸|妈妈|祖父母|兄弟|姐妹)/u
+        : proposal.proposedSubject === "partner" ? /(?:伴侣|配偶|对象|男友|女友|丈夫|妻子)/u
+          : /(?:其他人|别人)/u;
+    if (!subjectPattern.test(proposal.sourceSpan)) return false;
+  }
+  if (target.relatedPerson !== proposal.proposedRelatedPerson && proposal.proposedRelatedPerson) {
+    const relatedPattern: Readonly<Record<RelatedPerson, RegExp>> = {
+      father: /(?:父亲|爸爸)/u, mother: /(?:母亲|妈妈)/u,
+      sibling: /(?:兄弟|姐妹|哥哥|弟弟|姐姐|妹妹)/u,
+      partner: /(?:伴侣|配偶|对象|男友|女友|丈夫|妻子)/u,
+      grandparent: /(?:祖父母|爷爷|奶奶|外公|外婆)/u,
+    };
+    if (!relatedPattern[proposal.proposedRelatedPerson].test(proposal.sourceSpan)) return false;
+  }
+  return true;
 }
 
 function newRevision(event: ExtractedLifeEventEvidence, existing: readonly LifeEventRevision[], now?: Date): LifeEventRevision | null {
@@ -240,8 +324,55 @@ export function stageAgentEvidenceProposals(input: Readonly<{
   const active = latestEventRevisions(input.existing);
   for (const proposal of input.proposals) {
     if (proposal.operation === "ignore") continue;
-    if (!input.rawText.includes(proposal.sourceSpan) || !proposal.dateText || !input.rawText.includes(proposal.dateText)) {
-      pending.push(pendingEvidence({ caseId: input.caseId, turnId: input.sourceTurnId, rawText: input.rawText, reasonCode: proposal.dateText ? "event_unparsed" : "date_unresolved", targetEventId: proposal.targetEventId, now: input.now }));
+    const target = proposal.targetEventId ? active.find((event) => event.eventId === proposal.targetEventId) ?? null : null;
+    if (!input.rawText.includes(proposal.sourceSpan)) {
+      pending.push(pendingEvidence({ caseId: input.caseId, turnId: input.sourceTurnId, rawText: input.rawText, reasonCode: "event_unparsed", targetEventId: proposal.targetEventId, now: input.now }));
+      continue;
+    }
+    if (proposal.operation === "revise_date") {
+      const dateRange = target && proposal.dateText && input.rawText.includes(proposal.dateText)
+        ? inferredTargetDateRange(proposal.dateText, target, input.asOfDate)
+        : null;
+      if (!target || !dateRange || dateRange.start > input.asOfDate) {
+        pending.push(pendingEvidence({ caseId: input.caseId, turnId: input.sourceTurnId, rawText: input.rawText, reasonCode: proposal.dateText ? "event_unparsed" : "date_unresolved", targetEventId: proposal.targetEventId, now: input.now }));
+        continue;
+      }
+      revisions.push(appendEventRevision([...input.existing, ...revisions], {
+        eventId: target.eventId,
+        domain: target.domain,
+        eventKind: target.eventKind,
+        subject: target.subject,
+        relatedPerson: target.relatedPerson,
+        summary: target.summary,
+        rawText: input.rawText,
+        dateRange,
+        ...eventDateProvenance(target),
+        scoreability: target.scoreability,
+      }, { now: input.now }));
+      continue;
+    }
+    if (proposal.operation === "reclassify") {
+      if (!target || !groundedReclassification(target, proposal)) {
+        pending.push(pendingEvidence({ caseId: input.caseId, turnId: input.sourceTurnId, rawText: input.rawText, reasonCode: "event_unparsed", targetEventId: proposal.targetEventId, now: input.now }));
+        continue;
+      }
+      const identityChanged = target.subject !== proposal.proposedSubject || target.relatedPerson !== proposal.proposedRelatedPerson;
+      revisions.push(appendEventRevision([...input.existing, ...revisions], {
+        eventId: target.eventId,
+        domain: proposal.proposedDomain,
+        eventKind: proposal.proposedEventKind,
+        subject: proposal.proposedSubject,
+        relatedPerson: proposal.proposedRelatedPerson,
+        summary: proposal.proposedSummary,
+        rawText: input.rawText,
+        dateRange: target.dateRange,
+        ...eventDateProvenance(target),
+        scoreability: identityChanged ? "pending_review" : target.scoreability,
+      }, { now: input.now }));
+      continue;
+    }
+    if (!proposal.dateText || !input.rawText.includes(proposal.dateText)) {
+      pending.push(pendingEvidence({ caseId: input.caseId, turnId: input.sourceTurnId, rawText: input.rawText, reasonCode: proposal.dateText ? "event_unparsed" : "date_unresolved", targetEventId: null, now: input.now }));
       continue;
     }
     const extracted = validatedModelAssistedEvidence({
@@ -259,32 +390,11 @@ export function stageAgentEvidenceProposals(input: Readonly<{
       },
     });
     if (!extracted?.dateValue || extracted.datePrecision === "unknown") {
-      pending.push(pendingEvidence({ caseId: input.caseId, turnId: input.sourceTurnId, rawText: input.rawText, reasonCode: "event_unparsed", targetEventId: proposal.targetEventId, now: input.now }));
+      pending.push(pendingEvidence({ caseId: input.caseId, turnId: input.sourceTurnId, rawText: input.rawText, reasonCode: "event_unparsed", targetEventId: null, now: input.now }));
       continue;
     }
-    if (proposal.operation === "create") {
-      const revision = newRevision(extracted, [...input.existing, ...revisions], input.now);
-      if (revision && !revisions.some((value) => value.eventId === revision.eventId)) revisions.push(revision);
-      continue;
-    }
-    const target = proposal.targetEventId ? active.find((event) => event.eventId === proposal.targetEventId) : null;
-    const parsedDate = parseDeclaredDateText(proposal.dateText.normalize("NFKC"), input.asOfDate);
-    if (!target || !parsedDate || !isSameEventRevision(target, extracted)) {
-      pending.push(pendingEvidence({ caseId: input.caseId, turnId: input.sourceTurnId, rawText: input.rawText, reasonCode: "event_unparsed", targetEventId: proposal.targetEventId, now: input.now }));
-      continue;
-    }
-    revisions.push(appendEventRevision([...input.existing, ...revisions], {
-      eventId: target.eventId,
-      domain: target.domain,
-      eventKind: target.eventKind,
-      subject: target.subject,
-      relatedPerson: target.relatedPerson,
-      summary: extracted.eventSummary,
-      rawText: input.rawText,
-      dateRange: dateRangeFromDeclared(parsedDate.value, parsedDate.precision),
-      ...eventDateProvenance(target),
-      scoreability: target.scoreability,
-    }, { now: input.now }));
+    const revision = newRevision(extracted, [...input.existing, ...revisions], input.now);
+    if (revision && !revisions.some((value) => value.eventId === revision.eventId)) revisions.push(revision);
   }
   return {
     revisions,

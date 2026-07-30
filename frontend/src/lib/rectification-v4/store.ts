@@ -22,6 +22,11 @@ export type ClaimedRectificationV4Job = Readonly<{
   attemptedRefinementEventIds: readonly string[];
 }>;
 
+export type ResolvedPendingEvidence = Readonly<{
+  pendingEvidenceId: string;
+  resolvedEventId: string;
+}>;
+
 export type CompleteRectificationV4JobInput = Readonly<{
   workerId: string;
   jobId: string;
@@ -31,6 +36,7 @@ export type CompleteRectificationV4JobInput = Readonly<{
   calculationSpecHash: string;
   newEventRevisions: readonly LifeEventRevision[];
   pendingEvidence: readonly PendingEvidence[];
+  resolvedPendingEvidence: readonly ResolvedPendingEvidence[];
   snapshot: CandidateSnapshot | null;
   diagnostics: DiagnosticsSummary | null;
   featureSnapshot: CandidateFeatureSnapshot | null;
