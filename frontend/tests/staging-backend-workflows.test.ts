@@ -153,7 +153,7 @@ test("live staging sync preserves env, state, incoming files, and encrypted back
   }
 });
 
-test("live staging sync repairs a non-writable deploy tree without preserving foreign ownership", () => {
+test("live staging sync repairs nested deploy-tree drift without preserving foreign ownership", () => {
   const root = mkdtempSync(join(tmpdir(), "jyotisha-live-sync-permissions-"));
   const source = join(root, "source");
   const destination = join(root, "destination");
@@ -163,20 +163,21 @@ test("live staging sync repairs a non-writable deploy tree without preserving fo
   mkdirSync(join(source, "deploy"), { recursive: true });
   mkdirSync(destinationDeploy, { recursive: true });
   mkdirSync(mockBin);
-  writeFileSync(join(source, "deploy", "current.txt"), "new\n");
-  writeFileSync(join(destinationDeploy, "stale.txt"), "old\n");
+  mkdirSync(join(source, "deploy", "postgres"), { recursive: true });
+  mkdirSync(join(destinationDeploy, "postgres"), { recursive: true });
+  writeFileSync(join(source, "deploy", "postgres", "current.txt"), "new\n");
+  writeFileSync(join(destinationDeploy, "postgres", "stale.txt"), "old\n");
   writeFileSync(
     join(mockBin, "docker"),
     [
       "#!/usr/bin/env bash",
       "set -euo pipefail",
       "printf '%s\\n' \"$*\" >\"$DOCKER_LOG\"",
-      'chmod -R u+rwX "$REPAIR_DESTINATION"',
       "",
     ].join("\n"),
   );
   chmodSync(join(mockBin, "docker"), 0o755);
-  chmodSync(destinationDeploy, 0o555);
+  chmodSync(join(destinationDeploy, "postgres"), 0o555);
 
   try {
     const result = spawnSync(
@@ -188,23 +189,28 @@ test("live staging sync repairs a non-writable deploy tree without preserving fo
           ...process.env,
           PATH: `${mockBin}:${process.env.PATH ?? ""}`,
           DOCKER_LOG: dockerLog,
-          REPAIR_DESTINATION: destinationDeploy,
         },
       },
     );
     assert.equal(result.status, 0, result.stderr);
-    assert.equal(existsSync(join(destinationDeploy, "stale.txt")), false);
     assert.equal(
-      readFileSync(join(destinationDeploy, "current.txt"), "utf8"),
+      existsSync(join(destinationDeploy, "postgres", "stale.txt")),
+      false,
+    );
+    assert.equal(
+      readFileSync(join(destinationDeploy, "postgres", "current.txt"), "utf8"),
       "new\n",
     );
     const invocation = readFileSync(dockerLog, "utf8");
-    assert.match(invocation, /--network none --read-only --user 0:0/);
+    assert.match(invocation, /--pull never --network none --read-only --user 0:0/);
     assert.match(invocation, /--cap-drop ALL --cap-add CHOWN/);
     assert.match(invocation, /postgres:17-alpine chown -R/);
+    assert.match(read(syncScript), /chmod -R u\+rwX/);
     assert.match(read(syncScript), /--no-owner --no-group/);
   } finally {
-    if (existsSync(destinationDeploy)) chmodSync(destinationDeploy, 0o755);
+    if (existsSync(join(destinationDeploy, "postgres"))) {
+      chmodSync(join(destinationDeploy, "postgres"), 0o755);
+    }
     rmSync(root, { recursive: true, force: true });
   }
 });

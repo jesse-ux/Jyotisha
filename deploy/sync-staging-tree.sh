@@ -7,11 +7,12 @@ if [ "$#" -ne 2 ] || [ ! -d "$1" ] || [ ! -d "$2" ]; then
 fi
 
 destination_deploy="$2/deploy"
-if [ -d "$destination_deploy" ] && [ ! -w "$destination_deploy" ]; then
-  docker run --rm --network none --read-only --user 0:0 \
+if [ -d "$destination_deploy" ]; then
+  docker run --rm --pull never --network none --read-only --user 0:0 \
     --cap-drop ALL --cap-add CHOWN --security-opt no-new-privileges \
     -v "$destination_deploy:/destination" postgres:17-alpine \
     chown -R "$(id -u):$(id -g)" /destination
+  chmod -R u+rwX "$destination_deploy"
 fi
 
 rsync -az --delete --no-owner --no-group \
