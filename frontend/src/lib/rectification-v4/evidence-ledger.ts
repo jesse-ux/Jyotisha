@@ -6,6 +6,20 @@ export type NewEventRevision = Omit<LifeEventRevision, "id" | "revision" | "supe
   readonly scoreability?: LifeEventRevision["scoreability"];
 };
 
+export type EventDateProvenance = Pick<
+  LifeEventRevision,
+  "dateSource" | "dateReliability" | "dateCorroboration" | "dateConflictStatus"
+>;
+
+export function eventDateProvenance(value: Partial<EventDateProvenance>): Partial<EventDateProvenance> {
+  return {
+    ...(Object.prototype.hasOwnProperty.call(value, "dateSource") ? { dateSource: value.dateSource } : {}),
+    ...(Object.prototype.hasOwnProperty.call(value, "dateReliability") ? { dateReliability: value.dateReliability } : {}),
+    ...(Object.prototype.hasOwnProperty.call(value, "dateCorroboration") ? { dateCorroboration: value.dateCorroboration } : {}),
+    ...(Object.prototype.hasOwnProperty.call(value, "dateConflictStatus") ? { dateConflictStatus: value.dateConflictStatus } : {}),
+  };
+}
+
 export function latestEventRevisions(revisions: readonly LifeEventRevision[]): readonly LifeEventRevision[] {
   const latest = new Map<string, LifeEventRevision>();
   for (const revision of revisions) {

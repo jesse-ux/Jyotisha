@@ -10,7 +10,7 @@ import type {
   Scoreability,
 } from "./contracts.ts";
 import { dateRangeFromDeclared } from "./date-range.ts";
-import { appendEventRevision, latestEventRevisions } from "./evidence-ledger.ts";
+import { appendEventRevision, eventDateProvenance, latestEventRevisions } from "./evidence-ledger.ts";
 
 const allowedKinds = new Set<EventKind>([
   "education_milestone", "relocation", "relationship_start", "relationship_end", "relationship_change",
@@ -111,6 +111,7 @@ function subjectRevision(answer: string, target: LifeEventRevision, existing: re
     summary: target.summary,
     rawText: answer,
     dateRange: target.dateRange,
+    ...eventDateProvenance(target),
     scoreability,
   }, { now });
 }
@@ -161,6 +162,7 @@ export function reconcileV4Evidence(input: {
             summary: target.summary,
             rawText: input.answer,
             dateRange,
+            ...eventDateProvenance(target),
             scoreability: target.scoreability,
           }, { id: targetAnswer.id, now: input.now }));
           consumed.add(targetAnswer.id);

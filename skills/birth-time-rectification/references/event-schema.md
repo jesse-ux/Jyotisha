@@ -2,6 +2,8 @@
 
 Preserve the event's subject, related person, domain, event kind, original user wording, declared date text, normalized date range, precision, extraction status, correction lineage, source Turn, and scoreability.
 
+These source fields are provenance for audit and replay only. Raw wording, source Turn, extraction path, and revision lineage must never add points, change technique weights, or act as a confidence multiplier. Scoring uses only the validated scoreable event contract and the server-owned contribution rules.
+
 ## Subject and scoreability
 
 - A user's own supported event may be `scoreable`.

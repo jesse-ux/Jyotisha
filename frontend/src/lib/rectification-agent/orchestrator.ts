@@ -163,6 +163,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     const robustness = {
       neighborSupportMinutes: scored.robustness.neighborSupportMinutes,
       leaveOneOutRetentionRate: scored.robustness.leaveOneOutRetentionRate,
+      leaveOneDomainOutRetentionRate: scored.robustness.leaveOneDomainOutRetentionRate,
       dateSensitivityRetentionRate: scored.robustness.dateSensitivityRetentionRate,
       calculationSpecHashMatched: scored.calculationSpecHash === claimed.case.calculationSpecHash,
     };
@@ -170,7 +171,8 @@ export async function processRectificationAgentTurn(input: Readonly<{
       clusters,
       robustness,
       scoreableEventCount: scoreable.length,
-      scoreableDomainCount: domains.size,
+      scoreableDomains: [...domains],
+      missingTechniqueLayers: scored.missingLayers,
     });
     snapshot = {
       id: scored.resultId,
@@ -184,7 +186,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
       robustness,
       canConfirmExactMinute: false,
       canAcceptRange: gate.canAcceptRange,
-      gateReasons: [...gate.reasons, ...scored.missingLayers.map((layer) => `missing_layer:${layer}`)],
+      gateReasons: [...gate.reasons],
       createdAt: now.toISOString(),
     };
     diagnostics = diagnosticsSummarySchema.parse({

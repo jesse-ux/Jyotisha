@@ -153,7 +153,7 @@ def calculation_spec(request: RectificationRequest) -> dict[str, Any]:
     def json_number(value: float) -> int | float:
         return int(value) if value.is_integer() else value
 
-    return {
+    spec = {
         "version": INPUT_CONTRACT_VERSION,
         "birthDate": request["birth_date"],
         "candidateRange": {"start": request["start_time"], "end": request["end_time"]},
@@ -162,6 +162,15 @@ def calculation_spec(request: RectificationRequest) -> dict[str, Any]:
         "timezoneOffsetHours": json_number(request["tz"]),
         "ayanamsa": "lahiri", "nodeMode": "mean", "minuteStep": 1,
     }
+    for source, target in (
+        ("birth_time_source", "birthTimeSource"),
+        ("timezone_id", "timezoneId"),
+        ("timezone_source", "timezoneSource"),
+        ("local_time_status", "localTimeStatus"),
+    ):
+        if source in request:
+            spec[target] = request[source]  # type: ignore[literal-required]
+    return spec
 
 
 def sha256(value: Any) -> str:

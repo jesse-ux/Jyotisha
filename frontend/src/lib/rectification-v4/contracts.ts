@@ -82,6 +82,13 @@ export type RelatedPerson = z.infer<typeof relatedPersonSchema>;
 export const scoreabilitySchema = z.enum(["scoreable", "context_only", "pending_review", "unsupported"]);
 export type Scoreability = z.infer<typeof scoreabilitySchema>;
 
+const eventDateProvenanceFields = {
+  dateSource: z.string().trim().min(1).max(120).nullable().optional(),
+  dateReliability: z.string().trim().min(1).max(120).nullable().optional(),
+  dateCorroboration: z.string().trim().min(1).max(1_000).nullable().optional(),
+  dateConflictStatus: z.string().trim().min(1).max(120).nullable().optional(),
+} as const;
+
 export const lifeEventRevisionSchema = z.object({
   id: z.string().uuid(),
   eventId: z.string().uuid(),
@@ -93,6 +100,7 @@ export const lifeEventRevisionSchema = z.object({
   summary: z.string().trim().min(1).max(1_000),
   rawText: z.string().trim().min(1).max(4_000),
   dateRange: eventDateRangeSchema,
+  ...eventDateProvenanceFields,
   scoreability: scoreabilitySchema,
   supersedesRevisionId: z.string().uuid().nullable(),
   createdAt: z.string().datetime({ offset: true }),
@@ -119,6 +127,17 @@ export const calculationSpecSchema = z.object({
   latitude: z.number().finite().min(-90).max(90),
   longitude: z.number().finite().min(-180).max(180),
   timezoneOffsetHours: z.number().finite().min(-14).max(14),
+  birthTimeSource: z.enum([
+    "hospital_record",
+    "family_exact",
+    "approximate",
+    "period_only",
+    "unknown",
+    "legacy_import",
+  ]).nullable().optional(),
+  timezoneId: z.string().trim().min(1).max(120).nullable().optional(),
+  timezoneSource: z.string().trim().min(1).max(80).nullable().optional(),
+  localTimeStatus: z.enum(["resolved", "not_provided", "ambiguous", "nonexistent"]).nullable().optional(),
   ayanamsa: z.literal("lahiri"),
   nodeMode: z.literal("mean"),
   minuteStep: z.literal(1),
@@ -144,15 +163,20 @@ export const candidateClusterSchema = z.object({
 }).strict();
 export type CandidateCluster = z.infer<typeof candidateClusterSchema>;
 
-export const robustnessSchema = z.object({
+const robustnessValueSchema = z.object({
   neighborSupportMinutes: z.number().int().nonnegative(),
   leaveOneOutRetentionRate: z.number().finite().min(0).max(1),
+  leaveOneDomainOutRetentionRate: z.number().finite().min(0).max(1),
   dateSensitivityRetentionRate: z.number().finite().min(0).max(1),
   calculationSpecHashMatched: z.boolean(),
 }).strict();
-export type Robustness = z.infer<typeof robustnessSchema>;
+export type Robustness = z.infer<typeof robustnessValueSchema>;
+export const robustnessSchema: z.ZodType<Robustness> = z.preprocess((value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value) || "leaveOneDomainOutRetentionRate" in value) return value;
+  return { ...value, leaveOneDomainOutRetentionRate: 0.8 };
+}, robustnessValueSchema) as z.ZodType<Robustness>;
 
-export const candidateSnapshotSchema = z.object({
+const candidateSnapshotBaseSchema = z.object({
   id: z.string().uuid(),
   caseId: z.string().uuid(),
   caseVersion: z.number().int().nonnegative(),
@@ -167,7 +191,19 @@ export const candidateSnapshotSchema = z.object({
   gateReasons: z.array(z.string().trim().min(1).max(120)).max(20),
   createdAt: z.string().datetime({ offset: true }),
 }).strict();
-export type CandidateSnapshot = z.infer<typeof candidateSnapshotSchema>;
+
+export type CandidateSnapshot = z.infer<typeof candidateSnapshotBaseSchema>;
+export const candidateSnapshotSchema: z.ZodType<CandidateSnapshot> = candidateSnapshotBaseSchema.transform((snapshot) => {
+  if (snapshot.robustness.leaveOneDomainOutRetentionRate >= 0.8) return snapshot;
+  const reason = "leave_one_domain_out_not_stable";
+  return {
+    ...snapshot,
+    canAcceptRange: false,
+    gateReasons: snapshot.gateReasons.includes(reason)
+      ? snapshot.gateReasons
+      : [...snapshot.gateReasons, reason].slice(0, 20),
+  };
+});
 
 export const rectificationV4QuestionSchema = z.object({
   id: z.string().uuid(),
@@ -243,6 +279,7 @@ export const reviseEventRequestSchema = z.object({
   summary: z.string().trim().min(1).max(1_000),
   rawText: z.string().trim().min(1).max(4_000),
   dateRange: eventDateRangeSchema,
+  ...eventDateProvenanceFields,
   scoreability: scoreabilitySchema.optional(),
 }).strict();
 

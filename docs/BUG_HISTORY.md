@@ -1740,3 +1740,19 @@
 - 相关记录：BUG-090、BUG-093、BUG-094、BUG-095
 - 复发自：BUG-093、BUG-095
 - 修复版本：待本次 staging 修复提交与部署验收
+
+## BUG-098 | V6 公开候选门禁未明确 LODO、技法层级与独立 holdout 边界
+
+- 状态：resolved/partial
+- 首次发现：2026-07-30
+- 最近更新：2026-07-30
+- 影响面：V6 Python 候选扫描、Candidate Snapshot 公开范围门禁、生时纠正 Skill 与参考 Skill 能力声明
+- 用户现象：现有说明容易把“支持某技法”、同一 Case 内的留一诊断和参考 Skill 方法论误读为已完成独立验证；缺失 `KP_cusps` 或 D60 也可能被错误当成公开范围的统一硬阻塞。
+- 根因：文档没有把真实实现链、LODO public gate、active-domain required/optional/reference-only 技法策略和参考 Skill 的未实现能力分开；LOEO/LODO 使用同一事件贡献矩阵做事后减项，不能替代 prospective independent holdout。
+- 修复：记录 V6 的真实链路为跨午夜兼容的逐分钟 Python 扫描、事件贡献矩阵、Snapshot、LOEO/LODO、date sensitivity、neighbor stability 与 candidate split；公开范围新增 LODO 稳定性门禁，并按活跃可评分领域判定 required layer，`KP_cusps` 为 optional、D60 为 reference-only、未知层失败关闭；事件 provenance 仅用于审计且不参与加权。
+- 验证：本工作树的聚焦合同覆盖跨午夜分钟枚举、LODO 低于 `0.8` 拒绝公开范围、required layer 缺失阻塞、`KP_cusps`/D60 缺失不阻塞，以及旧 Snapshot 兼容；本记录不把这些回归误写成独立 holdout 验证。
+- Partial / deferred：per-Case independent holdout 因缺少 prospective sticky partition 与 calibration contract 延期。当前 LOEO/LODO 只证明同一 Case 内的敏感性，不得伪称 prospective、independent 或 calibrated validation 已完成。
+- 安全边界：继续禁止手工 `supports/conflicts` 伪评分、任意外部仓动态加载、唯一分钟结论和自动写入 `profiles.active_birth_time`；参考 Skill 只作方法与审计参照，不成为第二评分真源。
+- 防复发：公开候选必须同时通过事件/领域覆盖、范围宽度、邻近分钟、LOEO、LODO、日期敏感性、计算规格和 required-technique 门禁；任何 holdout 完成声明必须先有稳定分区持久化与校准验收证据。
+- 相关记录：BUG-082、BUG-090、BUG-093、BUG-095
+- 修复版本：`birth-time-rectification-v6` / `rectification-agent-v6-1`，独立 holdout 延期

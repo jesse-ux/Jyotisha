@@ -57,7 +57,7 @@ const snapshot: CandidateSnapshot = {
   algorithmVersion: "rectification-v5-matrix-scoring-1",
   candidates: [{ time: "05:13", score: 10, supportingEventIds: [], conflictingEventIds: [] }],
   clusters: [{ rank: 1, startTime: "05:13", endTime: "05:15", representativeTime: "05:13", widthMinutes: 3, peakScore: 10, scoreMass: 1 }],
-  robustness: { neighborSupportMinutes: 3, leaveOneOutRetentionRate: 1, dateSensitivityRetentionRate: 1, calculationSpecHashMatched: true },
+  robustness: { neighborSupportMinutes: 3, leaveOneOutRetentionRate: 1, leaveOneDomainOutRetentionRate: 1, dateSensitivityRetentionRate: 1, calculationSpecHashMatched: true },
   canConfirmExactMinute: false,
   canAcceptRange: false,
   gateReasons: ["insufficient_scoreable_events"],
@@ -444,6 +444,7 @@ test("V6 agent conversation follows dated events, respects direction change, and
     assert.ok(fourth.events.some((event) => event.domain === "career" && event.summary.includes("商业巡演经纪公司")));
     assert.equal(scoreCalls, 1);
     assert.ok(store.diagnostics.size > 0);
+    assert.equal(fourth.case.latestSnapshot?.robustness.leaveOneDomainOutRetentionRate, 1);
     assert.equal(fourth.case.latestSnapshot?.canConfirmExactMinute, false);
     assert.equal(fourth.case.algorithmVersion, "rectification-v5-matrix-scoring-1");
     const finalMessage = [...store.publicMessages.values()].at(-1);

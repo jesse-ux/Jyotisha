@@ -91,9 +91,17 @@ export function createRectificationV4CandidateEngine(options: { readonly apiBase
       body: JSON.stringify({
         birth_date: calculationSpec.birthDate, start_time: calculationSpec.candidateRange.start, end_time: calculationSpec.candidateRange.end,
         lat: calculationSpec.latitude, lon: calculationSpec.longitude, tz: calculationSpec.timezoneOffsetHours,
+        ...(Object.hasOwn(calculationSpec, "birthTimeSource") ? { birth_time_source: calculationSpec.birthTimeSource } : {}),
+        ...(Object.hasOwn(calculationSpec, "timezoneId") ? { timezone_id: calculationSpec.timezoneId } : {}),
+        ...(Object.hasOwn(calculationSpec, "timezoneSource") ? { timezone_source: calculationSpec.timezoneSource } : {}),
+        ...(Object.hasOwn(calculationSpec, "localTimeStatus") ? { local_time_status: calculationSpec.localTimeStatus } : {}),
         events: events.map((event) => ({
           id: event.eventId, domain: event.domain, event_kind: event.eventKind,
           date_start: event.dateRange.start, date_end: event.dateRange.end, precision: event.dateRange.precision, summary: event.summary,
+          ...(Object.hasOwn(event, "dateSource") ? { date_source: event.dateSource } : {}),
+          ...(Object.hasOwn(event, "dateReliability") ? { date_reliability: event.dateReliability } : {}),
+          ...(Object.hasOwn(event, "dateCorroboration") ? { date_corroboration: event.dateCorroboration } : {}),
+          ...(Object.hasOwn(event, "dateConflictStatus") ? { date_conflict_status: event.dateConflictStatus } : {}),
         })),
       }),
     });

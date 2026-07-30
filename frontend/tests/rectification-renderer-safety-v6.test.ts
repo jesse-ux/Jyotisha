@@ -73,7 +73,7 @@ function snapshot(range: readonly [string, string]): CandidateSnapshot {
     algorithmVersion: "rectification-v5-matrix-scoring-1",
     candidates: [{ time: startTime, score: 10, supportingEventIds: [], conflictingEventIds: [] }],
     clusters: [{ rank: 1, startTime, endTime, representativeTime: startTime, widthMinutes: 7, peakScore: 10, scoreMass: 1 }],
-    robustness: { neighborSupportMinutes: 8, leaveOneOutRetentionRate: 0.8, dateSensitivityRetentionRate: 0.8, calculationSpecHashMatched: true },
+    robustness: { neighborSupportMinutes: 8, leaveOneOutRetentionRate: 0.8, leaveOneDomainOutRetentionRate: 0.8, dateSensitivityRetentionRate: 0.8, calculationSpecHashMatched: true },
     canConfirmExactMinute: false,
     canAcceptRange: true,
     gateReasons: [],

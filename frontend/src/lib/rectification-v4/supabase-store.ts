@@ -108,7 +108,10 @@ function caseValue(row: Row, latestSnapshot: CandidateSnapshot | null): Rectific
   });
 }
 
-function eventRevision(row: Row): LifeEventRevision {
+export function rectificationEventRevisionFromRow(row: Row): LifeEventRevision {
+  const provenance = row.date_provenance && typeof row.date_provenance === "object" && !Array.isArray(row.date_provenance)
+    ? row.date_provenance as Row
+    : null;
   return lifeEventRevisionSchema.parse({
     id: row.id,
     eventId: row.event_id,
@@ -125,6 +128,10 @@ function eventRevision(row: Row): LifeEventRevision {
       precision: row.date_precision,
       label: row.date_label,
     },
+    ...(provenance && Object.prototype.hasOwnProperty.call(provenance, "dateSource") ? { dateSource: provenance.dateSource } : {}),
+    ...(provenance && Object.prototype.hasOwnProperty.call(provenance, "dateReliability") ? { dateReliability: provenance.dateReliability } : {}),
+    ...(provenance && Object.prototype.hasOwnProperty.call(provenance, "dateCorroboration") ? { dateCorroboration: provenance.dateCorroboration } : {}),
+    ...(provenance && Object.prototype.hasOwnProperty.call(provenance, "dateConflictStatus") ? { dateConflictStatus: provenance.dateConflictStatus } : {}),
     scoreability: row.scoreability,
     supersedesRevisionId: row.supersedes_revision_id,
     createdAt: timestamp(row.created_at),
@@ -191,7 +198,7 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
       .select("*").eq("case_id", caseId).eq("user_id", userId)
       .order("created_at", { ascending: true });
     if (error) throw storeError(error);
-    return ((data ?? []) as Row[]).map(eventRevision);
+    return ((data ?? []) as Row[]).map(rectificationEventRevisionFromRow);
   }
 
   async function loadTurnsByCase(userId: string, caseId: string): Promise<readonly RectificationV4Turn[]> {

@@ -43,13 +43,33 @@ export async function calculationSpecForUser(
   userId: string,
 ): Promise<CalculationSpec> {
   const { data, error } = await auth.from("profiles")
-    .select("birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,latitude,longitude,timezone_id,timezone_offset")
+    .select("birth_date,reported_birth_time,birth_time_source,birth_time_period,birth_time_clue,uncertainty_before_minutes,uncertainty_after_minutes,latitude,longitude,timezone_id,timezone_source,timezone_offset")
     .eq("id", userId).maybeSingle();
   if (error) throw error;
   if (!data) throw new RectificationV4HttpError(409, "请先补全出生日期、时间线索和出生地点。");
-  const profile = await resolveMissingBirthTimezoneOffset(data);
+  let resolvedLocalTimeStatus: CalculationSpec["localTimeStatus"] | undefined;
+  const profile = await resolveMissingBirthTimezoneOffset(data, {
+    fetchImpl: async (input, init) => {
+      const response = await fetch(input, init);
+      const payload = await response.clone().json().catch(() => null) as { localTimeStatus?: unknown } | null;
+      const status = payload?.localTimeStatus;
+      if (status === "resolved" || status === "not_provided" || status === "ambiguous" || status === "nonexistent") {
+        resolvedLocalTimeStatus = status;
+      }
+      return response;
+    },
+  });
   const assessment = parseBirthTimeProfile(profile);
   const range = assessBirthTime(assessment, { kind: "unavailable" }).reportedRange;
+  const birthTimeSource = typeof data.birth_time_source === "string" && data.birth_time_source.trim()
+    ? data.birth_time_source.trim() as CalculationSpec["birthTimeSource"]
+    : undefined;
+  const timezoneId = typeof data.timezone_id === "string" && data.timezone_id.trim()
+    ? data.timezone_id.trim()
+    : undefined;
+  const timezoneSource = typeof data.timezone_source === "string" && data.timezone_source.trim()
+    ? data.timezone_source.trim()
+    : undefined;
   return {
     version: "rectification-calculation-spec-v4",
     birthDate: assessment.date,
@@ -60,6 +80,10 @@ export async function calculationSpecForUser(
     latitude: assessment.location.lat,
     longitude: assessment.location.lon,
     timezoneOffsetHours: assessment.location.tz,
+    ...(birthTimeSource ? { birthTimeSource } : {}),
+    ...(timezoneId ? { timezoneId } : {}),
+    ...(timezoneSource ? { timezoneSource } : {}),
+    ...(resolvedLocalTimeStatus ? { localTimeStatus: resolvedLocalTimeStatus } : {}),
     ayanamsa: "lahiri",
     nodeMode: "mean",
     minuteStep: 1,

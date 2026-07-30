@@ -12,22 +12,28 @@ def _winner(rows: Sequence[CandidateScoreRow]) -> str | None:
     return max(rows, key=lambda row: row["score"])["time"] if rows else None
 
 
+def _minute_value(value: str) -> int:
+    return int(value[:2]) * 60 + int(value[3:])
+
+
 def _primary_cluster(rows: Sequence[CandidateScoreRow], relative_floor: float = .97) -> list[str]:
     if not rows:
         return []
     peak = max(row["score"] for row in rows)
     floor = peak * relative_floor if peak >= 0 else peak / relative_floor
-    selected = [row["time"] for row in rows if row["score"] >= floor]
+    selected = sorted((row["time"] for row in rows if row["score"] >= floor), key=_minute_value)
     if not selected:
         return []
     groups: list[list[str]] = []
     for current in selected:
-        minute = lambda value: int(value[:2]) * 60 + int(value[3:])
-        if groups and minute(current) - minute(groups[-1][-1]) == 1:
+        if groups and (_minute_value(current) - _minute_value(groups[-1][-1])) % 1_440 == 1:
             groups[-1].append(current)
         else:
             groups.append([current])
-    return max(groups, key=lambda group: (max(next(row["score"] for row in rows if row["time"] == time) for time in group), len(group)))
+    if len(groups) > 1 and (_minute_value(groups[0][0]) - _minute_value(groups[-1][-1])) % 1_440 == 1:
+        groups[0] = [*groups.pop(), *groups[0]]
+    scores = {row["time"]: row["score"] for row in rows}
+    return max(groups, key=lambda group: (max(scores[time] for time in group), sum(max(scores[time], 0) for time in group)))
 
 
 def _subtract(rows: Sequence[CandidateScoreRow], removed_ids: set[str]) -> list[CandidateScoreRow]:

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { reviseEventRequestSchema } from "@/lib/rectification-v4/contracts";
-import { appendEventRevision } from "@/lib/rectification-v4/evidence-ledger";
+import { appendEventRevision, eventDateProvenance } from "@/lib/rectification-v4/evidence-ledger";
 import { rectificationV4Context, rectificationV4Error, requestBody, routeId } from "../../../../../_server";
 
 export const runtime = "nodejs";
@@ -23,6 +23,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ cas
       summary: body.summary,
       rawText: body.rawText,
       dateRange: body.dateRange,
+      ...eventDateProvenance(body),
       scoreability: body.scoreability,
     });
     return NextResponse.json(await context.service.reviseEvent({

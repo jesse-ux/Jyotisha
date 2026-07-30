@@ -70,9 +70,9 @@ test("candidate minutes merge into ranked contiguous clusters and never confirm 
   assert.deepEqual(clusters.map((cluster) => [cluster.rank, cluster.startTime, cluster.endTime]), [[1, "05:13", "05:15"], [2, "05:17", "05:18"]]);
   const gate = evaluateDecisionGate({
     clusters: [clusters[0]!],
-    robustness: { neighborSupportMinutes: 3, leaveOneOutRetentionRate: 1, dateSensitivityRetentionRate: 0.9, calculationSpecHashMatched: true },
+    robustness: { neighborSupportMinutes: 3, leaveOneOutRetentionRate: 1, leaveOneDomainOutRetentionRate: 1, dateSensitivityRetentionRate: 0.9, calculationSpecHashMatched: true },
     scoreableEventCount: 10,
-    scoreableDomainCount: 5,
+    scoreableDomains: ["education", "relocation", "relationship", "career", "finance"],
   });
   assert.equal(gate.canAcceptRange, true);
   assert.equal(gate.canConfirmExactMinute, false);
