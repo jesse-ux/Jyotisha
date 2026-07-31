@@ -71,12 +71,21 @@ export function buildRectificationCaseDossier(input: Readonly<{ caseValue: Recti
 
 function fallback(dossier: RectificationCaseDossier, latestAnswer: string): RectificationTurnPlan {
   if (dossier.candidateState.publicRangeAllowed && dossier.candidateState.currentSnapshotId) return { contractVersion: "rectification-turn-plan-v1", targetDisposition: dossier.interviewState.targetDisposition, evidenceProposals: [], action: { type: "offer_candidate_range", snapshotId: dossier.candidateState.currentSnapshotId }, publicReply: { acknowledgement: "现有事件已经完成本轮复核。", candidateCommentary: "候选范围已通过当前稳定性门槛，可以作为工作范围查看。", limitation: "这仍不是对某个精确出生分钟的确认。" } };
-  const keepTarget = Boolean(dossier.interviewState.currentTargetEventId && ["unresolved", "answered_other_event"].includes(dossier.interviewState.targetDisposition));
+  const targetEventId = dossier.interviewState.currentTargetEventId;
+  const keepTarget = Boolean(targetEventId && ["unresolved", "answered_other_event"].includes(dossier.interviewState.targetDisposition));
+  const targetEvent = keepTarget ? dossier.eventLedger.find((event) => event.eventId === targetEventId && event.status === "active") : null;
   const latestGroundedEvent = [...dossier.eventLedger].reverse().find((event) => event.status === "active" && (event.rawText === latestAnswer || latestAnswer.includes(event.summary)));
   const safeSummary = latestGroundedEvent && !privatePattern.test(latestGroundedEvent.summary) && !containsExactMinute(latestGroundedEvent.summary)
     ? latestGroundedEvent.summary.slice(0, 120)
     : null;
-  return { contractVersion: "rectification-turn-plan-v1", targetDisposition: dossier.interviewState.targetDisposition, evidenceProposals: [], action: { type: "ask_question", focus: { mode: keepTarget ? "clarify_existing_event" : "collect_independent_event", targetEventId: keepTarget ? dossier.interviewState.currentTargetEventId : null, domain: null, requestedFacts: keepTarget ? ["day_or_period"] : ["independent_event", "year"], rationaleCodes: [keepTarget ? "unresolved_current_event" : "need_independent_dated_event"] }, question: keepTarget ? "关于刚才那件事，你还记得它大约发生在哪一年或哪个阶段吗？" : "你还能想到一件发生在你本人身上、时间大致确定的重要经历吗？", optionalQuickReplies: [] }, publicReply: { acknowledgement: safeSummary ? `你提到的“${safeSummary}”已经纳入本轮事件线索。` : latestAnswer.trim() ? "我已按你刚才的描述继续整理事件线索。" : "我们先从真实经历建立事件线索。", candidateCommentary: null, limitation: "在证据通过稳定性门槛前，我不会把某个具体分钟当成确定出生时间。" } };
+  const safeTargetSummary = targetEvent && !privatePattern.test(targetEvent.summary) && !containsExactMinute(targetEvent.summary)
+    ? `“${targetEvent.summary.slice(0, 120)}”`
+    : "刚才那件事";
+  const targetNeedsMonth = targetEvent?.dateRange.precision === "year" || targetEvent?.dateRange.precision === "quarter";
+  const targetQuestion = targetNeedsMonth
+    ? `${safeTargetSummary}大概发生在哪个月，或一年中的哪个时间段？`
+    : `关于${safeTargetSummary}，你还记得更具体的时间或阶段吗？`;
+  return { contractVersion: "rectification-turn-plan-v1", targetDisposition: dossier.interviewState.targetDisposition, evidenceProposals: [], action: { type: "ask_question", focus: { mode: keepTarget ? "clarify_existing_event" : "collect_independent_event", targetEventId: keepTarget ? targetEventId : null, domain: keepTarget ? targetEvent?.domain ?? null : null, requestedFacts: keepTarget ? [targetNeedsMonth ? "month" : "day_or_period"] : ["independent_event", "year"], rationaleCodes: [keepTarget ? "unresolved_current_event" : "need_independent_dated_event"] }, question: keepTarget ? targetQuestion : "你还能想到一件发生在你本人身上、时间大致确定的重要经历吗？", optionalQuickReplies: [] }, publicReply: { acknowledgement: safeSummary ? `你提到的“${safeSummary}”已经纳入本轮事件线索。` : latestAnswer.trim() ? "我已按你刚才的描述继续整理事件线索。" : "我们先从真实经历建立事件线索。", candidateCommentary: null, limitation: "在证据通过稳定性门槛前，我不会把某个具体分钟当成确定出生时间。" } };
 }
 
 export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; dossier: RectificationCaseDossier; latestAnswer: string; phase: "evidence" | "final" }>): Readonly<{ plan: RectificationTurnPlan | null; issues: readonly string[] }> {
@@ -110,6 +119,8 @@ export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; d
   if (plan.action.type === "ask_question") {
     if (asksMultipleQuestions(plan.action.question)) issues.push("multiple_questions");
     if (plan.action.focus.targetEventId && !known.has(plan.action.focus.targetEventId)) issues.push("focus_target_invalid");
+    if (currentTarget && ["unresolved", "answered_other_event"].includes(plan.targetDisposition)
+      && plan.action.focus.targetEventId !== currentTarget) issues.push("unresolved_target_abandoned");
     if (["unknown", "declined", "direction_change"].includes(plan.targetDisposition)
       && (plan.action.focus.targetEventId === input.dossier.interviewState.currentTargetEventId
         || ["clarify_existing_event", "resolve_conflict"].includes(plan.action.focus.mode))) issues.push("declined_target_reopened");
