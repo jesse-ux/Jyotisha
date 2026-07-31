@@ -12,6 +12,11 @@ import type {
 } from "./contracts.ts";
 export type { RectificationV4Turn } from "./contracts.ts";
 
+export function canResumeRectificationCase(caseValue: RectificationV4Case, hasActiveJob: boolean): boolean {
+  return (caseValue.status === "awaiting_answer" && caseValue.currentQuestion !== null)
+    || (caseValue.status === "processing" && hasActiveJob);
+}
+
 export type ClaimedRectificationV4Job = Readonly<{
   job: RectificationV4Job;
   case: RectificationV4Case;

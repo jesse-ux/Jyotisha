@@ -1849,3 +1849,20 @@
 - 防复发：拒答保护必须有 Orchestrator/Director 级回归；Pending resolution 必须验证缺口已被对应 Revision 补齐；评分政策变化必须同时处理历史 Snapshot；公开技术层过滤按完整技术命名空间测试。
 - 相关记录：BUG-099、BUG-102、BUG-103
 - 修复版本：`birth-time-rectification-v6` / `rectification-director-v2`
+
+## BUG-105 | 候选差异未驱动下一问、Event Kind 未进入评分且不可回答 Case 被错误复用
+
+- 状态：resolved
+- 首次发现：2026-07-31
+- 最近更新：2026-07-31
+- 影响面：V6 Agent 问题排序、V5 Python 贡献矩阵、V4 Case 创建/复用、Staging 新建校正后的首次回答
+- 用户现象：诊断已经显示候选簇在特定技术层存在差异时，访谈仍可能继续做通用领域轮询；关系确立与关系变化在评分中缺少语义差异；新建校正后首次提交回答可能返回“当前没有待回答的问题，请刷新后重试。”；已知主体的非评分事件还可能被错误追问“发生在谁身上”。
+- 触发条件：候选分歧只携带技术层而没有可行动的缺失证据；评分仅按 Domain 汇总；创建 Case 时复用 `paused`、没有 Active Job 的 `processing`、或没有 `currentQuestion` 的 `awaiting_answer` Case；`pending_review` 被等同于主体不明确。
+- 根因：Director Dossier 缺少 Candidate Contrast Packet，问题排序对同领域历史提问施加通用重复惩罚；共享评分入口没有按 Event Kind 和真实命中 Rule ID 调整贡献；Service、Memory Store 与 Supabase RPC 的可恢复 Case 条件不一致且没有算法版本隔离；主体澄清条件错误地依赖整个 Scoreability 状态。
+- 修复：共享诊断层按主候选与次候选的静态特征差异计算区分层、按事件贡献差值计算相关事件，再生成不暴露候选分钟的 Candidate Contrast Packet，用 Cluster Rank、区分层、相关事件和缺失 Event Kind 驱动问题机会；候选驱动的不同 Event Kind 不受通用同领域重复惩罚，并优先于无诊断依据的领域轮询，非评分事件不作为 Candidate Split Target；共享 Python 贡献矩阵按真实 Rule ID 对 `relationship_start` 与 `relationship_change` 应用不同 Profile，零 Activation 不凭空加分，`relationship_end` 继续 Fail Closed；算法版本升级到 `rectification-v5-matrix-scoring-2`；三层 Case 复用统一为仅恢复可回答 Case 或拥有 Active Job 的 Processing Case，且必须匹配算法版本；主体澄清仅针对 `subject=other`。
+- 数据库：新增向前迁移，更新新 Case 默认算法版本、保留 range-scoring v1 与 matrix-scoring v1 历史 Candidate Snapshot 解析兼容、废弃未完成的旧算法 Case、标记其活跃 Job 为 Stale，并重建带可恢复状态和算法版本检查的 Case 创建 RPC；不写入 Profile 出生时间。
+- 验证：真实用户回放覆盖复读、大学入学并离家、开始工作、分手和负债，断言关系结束保持 `pending_review`、不会把大学入学换词重问为迁居、D9 内部差异转为关系确立/状态变化的自然存在性问题、公开问题不泄露技术层或候选分钟，并允许“没有、不知道、不想回答、换方向”；Service 回归覆盖 Paused、孤儿 Processing、空问题 Awaiting Answer、新 Case 首次回答与旧算法 Case 替换；Python 回归覆盖关系 Event Kind 反转候选排序及零 Activation。
+- 安全边界：Candidate Contrast 只在服务器内部使用，不向用户公开技术层、分数、代表分钟或第二候选簇；Agent 不能把 `relationship_end` 变为可评分事件，不能确认精确出生分钟，也不能自动写入 Profile。
+- 防复发：完整回放测试必须同时覆盖事件账本、问题排序、退出方式和公开文本；评分版本变化必须同步 Case 复用、数据库默认值和历史快照兼容；Case 创建测试必须随后真实调用一次 Answer。
+- 相关记录：BUG-101、BUG-102、BUG-104
+- 修复版本：local follow-up / `rectification-v5-matrix-scoring-2`

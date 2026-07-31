@@ -11,7 +11,7 @@ import type {
   RectificationV4Store,
   RectificationV4Turn,
 } from "./store.ts";
-import { RectificationV4StoreError } from "./store.ts";
+import { canResumeRectificationCase, RectificationV4StoreError } from "./store.ts";
 import { evidenceSetHash } from "./fingerprints.ts";
 
 export function createRectificationV4MemoryStore(): RectificationV4Store & {
@@ -93,7 +93,10 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
       if (replay) return owned(input.case.userId, replay.caseId);
       const active = [...cases.values()].find((value) => value.userId === input.case.userId
         && value.status !== "abandoned" && value.acceptedRange === null);
-      if (active?.calculationSpecHash === input.case.calculationSpecHash) {
+      const hasActiveJob = active ? [...jobs.values()].some((job) => job.caseId === active.id && ["pending", "processing"].includes(job.status)) : false;
+      if (active?.calculationSpecHash === input.case.calculationSpecHash
+        && active.algorithmVersion === input.case.algorithmVersion
+        && canResumeRectificationCase(active, hasActiveJob)) {
         actionResults.set(`${input.case.userId}:${input.actionId}`, { caseId: active.id, jobId: null });
         return active;
       }

@@ -40,6 +40,48 @@ def _subtract(rows: Sequence[CandidateScoreRow], removed_ids: set[str]) -> list[
     return [{**row, "score": round(row["score"] - sum(item["points"] for item in row["evidence"] if item["event_id"] in removed_ids), 4)} for row in rows]
 
 
+def _candidate_feature_contrast(built: dict[str, Any], primary_time: str, secondary_time: str) -> list[str]:
+    features = {
+        value["time"]: value
+        for context in built.get("static_contexts") or []
+        if isinstance((value := context.get("feature")), dict) and isinstance(value.get("time"), str)
+    }
+    primary = features.get(primary_time)
+    secondary = features.get(secondary_time)
+    if not primary or not secondary:
+        return []
+    layers = []
+    for section in ("varga_ascendants", "arudha_signs"):
+        primary_values = primary.get(section) or {}
+        secondary_values = secondary.get(section) or {}
+        layers.extend(
+            key for key in set(primary_values) | set(secondary_values)
+            if primary_values.get(key) != secondary_values.get(key)
+        )
+    fingerprints = (("ashtakavarga", "Ashtakavarga"), ("shadbala", "Shadbala"))
+    primary_fingerprints = primary.get("fingerprints") or {}
+    secondary_fingerprints = secondary.get("fingerprints") or {}
+    layers.extend(
+        layer for key, layer in fingerprints
+        if primary_fingerprints.get(key) != secondary_fingerprints.get(key)
+    )
+    return sorted(set(layers))[:8]
+
+
+def _candidate_contrast(built: dict[str, Any], primary_time: str, secondary_time: str) -> tuple[list[str], list[str]]:
+    event_deltas: list[tuple[float, str]] = []
+    for event_id, candidates in built["matrix"].items():
+        primary = candidates.get(primary_time)
+        secondary = candidates.get(secondary_time)
+        if not primary or not secondary:
+            continue
+        delta = abs(float(primary["points"]) - float(secondary["points"]))
+        if delta > 1e-9:
+            event_deltas.append((delta, event_id))
+    events = [event_id for _, event_id in sorted(event_deltas, key=lambda item: (-item[0], item[1]))]
+    return _candidate_feature_contrast(built, primary_time, secondary_time), events
+
+
 def run_diagnostics(request: RectificationRequest, rows: list[CandidateScoreRow], built: dict[str, Any]) -> dict[str, Any]:
     primary = set(_primary_cluster(rows))
     event_runs = []
@@ -74,11 +116,12 @@ def run_diagnostics(request: RectificationRequest, rows: list[CandidateScoreRow]
     clusters = [_primary_cluster(rows)]
     candidate_splits = []
     if secondary and clusters[0]:
+        contrast_layers, contrast_event_ids = _candidate_contrast(built, top[0]["time"], secondary["time"])
         candidate_splits.append({
             "left_cluster": {"start": clusters[0][0], "end": clusters[0][-1]},
             "right_cluster": {"start": secondary["time"], "end": secondary["time"]},
-            "technique_layers": [name for name, _ in sorted(layers.items(), key=lambda item: item[1], reverse=True)[:8]],
-            "event_ids": [item["event_id"] for item in secondary["evidence"] if item["points"] != 0],
+            "technique_layers": contrast_layers,
+            "event_ids": contrast_event_ids,
         })
     return {
         "primary_cluster_retention_rate": 1.0 if primary else 0.0,

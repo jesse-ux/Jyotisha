@@ -27,7 +27,7 @@ const newEventDomainTerms: Readonly<Partial<Record<QuestionOpportunity["domain"]
 };
 const questionRealizationSchema = z.object({ question: z.string().trim().min(1).max(1_000) }).strict();
 const openingMessageSchema = z.object({ message: z.string().trim().min(1).max(1_000) }).strict();
-const domainChecklistTerms = /(?:学业|教育|搬家|迁居|感情|婚姻|工作|职业|财务|健康)/g;
+const fixedChoiceStructure = /(?:从|在)[^。！？?\n]{1,80}(?:、|，|,|或|或者)[^。！？?\n]{1,80}(?:(?:中|里|方面)(?:选|选择|挑|说|讲|开始)|(?:选|选择|挑)(?:一|1)?(?:个|件|段))|按[^。！？?\n]{1,80}(?:依次|逐一|分别)(?:回答|说|讲)/;
 
 export type OpeningQuestionGenerator = (prompt: string, phase: "generate" | "repair") => Promise<Readonly<{ object: unknown }>>;
 
@@ -60,7 +60,7 @@ function validateOpeningMessage(value: unknown, range: Readonly<{ start: string;
   if (internalTerms.test(message)) issues.push("private_detail_exposed");
   const positiveClaims = message.split(/[。；;！？?!]/).filter((sentence) => !/(?:不是|并非|尚未|还未|不能)/.test(sentence)).join(" ");
   if (exactMinuteClaim.test(positiveClaims)) issues.push("exact_minute_claimed");
-  if ((message.match(domainChecklistTerms) ?? []).length >= 3) issues.push("fixed_domain_checklist");
+  if (fixedChoiceStructure.test(message)) issues.push("fixed_domain_checklist");
   return { message: issues.length ? null : message, issues };
 }
 

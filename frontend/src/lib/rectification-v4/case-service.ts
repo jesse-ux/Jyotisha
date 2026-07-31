@@ -13,7 +13,7 @@ import { generateOpeningQuestion, regenerateQuestionRealization } from "../recti
 import { calculationSpecHash, evidenceSetHash } from "./fingerprints.ts";
 import { hasPolicyInvalidScoreableEvents } from "./evidence-ledger.ts";
 import { openingQuestion } from "./opening-question.ts";
-import type { RectificationV4Store } from "./store.ts";
+import { canResumeRectificationCase, type RectificationV4Store } from "./store.ts";
 
 const regenerationInFlight = new Map<string, Promise<RectificationV4Case | null>>();
 
@@ -58,7 +58,10 @@ export function createRectificationV4CaseService(
 
       const specHash = calculationSpecHash(input.calculationSpec);
       const active = await store.findActiveCase(input.userId);
-      if (active?.calculationSpecHash === specHash) {
+      const activeJob = active?.status === "processing" ? await store.loadActiveJob(input.userId, active.id) : null;
+      if (active?.calculationSpecHash === specHash
+        && active.algorithmVersion === rectificationV4AlgorithmVersion
+        && canResumeRectificationCase(active, Boolean(activeJob))) {
         return response(input.userId, await store.createCase({ case: active, actionId: input.actionId }));
       }
 

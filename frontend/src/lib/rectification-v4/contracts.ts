@@ -4,7 +4,11 @@ export const rectificationV4Protocol = "rectification-evidence-v4" as const;
 export const rectificationAgentV5Protocol = "rectification-evidence-v5" as const;
 export const rectificationDeploymentModeSchema = z.enum(["v4_legacy", "v5_shadow", "v5_agent"]);
 export type RectificationDeploymentMode = z.infer<typeof rectificationDeploymentModeSchema>;
-export const rectificationV4AlgorithmVersion = "rectification-v5-matrix-scoring-1" as const;
+export const rectificationV4AlgorithmVersion = "rectification-v5-matrix-scoring-2" as const;
+const rectificationLegacyAlgorithmVersions = [
+  "rectification-v4-range-scoring-1",
+  "rectification-v5-matrix-scoring-1",
+] as const;
 
 export const rectificationV4CaseStatusSchema = z.enum([
   "awaiting_answer",
@@ -182,7 +186,7 @@ const candidateSnapshotBaseSchema = z.object({
   caseVersion: z.number().int().nonnegative(),
   evidenceSetHash: z.string().regex(/^[a-f0-9]{64}$/),
   calculationSpecHash: z.string().regex(/^[a-f0-9]{64}$/),
-  algorithmVersion: z.literal(rectificationV4AlgorithmVersion),
+  algorithmVersion: z.enum([...rectificationLegacyAlgorithmVersions, rectificationV4AlgorithmVersion]),
   candidates: z.array(candidateMinuteSchema).min(1).max(1_440),
   clusters: z.array(candidateClusterSchema).max(20),
   robustness: robustnessSchema,

@@ -11,7 +11,7 @@ DatePrecision = Literal["day", "month", "quarter", "year", "range"]
 SCOREABLE_EVENT_KINDS: dict[str, frozenset[str]] = {
     "education": frozenset({"education_milestone"}),
     "relocation": frozenset({"relocation"}),
-    "relationship": frozenset({"relationship_start", "relationship_end", "relationship_change"}),
+    "relationship": frozenset({"relationship_start", "relationship_change"}),
     "career": frozenset({"career_change"}),
     "finance": frozenset({"finance_change"}),
     "health_pressure": frozenset({"self_health_event"}),

@@ -9,7 +9,7 @@ import {
   type QuestionOpportunity,
   type ValidatedDecision,
 } from "../src/lib/rectification-agent/contracts.ts";
-import { buildQuestionOpportunities } from "../src/lib/rectification-agent/opportunity-builder.ts";
+import { buildCandidateContrastPacket, buildQuestionOpportunities } from "../src/lib/rectification-agent/opportunity-builder.ts";
 import { buildReasonerState } from "../src/lib/rectification-agent/reasoner-agent.ts";
 import { candidateUpdateFor, realizePublicMessage, validateQuestionRealization } from "../src/lib/rectification-agent/renderer-agent.ts";
 import { extractLifeEventEvidence, validatedModelAssistedEvidence } from "../src/lib/conversational-rectification/evidence-extractor.ts";
@@ -462,6 +462,139 @@ test("新事件机会提供具体回忆线索和退出方式，不把离家上�
   assert.ok(career.contextFacts.some((fact) => /不得假定/.test(fact)));
   assert.ok(career.contextFacts.some((fact) => /没有、记不清、不想回答或换方向/.test(fact)));
   assert.equal(validateQuestionRealization(career.fallbackPrompt, career).valid, true);
+});
+
+test("D9 候选差异优先请求缺失的关系事件语义而不是继续领域轮询", () => {
+  const events = [
+    event({ summary: "2015年复读", rawText: "2015年复读" }),
+    event({ eventId: randomUUID(), domain: "career", eventKind: "career_change", summary: "2020年开始工作", rawText: "2020年开始工作" }),
+    event({ eventId: randomUUID(), domain: "finance", eventKind: "finance_change", summary: "2026年开始负债", rawText: "2026年开始负债" }),
+  ];
+  const splitDiagnostics = diagnostics({
+    candidateSplits: [{
+      leftCluster: { start: "05:10", end: "05:14" },
+      rightCluster: { start: "05:16", end: "05:20" },
+      techniqueLayers: ["D9", "vimshottari"],
+      eventIds: [],
+    }],
+  });
+  const currentSnapshot = snapshot(["05:10", "05:14"], {
+    clusters: [
+      { rank: 1, startTime: "05:10", endTime: "05:14", representativeTime: "05:12", widthMinutes: 5, peakScore: 10, scoreMass: .55 },
+      { rank: 2, startTime: "05:16", endTime: "05:20", representativeTime: "05:18", widthMinutes: 5, peakScore: 9.8, scoreMass: .45 },
+    ],
+  });
+
+  const packet = buildCandidateContrastPacket({ events, snapshot: currentSnapshot, diagnostics: splitDiagnostics });
+  assert.deepEqual(packet?.missingEvidence[0], {
+    domain: "relationship",
+    eventKind: "relationship_start",
+    reason: "highest_candidate_separation",
+  });
+  assert.deepEqual(packet?.discriminatingLayers, ["D9"]);
+
+  const opportunities = buildQuestionOpportunities({ caseId, events, turns: [], snapshot: currentSnapshot, diagnostics: splitDiagnostics });
+  assert.equal(opportunities.some((item) => item.kind === "disambiguate_candidate_split" && item.targetEventId === null), false);
+  assert.equal(opportunities[0]?.kind, "ask_new_event");
+  assert.equal(opportunities[0]?.domain, "relationship");
+  assert.ok(opportunities[0]?.contextFacts.some((fact) => /候选区分力最高/.test(fact)));
+  assert.doesNotMatch(opportunities[0]?.contextFacts.join(" ") ?? "", /D9|05:1/);
+
+  const withStart = buildCandidateContrastPacket({
+    events: [...events, event({ eventId: randomUUID(), domain: "relationship", eventKind: "relationship_start", summary: "2022年确定关系", rawText: "2022年确定关系" })],
+    snapshot: currentSnapshot,
+    diagnostics: splitDiagnostics,
+  });
+  assert.equal(withStart?.missingEvidence[0]?.eventKind, "relationship_change");
+});
+
+test("真实用户回放按候选差异追问关系证据且不泄露内部候选", () => {
+  const replay = [
+    { rawText: "2015年复读", domain: "education", eventKind: "education_milestone" },
+    { rawText: "2016年离家去外地上大学", domain: "education", eventKind: "education_milestone" },
+    { rawText: "2020年开始工作", domain: "career", eventKind: "career_change" },
+    { rawText: "2024年分手", domain: "relationship", eventKind: "relationship_end" },
+    { rawText: "2026年开始负债", domain: "finance", eventKind: "finance_change" },
+  ] as const;
+  let events: LifeEventRevision[] = [];
+  const turns: RectificationV4Turn[] = [];
+
+  replay.forEach((item, index) => {
+    const sourceTurnId = randomUUID();
+    const dateText = item.rawText.slice(0, 5);
+    const assisted = validatedModelAssistedEvidence({
+      rawText: item.rawText,
+      sourceTurnId,
+      asOfDate: "2026-07-31",
+      extraction: {
+        sourceSpan: item.rawText,
+        summary: item.rawText.slice(5),
+        domain: item.domain,
+        eventKind: item.eventKind,
+        subject: "self",
+        relatedPerson: null,
+        dateText,
+      },
+    });
+    assert.ok(assisted);
+    const reconciled = reconcileV4Evidence({
+      caseId,
+      answer: item.rawText,
+      sourceTurnId,
+      asOfDate: "2026-07-31",
+      existing: events,
+      assistedEvidence: [assisted],
+      now: new Date(`2026-07-31T0${index}:00:00.000Z`),
+    });
+    assert.equal(reconciled.pending.length, 0);
+    events = [...events, ...reconciled.revisions];
+    turns.push(turn({
+      id: sourceTurnId,
+      caseVersion: index + 1,
+      questionDomain: item.domain,
+      answer: item.rawText,
+      createdAt: `2026-07-31T0${index}:00:00.000Z`,
+    }));
+  });
+
+  const breakup = events.find((item) => item.eventKind === "relationship_end");
+  assert.ok(breakup);
+  assert.equal(breakup.scoreability, "pending_review");
+  assert.equal(events.some((item) => item.eventKind === "relationship_end" && item.scoreability === "scoreable"), false);
+  assert.equal(events.some((item) => item.domain === "relocation"), false);
+
+  const currentSnapshot = snapshot(["05:10", "05:14"], {
+    canAcceptRange: false,
+    gateReasons: ["insufficient_candidate_separation"],
+    clusters: [
+      { rank: 1, startTime: "05:10", endTime: "05:14", representativeTime: "05:13", widthMinutes: 5, peakScore: 10, scoreMass: .51 },
+      { rank: 2, startTime: "05:16", endTime: "05:20", representativeTime: "05:17", widthMinutes: 5, peakScore: 9.9, scoreMass: .49 },
+    ],
+  });
+  const splitDiagnostics = diagnostics({
+    candidateSplits: [{
+      leftCluster: { start: "05:10", end: "05:14" },
+      rightCluster: { start: "05:16", end: "05:20" },
+      techniqueLayers: ["D9", "vimshottari"],
+      eventIds: [breakup.eventId],
+    }],
+  });
+  const packet = buildCandidateContrastPacket({ events, snapshot: currentSnapshot, diagnostics: splitDiagnostics });
+  assert.equal(packet?.missingEvidence[0]?.eventKind, "relationship_start");
+
+  const opportunities = buildQuestionOpportunities({ caseId, events, turns, snapshot: currentSnapshot, diagnostics: splitDiagnostics });
+  const next = opportunities[0];
+  assert.ok(next);
+  assert.equal(next.kind, "ask_new_event");
+  assert.equal(next.domain, "relationship");
+  assert.match(next.fallbackPrompt, /关系正式确立|开始共同生活/);
+  assert.match(next.fallbackPrompt, /没有/);
+  assert.match(next.fallbackPrompt, /不知道/);
+  assert.match(next.fallbackPrompt, /不想回答/);
+  assert.match(next.fallbackPrompt, /换方向/);
+  assert.doesNotMatch(next.fallbackPrompt, /搬家|迁居|离乡|外地/);
+  assert.doesNotMatch([next.goal, next.fallbackPrompt, ...next.contextFacts].join(" "), /D9|vimshottari|05:1[037]/i);
+  assert.equal(validateQuestionRealization(next.fallbackPrompt, next).valid, true);
 });
 
 test("研究院实习后的迁居机会以存在性问题主动引导，不要求用户自己发明事件", () => {

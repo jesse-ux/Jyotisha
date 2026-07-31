@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
-import type { CandidateSnapshot, EvidenceDomain, LifeEventRevision, RectificationV4Turn } from "../rectification-v4/contracts.ts";
-import { chronologicalEvents } from "../rectification-v4/evidence-ledger.ts";
+import type { CandidateSnapshot, EvidenceDomain, EventKind, LifeEventRevision, RectificationV4Turn } from "../rectification-v4/contracts.ts";
+import { domainScorerRegistry } from "../rectification-v4/domain-scorers.ts";
+import { chronologicalEvents, latestEventRevisions } from "../rectification-v4/evidence-ledger.ts";
 import type { TargetDisposition } from "../rectification-v4/extraction.ts";
-import type { DiagnosticsSummary, QuestionOpportunity, SemanticQuestionOpportunity } from "./contracts.ts";
+import type { CandidateContrastPacket, DiagnosticsSummary, QuestionOpportunity, SemanticQuestionOpportunity } from "./contracts.ts";
 
 const forbiddenMoves: SemanticQuestionOpportunity["forbiddenMoves"] = [
   "switch_target_event", "ask_multiple_questions", "claim_exact_birth_minute", "invent_event",
@@ -86,21 +87,21 @@ const routingValue: Record<QuestionOpportunity["kind"], number> = {
 
 type OpportunityInput = Omit<SemanticQuestionOpportunity, "contractVersion" | "opportunityId" | "utility" | "active" | "forbiddenMoves">;
 
-function utility(value: OpportunityInput): number {
+function utility(value: OpportunityInput, contrastPriority = 0): number {
   return Number((
     .35 * value.expectedInformationGain + .20 * value.dateSensitivity + .15 * value.candidateSplitRelevance
     + .10 * value.domainCoverageGain + .10 * value.recallEase + .10 * value.novelty
-    + routingValue[value.kind] - value.repetitionPenalty - value.privacyCost
+    + routingValue[value.kind] + contrastPriority - value.repetitionPenalty - value.privacyCost
   ).toFixed(6));
 }
 
-function opportunity(caseId: string, input: OpportunityInput): QuestionOpportunity {
+function opportunity(caseId: string, input: OpportunityInput, contrastPriority = 0): QuestionOpportunity {
   return {
     contractVersion: "semantic-question-v2",
     ...input,
     forbiddenMoves,
     opportunityId: stableUuid(`${caseId}:${input.kind}:${input.targetEventId ?? input.domain}:${input.goal}:${input.fallbackPrompt}`),
-    utility: utility(input),
+    utility: utility(input, contrastPriority),
     active: true,
   };
 }
@@ -119,6 +120,47 @@ function declinedSensitiveDomains(turns: readonly RectificationV4Turn[]): Readon
     if (turn.questionDomain && /不想说|不方便说|不想回答|跳过|这个不说|换个方向|不聊这个/.test(turn.answer)) result.add(turn.questionDomain);
   }
   return result;
+}
+
+const genericTechniqueLayers = new Set(["vimshottari", "narayana"]);
+
+export function buildCandidateContrastPacket(input: Readonly<{
+  events: readonly LifeEventRevision[];
+  snapshot: CandidateSnapshot | null;
+  diagnostics: DiagnosticsSummary | null;
+}>): CandidateContrastPacket | null {
+  const split = input.diagnostics?.candidateSplits[0];
+  if (!split) return null;
+  const discriminatingLayers = split.techniqueLayers.filter((layer) => !genericTechniqueLayers.has(layer.toLowerCase()));
+  const existingKinds = new Set(latestEventRevisions(input.events)
+    .filter((event) => event.scoreability === "scoreable")
+    .map((event) => event.eventKind));
+  const missingEvidence = (Object.entries(domainScorerRegistry) as [EvidenceDomain, (typeof domainScorerRegistry)[EvidenceDomain]][])
+    .flatMap(([domain, policy]) => {
+      if (!policy.techniqueLayers.some((layer) => discriminatingLayers.includes(layer))) return [];
+      const eventKind = policy.supportedKinds.find((kind) => !existingKinds.has(kind));
+      return eventKind ? [{ domain, eventKind, reason: "highest_candidate_separation" as const }] : [];
+    });
+  return {
+    primaryClusterRank: input.snapshot?.clusters[0]?.rank ?? null,
+    secondaryClusterRank: input.snapshot?.clusters[1]?.rank ?? null,
+    discriminatingLayers,
+    relevantEventIds: [...split.eventIds],
+    missingEvidence,
+  };
+}
+
+function contrastQuestion(eventKind: EventKind, anchor: string | null): Readonly<{ goal: string; fallbackPrompt: string }> | null {
+  const prefix = anchor ? `在“${anchor}”之外，` : "";
+  if (eventKind === "relationship_start") return {
+    goal: `${prefix}在用户愿意的前提下，询问是否有一段关系正式确立或开始共同生活的经历及其大致年月，不预设一定发生。`,
+    fallbackPrompt: `${prefix}如果你愿意，有没有一段关系正式确立或开始共同生活的经历；如果有，大概是哪年哪月，没有、不知道或不想回答也可以换方向？`,
+  };
+  if (eventKind === "relationship_change") return {
+    goal: `${prefix}在用户愿意的前提下，询问是否有一段关系状态明显改变的经历及其大致年月，不预设一定发生。`,
+    fallbackPrompt: `${prefix}如果你愿意，有没有一段关系状态明显改变的经历；如果有，大概是哪年哪月，没有、不知道或不想回答也可以换方向？`,
+  };
+  return null;
 }
 
 export function buildQuestionOpportunities(input: Readonly<{
@@ -140,6 +182,7 @@ export function buildQuestionOpportunities(input: Readonly<{
   const latestEvent = chronologicalEvents(input.events).at(-1);
   const latestContext = input.turns.at(-1)?.answer ?? latestEvent?.rawText ?? "";
   const opportunities: QuestionOpportunity[] = [];
+  const contrastPacket = buildCandidateContrastPacket(input);
 
   if (input.targetDisposition === "answered_other_event") {
     for (const eventId of retryTargets) {
@@ -165,7 +208,7 @@ export function buildQuestionOpportunities(input: Readonly<{
     if (targetClosed && retryTargets.has(event.eventId)) continue;
     const attemptCount = targetAttempts.get(event.eventId) ?? 0;
     const anchor = anchorFor(event);
-    if ((event.scoreability === "pending_review" || event.subject === "other") && attemptCount === 0) {
+    if (event.subject === "other" && attemptCount === 0) {
       opportunities.push(opportunity(input.caseId, {
         kind: "clarify_event_subject", domain: event.domain, targetEventId: event.eventId,
         goal: `确认“${anchor}”发生在本人、家人还是伴侣。`, requestedFields: ["event_subject"],
@@ -205,16 +248,17 @@ export function buildQuestionOpportunities(input: Readonly<{
 
   const split = input.diagnostics?.candidateSplits[0];
   if (split) {
-    const target = input.events.find((event) => split.eventIds.includes(event.eventId)
+    const target = input.events.find((event) => event.scoreability === "scoreable"
+      && split.eventIds.includes(event.eventId)
       && (targetAttempts.get(event.eventId) ?? 0) === 0
       && !(targetClosed && retryTargets.has(event.eventId)));
     const anchor = target ? anchorFor(target) : null;
-    opportunities.push(opportunity(input.caseId, {
+    if (target) opportunities.push(opportunity(input.caseId, {
       kind: "disambiguate_candidate_split", domain: target?.domain ?? "other", targetEventId: target?.eventId ?? null,
-      goal: target ? `确认“${anchor}”更接近开始、高峰还是正式结束。` : "确认一件现有事件的发生阶段。",
-      requestedFields: ["event_stage"], anchors: anchor ? [anchor] : [],
+      goal: `确认“${anchor}”更接近开始、高峰还是正式结束。`,
+      requestedFields: ["event_stage"], anchors: [anchor!],
       contextFacts: [`候选分歧涉及 ${split.techniqueLayers.length} 个已计算技术层。`],
-      fallbackPrompt: target ? `“${anchor}”当时更接近事情开始、达到高峰，还是正式结束？` : "那件经历更接近开始、达到高峰，还是正式结束？",
+      fallbackPrompt: `“${anchor}”当时更接近事情开始、达到高峰，还是正式结束？`,
       reason: "候选簇在现有诊断中出现可检验分歧。",
       expectedInformationGain: .88, dateSensitivity: .45, candidateSplitRelevance: .95, domainCoverageGain: 0,
       recallEase: .65, novelty: .9, repetitionPenalty: 0, privacyCost: .1,
@@ -231,8 +275,10 @@ export function buildQuestionOpportunities(input: Readonly<{
     const pendingThemeBonus = !latestEvent && policy.signals.test(latestContext) ? .12 : 0;
     const alreadyAsked = input.turns.some((turn) => turn.questionDomain === domain && !turn.questionTargetEventId);
     const latestAnchor = latestEvent ? anchorFor(latestEvent) : null;
+    const contrastEvidence = contrastPacket?.missingEvidence.find((item) => item.domain === domain) ?? null;
+    const targetedQuestion = contrastEvidence ? contrastQuestion(contrastEvidence.eventKind, latestAnchor) : null;
     opportunities.push(opportunity(input.caseId, {
-      kind: "ask_new_event", domain, targetEventId: null, goal: policy.goal(latestAnchor),
+      kind: "ask_new_event", domain, targetEventId: null, goal: targetedQuestion?.goal ?? policy.goal(latestAnchor),
       requestedFields: ["new_dated_event"], anchors: latestAnchor ? [latestAnchor] : [],
       contextFacts: [
         `已有 ${scoreableCount} 件可评分事件。`,
@@ -242,16 +288,17 @@ export function buildQuestionOpportunities(input: Readonly<{
         "只询问一件带大致年月的新事件，不要求用户逐项回答例子。",
         "允许用户回答没有、记不清、不想回答或换方向。",
         "不得发明年龄或日期窗口，只能引用 anchors 中已确认的经历。",
+        ...(contrastEvidence ? ["该类证据对当前候选区分力最高，应优先确认是否存在。"] : []),
         ...(semanticOverlap ? ["该领域与最新事件语义重叠，必须降低优先级，避免把同一经历换词重问。"] : []),
       ],
-      fallbackPrompt: policy.fallbackPrompt(latestAnchor), reason: covered ? "继续收集可区分候选的独立事件。" : "补足证据领域覆盖。",
-      expectedInformationGain: covered ? .54 + latestDomainContinuity + pendingThemeBonus : .65 + pendingThemeBonus,
+      fallbackPrompt: targetedQuestion?.fallbackPrompt ?? policy.fallbackPrompt(latestAnchor), reason: contrastEvidence ? "补足当前候选分离所需的关键证据。" : covered ? "继续收集可区分候选的独立事件。" : "补足证据领域覆盖。",
+      expectedInformationGain: contrastEvidence ? .95 : covered ? .54 + latestDomainContinuity + pendingThemeBonus : .65 + pendingThemeBonus,
       dateSensitivity: input.snapshot ? .5 : .35,
-      candidateSplitRelevance: input.diagnostics?.candidateSplits.length ? .58 : .42,
-      domainCoverageGain: covered ? 0 : scoreableDomains.size < 2 ? 1 : .15,
-      recallEase: policy.recallEase, novelty: semanticOverlap ? .45 : alreadyAsked ? .35 : .9,
-      repetitionPenalty: (alreadyAsked ? .3 : 0) + (semanticOverlap ? .2 : 0), privacyCost: policy.privacyCost,
-    }));
+      candidateSplitRelevance: contrastEvidence ? .98 : input.diagnostics?.candidateSplits.length ? .58 : .42,
+      domainCoverageGain: contrastEvidence ? 1 : covered ? 0 : scoreableDomains.size < 2 ? 1 : .15,
+      recallEase: policy.recallEase, novelty: contrastEvidence ? .95 : semanticOverlap ? .45 : alreadyAsked ? .35 : .9,
+      repetitionPenalty: contrastEvidence ? 0 : (alreadyAsked ? .3 : 0) + (semanticOverlap ? .2 : 0), privacyCost: policy.privacyCost,
+    }, contrastEvidence ? .08 : 0));
   }
 
   return opportunities

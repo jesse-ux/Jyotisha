@@ -88,6 +88,14 @@ function snapshotInput(overrides: Record<string, unknown> = {}) {
   };
 }
 
+test("pre-matrix historical snapshots remain readable", () => {
+  const parsed = candidateSnapshotSchema.parse(snapshotInput({
+    algorithmVersion: "rectification-v4-range-scoring-1",
+    robustness,
+  }));
+  assert.equal(parsed.algorithmVersion, "rectification-v4-range-scoring-1");
+});
+
 test("legacy snapshots without domain retention still parse without retroactive rejection", () => {
   const parsed = candidateSnapshotSchema.parse(snapshotInput({
     robustness: {

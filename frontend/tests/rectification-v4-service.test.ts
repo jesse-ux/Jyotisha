@@ -83,6 +83,48 @@ test("same calculation spec resumes while a changed spec abandons the old case a
   assert.equal(store.jobs.get(queued.job.id)?.status, "stale");
 }));
 
+test("new case replaces paused or orphaned processing state and can be answered immediately", async () => withMode("v5_agent", async () => {
+  const store = createRectificationV4MemoryStore();
+  const service = createTestCaseService(store, { now: fixedNow });
+  const userId = randomUUID();
+
+  const first = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+  await service.transition({ userId, caseId: first.case.id, actionId: randomUUID(), expectedCaseVersion: 0, kind: "pause" });
+  const afterPause = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+  assert.notEqual(afterPause.case.id, first.case.id);
+  assert.equal(store.cases.get(first.case.id)?.status, "abandoned");
+  assert.ok(afterPause.case.currentQuestion);
+
+  store.cases.set(afterPause.case.id, { ...afterPause.case, status: "processing", phase: "reasoning", currentQuestion: null });
+  const replacement = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+  assert.notEqual(replacement.case.id, afterPause.case.id);
+  assert.equal(store.cases.get(afterPause.case.id)?.status, "abandoned");
+  assert.ok(replacement.case.currentQuestion);
+
+  const queued = await service.answer({
+    userId,
+    caseId: replacement.case.id,
+    actionId: randomUUID(),
+    expectedCaseVersion: replacement.case.version,
+    answer: "2016 年离家去外地上大学",
+  });
+  assert.ok(queued?.job);
+}));
+
+test("new scoring version replaces a resumable Case created by an older algorithm", async () => withMode("v5_agent", async () => {
+  const store = createRectificationV4MemoryStore();
+  const service = createTestCaseService(store, { now: fixedNow });
+  const userId = randomUUID();
+  const first = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+  store.cases.set(first.case.id, { ...first.case, algorithmVersion: "rectification-v5-matrix-scoring-1" });
+
+  const second = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+
+  assert.notEqual(second.case.id, first.case.id);
+  assert.equal(second.case.algorithmVersion, "rectification-v5-matrix-scoring-2");
+  assert.equal(store.cases.get(first.case.id)?.status, "abandoned");
+}));
+
 test("answer is durably queued and a processing case reload restores its active job", async () => withMode("v5_agent", async () => {
   const store = createRectificationV4MemoryStore();
   const service = createTestCaseService(store, { now: fixedNow });

@@ -50,8 +50,8 @@ test("opening Agent generates and validates the first rectification message", as
     generate: async (_prompt, phase) => {
       phases.push(phase);
       return phase === "generate"
-        ? { object: { message: "目前核对的是 00:00–23:59 候选范围，尚未确认出生分钟。请按学业、搬家、感情、工作依次回答。" } }
-        : { object: { message: "目前核对的是 00:00–23:59 候选范围，并不是已确认的出生分钟。你愿意先从一段自己记得清楚的经历开始说吗？" } };
+        ? { object: { message: "目前核对的是 00:00–23:59 候选范围，尚未确认出生分钟。请从学习、工作或感情中选一段经历来说。" } }
+        : { object: { message: "目前核对的是 00:00–23:59 候选范围，并不是已确认的出生分钟。请讲一段你最清楚的经历，也可以连续讲几件相关的事；记不清或想换方向都可以。" } };
     },
   });
   assert.deepEqual(phases, ["generate", "repair"]);
@@ -475,7 +475,7 @@ test("V6 agent conversation follows dated events, respects direction change, and
     assert.ok(store.diagnostics.size > 0);
     assert.equal(fourth.case.latestSnapshot?.robustness.leaveOneDomainOutRetentionRate, 1);
     assert.equal(fourth.case.latestSnapshot?.canConfirmExactMinute, false);
-    assert.equal(fourth.case.algorithmVersion, "rectification-v5-matrix-scoring-1");
+    assert.equal(fourth.case.algorithmVersion, "rectification-v5-matrix-scoring-2");
     const finalMessage = [...store.publicMessages.values()].at(-1);
     assert.doesNotMatch(`${finalMessage?.candidateUpdate ?? ""}${finalMessage?.limitation ?? ""}`, /唯一分钟|准确分钟|代表分钟|05:13/);
   });

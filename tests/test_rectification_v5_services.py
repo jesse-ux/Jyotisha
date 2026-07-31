@@ -113,6 +113,71 @@ class RectificationV5ServicesTest(unittest.TestCase):
         normalized = normalize_rectification_request(request(domain="health_pressure", event_kind="self_health_event"), today=date(2026, 7, 28))
         self.assertEqual(normalized["events"][0]["event_kind"], "self_health_event")
 
+    def test_relationship_end_is_not_scoreable(self):
+        with self.assertRaisesRegex(ValueError, "event_kind does not match domain"):
+            normalize_rectification_request(
+                request(domain="relationship", event_kind="relationship_end"),
+                today=date(2026, 7, 28),
+            )
+
+    def test_relationship_start_and_change_use_distinct_rule_conditioned_profiles(self):
+        def relationship_rows(_value):
+            return [
+                {
+                    "time": "05:13", "score": 10,
+                    "evidence": [{
+                        "event_id": EVENT_ID, "domain": "relationship", "candidate_time": "05:13",
+                        "rule_ids": ["vim_md_domain_house", "vim_ad_functional_benefic_auxiliary"],
+                        "points": 10,
+                    }],
+                    "missing_layers": [],
+                },
+                {
+                    "time": "05:14", "score": 9,
+                    "evidence": [{
+                        "event_id": EVENT_ID, "domain": "relationship", "candidate_time": "05:14",
+                        "rule_ids": ["controlled_transit_saturn_domain_house", "vim_ad_functional_malefic_auxiliary"],
+                        "points": 9,
+                    }],
+                    "missing_layers": [],
+                },
+            ]
+
+        start = normalize_rectification_request(
+            request(domain="relationship", event_kind="relationship_start"), today=date(2026, 7, 28)
+        )
+        change = normalize_rectification_request(
+            request(domain="relationship", event_kind="relationship_change"), today=date(2026, 7, 28)
+        )
+
+        start_matrix = build_event_contribution_matrix(start, row_provider=relationship_rows)
+        change_matrix = build_event_contribution_matrix(change, row_provider=relationship_rows)
+
+        self.assertGreater(start_matrix["matrix"][EVENT_ID]["05:13"]["points"], start_matrix["matrix"][EVENT_ID]["05:14"]["points"] )
+        self.assertGreater(change_matrix["matrix"][EVENT_ID]["05:14"]["points"], change_matrix["matrix"][EVENT_ID]["05:13"]["points"] )
+        self.assertEqual(change_matrix["date_sensitivity"][0]["sample_winners"], ["05:14", "05:14", "05:14"])
+        self.assertNotIn("event_kind_profile", change_matrix["matrix"][EVENT_ID]["05:14"]["technique_layers"])
+
+    def test_relationship_kind_profile_does_not_create_points_without_activation(self):
+        normalized = normalize_rectification_request(
+            request(domain="relationship", event_kind="relationship_change", precision="day"),
+            today=date(2026, 7, 28),
+        )
+
+        def rows(_value):
+            return [{
+                "time": "05:13", "score": 0,
+                "evidence": [{
+                    "event_id": EVENT_ID, "domain": "relationship", "candidate_time": "05:13",
+                    "rule_ids": ["no_domain_activation", "event_kind:relationship_change"],
+                    "points": 0,
+                }],
+                "missing_layers": [],
+            }]
+
+        built = build_event_contribution_matrix(normalized, row_provider=rows)
+        self.assertEqual(built["matrix"][EVENT_ID]["05:13"]["points"], 0)
+
     def test_date_sampling_preserves_declared_range_and_uses_bounded_samples(self):
         base = request()["events"][0]
         self.assertEqual(sample_event_dates({**base, "precision": "month"}), ["2016-09-01", "2016-09-15", "2016-09-30"])
@@ -167,7 +232,7 @@ class RectificationV5ServicesTest(unittest.TestCase):
         }
         feature = {
             "calculation_spec_hash": "0" * 64,
-            "algorithm_version": "rectification-v5-matrix-scoring-1",
+            "algorithm_version": "rectification-v5-matrix-scoring-2",
             "candidate_count": 2,
             "feature_hash": "1" * 64,
             "features": [{"time": "05:13"}, {"time": "05:14"}],

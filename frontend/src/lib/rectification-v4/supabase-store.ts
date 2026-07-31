@@ -97,7 +97,7 @@ function caseValue(row: Row, latestSnapshot: CandidateSnapshot | null): Rectific
     narrationModelId: row.narration_model_id ? String(row.narration_model_id) : null,
     skillVersion: row.skill_version ? String(row.skill_version) : "birth-time-rectification-v5",
     promptVersion: row.prompt_version ? String(row.prompt_version) : "rectification-agent-v5-1",
-    algorithmVersion: row.algorithm_version ? String(row.algorithm_version) : "rectification-v5-matrix-scoring-1",
+    algorithmVersion: row.algorithm_version ? String(row.algorithm_version) : "rectification-v5-matrix-scoring-2",
     deploymentMode: row.deployment_mode === "v5_agent" || row.deployment_mode === "v5_shadow" ? row.deployment_mode : "v4_legacy",
     agentMode: row.agent_mode === "agent" ? "agent" : "deterministic_fallback",
     featureSnapshotId: row.feature_snapshot_id ? String(row.feature_snapshot_id) : null,

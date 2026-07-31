@@ -90,6 +90,19 @@ export const rectificationTurnPlanSchema = z.object({
 }).strict();
 export type RectificationTurnPlan = z.infer<typeof rectificationTurnPlanSchema>;
 
+export const candidateContrastPacketSchema = z.object({
+  primaryClusterRank: z.number().int().positive().nullable(),
+  secondaryClusterRank: z.number().int().positive().nullable(),
+  discriminatingLayers: z.array(nonblank(80)).max(40),
+  relevantEventIds: z.array(uuid).max(100),
+  missingEvidence: z.array(z.object({
+    domain: evidenceDomainSchema,
+    eventKind: eventKindSchema,
+    reason: z.literal("highest_candidate_separation"),
+  }).strict()).max(8),
+}).strict();
+export type CandidateContrastPacket = z.infer<typeof candidateContrastPacketSchema>;
+
 export const rectificationCaseDossierSchema = z.object({
   case: z.object({
     candidateWindow: z.object({ start: clockTimeSchema, end: clockTimeSchema }).strict(),
@@ -140,6 +153,7 @@ export const rectificationCaseDossierSchema = z.object({
     rangeChanged: z.boolean(),
     topClusters: z.array(z.object({ rank: z.number().int(), widthMinutes: z.number().int(), stability: z.enum(["stable", "unstable"]) }).strict()).max(4),
     contrasts: z.array(z.object({ techniqueLayers: z.array(z.string()), relevantEventIds: z.array(uuid) }).strict()).max(8),
+    contrastIntelligence: candidateContrastPacketSchema.nullable(),
     eventDiagnostics: z.array(z.object({ eventId: uuid, winnerRetentionRate: z.number(), scoreVariance: z.number() }).strict()).max(100),
     gateReasons: z.array(z.string()).max(20),
     currentSnapshotId: uuid.nullable(),
