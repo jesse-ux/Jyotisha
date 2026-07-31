@@ -91,14 +91,12 @@ test("candidate minutes merge into ranked contiguous clusters and never confirm 
   assert.equal(gate.canConfirmExactMinute, false);
 });
 
-test("opening question is open narration, not a fixed-domain questionnaire", () => {
-  const question = openingQuestion({ start: "04:50", end: "05:10" }, randomUUID());
+test("opening question stores the Agent-generated message without a fixed template", () => {
+  const question = openingQuestion("Agent 生成的首轮引导。", randomUUID());
   assert.equal(question.domain, "other");
   assert.equal(question.targetEventId, null);
-  assert.match(question.prompt, /04:50–05:10/);
-  assert.match(question.prompt, /不是已确认的出生分钟/);
-  assert.match(question.prompt, /不需要按固定领域回答/);
-  assert.doesNotMatch(question.prompt, /毕业|搬家|恋爱|工作|财务|健康/);
+  assert.equal(question.prompt, "Agent 生成的首轮引导。");
+  assert.match(question.reason, /Agent/);
 });
 
 test("Opportunity Builder prioritizes event-local date refinement and never asks family as self health", () => {

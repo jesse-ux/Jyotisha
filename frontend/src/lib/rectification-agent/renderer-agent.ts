@@ -26,6 +26,10 @@ const newEventDomainTerms: Readonly<Partial<Record<QuestionOpportunity["domain"]
   health_pressure: /(?:住院|手术|事故|健康|生病|确诊|康复)/,
 };
 const questionRealizationSchema = z.object({ question: z.string().trim().min(1).max(1_000) }).strict();
+const openingMessageSchema = z.object({ message: z.string().trim().min(1).max(1_000) }).strict();
+const domainChecklistTerms = /(?:学业|教育|搬家|迁居|感情|婚姻|工作|职业|财务|健康)/g;
+
+export type OpeningQuestionGenerator = (prompt: string, phase: "generate" | "repair") => Promise<Readonly<{ object: unknown }>>;
 
 function agentFor(modelId: string | null): { id: string; agent: Agent } | null {
   const selected = (modelId ? resolveLanguageModel(modelId) : null) ?? defaultLanguageModel();
@@ -37,10 +41,72 @@ function agentFor(modelId: string | null): { id: string; agent: Agent } | null {
     name: "Birth Time Rectification Response Renderer",
     model: selected.model,
     skills: [skillPath],
-    instructions: "Write concise natural Simplified Chinese. Realize exactly one question from the supplied semantic opportunity. For a new event, use the supplied recall cues as optional examples, ask whether one such event happened instead of assuming it did, and preserve the user's ability to say no, forget, decline, or change direction. Do not invent events, ages, date windows or dates, switch targets, interpret the life meaning of an experience, expose ids/scores/techniques, mention a representative minute, or claim an exact birth minute. Avoid canned acknowledgement. Return strict JSON only.",
+    instructions: "Write concise natural Simplified Chinese for the supplied task. For an opening message, state that the supplied candidate window is only being checked and is not a confirmed birth minute, then invite one clearly remembered experience or connected sequence without a fixed-domain checklist. For a semantic opportunity, realize exactly one question; for a new event, use recall cues only as optional examples and ask whether it happened instead of assuming it did. Preserve the user's ability to be unsure, skip, decline, or change direction. Do not invent events, ages, date windows or dates, switch targets, interpret life meaning, expose ids/scores/techniques, mention a representative minute, or claim an exact birth minute. Avoid canned acknowledgement. Return strict JSON only.",
   });
   agents.set(selected.id, agent);
   return { id: selected.id, agent };
+}
+
+
+function validateOpeningMessage(value: unknown, range: Readonly<{ start: string; end: string }>) {
+  const parsed = openingMessageSchema.safeParse(value);
+  if (!parsed.success) return { message: null, issues: ["opening_schema_invalid"] };
+  const message = parsed.data.message;
+  const issues: string[] = [];
+  if (!message.includes(range.start) || !message.includes(range.end)) issues.push("candidate_range_missing");
+  if (!/(?:不是|并非|尚未|还未|不能).{0,16}(?:确认|确定)|待(?:核对|验证)/.test(message)) issues.push("unconfirmed_range_missing");
+  if ((message.match(/[?？]/g) ?? []).length > 1) issues.push("multiple_questions");
+  if (!/(?:经历|事情|事件|变化|转折|记得|想得起来)/.test(message) || !/(?:说|讲|分享|回忆|开始)/.test(message)) issues.push("experience_invitation_missing");
+  if (internalTerms.test(message)) issues.push("private_detail_exposed");
+  const positiveClaims = message.split(/[。；;！？?!]/).filter((sentence) => !/(?:不是|并非|尚未|还未|不能)/.test(sentence)).join(" ");
+  if (exactMinuteClaim.test(positiveClaims)) issues.push("exact_minute_claimed");
+  if ((message.match(domainChecklistTerms) ?? []).length >= 3) issues.push("fixed_domain_checklist");
+  return { message: issues.length ? null : message, issues };
+}
+
+export async function generateOpeningQuestion(input: Readonly<{
+  caseId: string;
+  candidateRange: Readonly<{ start: string; end: string }>;
+  modelId: string | null;
+  timeoutMs?: number;
+  generate?: OpeningQuestionGenerator;
+}>): Promise<string> {
+  const selected = input.generate ? null : agentFor(input.modelId);
+  const modelId = selected?.id ?? input.modelId;
+  const started = Date.now();
+  const deploymentSha = process.env.DEPLOYMENT_SHA?.trim() || process.env.VERCEL_GIT_COMMIT_SHA?.trim() || null;
+  const generate = input.generate ?? (async (prompt: string) => {
+    if (!selected) throw new Error("opening_model_unavailable");
+    return selected.agent.generate(prompt, {
+      abortSignal: AbortSignal.timeout(input.timeoutMs ?? 15_000),
+      structuredOutput: { schema: openingMessageSchema, jsonPromptInjection: "inline" },
+    });
+  });
+  const context = {
+    task: "Write the opening message for this new rectification case.",
+    candidateRange: input.candidateRange,
+    requirements: [
+      "State that this candidate range is unconfirmed and only being checked.",
+      "Invite one clearly remembered experience or a connected sequence.",
+      "Use at most one natural question and no fixed-domain checklist.",
+      "Allow the user to be unsure, skip, or change direction.",
+    ],
+  };
+
+  recordRectificationAgentTelemetry({ caseId: input.caseId, phase: "renderer", outcome: "started", modelId, toolName: null, decisionAction: "opening_question", durationMs: null, errorCode: null, deploymentSha });
+  try {
+    let result = validateOpeningMessage((await generate(JSON.stringify(context), "generate")).object, input.candidateRange);
+    if (!result.message) {
+      recordRectificationAgentTelemetry({ caseId: input.caseId, phase: "renderer", outcome: "rejected", modelId, toolName: null, decisionAction: "opening_question", durationMs: Date.now() - started, errorCode: result.issues[0] ?? "opening_rejected", deploymentSha });
+      result = validateOpeningMessage((await generate(JSON.stringify({ ...context, task: "Repair the rejected opening message once.", validationIssues: result.issues }), "repair")).object, input.candidateRange);
+    }
+    if (!result.message) throw new Error(`opening_rejected:${result.issues.join(",")}`);
+    recordRectificationAgentTelemetry({ caseId: input.caseId, phase: "renderer", outcome: "succeeded", modelId, toolName: null, decisionAction: "opening_question", durationMs: Date.now() - started, errorCode: null, deploymentSha });
+    return result.message;
+  } catch (error) {
+    recordRectificationAgentTelemetry({ caseId: input.caseId, phase: "renderer", outcome: "failed", modelId, toolName: null, decisionAction: "opening_question", durationMs: Date.now() - started, errorCode: error instanceof Error ? error.message.slice(0, 120) : "opening_failed", deploymentSha });
+    throw error;
+  }
 }
 
 function normalized(value: string): string {

@@ -8,6 +8,17 @@ import { createRectificationV4MemoryStore } from "../src/lib/rectification-v4/me
 import { createRectificationV4Worker } from "../src/lib/rectification-v4/worker.ts";
 import { passingVedAstroValidation, v5EngineResult, withV5Mode } from "./rectification-v5-test-support.ts";
 
+function createTestCaseService(
+  store: Parameters<typeof createRectificationV4CaseService>[0],
+  options: Parameters<typeof createRectificationV4CaseService>[1] = {},
+) {
+  return createRectificationV4CaseService(store, {
+    generateOpeningQuestion: async ({ candidateRange }) =>
+      `Agent 将在 ${candidateRange.start}–${candidateRange.end} 的待核对范围内陪你梳理；这并不是已确认的出生分钟。你愿意先说一段自己记得比较清楚的人生经历吗？`,
+    ...options,
+  });
+}
+
 const now = () => new Date("2026-07-26T08:00:00.000Z");
 const spec: CalculationSpec = {
   version: "rectification-calculation-spec-v4",
@@ -40,7 +51,7 @@ async function answerAndRun(
 test("V5 golden replay persists the full artifact chain, returns ranges only, and never mutates the profile minute", async () => withV5Mode("v5_agent", async () => {
   const profile = { active_birth_time: "05:00:00" };
   const store = createRectificationV4MemoryStore();
-  const service = createRectificationV4CaseService(store, { now });
+  const service = createTestCaseService(store, { now });
   const candidates: readonly CandidateMinute[] = [
     { time: "05:13", score: 100, supportingEventIds: [], conflictingEventIds: [] },
     { time: "05:14", score: 99, supportingEventIds: [], conflictingEventIds: [] },

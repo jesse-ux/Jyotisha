@@ -6,6 +6,17 @@ import type { CalculationSpec, CandidateSnapshot, LifeEventRevision, PendingEvid
 import { createRectificationV4MemoryStore } from "../src/lib/rectification-v4/memory-store.ts";
 import { createRectificationV4Worker, resolvedPendingEvidence } from "../src/lib/rectification-v4/worker.ts";
 
+function createTestCaseService(
+  store: Parameters<typeof createRectificationV4CaseService>[0],
+  options: Parameters<typeof createRectificationV4CaseService>[1] = {},
+) {
+  return createRectificationV4CaseService(store, {
+    generateOpeningQuestion: async ({ candidateRange }) =>
+      `Agent 将在 ${candidateRange.start}–${candidateRange.end} 的待核对范围内陪你梳理；这并不是已确认的出生分钟。你愿意先说一段自己记得比较清楚的人生经历吗？`,
+    ...options,
+  });
+}
+
 const fixedNow = () => new Date("2026-07-28T12:00:00.000Z");
 const spec: CalculationSpec = {
   version: "rectification-calculation-spec-v4",
@@ -33,9 +44,28 @@ async function withMode<T>(mode: "v4_legacy" | "v5_shadow" | "v5_agent", run: ()
   }
 }
 
+test("new cases use the Agent-generated opening and do not regenerate it when resuming", async () => withMode("v5_agent", async () => {
+  const store = createRectificationV4MemoryStore();
+  let calls = 0;
+  const service = createTestCaseService(store, {
+    now: fixedNow,
+    generateOpeningQuestion: async ({ candidateRange }) => {
+      calls += 1;
+      return `这是 Agent 为 ${candidateRange.start}–${candidateRange.end} 生成的首轮引导。`;
+    },
+  });
+  const userId = randomUUID();
+  const first = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+  const resumed = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+  assert.equal(first.case.currentQuestion?.prompt, "这是 Agent 为 04:30–05:30 生成的首轮引导。");
+  assert.equal(first.case.agentMode, "deterministic_fallback");
+  assert.equal(resumed.case.id, first.case.id);
+  assert.equal(calls, 1);
+}));
+
 test("same calculation spec resumes while a changed spec abandons the old case and stales its job", async () => withMode("v4_legacy", async () => {
   const store = createRectificationV4MemoryStore();
-  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const service = createTestCaseService(store, { now: fixedNow });
   const userId = randomUUID();
   const first = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
   const resumed = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: { ...spec } });
@@ -55,7 +85,7 @@ test("same calculation spec resumes while a changed spec abandons the old case a
 
 test("answer is durably queued and a processing case reload restores its active job", async () => withMode("v5_agent", async () => {
   const store = createRectificationV4MemoryStore();
-  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const service = createTestCaseService(store, { now: fixedNow });
   const userId = randomUUID();
   const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
   assert.equal(created.case.protocol, "rectification-evidence-v5");
@@ -77,7 +107,7 @@ test("answer is durably queued and a processing case reload restores its active 
 
 test("V5 agent fallback persists the Director decision, Public Message and next question", async () => withMode("v5_agent", async () => {
   const store = createRectificationV4MemoryStore();
-  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const service = createTestCaseService(store, { now: fixedNow });
   const userId = randomUUID();
   const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
   const queued = await service.answer({
@@ -108,7 +138,7 @@ test("V5 agent fallback persists the Director decision, Public Message and next 
 
 test("V5 shadow runs and persists V5 artifacts but keeps the legacy visible projection", async () => withMode("v5_shadow", async () => {
   const store = createRectificationV4MemoryStore();
-  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const service = createTestCaseService(store, { now: fixedNow });
   const userId = randomUUID();
   const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
   const queued = await service.answer({
@@ -134,7 +164,7 @@ test("V5 shadow runs and persists V5 artifacts but keeps the legacy visible proj
 
 test("V5 shadow keeps legacy year-precision refinement targeted to the original event", async () => withMode("v5_shadow", async () => {
   const store = createRectificationV4MemoryStore();
-  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const service = createTestCaseService(store, { now: fixedNow });
   const userId = randomUUID();
   const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
   const queued = await service.answer({
@@ -157,7 +187,7 @@ test("V5 shadow keeps legacy year-precision refinement targeted to the original 
 
 test("legacy cases are not hard-switched to V5 even when flags change later", async () => {
   const store = createRectificationV4MemoryStore();
-  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const service = createTestCaseService(store, { now: fixedNow });
   const userId = randomUUID();
   const created = await withMode("v4_legacy", () => service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec }));
   await withMode("v5_agent", async () => {
@@ -179,7 +209,7 @@ test("legacy cases are not hard-switched to V5 even when flags change later", as
 test("V5 Agent regenerate rewrites only the current semantic question and replays the same action once", async () => withMode("v5_agent", async () => {
   const store = createRectificationV4MemoryStore();
   let realizationCalls = 0;
-  const service = createRectificationV4CaseService(store, {
+  const service = createTestCaseService(store, {
     now: fixedNow,
     regenerateDirectorQuestion: async ({ currentQuestion }) => {
       realizationCalls += 1;
@@ -247,7 +277,7 @@ test("legacy and shadow cases cannot call the V5 Agent question renderer", async
   for (const mode of ["v4_legacy", "v5_shadow"] as const) {
     await withMode(mode, async () => {
       const store = createRectificationV4MemoryStore();
-      const service = createRectificationV4CaseService(store, { now: fixedNow });
+      const service = createTestCaseService(store, { now: fixedNow });
       const userId = randomUUID();
       const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
       assert.equal(await service.regenerateQuestion({
@@ -263,7 +293,7 @@ test("legacy and shadow cases cannot call the V5 Agent question renderer", async
 
 test("worker closes only the uniquely matched historical pending evidence", async () => withMode("v4_legacy", async () => {
   const store = createRectificationV4MemoryStore();
-  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const service = createTestCaseService(store, { now: fixedNow });
   const userId = randomUUID();
   const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
   const pending: PendingEvidence = {
@@ -299,7 +329,7 @@ test("worker closes only the uniquely matched historical pending evidence", asyn
 
 test("worker leaves ambiguous historical pending evidence unresolved", async () => withMode("v4_legacy", async () => {
   const store = createRectificationV4MemoryStore();
-  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const service = createTestCaseService(store, { now: fixedNow });
   const userId = randomUUID();
   const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
   const pending = ["后来搬家一次，但记不清时间了", "以前也搬家，时间忘了"].map((rawText): PendingEvidence => ({
@@ -353,7 +383,7 @@ test("date pending evidence closes only after the event date changes", () => {
 
 test("legacy scoreable relationship-end snapshots cannot be accepted", async () => withMode("v5_agent", async () => {
   const store = createRectificationV4MemoryStore();
-  const service = createRectificationV4CaseService(store, { now: fixedNow });
+  const service = createTestCaseService(store, { now: fixedNow });
   const userId = randomUUID();
   const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
   const revision: LifeEventRevision = {

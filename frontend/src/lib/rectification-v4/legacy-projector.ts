@@ -26,9 +26,7 @@ export function projectLegacyV4Question(input: Readonly<{
     id: randomUUID(),
     domain: "other",
     targetEventId: null,
-    prompt: input.latestAnswer
-      ? "我记下了这段经历。接下来请继续讲另一件你自己最确定、时间也比较清楚的人生变化；可以一次讲几件连续发生的事，我会顺着你的叙述继续核对。"
-      : "请从你自己最确定、时间也比较清楚的一段人生经历开始说。你可以一次讲几件连续发生的事，不需要按固定领域回答。",
+    prompt: "我记下了这段经历。接下来请继续讲另一件你自己最确定、时间也比较清楚的人生变化；可以一次讲几件连续发生的事，我会顺着你的叙述继续核对。",
     recallCost: "low",
     reason: "V4 legacy projector：保持开放叙述。",
   };

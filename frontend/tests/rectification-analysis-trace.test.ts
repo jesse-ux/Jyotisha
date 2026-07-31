@@ -27,6 +27,17 @@ import type { ClaimedRectificationV4Job } from "../src/lib/rectification-v4/stor
 import { createRectificationV4Worker } from "../src/lib/rectification-v4/worker.ts";
 import { passingVedAstroValidation, v5EngineResult, withV5Mode } from "./rectification-v5-test-support.ts";
 
+function createTestCaseService(
+  store: Parameters<typeof createRectificationV4CaseService>[0],
+  options: Parameters<typeof createRectificationV4CaseService>[1] = {},
+) {
+  return createRectificationV4CaseService(store, {
+    generateOpeningQuestion: async ({ candidateRange }) =>
+      `Agent 将在 ${candidateRange.start}–${candidateRange.end} 的待核对范围内陪你梳理；这并不是已确认的出生分钟。你愿意先说一段自己记得比较清楚的人生经历吗？`,
+    ...options,
+  });
+}
+
 const now = "2026-07-29T00:00:00.000Z";
 const rangeReadyCandidates: CandidateMinute[] = [
   { time: "05:13", score: 100, supportingEventIds: [], conflictingEventIds: [] },
@@ -419,7 +430,7 @@ test("read-only Agent diagnostics are traced only when the reasoner actually req
 test("old public messages without analysisTrace remain readable and are omitted from trace history", async () => {
   await withV5Mode("v5_agent", async () => {
     const store = createRectificationV4MemoryStore();
-    const service = createRectificationV4CaseService(store, { now: () => new Date(now) });
+    const service = createTestCaseService(store, { now: () => new Date(now) });
     const worker = createRectificationV4Worker({
       store,
       now: () => new Date(now),

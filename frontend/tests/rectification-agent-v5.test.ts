@@ -11,7 +11,7 @@ import {
 import { rectificationCanaryBucket, selectRectificationDeploymentMode } from "../src/lib/rectification-agent/feature-policy.ts";
 import { buildQuestionOpportunities } from "../src/lib/rectification-agent/opportunity-builder.ts";
 import { runBoundedReasoner } from "../src/lib/rectification-agent/reasoner-agent.ts";
-import { realizePublicMessage, validateQuestionRealization } from "../src/lib/rectification-agent/renderer-agent.ts";
+import { generateOpeningQuestion, realizePublicMessage, validateQuestionRealization } from "../src/lib/rectification-agent/renderer-agent.ts";
 import { createRectificationV4CaseService } from "../src/lib/rectification-v4/case-service.ts";
 import type {
   CalculationSpec,
@@ -25,10 +25,39 @@ import { createRectificationV4MemoryStore } from "../src/lib/rectification-v4/me
 import { createRectificationV4Worker } from "../src/lib/rectification-v4/worker.ts";
 import { v5EngineResult, withV5Mode } from "./rectification-v5-test-support.ts";
 
+function createTestCaseService(
+  store: Parameters<typeof createRectificationV4CaseService>[0],
+  options: Parameters<typeof createRectificationV4CaseService>[1] = {},
+) {
+  return createRectificationV4CaseService(store, {
+    generateOpeningQuestion: async ({ candidateRange }) =>
+      `Agent 将在 ${candidateRange.start}–${candidateRange.end} 的待核对范围内陪你梳理；这并不是已确认的出生分钟。你愿意先说一段自己记得比较清楚的人生经历吗？`,
+    ...options,
+  });
+}
+
 const caseId = "00000000-0000-4000-8000-000000000901";
 const snapshotId = "00000000-0000-4000-8000-000000000902";
 const opportunityId = "00000000-0000-4000-8000-000000000903";
 const now = "2026-07-28T00:00:00.000Z";
+
+test("opening Agent generates and validates the first rectification message", async () => {
+  const phases: string[] = [];
+  const message = await generateOpeningQuestion({
+    caseId,
+    candidateRange: { start: "00:00", end: "23:59" },
+    modelId: "test-model",
+    generate: async (_prompt, phase) => {
+      phases.push(phase);
+      return phase === "generate"
+        ? { object: { message: "目前核对的是 00:00–23:59 候选范围，尚未确认出生分钟。请按学业、搬家、感情、工作依次回答。" } }
+        : { object: { message: "目前核对的是 00:00–23:59 候选范围，并不是已确认的出生分钟。你愿意先从一段自己记得清楚的经历开始说吗？" } };
+    },
+  });
+  assert.deepEqual(phases, ["generate", "repair"]);
+  assert.match(message, /00:00–23:59/);
+  assert.match(message, /并不是已确认的出生分钟/);
+});
 
 test("completion artifact fingerprints are canonical and payload-sensitive", () => {
   const left = rectificationFingerprint({ status: "complete", artifact: { b: 2, a: 1 } });
@@ -347,7 +376,7 @@ test("shadow mode persists V5 artifacts while preserving the legacy visible repl
   async function run(mode: "v4_legacy" | "v5_shadow") {
     return withV5Mode(mode, async () => {
       const store = createRectificationV4MemoryStore();
-      const service = createRectificationV4CaseService(store, { now: () => new Date(now) });
+      const service = createTestCaseService(store, { now: () => new Date(now) });
       const worker = createRectificationV4Worker({
         store,
         now: () => new Date(now),
@@ -388,7 +417,7 @@ test("shadow mode persists V5 artifacts while preserving the legacy visible repl
 test("V6 agent conversation follows dated events, respects direction change, and runs the existing V5 engine", async () => {
   await withV5Mode("v5_agent", async () => {
     const store = createRectificationV4MemoryStore();
-    const service = createRectificationV4CaseService(store, { now: () => new Date("2026-07-29T00:00:00.000Z") });
+    const service = createTestCaseService(store, { now: () => new Date("2026-07-29T00:00:00.000Z") });
     let scoreCalls = 0;
     const worker = createRectificationV4Worker({
       store,

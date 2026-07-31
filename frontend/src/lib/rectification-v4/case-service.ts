@@ -9,7 +9,7 @@ import { rectificationAgentV5Protocol, rectificationV4AlgorithmVersion, rectific
 import { selectRectificationDeploymentMode } from "../rectification-agent/feature-policy.ts";
 import { CURRENT_RECTIFICATION_PROMPT_VERSION, CURRENT_RECTIFICATION_SKILL_VERSION } from "../rectification-agent/contracts.ts";
 import { regenerateDirectorQuestion } from "../rectification-agent/director-agent.ts";
-import { regenerateQuestionRealization } from "../rectification-agent/renderer-agent.ts";
+import { generateOpeningQuestion, regenerateQuestionRealization } from "../rectification-agent/renderer-agent.ts";
 import { calculationSpecHash, evidenceSetHash } from "./fingerprints.ts";
 import { hasPolicyInvalidScoreableEvents } from "./evidence-ledger.ts";
 import { openingQuestion } from "./opening-question.ts";
@@ -23,11 +23,13 @@ export function createRectificationV4CaseService(
     readonly now?: () => Date;
     readonly regenerateQuestion?: typeof regenerateQuestionRealization;
     readonly regenerateDirectorQuestion?: typeof regenerateDirectorQuestion;
+    readonly generateOpeningQuestion?: typeof generateOpeningQuestion;
   } = {},
 ) {
   const now = options.now ?? (() => new Date());
   const realizeQuestion = options.regenerateQuestion ?? regenerateQuestionRealization;
   const redirectQuestion = options.regenerateDirectorQuestion ?? regenerateDirectorQuestion;
+  const generateOpening = options.generateOpeningQuestion ?? generateOpeningQuestion;
 
   async function response(userId: string, caseValue: RectificationV4Case, jobId?: string): Promise<RectificationV4ApiResponse> {
     const [events, turns, analysis, job] = await Promise.all([
@@ -51,22 +53,39 @@ export function createRectificationV4CaseService(
 
   return {
     async createCase(input: { readonly userId: string; readonly actionId: string; readonly calculationSpec: CalculationSpec }) {
+      const replay = await store.loadActionCase(input.userId, input.actionId);
+      if (replay) return response(input.userId, replay);
+
+      const specHash = calculationSpecHash(input.calculationSpec);
+      const active = await store.findActiveCase(input.userId);
+      if (active?.calculationSpecHash === specHash) {
+        return response(input.userId, await store.createCase({ case: active, actionId: input.actionId }));
+      }
+
       const timestamp = now().toISOString();
       const deploymentMode = selectRectificationDeploymentMode(input.userId);
+      const caseId = randomUUID();
+      const orchestrationModelId = process.env.RECTIFICATION_ORCHESTRATION_MODEL_ID?.trim() || null;
+      const narrationModelId = process.env.RECTIFICATION_NARRATION_MODEL_ID?.trim() || null;
+      const initialQuestion = openingQuestion(await generateOpening({
+        caseId,
+        candidateRange: input.calculationSpec.candidateRange,
+        modelId: narrationModelId,
+      }));
       const caseValue: RectificationV4Case = {
-        id: randomUUID(),
+        id: caseId,
         userId: input.userId,
         protocol: deploymentMode === "v4_legacy" ? rectificationV4Protocol : rectificationAgentV5Protocol,
         version: 0,
         status: "awaiting_answer",
         phase: "collecting_evidence",
         calculationSpec: input.calculationSpec,
-        calculationSpecHash: calculationSpecHash(input.calculationSpec),
+        calculationSpecHash: specHash,
         evidenceSetHash: evidenceSetHash([]),
-        currentQuestion: openingQuestion(input.calculationSpec.candidateRange),
+        currentQuestion: initialQuestion,
         latestSnapshot: null,
-        orchestrationModelId: process.env.RECTIFICATION_ORCHESTRATION_MODEL_ID?.trim() || null,
-        narrationModelId: process.env.RECTIFICATION_NARRATION_MODEL_ID?.trim() || null,
+        orchestrationModelId,
+        narrationModelId,
         skillVersion: CURRENT_RECTIFICATION_SKILL_VERSION,
         promptVersion: CURRENT_RECTIFICATION_PROMPT_VERSION,
         algorithmVersion: rectificationV4AlgorithmVersion,
