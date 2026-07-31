@@ -13,7 +13,7 @@ import { assertRectificationSkillLoaded } from "./skill-runtime.ts";
 const skillPath = process.env.RECTIFICATION_SKILL_PATH?.trim() || path.resolve(process.cwd(), "..", "skills", "birth-time-rectification");
 const domains: EvidenceDomain[] = ["education", "relocation", "relationship", "career", "finance", "health_pressure", "family", "other"];
 const kinds: EventKind[] = ["education_milestone", "relocation", "relationship_start", "relationship_end", "relationship_change", "career_change", "finance_change", "self_health_event", "family_health_event", "family_bereavement", "family_event", "other"];
-const privatePattern = /(?:[0-9a-f]{8}-[0-9a-f-]{27,}|opportunity(?:id)?|snapshot(?:id)?|event(?:id)?|targetEventId|(?:raw|原始)?\s*(?:score|评分|得分)|权重|rule[_ -]?id|贡献矩阵|tool[_ -]?call|cluster[_ -]?id|工具原始(?:输出|轨迹)|内部推理链)/iu;
+const privatePattern = /(?:[0-9a-f]{8}-[0-9a-f-]{27,}|opportunity(?:id)?|snapshot(?:id)?|event(?:id)?|targetEventId|(?:raw|原始)?\s*(?:score|评分|得分)|权重|rule[_ -]?id|贡献矩阵|tool[_ -]?call|cluster[_ -]?id|\b(?:case_read|candidate_scan|evidence_gap|diagnostic_read)\b|工具原始(?:输出|轨迹)|内部推理链)/iu;
 const quantifiedStructurePattern = /(?:(?:D\d{1,2}|KP|Vimshottari|Narayana|Shadbala|Ashtakavarga|Chaturvimshamsha|上升星座|宫位|分盘)[^。！？\n]{0,60}(?:切换|变化|变动|遍历)[^。！？\n]{0,16}(?:\d+|[一二三四五六七八九十百]+)\s*次|(?:\d+|[一二三四五六七八九十百]+)\s*次[^。！？\n]{0,60}(?:切换|变化|变动|遍历))/iu;
 const exactMinutePattern = /(?:\b(?:[01]?\d|2[0-3]):[0-5]\d\b|(?:凌晨|清晨|上午|中午|下午|傍晚|晚上)?\s*[零〇一二两三四五六七八九十百\d]{1,4}\s*[点时]\s*[零〇一二两三四五六七八九十百\d]{1,4}\s*分)/u;
 const questionClausePattern = /(?:请|你(?:还)?(?:记得|能否|是否|有没有)|再(?:说|补充|回忆)|哪(?:一|个|年|月|天)?|什么|多少|几(?:年|月|号|日)?|吗|呢)/u;
@@ -29,6 +29,15 @@ function asksMultipleQuestions(value: string): boolean {
   return value.split(/[。；;！!\n]+|[，,]\s*(?=(?:请|你|再))/u)
     .filter((part) => questionClausePattern.test(part))
     .length > 1;
+}
+
+function normalizedQuestion(value: string): string {
+  return value.normalize("NFKC").toLocaleLowerCase().replace(/[\s?？。！!，,、；;：:“”‘’'"（）()]/gu, "");
+}
+
+function mentionsTechnique(value: string, technique: string): boolean {
+  const escaped = technique.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?<![A-Za-z0-9])${escaped}(?![A-Za-z0-9])`, "iu").test(value);
 }
 const declinedPattern = /(?:不想说|不方便说|不想回答|跳过|这个不说|换个方向|不聊这个)/u;
 type Generated = Readonly<{ object: unknown; totalUsage?: { inputTokens?: number; outputTokens?: number } | Promise<{ inputTokens?: number; outputTokens?: number }> }>;
@@ -152,22 +161,52 @@ export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; d
   const publicText = [plan.publicReply.acknowledgement, plan.publicReply.evidenceExplanation, plan.publicReply.candidateCommentary, plan.publicReply.limitation, plan.action.type === "ask_question" ? plan.action.question : null].filter(Boolean).join(" ");
   if (privatePattern.test(publicText)) issues.push("private_detail_exposed");
   if (containsExactMinute(publicText)) issues.push("exact_minute_claimed");
+  const groundedEvent = latestGroundedEvent(input.dossier, input.latestAnswer);
+  const capabilityFacts = new Map(input.dossier.capabilities.publicTechniqueCapabilities.map((item) => [`domain:${item.domain}`, item]));
+  const observationFacts = new Map<"window_sensitivity" | "candidate_scan" | "diagnostic", Set<string>>([
+    ["window_sensitivity", new Set()], ["candidate_scan", new Set()], ["diagnostic", new Set()],
+  ]);
+  input.dossier.runtime.observations.forEach((observation) => {
+    if (observation.outcome !== "succeeded") return;
+    const direct = Object.keys(observation.result);
+    const window = observation.result.windowSensitivity;
+    if (window && typeof window === "object" && !Array.isArray(window)) {
+      Object.keys(window as Record<string, unknown>).forEach((key) => observationFacts.get("window_sensitivity")?.add(key));
+    }
+    if (observation.tool === "candidate_scan") direct.forEach((key) => observationFacts.get("candidate_scan")?.add(key));
+    if (observation.tool === "diagnostic_read") direct.forEach((key) => observationFacts.get("diagnostic")?.add(key));
+  });
+  plan.publicExplanationGrounding.forEach((grounding) => {
+    if (grounding.source === "capability_matrix") {
+      const capability = capabilityFacts.get(grounding.factKey);
+      if (!capability || (groundedEvent && capability.domain !== groundedEvent.domain)) issues.push("public_grounding_invalid");
+      return;
+    }
+    if (!observationFacts.get(grounding.source)?.has(grounding.factKey)) issues.push("public_grounding_invalid");
+  });
+  if (groundedEvent && plan.publicReply.evidenceExplanation) {
+    const citedCapabilities = plan.publicExplanationGrounding.flatMap((grounding) => {
+      const capability = grounding.source === "capability_matrix" ? capabilityFacts.get(grounding.factKey) : null;
+      return capability && capability.domain === groundedEvent.domain ? [capability] : [];
+    });
+    const allowedTechniques = new Set(citedCapabilities.flatMap((item) => item.techniqueLayers.map((layer) => layer.toLocaleLowerCase())));
+    const knownTechniques = [...new Set([
+      ...input.dossier.capabilities.publicTechniqueCapabilities.flatMap((item) => item.techniqueLayers),
+      "KP", "Shadbala", "Ashtakavarga", "Chaturvimshamsha",
+    ])];
+    if (knownTechniques.some((technique) => mentionsTechnique(plan.publicReply.evidenceExplanation ?? "", technique)
+      && !allowedTechniques.has(technique.toLocaleLowerCase()))) issues.push("public_technique_not_grounded");
+  }
   if (quantifiedStructurePattern.test(publicText)) {
     const windowFactKeys = new Set(plan.publicExplanationGrounding.filter((item) => item.source === "window_sensitivity").map((item) => item.factKey));
-    const observedFactKeys = new Set(input.dossier.runtime.observations.flatMap((observation) => {
-      if (observation.outcome !== "succeeded") return [];
-      const result = observation.result;
-      const direct = Object.keys(result);
-      const nested = result.windowSensitivity && typeof result.windowSensitivity === "object" && !Array.isArray(result.windowSensitivity)
-        ? Object.keys(result.windowSensitivity as Record<string, unknown>)
-        : [];
-      return [...direct, ...nested];
-    }));
+    const observedFactKeys = observationFacts.get("window_sensitivity") ?? new Set<string>();
     if (![...windowFactKeys].some((factKey) => observedFactKeys.has(factKey))) issues.push("ungrounded_numeric_structure_claim");
   }
   if (plan.action.type === "ask_question") {
     if (asksMultipleQuestions(plan.action.question)) issues.push("multiple_questions");
-    if (input.phase === "final" && latestGroundedEvent(input.dossier, input.latestAnswer)) {
+    const nextQuestion = normalizedQuestion(plan.action.question);
+    if (nextQuestion && input.dossier.interviewState.askedTopics.some((question) => normalizedQuestion(question).endsWith(nextQuestion))) issues.push("question_repeated");
+    if (input.phase === "final" && groundedEvent) {
       if (genericAcknowledgementPattern.test(plan.publicReply.acknowledgement.trim())) issues.push("event_acknowledgement_generic");
       if (!plan.publicReply.evidenceExplanation || plan.publicReply.evidenceExplanation.trim().length < 12) issues.push("event_explanation_missing");
       if (!plan.publicReply.candidateCommentary || plan.publicReply.candidateCommentary.trim().length < 12) issues.push("event_value_commentary_missing");
@@ -250,6 +289,7 @@ export async function runRectificationDirector(input: Readonly<{ caseValue: Rect
   };
   const toolKey = (request: Readonly<{ tool: RectificationAgentTool; diagnostic: RectificationDiagnostic | null }>) => `${request.tool}:${request.diagnostic ?? ""}`;
   const promptDossier = () => input.phase === "evidence" ? dossier : {
+    interviewState: { askedTopics: dossier.interviewState.askedTopics },
     runtime: { revision: dossier.runtime.revision, observations: dossier.runtime.observations },
     capabilities: dossier.capabilities,
     availableTools: {

@@ -415,6 +415,7 @@ test("declined targets cannot be reopened and the Director adapts through server
   assert.equal(firstPrompt.dossier.eventLedger, undefined);
   assert.equal(firstPrompt.dossier.candidateState, undefined);
   assert.equal(firstPrompt.dossier.runtime.hypotheses, undefined);
+  assert.deepEqual(firstPrompt.dossier.interviewState.askedTopics, []);
   assert.deepEqual(firstPrompt.dossier.availableTools.readOnly, ["case_read", "candidate_scan", "evidence_gap"]);
   const caseObservationPrompt = JSON.parse(prompts[1]!);
   assert.ok(Array.isArray(caseObservationPrompt.latestObservation.result.eventLedger));
@@ -496,7 +497,7 @@ test("final Director repairs a generic acknowledgement and missing evidence-valu
       prompts.push(prompt);
       return {
         object: phase === "repair"
-          ? plan({ publicReply: { acknowledgement: "你提到2020年4月去石油化工研究院实习做研究员。", evidenceExplanation: "这是一条职业状态变化线索，按能力矩阵可参考 D10 与 Vimshottari；目前只是方法映射，不是候选结论。", candidateCommentary: "这段经历的时间和工作状态变化都很明确，可以和其他独立事件交叉比较候选范围。", limitation: null } })
+          ? plan({ publicReply: { acknowledgement: "你提到2020年4月去石油化工研究院实习做研究员。", evidenceExplanation: "这是一条职业状态变化线索，按能力矩阵可参考 D10 与 Vimshottari；目前只是方法映射，不是候选结论。", candidateCommentary: "这段经历的时间和工作状态变化都很明确，可以和其他独立事件交叉比较候选范围。", limitation: null }, publicExplanationGrounding: [{ source: "capability_matrix", factKey: "domain:career" }] })
           : plan(),
       };
     },
@@ -542,7 +543,7 @@ test("public reply allows method names but rejects private internals and ungroun
     }).issues;
     assert.ok(!issues.includes("private_detail_exposed"), technique);
   }
-  for (const privateDetail of ["原始评分 8.7", "权重 0.4", "贡献矩阵如下", "tool_call 原始输出"]) {
+  for (const privateDetail of ["原始评分 8.7", "权重 0.4", "贡献矩阵如下", "tool_call 原始输出", "我先调用 case_read，再调用 candidate_scan 和 diagnostic_read"]) {
     const issues = validateRectificationTurnPlan({
       plan: plan({ publicReply: { acknowledgement: "这条经历已经保留。", evidenceExplanation: privateDetail, candidateCommentary: null, limitation: null } }),
       dossier: dossier(), latestAnswer: "", phase: "final",
@@ -556,6 +557,61 @@ test("public reply allows method names but rejects private internals and ungroun
   assert.ok(validateRectificationTurnPlan({ plan: multiple, dossier: dossier(), latestAnswer: "", phase: "final" }).issues.includes("multiple_questions"));
   const single = plan({ action: { type: "ask_question", focus: { mode: "collect_independent_event", targetEventId: null, domain: null, requestedFacts: ["independent_event"], rationaleCodes: ["test"] }, question: "你还记得一件时间大致确定的重要经历吗？", optionalQuickReplies: [] } });
   assert.deepEqual(validateRectificationTurnPlan({ plan: single, dossier: dossier(), latestAnswer: "", phase: "final" }).issues, []);
+});
+
+test("public explanations require real capability grounding for the current event", () => {
+  const internship = event({
+    domain: "career",
+    eventKind: "career_change",
+    summary: "2020年4月去研究院实习做研究员",
+    rawText: "2020年4月去研究院实习做研究员",
+    dateRange: { start: "2020-04-01", end: "2020-04-30", precision: "month", label: "2020年4月" },
+  });
+  const base = {
+    acknowledgement: "你提到的是2020年4月去研究院实习做研究员。",
+    candidateCommentary: "这条职业变化有明确月份，可以和其他独立事件交叉比较候选范围。",
+    limitation: null,
+  } as const;
+  const madeUp = plan({
+    publicReply: { ...base, evidenceExplanation: "这条职业变化可参考 D10；目前只是方法映射。" },
+    publicExplanationGrounding: [{ source: "capability_matrix", factKey: "made-up-key" }],
+  });
+  assert.ok(validateRectificationTurnPlan({ plan: madeUp, dossier: dossier([internship]), latestAnswer: internship.rawText, phase: "final" }).issues.includes("public_grounding_invalid"));
+
+  const wrongDomain = plan({
+    publicReply: { ...base, evidenceExplanation: "这条职业变化可参考 D24；目前只是方法映射。" },
+    publicExplanationGrounding: [{ source: "capability_matrix", factKey: "domain:education" }],
+  });
+  const wrongDomainIssues = validateRectificationTurnPlan({ plan: wrongDomain, dossier: dossier([internship]), latestAnswer: internship.rawText, phase: "final" }).issues;
+  assert.ok(wrongDomainIssues.includes("public_grounding_invalid"));
+  assert.ok(wrongDomainIssues.includes("public_technique_not_grounded"));
+
+  const grounded = plan({
+    publicReply: { ...base, evidenceExplanation: "这条职业变化可参考 D10 与 Vimshottari；目前只是方法映射。" },
+    publicExplanationGrounding: [{ source: "capability_matrix", factKey: "domain:career" }],
+  });
+  assert.deepEqual(validateRectificationTurnPlan({ plan: grounded, dossier: dossier([internship]), latestAnswer: internship.rawText, phase: "final" }).issues, []);
+});
+
+test("the final plan cannot repeat a previously asked question", () => {
+  const previous = "你还能想到一件时间大致确定的重要经历吗？";
+  const repeated = plan({
+    action: {
+      type: "ask_question",
+      focus: { mode: "collect_independent_event", targetEventId: null, domain: null, requestedFacts: ["independent_event"], rationaleCodes: ["test"] },
+      question: "你还能想到一件时间大致确定的重要经历吗",
+      optionalQuickReplies: [],
+    },
+  });
+  assert.ok(validateRectificationTurnPlan({ plan: repeated, dossier: dossier([], [turn(0, { question: previous })]), latestAnswer: "", phase: "final" }).issues.includes("question_repeated"));
+  const storedPublicReply = composeRectificationPublicTurn({
+    acknowledgement: "你提到的是2020年4月去研究院实习。",
+    evidenceExplanation: "这条经历有明确月份，可以和其他经历交叉比较。",
+    candidateUpdate: null,
+    limitation: null,
+    question: previous,
+  });
+  assert.ok(validateRectificationTurnPlan({ plan: repeated, dossier: dossier([], [turn(0, { question: storedPublicReply })]), latestAnswer: "", phase: "final" }).issues.includes("question_repeated"));
 });
 
 test("candidate range requires the current approved snapshot id", () => {
