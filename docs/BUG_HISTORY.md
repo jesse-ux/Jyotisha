@@ -1944,3 +1944,19 @@
 - 相关记录：BUG-104、BUG-107、BUG-109
 - 复发自：无
 - 修复版本：local / pending release
+
+## BUG-111 | Director 校验器覆盖 Agent 公开回复且复合事件缺少公开语义
+
+- 状态：resolved（local）
+- 首次发现：2026-07-31
+- 最近更新：2026-07-31
+- 影响面：V5 Director 公开承接、方法说明、下一问、手动重新生成与复合事件语义
+- 用户现象：Agent 已生成自然承接和下一问时，服务器仍会替换为固定模板；“离家去外地上大学”只暴露教育语义，公开解释无法同时说明教育与迁居层面。
+- 触发条件：最新事件同时包含多个可核对维度，或 Director / 手动 regenerate 返回合规的自然文案。
+- 根因：最终计划校验器同时承担验证和重写职责；事件账本只暴露单一主评分领域；手动 regenerate 路径完全忽略模型输出并直接调用服务器问题模板。
+- 修复：事件账本为同一事件增加只读 `publicSignals`，保留一个主评分身份并补充公开 secondary signals，不新增 Event、不重复计分；最终校验器只验证 grounding、技术边界、候选结论、隐私、单问题、重复问题和目标连续性，不再覆盖合规 Agent 文案；手动 regenerate 改为 Agent 生成、服务器两轮安全校验，不合规后才使用确定性 fallback。
+- 验证：回归覆盖“离家去外地上大学”只保留一条事件但公开 education + relocation、D24 + D4 合法 grounding、家人健康不投射为本人 D30、合规 Agent 文案原样保留、未 grounding 技法与候选结论被拒绝、手动 regenerate 的 repair 与 fallback。
+- 防复发：公开语义只解释用户原话中已存在的复合信号；服务器继续拥有事件身份、评分、事实 grounding 和安全门，正常措辞与提问归 Agent。
+- 相关记录：BUG-107、BUG-108、BUG-109、BUG-110
+- 复发自：BUG-109
+- 修复版本：local / pending release

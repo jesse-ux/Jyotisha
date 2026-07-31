@@ -161,6 +161,11 @@ export const rectificationCaseDossierSchema = z.object({
     dateRange: z.object({ start: nonblank(10), end: nonblank(10), precision: nonblank(20), label: nonblank(80) }).strict(),
     scoreability: nonblank(40),
     status: z.enum(["active", "superseded", "pending"]),
+    publicSignals: z.array(z.object({
+      domain: evidenceDomainSchema,
+      role: z.enum(["primary", "secondary"]),
+      techniqueLayers: z.array(nonblank(80)).max(20),
+    }).strict()).min(1).max(8),
   }).strict()),
   interviewState: z.object({
     currentTargetEventId: uuid.nullable(),

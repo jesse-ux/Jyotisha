@@ -1,8 +1,10 @@
 import path from "node:path";
 import { Agent } from "@mastra/core/agent";
+import { z } from "zod";
 import { defaultLanguageModel, resolveLanguageModel } from "@/mastra/model";
 import type { CandidateSnapshot, EvidenceDomain, EventKind, LifeEventRevision, PendingEvidence, RectificationV4Case, RectificationV4Turn } from "../rectification-v4/contracts.ts";
 import type { TargetDisposition } from "../rectification-v4/extraction.ts";
+import { publicEvidenceDomainsFor } from "../conversational-rectification/evidence-extractor.ts";
 import { hasPolicyInvalidScoreableEvents } from "../rectification-v4/evidence-ledger.ts";
 import { domainScorerRegistry } from "../rectification-v4/domain-scorers.ts";
 import { buildCandidateContrastPacket } from "./opportunity-builder.ts";
@@ -16,6 +18,9 @@ const privatePattern = /(?:[0-9a-f]{8}-[0-9a-f-]{27,}|opportunity(?:id)?|snapsho
 const quantifiedStructurePattern = /(?:(?:D\d{1,2}|KP|Vimshottari|Narayana|Shadbala|Ashtakavarga|Chaturvimshamsha|上升星座|宫位|分盘)[^。！？\n]{0,60}(?:切换|变化|变动|遍历)[^。！？\n]{0,16}(?:\d+|[一二三四五六七八九十百]+)\s*次|(?:\d+|[一二三四五六七八九十百]+)\s*次[^。！？\n]{0,60}(?:切换|变化|变动|遍历))/iu;
 const exactMinutePattern = /(?:\b(?:[01]?\d|2[0-3]):[0-5]\d\b|(?:凌晨|清晨|上午|中午|下午|傍晚|晚上)?\s*[零〇一二两三四五六七八九十百\d]{1,4}\s*[点时]\s*[零〇一二两三四五六七八九十百\d]{1,4}\s*分)/u;
 const genericAcknowledgementPattern = /^(?:好的|明白了|知道了|收到|已记录|我记下了|我已按你的描述整理这轮线索)[。！!]?$/u;
+const publicTechniquePattern = /(?:D\d{1,2}|A\d{1,2}|KP|Vimshottari|Narayana|Shadbala|Ashtakavarga|UL)/giu;
+const candidateConclusionPattern = /(?:(?:证明|显示|表明|判定|支持|意味着)[^。！？\n]{0,40}(?:候选|区间|方案|出生|较早|较晚|前者|后者|甲组|乙组|头一组)|(?:候选|区间|方案|较早|较晚|前者|后者|甲组|乙组|头一组)[^。！？\n]{0,40}(?:更可信|更符合|更合适|领先|占优|已经确定|已经确认))/u;
+const regeneratedQuestionSchema = z.object({ question: z.string().trim().min(1).max(240) }).strict();
 const groundedPublicReplyRequirement = "When the latest answer adds or refines a concrete event, the final public reply must: acknowledge the exact event and its date precision; summarize one to three evidence signals found in the user wording; use evidenceExplanation to map those signals to public method layers from dossier.capabilities.publicTechniqueCapabilities; keep evidenceExplanation as a general method mapping rather than a calculated candidate conclusion; put only server-verifiable candidate updates in candidateCommentary; explain why the next question helps; and ask at most one question. Public method names such as D4, D24, Vimshottari, Narayana, UL, and A10 are allowed. Never expose internal ids, raw scores, weights, contribution matrices, raw tool traces, candidate minutes, or hidden reasoning. Never claim a numeric structural fact such as a division switching N times unless the dossier contains the matching window_sensitivity observation and publicExplanationGrounding cites its fact key.";
 
 function containsExactMinute(value: string): boolean {
@@ -53,7 +58,24 @@ function diagnosticResult(kind: RectificationDiagnostic, value: DiagnosticsSumma
 function projectEventLedger(events: readonly LifeEventRevision[]): RectificationCaseDossier["eventLedger"] {
   const latest = new Map<string, number>();
   events.forEach((event) => latest.set(event.eventId, Math.max(latest.get(event.eventId) ?? 0, event.revision)));
-  return events.map((event) => ({ eventId: event.eventId, revision: event.revision, summary: event.summary, rawText: event.rawText, domain: event.domain, eventKind: event.eventKind, subject: event.subject, relatedPerson: event.relatedPerson, dateRange: event.dateRange, scoreability: event.scoreability, status: latest.get(event.eventId) === event.revision ? "active" as const : "superseded" as const }));
+  return events.map((event) => ({
+    eventId: event.eventId,
+    revision: event.revision,
+    summary: event.summary,
+    rawText: event.rawText,
+    domain: event.domain,
+    eventKind: event.eventKind,
+    subject: event.subject,
+    relatedPerson: event.relatedPerson,
+    dateRange: event.dateRange,
+    scoreability: event.scoreability,
+    status: latest.get(event.eventId) === event.revision ? "active" as const : "superseded" as const,
+    publicSignals: publicEvidenceDomainsFor({ summary: event.summary, primaryDomain: event.domain, subject: event.subject }).map((domain, index) => ({
+      domain,
+      role: index === 0 ? "primary" as const : "secondary" as const,
+      techniqueLayers: [...domainScorerRegistry[domain].techniqueLayers],
+    })),
+  }));
 }
 
 export function buildRectificationCaseDossier(input: Readonly<{ caseValue: RectificationV4Case; turns: readonly RectificationV4Turn[]; events: readonly LifeEventRevision[]; pendingEvidence?: readonly PendingEvidence[]; snapshot: CandidateSnapshot | null; previousSnapshot?: CandidateSnapshot | null; diagnostics: DiagnosticsSummary | null; targetDisposition: TargetDisposition; currentTargetEventId: string | null }>): RectificationCaseDossier {
@@ -86,11 +108,6 @@ export function buildRectificationCaseDossier(input: Readonly<{ caseValue: Recti
 
 function latestGroundedEvent(dossier: Pick<RectificationCaseDossier, "eventLedger">, latestAnswer: string) {
   return [...dossier.eventLedger].reverse().find((event) => event.status === "active" && (event.rawText === latestAnswer || latestAnswer.includes(event.summary))) ?? null;
-}
-
-function groundedEvidenceExplanation(event: RectificationCaseDossier["eventLedger"][number], techniqueLayers: readonly string[]): string {
-  const labels = techniqueLayers.map((layer) => ({ vimshottari: "Vimshottari", narayana: "Narayana" }[layer.toLocaleLowerCase()] ?? layer));
-  return `“${event.summary.slice(0, 120)}”包含可核对的时间和事件变化；方法层通常参考 ${labels.join("、")}。这条线索可以和其他独立经历交叉核对；这里只说明校正时会检查的层面，不代表已经形成计算结论。`;
 }
 
 const publicDomainLabels: Readonly<Record<Exclude<EvidenceDomain, "other">, string>> = {
@@ -167,9 +184,10 @@ function fallback(dossier: RectificationCaseDossier, latestAnswer: string): Rect
     ? { mode: "clarify_existing_event" as const, targetEventId, domain: targetEvent?.domain ?? null, requestedFacts: [targetNeedsMonth ? "month" as const : "day_or_period" as const], rationaleCodes: ["unresolved_current_event"] }
     : { mode: "collect_independent_event" as const, targetEventId: null, domain: null, requestedFacts: ["independent_event" as const, "year" as const], rationaleCodes: ["model_unavailable_neutral_fallback"] };
   const question = publicQuestionForFocus(dossier, latestAnswer, focus);
-  const techniqueLayers = groundedEvent ? domainScorerRegistry[groundedEvent.domain].techniqueLayers : [];
+  const techniqueLayers = [...new Set(groundedEvent?.publicSignals.flatMap((signal) => signal.techniqueLayers) ?? [])]
+    .map((layer) => ({ vimshottari: "Vimshottari", narayana: "Narayana" }[layer.toLocaleLowerCase()] ?? layer));
   const evidenceExplanation = safeSummary && techniqueLayers.length
-    ? `按当前校正能力，这类事件通常会参考 ${techniqueLayers.join("、")}；这里只是在说明方法映射，尚未形成实际计算结果。`
+    ? `按当前校正能力，这类事件通常会参考 ${techniqueLayers.join("、")}。这条线索会与其他独立经历交叉核对；这里只是在说明方法映射，尚未形成实际计算结果。`
     : safeSummary ? "这条经历提供了可核对的时间和变化类型；目前只是整理证据，还不是实际计算结果。" : null;
   return {
     contractVersion: "rectification-turn-plan-v1",
@@ -179,10 +197,10 @@ function fallback(dossier: RectificationCaseDossier, latestAnswer: string): Rect
     publicReply: {
       acknowledgement: safeSummary ? `你提到的是“${safeSummary}”。` : latestAnswer.trim() ? "我会保留你刚才的原始说法，不补写你没有确认的信息。" : "我们先从真实经历建立事件线索。",
       evidenceExplanation,
-      candidateCommentary: safeSummary ? "这条线索有明确时间，也说明了具体发生的变化，可以和其他独立经历交叉比较候选范围。" : null,
+      candidateCommentary: null,
       limitation: null,
     },
-    publicExplanationGrounding: groundedEvent ? [{ source: "capability_matrix", factKey: `domain:${groundedEvent.domain}` }] : [],
+    publicExplanationGrounding: groundedEvent ? groundedEvent.publicSignals.map((signal) => ({ source: "capability_matrix" as const, factKey: `domain:${signal.domain}` })) : [],
   };
 }
 
@@ -214,6 +232,7 @@ export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; d
   if (input.phase === "evidence") return { plan: issues.length ? null : plan, issues };
   const groundedEvent = latestGroundedEvent(input.dossier, input.latestAnswer);
   const capabilityFacts = new Map(input.dossier.capabilities.publicTechniqueCapabilities.map((item) => [`domain:${item.domain}`, item]));
+  const groundedDomains = new Set(groundedEvent?.publicSignals.map((signal) => signal.domain) ?? []);
   const observationFacts = new Map<"window_sensitivity" | "candidate_scan" | "diagnostic", Set<string>>([
     ["window_sensitivity", new Set()], ["candidate_scan", new Set()], ["diagnostic", new Set()],
   ]);
@@ -227,73 +246,63 @@ export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; d
     if (observation.tool === "candidate_scan") direct.forEach((key) => observationFacts.get("candidate_scan")?.add(key));
     if (observation.tool === "diagnostic_read") direct.forEach((key) => observationFacts.get("diagnostic")?.add(key));
   });
-  plan.publicExplanationGrounding.forEach((grounding) => {
+  const groundedCapabilities = plan.publicExplanationGrounding.flatMap((grounding) => {
     if (grounding.source === "capability_matrix") {
       const capability = capabilityFacts.get(grounding.factKey);
-      if (!capability || (groundedEvent && capability.domain !== groundedEvent.domain)) issues.push("public_grounding_invalid");
-      return;
+      if (!capability || (groundedEvent && !groundedDomains.has(capability.domain))) {
+        issues.push("public_grounding_invalid");
+        return [];
+      }
+      return [capability];
     }
     if (!observationFacts.get(grounding.source)?.has(grounding.factKey)) issues.push("public_grounding_invalid");
+    return [];
   });
-  const groundedCapability = groundedEvent && plan.action.type === "ask_question"
-    ? plan.publicExplanationGrounding.flatMap((grounding) => {
-      const capability = grounding.source === "capability_matrix" ? capabilityFacts.get(grounding.factKey) : null;
-      return capability?.domain === groundedEvent.domain ? [capability] : [];
-    })[0] ?? null
-    : null;
-  if (groundedEvent && plan.action.type === "ask_question" && !groundedCapability) issues.push("event_explanation_grounding_missing");
-  const normalizedPlan: RectificationTurnPlan = {
-    ...plan,
-    action: plan.action.type === "ask_question"
-      ? { ...plan.action, question: publicQuestionForFocus(input.dossier, input.latestAnswer, plan.action.focus) }
-      : plan.action,
-    publicReply: {
-      acknowledgement: groundedEvent
-        ? `你提到的是“${groundedEvent.summary.slice(0, 120)}”。`
-        : plan.action.type === "offer_candidate_range"
-          ? "现有事件已经完成本轮复核。"
-          : input.latestAnswer.trim()
-            ? "我会保留你刚才的原始说法，不补写你没有确认的信息。"
-            : "我们先从真实经历建立事件线索。",
-      evidenceExplanation: groundedEvent && plan.action.type === "ask_question" && groundedCapability
-        ? groundedEvidenceExplanation(groundedEvent, groundedCapability.techniqueLayers)
-        : null,
-      candidateCommentary: null,
-      limitation: plan.action.type === "offer_candidate_range"
-        ? "这仍不是对某个精确出生分钟的确认。"
-        : plan.action.type === "stop_low_confidence"
-          ? "当前证据不足以安全缩小候选范围。"
-          : null,
-    },
-    publicExplanationGrounding: groundedEvent && plan.action.type === "ask_question" && groundedCapability
-      ? [{ source: "capability_matrix", factKey: `domain:${groundedEvent.domain}` }]
-      : [],
-  };
-  const publicText = [normalizedPlan.publicReply.acknowledgement, normalizedPlan.publicReply.evidenceExplanation, normalizedPlan.publicReply.limitation, normalizedPlan.action.type === "ask_question" ? normalizedPlan.action.question : null].filter(Boolean).join(" ");
+  if (groundedEvent && plan.action.type === "ask_question" && !groundedCapabilities.length) issues.push("event_explanation_grounding_missing");
+
+  const publicText = [
+    plan.publicReply.acknowledgement,
+    plan.publicReply.evidenceExplanation,
+    plan.publicReply.candidateCommentary,
+    plan.publicReply.limitation,
+    plan.action.type === "ask_question" ? plan.action.question : null,
+    ...(plan.action.type === "ask_question" ? plan.action.optionalQuickReplies.flatMap((item) => [item.label, item.value]) : []),
+  ].filter((value): value is string => Boolean(value)).join(" ");
   if (privatePattern.test(publicText)) issues.push("private_detail_exposed");
   if (containsExactMinute(publicText)) issues.push("exact_minute_claimed");
   if (quantifiedStructurePattern.test(publicText)) issues.push("ungrounded_numeric_structure_claim");
-  if (normalizedPlan.action.type === "ask_question") {
-    if (asksMultipleQuestions(normalizedPlan.action.question)) issues.push("multiple_questions");
-    const nextQuestion = normalizedQuestion(normalizedPlan.action.question);
+  const nonCandidateCommentary = [
+    plan.publicReply.acknowledgement,
+    plan.publicReply.evidenceExplanation,
+    plan.publicReply.limitation,
+    plan.action.type === "ask_question" ? plan.action.question : null,
+  ].filter((value): value is string => Boolean(value)).join(" ");
+  if (candidateConclusionPattern.test(nonCandidateCommentary)) issues.push("ungrounded_candidate_conclusion");
+  const allowedTechniques = new Set(groundedCapabilities.flatMap((capability) => capability.techniqueLayers.map((layer) => layer.toLocaleLowerCase())));
+  const referencedTechniques = [...publicText.matchAll(publicTechniquePattern)].map((match) => (match[0] ?? "").toLocaleLowerCase());
+  if (referencedTechniques.some((technique) => !allowedTechniques.has(technique))) issues.push("public_technique_ungrounded");
+  if (plan.publicReply.candidateCommentary && !plan.publicExplanationGrounding.some((grounding) => grounding.source !== "capability_matrix")) {
+    issues.push("candidate_commentary_ungrounded");
+  }
+  if (plan.action.type === "ask_question") {
+    if (asksMultipleQuestions(plan.action.question)) issues.push("multiple_questions");
+    const nextQuestion = normalizedQuestion(plan.action.question);
     if (nextQuestion && input.dossier.interviewState.askedTopics.some((question) => {
       const previousQuestion = normalizedQuestion(question);
       return previousQuestion.endsWith(nextQuestion) || nextQuestion.endsWith(previousQuestion);
     })) issues.push("question_repeated");
-    if (input.phase === "final" && groundedEvent) {
-      if (genericAcknowledgementPattern.test(plan.publicReply.acknowledgement.trim())) issues.push("event_acknowledgement_generic");
-    }
-    if (normalizedPlan.action.focus.targetEventId && !known.has(normalizedPlan.action.focus.targetEventId)) issues.push("focus_target_invalid");
-    if (normalizedPlan.action.focus.domain && input.dossier.interviewState.declinedDomains.includes(normalizedPlan.action.focus.domain)) issues.push("declined_domain_reopened");
+    if (input.phase === "final" && groundedEvent && genericAcknowledgementPattern.test(plan.publicReply.acknowledgement.trim())) issues.push("event_acknowledgement_generic");
+    if (plan.action.focus.targetEventId && !known.has(plan.action.focus.targetEventId)) issues.push("focus_target_invalid");
+    if (plan.action.focus.domain && input.dossier.interviewState.declinedDomains.includes(plan.action.focus.domain)) issues.push("declined_domain_reopened");
     if (currentTarget && ["unresolved", "answered_other_event"].includes(plan.targetDisposition)
-      && normalizedPlan.action.focus.targetEventId !== currentTarget) issues.push("unresolved_target_abandoned");
+      && plan.action.focus.targetEventId !== currentTarget) issues.push("unresolved_target_abandoned");
     if (["unknown", "declined", "direction_change"].includes(plan.targetDisposition)
       && ((input.dossier.interviewState.currentTargetEventId !== null
-        && normalizedPlan.action.focus.targetEventId === input.dossier.interviewState.currentTargetEventId)
-        || ["clarify_existing_event", "resolve_conflict"].includes(normalizedPlan.action.focus.mode))) issues.push("declined_target_reopened");
+        && plan.action.focus.targetEventId === input.dossier.interviewState.currentTargetEventId)
+        || ["clarify_existing_event", "resolve_conflict"].includes(plan.action.focus.mode))) issues.push("declined_target_reopened");
   }
   if (plan.action.type === "offer_candidate_range" && (!input.dossier.candidateState.publicRangeAllowed || plan.action.snapshotId !== input.dossier.candidateState.currentSnapshotId)) issues.push("candidate_range_gate_failed");
-  return { plan: issues.length ? null : normalizedPlan, issues };
+  return { plan: issues.length ? null : plan, issues };
 }
 
 export async function regenerateDirectorQuestion(input: Readonly<{
@@ -304,7 +313,60 @@ export async function regenerateDirectorQuestion(input: Readonly<{
   focus: Extract<RectificationTurnPlan["action"], { type: "ask_question" }>["focus"];
   generateQuestion?: (prompt: string, phase: "regenerate" | "repair") => Promise<Generated>;
 }>): Promise<string> {
-  return publicQuestionForFocus({ eventLedger: projectEventLedger(input.acceptedEvents) }, input.latestAnswer, input.focus);
+  const eventLedger = projectEventLedger(input.acceptedEvents);
+  const fallbackQuestion = publicQuestionForFocus({ eventLedger }, input.latestAnswer, input.focus);
+  const model = input.generateQuestion ? null : ((input.caseValue.orchestrationModelId ? resolveLanguageModel(input.caseValue.orchestrationModelId) : null) ?? defaultLanguageModel());
+  const agent = model ? new Agent({
+    id: `rectification-question-regenerator-${model.id}`,
+    name: "Birth Time Rectification Question Regenerator",
+    model: model.model,
+    skills: [skillPath],
+    instructions: "Rewrite the current question as exactly one natural Simplified-Chinese question while preserving the supplied focus and target. Use the event ledger only as factual context. Do not expose technical methods, candidate conclusions, exact birth minutes, scores, ids, tool traces, or hidden reasoning. Do not repeat the current question. Return strict JSON only.",
+  }) : null;
+  const skillReady = agent ? assertRectificationSkillLoaded(agent, { caseId: input.caseValue.id, modelId: model?.id ?? null, deploymentSha: process.env.DEPLOYMENT_SHA?.trim() || null }) : null;
+  const generate = input.generateQuestion ?? (async (prompt: string) => {
+    if (!agent || !skillReady) throw new Error("question_regenerator_model_unavailable");
+    await skillReady;
+    return agent.generate(prompt, {
+      abortSignal: AbortSignal.timeout(15_000),
+      structuredOutput: { schema: regeneratedQuestionSchema, jsonPromptInjection: "inline" },
+    });
+  });
+  const context = {
+    task: "Rewrite the current question without changing its semantic focus.",
+    currentQuestion: input.currentQuestion,
+    latestAnswer: input.latestAnswer,
+    focus: input.focus,
+    events: eventLedger.filter((event) => event.status === "active").slice(-8).map((event) => ({
+      summary: event.summary,
+      date: event.dateRange.label,
+      domain: event.domain,
+      subject: event.subject,
+    })),
+  };
+  let issues: string[] = [];
+  for (const phase of ["regenerate", "repair"] as const) {
+    try {
+      const generated = regeneratedQuestionSchema.safeParse((await generate(JSON.stringify({ ...context, previousIssues: issues }), phase)).object);
+      if (!generated.success) {
+        issues = ["question_schema_invalid"];
+        continue;
+      }
+      const question = generated.data.question;
+      issues = [];
+      if (asksMultipleQuestions(question)) issues.push("multiple_questions");
+      if (normalizedQuestion(question) === normalizedQuestion(input.currentQuestion)) issues.push("question_repeated");
+      if (privatePattern.test(question)) issues.push("private_detail_exposed");
+      if (containsExactMinute(question)) issues.push("exact_minute_claimed");
+      if (quantifiedStructurePattern.test(question)) issues.push("ungrounded_numeric_structure_claim");
+      if (candidateConclusionPattern.test(question)) issues.push("ungrounded_candidate_conclusion");
+      if ([...question.matchAll(publicTechniquePattern)].length) issues.push("public_technique_in_question");
+      if (!issues.length) return question;
+    } catch {
+      issues = ["question_generation_failed"];
+    }
+  }
+  return fallbackQuestion;
 }
 
 export async function runRectificationDirector(input: Readonly<{ caseValue: RectificationV4Case; dossier: RectificationCaseDossier; latestAnswer: string; phase: "evidence" | "final"; diagnostics: DiagnosticsSummary; timeoutMs?: number; generatePlan?: RectificationDirectorGenerator }>) {

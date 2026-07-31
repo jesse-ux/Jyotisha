@@ -34,6 +34,33 @@ const isoDatePattern = /(?:1\d{3}|20\d{2})-(?:0[1-9]|1[0-2])(?:-(?:0[1-9]|[12]\d
 const unresolvedRelativeTimePattern = /(?:来年|次年|第二年|翌年|后来|此前|同年|当年|那年|随后|先前|然后|之前|之后|今年|去年|前年|明年)/;
 const leadingRelativeTimePattern = /^\s*(?:(?:来年|次年|第二年|翌年|后来(?:又)?|此前|同年|当年|那年|随后|先前|然后|之前|之后|今年|去年|前年|明年)\s*)+/;
 const missingEventSummary = "事件内容待补充";
+const selfHealthPattern = /确诊|疾病|癌症|肿瘤|手术|住院|受伤|事故|车祸|交通事故|创伤|康复|病危|健康/;
+const educationPattern = /毕业|入学|升学|转学|学校|大学|专业|考试|考(?:了)?(?:一)?次?研|研究生(?:入学)?考试|留学|学业|学习/;
+const relocationPattern = /搬家|迁居|外地|异地|离乡|移居|出国|住所|居住|离家/;
+const relationshipPattern = /结婚|恋爱|分手|离婚|订婚|伴侣|关系/;
+const familyPattern = /生育|孩子|父亲|母亲|父母|家人|家庭|亲人/;
+const financePattern = /收入|工资|薪资|奖金|财富|财务|投资|亏损|盈利|负债|债务|资产/;
+const careerPattern = /工作|实习|研究员|入职|离职|辞职|升职|创业|职业|职位|任职|负责|管理职责|公司|项目/;
+const selfDomainPatterns: readonly Readonly<{ domain: RectificationEvidenceDomain; pattern: RegExp }>[] = [
+  { domain: "health_pressure", pattern: selfHealthPattern },
+  { domain: "education", pattern: educationPattern },
+  { domain: "relocation", pattern: relocationPattern },
+  { domain: "relationship", pattern: relationshipPattern },
+  { domain: "finance", pattern: financePattern },
+  { domain: "career", pattern: careerPattern },
+];
+
+export function publicEvidenceDomainsFor(input: Readonly<{
+  summary: string;
+  primaryDomain: RectificationEvidenceDomain;
+  subject: "self" | "family" | "partner" | "other";
+}>): readonly RectificationEvidenceDomain[] {
+  if (input.subject !== "self") return [input.primaryDomain];
+  return [...new Set([
+    input.primaryDomain,
+    ...selfDomainPatterns.flatMap(({ domain, pattern }) => pattern.test(input.summary) ? [domain] : []),
+  ])];
+}
 
 export function parseDeclaredDateText(value: string, asOfDate: string): ParsedDate | null {
   const chinese = value.match(/^((?:1\d{3}|20\d{2}|\d{2}))\s*年(?:\s*(\d{1,2})\s*月(?:\s*(\d{1,2})\s*(?:日|号))?)?$/);
@@ -121,25 +148,25 @@ function classifyEvent(summary: string): EventSemantics {
       scoreability: "context_only",
     };
   }
-  if (/确诊|疾病|癌症|肿瘤|手术|住院|受伤|事故|车祸|交通事故|创伤|康复|病危|健康/.test(summary)) {
+  if (selfHealthPattern.test(summary)) {
     return { domain: "health_pressure", eventKind: "self_health_event", subject: "self", relatedPerson: null, scoreability: "scoreable" };
   }
-  if (/毕业|入学|升学|转学|学校|大学|专业|考试|考(?:了)?(?:一)?次?研|研究生(?:入学)?考试|留学|学业|学习/.test(summary)) {
+  if (educationPattern.test(summary)) {
     return { domain: "education", eventKind: "education_milestone", subject: "self", relatedPerson: null, scoreability: "scoreable" };
   }
-  if (/搬家|迁居|外地|异地|离乡|移居|出国|住所|居住/.test(summary)) {
+  if (relocationPattern.test(summary)) {
     return { domain: "relocation", eventKind: "relocation", subject: "self", relatedPerson: null, scoreability: "scoreable" };
   }
-  if (/结婚|恋爱|分手|离婚|订婚|伴侣|关系/.test(summary)) {
+  if (relationshipPattern.test(summary)) {
     return { domain: "relationship", eventKind: "relationship_change", subject: /伴侣|配偶/.test(summary) ? "partner" : "self", relatedPerson: /伴侣|配偶/.test(summary) ? "partner" : null, scoreability: "scoreable" };
   }
-  if (/生育|孩子|父亲|母亲|父母|家人|家庭|亲人/.test(summary)) {
+  if (familyPattern.test(summary)) {
     return { domain: "family", eventKind: "family_event", subject: "family", relatedPerson: null, scoreability: "context_only" };
   }
-  if (/收入|工资|薪资|奖金|财富|财务|投资|亏损|盈利|负债|债务|资产/.test(summary)) {
+  if (financePattern.test(summary)) {
     return { domain: "finance", eventKind: "finance_change", subject: "self", relatedPerson: null, scoreability: "scoreable" };
   }
-  if (/工作|实习|研究员|入职|离职|辞职|升职|创业|职业|职位|任职|负责|管理职责|公司|项目/.test(summary)) {
+  if (careerPattern.test(summary)) {
     return { domain: "career", eventKind: "career_change", subject: "self", relatedPerson: null, scoreability: "scoreable" };
   }
   return { domain: "other", eventKind: "other", subject: "other", relatedPerson: null, scoreability: "unsupported" };
