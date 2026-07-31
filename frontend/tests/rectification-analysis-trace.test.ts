@@ -538,3 +538,25 @@ test("Supabase analysis projection ignores invalid traces", () => {
     created_at: "2026-07-29T01:00:00.000Z",
   }], [{ id: jobId, turn_id: turnId }]), []);
 });
+
+test("a newly collected year-only event stays current until its month is refined", async () => {
+  const base = makeClaimed([]);
+  const turn: RectificationV4Turn = {
+    ...base.turn,
+    question: "请先说一段自己记得比较清楚的人生经历。",
+    answer: "2016 年离家去外地上大学",
+  };
+  const result = await processRectificationAgentTurn({
+    claimed: { ...base, turn, turns: [turn] },
+    engine: { score: async () => { throw new Error("candidate_engine_should_not_run"); } },
+    now: new Date(now),
+  });
+
+  assert.equal(result.newEventRevisions.length, 1);
+  const created = result.newEventRevisions[0]!;
+  assert.equal(created.dateRange.precision, "year");
+  assert.equal(result.nextQuestion?.targetEventId, created.eventId);
+  assert.match(result.nextQuestion?.prompt ?? "", /离家去外地上大学/);
+  assert.match(result.nextQuestion?.prompt ?? "", /哪个月|时间段/);
+  assert.doesNotMatch(result.nextQuestion?.prompt ?? "", /还能想到一件/);
+});

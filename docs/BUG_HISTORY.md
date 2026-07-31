@@ -1882,3 +1882,18 @@
 - 防复发：不得把每次诊断后的 prompt 改回“必须立即结束”；增加新工具时必须定义 observation 是否会在同一 Turn 变化、重复调用策略和总轮次上限。
 - 相关记录：BUG-101、BUG-102、BUG-105
 - 修复版本：`birth-time-rectification-v8` / `rectification-director-v4`
+
+## BUG-107 | 开放问题收集年份事件后先切换新事件、下一轮再回访旧事件
+
+- 状态：resolved（local）
+- 首次发现：2026-07-31
+- 最近更新：2026-07-31
+- 影响面：V8 Director 最终规划、确定性 fallback、年份/季度精度事件的访谈连续性
+- 用户现象：开放问题收到一件只有年份的本人事件后，系统先用固定句式要求另一件经历；收到第二件月份明确的经历后，又突然回头追问第一件事件的月份，表现为事件焦点来回跳转。
+- 触发条件：上一问没有 `questionTargetEventId`，本轮新建的可评分事件只有 `year` 或 `quarter` 精度，同时 Director 调用失败、超时或计划被拒绝而进入 fallback；即使 Agent 正常返回，旧校验也未禁止它在未闭合宽日期事件时切换目标。
+- 根因：Orchestrator 只把上一问的 `questionTargetEventId` 传入最终 Dossier，没有把本轮新建且日期仍宽的事件提升为当前目标；Director 因而看见 `targetDisposition=not_applicable`。确定性 fallback 随即输出通用“再说一件经历”模板，后续 Director 才从完整账本重新发现旧事件缺月份。最终计划校验也只保护拒答目标，没有保护 `unresolved` / `answered_other_event` 目标不被放弃。
+- 修复：最终规划优先保留服务器 reconciliation 的未回答目标；否则把本轮新建的 `year` / `quarter` 可评分事件设为 `unresolved` 当前目标。计划校验拒绝在该目标未闭合时切换到无关新事件；fallback 按目标真实日期精度追问月份或时间段，并绑定真实 Event ID，而不是继续输出通用新事件模板。
+- 验证：Director 回归断言未闭合宽日期目标不能被新事件问题放弃，强制 fallback 会锚定该事件并请求 `month`；Orchestrator 回放断言开放问题收到年份事件后，下一问立即补月份且 `targetEventId` 指向新事件。相关 Director/分析轨迹测试、TypeScript 和 ESLint 均通过；完整前端测试 1157 项通过。
+- 防复发：事件连续性由服务器的 `currentTargetEventId + targetDisposition` 约束，不能只靠 Agent prompt；新事件的必要日期精度应在切换话题前闭合，用户明确“不知道/跳过/换方向”时才解除目标。
+- 相关记录：BUG-092、BUG-097、BUG-106
+- 修复版本：local / pending release

@@ -372,10 +372,17 @@ export async function processRectificationAgentTurn(input: Readonly<{
 
   if (claimed.case.deploymentMode !== "v4_legacy") {
     await enterPhase("planning_question");
+    const newlyCreatedBroadDateEvent = [...extracted].reverse().find((event) => event.revision === 1
+      && event.scoreability === "scoreable"
+      && (event.dateRange.precision === "year" || event.dateRange.precision === "quarter"));
+    const planningTargetEventId = reconciliation.unansweredTargetEventId ?? newlyCreatedBroadDateEvent?.eventId ?? null;
+    const planningTargetDisposition = planningTargetEventId && reconciliation.targetDisposition === "not_applicable"
+      ? "unresolved" as const
+      : reconciliation.targetDisposition;
     const dossier = buildRectificationCaseDossier({
       caseValue: claimed.case, turns: claimed.turns, events, pendingEvidence: [...claimed.pendingEvidence, ...reconciliation.pending],
       snapshot, previousSnapshot: claimed.case.latestSnapshot, diagnostics,
-      targetDisposition: reconciliation.targetDisposition, currentTargetEventId: claimed.turn.questionTargetEventId,
+      targetDisposition: planningTargetDisposition, currentTargetEventId: planningTargetEventId,
     });
     await enterPhase("reasoning");
     const directed = await runRectificationDirector({

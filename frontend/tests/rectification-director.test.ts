@@ -477,3 +477,73 @@ test("candidate range requires the current approved snapshot id", () => {
   assert.equal(staleDossier.candidateState.publicRangeAllowed, false);
   assert.ok(validateRectificationTurnPlan({ plan: accepted, dossier: staleDossier, latestAnswer: "", phase: "final" }).issues.includes("candidate_range_gate_failed"));
 });
+
+test("an unresolved broad-date target cannot be abandoned for a new event", () => {
+  const target = event({
+    dateRange: { start: "2016-01-01", end: "2016-12-31", precision: "year", label: "2016年" },
+  });
+  const targetDossier = buildRectificationCaseDossier({
+    caseValue,
+    turns: [],
+    events: [target],
+    snapshot: null,
+    diagnostics: null,
+    targetDisposition: "unresolved",
+    currentTargetEventId: target.eventId,
+  });
+  const abandoned = plan({
+    targetDisposition: "unresolved",
+    action: {
+      type: "ask_question",
+      focus: {
+        mode: "collect_independent_event",
+        targetEventId: null,
+        domain: null,
+        requestedFacts: ["independent_event"],
+        rationaleCodes: ["need_independent_event"],
+      },
+      question: "你还能想到另一件时间大致确定的重要经历吗？",
+      optionalQuickReplies: [],
+    },
+  });
+
+  assert.ok(validateRectificationTurnPlan({
+    plan: abandoned,
+    dossier: targetDossier,
+    latestAnswer: target.rawText,
+    phase: "final",
+  }).issues.includes("unresolved_target_abandoned"));
+});
+
+test("deterministic fallback refines the known year before collecting another event", async () => {
+  const target = event({
+    summary: "2016年离家去外地上大学",
+    rawText: "2016 年离家去外地上大学",
+    dateRange: { start: "2016-01-01", end: "2016-12-31", precision: "year", label: "2016年" },
+  });
+  const result = await runRectificationDirector({
+    caseValue,
+    dossier: buildRectificationCaseDossier({
+      caseValue,
+      turns: [],
+      events: [target],
+      snapshot: null,
+      diagnostics: null,
+      targetDisposition: "unresolved",
+      currentTargetEventId: target.eventId,
+    }),
+    latestAnswer: target.rawText,
+    phase: "final",
+    diagnostics,
+    generatePlan: async () => { throw new Error("forced_fallback"); },
+  });
+
+  assert.equal(result.mode, "deterministic_fallback");
+  assert.equal(result.plan.action.type, "ask_question");
+  if (result.plan.action.type !== "ask_question") return;
+  assert.equal(result.plan.action.focus.targetEventId, target.eventId);
+  assert.deepEqual(result.plan.action.focus.requestedFacts, ["month"]);
+  assert.match(result.plan.action.question, /2016年离家去外地上大学/);
+  assert.match(result.plan.action.question, /哪个月|时间段/);
+  assert.doesNotMatch(result.plan.action.question, /另一件|还能想到一件/);
+});
