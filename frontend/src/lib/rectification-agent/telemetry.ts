@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const telemetryEventSchema = z.object({
   caseId: z.string().uuid().nullable(),
-  phase: z.enum(["reasoner", "renderer", "tool", "fallback"]),
+  phase: z.enum(["reasoner", "renderer", "tool", "fallback", "skill"]),
   outcome: z.enum(["started", "succeeded", "failed", "rejected"]),
   modelId: z.string().trim().min(1).max(120).nullable(),
   toolName: z.string().trim().min(1).max(120).nullable(),
@@ -10,6 +10,10 @@ const telemetryEventSchema = z.object({
   durationMs: z.number().int().min(0).max(300_000).nullable(),
   errorCode: z.string().trim().min(1).max(120).nullable(),
   deploymentSha: z.string().trim().min(1).max(80).nullable(),
+  skillName: z.string().trim().min(1).max(120).optional(),
+  skillVersion: z.string().trim().min(1).max(120).optional(),
+  promptVersion: z.string().trim().min(1).max(120).optional(),
+  loadStatus: z.enum(["loaded", "failed"]).optional(),
 }).strict();
 
 export type RectificationAgentTelemetryEvent = z.infer<typeof telemetryEventSchema>;

@@ -1885,7 +1885,7 @@
 
 ## BUG-107 | 开放问题收集年份事件后先切换新事件、下一轮再回访旧事件
 
-- 状态：resolved（local）
+- 状态：resolved（staging pending deployment）
 - 首次发现：2026-07-31
 - 最近更新：2026-07-31
 - 影响面：V8 Director 最终规划、确定性 fallback、年份/季度精度事件的访谈连续性
@@ -1897,3 +1897,34 @@
 - 防复发：事件连续性由服务器的 `currentTargetEventId + targetDisposition` 约束，不能只靠 Agent prompt；新事件的必要日期精度应在切换话题前闭合，用户明确“不知道/跳过/换方向”时才解除目标。
 - 相关记录：BUG-092、BUG-097、BUG-106
 - 修复版本：local / pending release
+
+## BUG-108 | V8 丢失事件承接说明且服务器领域模板覆盖 Agent 自主选题
+
+- 状态：resolved（staging pending deployment）
+- 首次发现：2026-07-31
+- 最近更新：2026-07-31
+- 影响面：V8 Director 最终回复、Candidate Contrast、确定性 fallback、前端可见问题历史与处理中动画
+- 用户现象：用户提供具体经历后，界面只显示下一问，没有显示 Agent 对新线索的承接和公开安全的价值说明；后续问题又容易落入预写的教育、迁居、关系、事业、财务、健康模板，甚至把验收案例中的“大学、实习、搬家”等措辞当成产品脚本。处理中还显示固定三步 checklist，而不是随真实 phase 变化。
+- 触发条件：`v5_agent` 最终规划生成了 `publicReply`，但持久化出口只保存裸问题；同时 Opportunity Builder 通过 `domainPolicy`、关键词、人工 `recallEase/privacyCost` 和领域 `fallbackPrompt` 预先决定候选问题，Renderer 再用领域词表校验模型输出，模型异常时 Director fallback 直接采用人工排序结果。
+- 根因：公开消息和可见问题使用了两个出口；更关键的是服务器同时承担了事实约束和访谈选题，形成“Builder 人工选题 → Director 采用排名 → Renderer 关键词裁决”的双重控制，Agent 实际只能改写模板。
+- 修复：持久化完整的 acknowledgement、公开安全的证据价值说明、limitation 与唯一问题；删除固定领域 `domainPolicy`、领域 recall cues、领域关键词匹配和 V8 Opportunity 排名传参。Candidate Contrast 仅提供完整、顺序稳定的事实观察，Director 根据完整账本、拒答记录、候选差异和只读工具自主决定方向与措辞。无当前目标且模型失败时使用 `domain:null` 的领域中立恢复问题；有未闭合目标时服务器只保护目标连续性并询问必要事实。保留拒答/隐私保护、事实来源验证、单问题、范围门、目标锚点和技术信息过滤。前端移除固定分析 checklist，并把真实 Job phase 映射到 `thinking-orbs` 状态。
+- 验证：回归覆盖 Builder 不再生成六领域问题、Candidate Contrast 返回全部可用缺口而不替 Agent 选题、Renderer 接受不在测试样例中的自然方向、Agent 自主问题不被领域 fallback 替换、拒答领域不能被重新打开、大学与研究院实习回放在模型失败时保持领域中立。`npx tsc --noEmit`、98 项聚焦测试、1160 项完整前端测试、touched-file ESLint 与 `git diff --check` 均通过。
+- 防复发：服务器只提供事实、能力和禁止项；正常 V8 选题与措辞归 Agent。测试案例只能验证不变量和复现回归，不能通过词表、权重或预写问题进入生产决策链。
+- 相关记录：BUG-105、BUG-106、BUG-107
+- 修复版本：staging branch / deployment manifest records exact SHA
+
+## BUG-109 | 生时校正模型文案可越过公开事实边界
+
+- 状态：resolved
+- 首次发现：2026-07-31
+- 最近更新：2026-07-31
+- 影响面：V5 Director 公开回复、下一问生成与手动重新生成
+- 用户现象：模型可能直接追问、遗漏服务器承接说明，或把未经计算的候选优劣写入公开问题。
+- 触发条件：Director 返回自由文案，或历史 `selectedOpportunity` 进入问题重新生成路径。
+- 根因：公开回复和问题 wording 曾由模型直接提供；历史兼容分支还可绕过新 focus 合同调用 renderer。
+- 修复：Agent 只选择结构化 focus；服务器根据事件账本、能力矩阵和 focus 生成承接、方法说明及单一问题；历史 `selectedOpportunity` 先转换为 focus，所有重新生成路径共用同一服务器 renderer。
+- 验证：Director、analysis trace、V4 service 聚焦测试 52/52；TypeScript、ESLint 通过；前端全量测试 1164/1164。
+- 防复发：回归测试覆盖模型伪造候选结论、手动 regenerate 以及历史 `selectedOpportunity` 持久化路径。
+- 相关记录：无
+- 复发自：无
+- 修复版本：待发布

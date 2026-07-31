@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { clockTimeSchema, eventKindSchema, eventSubjectSchema, evidenceDomainSchema, relatedPersonSchema, rectificationAnalysisTraceSchema, rectificationDeploymentModeSchema } from "../rectification-v4/contracts.ts";
+import { clockTimeSchema, eventKindSchema, eventSubjectSchema, evidenceDomainSchema, rectificationAnalysisTraceSchema, rectificationAssistantMessageSchema, rectificationDeploymentModeSchema, relatedPersonSchema } from "../rectification-v4/contracts.ts";
 
 const uuid = z.string().uuid();
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
@@ -108,9 +108,14 @@ export const rectificationTurnPlanSchema = z.object({
   action: directorActionSchema,
   publicReply: z.object({
     acknowledgement: nonblank(1_000),
+    evidenceExplanation: nonblank(1_600).nullable().default(null),
     candidateCommentary: nonblank(1_000).nullable(),
     limitation: nonblank(1_000).nullable(),
   }).strict(),
+  publicExplanationGrounding: z.array(z.object({
+    source: z.enum(["capability_matrix", "window_sensitivity", "candidate_scan", "diagnostic"]),
+    factKey: nonblank(160),
+  }).strict()).max(12).default([]),
 }).strict();
 export type RectificationTurnPlan = z.infer<typeof rectificationTurnPlanSchema>;
 
@@ -194,6 +199,10 @@ export const rectificationCaseDossierSchema = z.object({
   capabilities: z.object({
     supportedDomains: z.array(evidenceDomainSchema),
     supportedEventKinds: z.array(eventKindSchema),
+    publicTechniqueCapabilities: z.array(z.object({
+      domain: evidenceDomainSchema,
+      techniqueLayers: z.array(nonblank(80)).max(20),
+    }).strict()).max(8),
     maxQuestionsPerTurn: z.literal(1),
     maxToolRounds: z.literal(10),
     forbiddenPublicClaims: z.array(z.string()),
@@ -464,12 +473,7 @@ export const validatedDecisionSchema = z.object({
 }).strict();
 export type ValidatedDecision = z.infer<typeof validatedDecisionSchema>;
 
-export const publicMessageSchema = z.object({
-  acknowledgement: nonblank(1_000),
-  candidateUpdate: nonblank(1_000).nullable(),
-  limitation: nonblank(1_000).nullable(),
-  question: nonblank(1_000).nullable(),
-}).strict();
+export const publicMessageSchema = rectificationAssistantMessageSchema;
 export type PublicMessage = z.infer<typeof publicMessageSchema>;
 
 export const storedPublicMessageSchema = publicMessageSchema.extend({

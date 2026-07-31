@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
+import { composeRectificationPublicTurn } from "../src/lib/rectification-agent/orchestrator.ts";
 import { createRectificationV4CaseService } from "../src/lib/rectification-v4/case-service.ts";
 import type { CalculationSpec, CandidateSnapshot, LifeEventRevision, PendingEvidence } from "../src/lib/rectification-v4/contracts.ts";
 import { createRectificationV4MemoryStore } from "../src/lib/rectification-v4/memory-store.ts";
@@ -174,7 +175,10 @@ test("V5 agent fallback persists the Director decision, Public Message and next 
   assert.equal(done?.case.currentQuestion?.targetEventId, null);
   assert.ok((done?.case.currentQuestion?.prompt ?? "").length > 0);
   assert.doesNotMatch(done?.case.currentQuestion?.prompt ?? "", /具体哪一天|几号/);
-  assert.equal(message.question, done?.case.currentQuestion?.prompt);
+  assert.equal(done?.case.currentQuestion?.prompt, composeRectificationPublicTurn(message));
+  assert.match(done?.case.currentQuestion?.prompt ?? "", /离家去外地上大学/);
+  assert.match(done?.case.currentQuestion?.prompt ?? "", /交叉核对/);
+  assert.ok(message.question && done?.case.currentQuestion?.prompt.includes(message.question));
   assert.equal(done?.case.latestSnapshot, null);
 }));
 
@@ -313,6 +317,84 @@ test("V5 Agent regenerate rewrites only the current semantic question and replay
   assert.equal(realizationCalls, 1);
   assert.equal(store.jobs.size, 1);
   assert.equal(regenerated.case.latestSnapshot?.canConfirmExactMinute ?? false, false);
+}));
+
+test("V5 Agent regenerate converts historical selected opportunities into server-rendered questions", async () => withMode("v5_agent", async () => {
+  const store = createRectificationV4MemoryStore();
+  const service = createTestCaseService(store, { now: fixedNow });
+  const userId = randomUUID();
+  const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
+  const queued = await service.answer({
+    userId,
+    caseId: created.case.id,
+    actionId: randomUUID(),
+    expectedCaseVersion: created.case.version,
+    answer: "2020年4月去石油化工研究院实习做研究员",
+  });
+  assert.ok(queued?.job);
+  const worker = createRectificationV4Worker({
+    store,
+    now: fixedNow,
+    engine: { async score() { throw new Error("engine must not run before enough events"); } },
+  });
+  assert.equal(await worker.runOnce(), true);
+
+  const current = await service.loadCase(userId, created.case.id);
+  const event = current?.events.find((item) => item.domain === "career");
+  const run = [...store.agentRuns.values()][0];
+  assert.ok(current?.case.currentQuestion && event && run && queued.job);
+
+  const opportunityId = randomUUID();
+  store.validatedDecisions.set(queued.job.id, {
+    decision: { action: "ask_question", opportunityId, narrativeFocus: ["date_precision"] },
+    mode: "agent",
+    validationIssues: [],
+    selectedOpportunity: {
+      contractVersion: "semantic-question-v2",
+      opportunityId,
+      kind: "refine_event_date",
+      domain: "career",
+      targetEventId: event.eventId,
+      goal: "核对这段实习经历的月份",
+      requestedFields: ["event_month"],
+      anchors: [event.summary],
+      contextFacts: [],
+      forbiddenMoves: ["expose_technique_trace"],
+      fallbackPrompt: "分盘已表明甲组更有把握，请确认 D10 的结论。",
+      reason: "历史问题机会兼容测试",
+      expectedInformationGain: .5,
+      dateSensitivity: .5,
+      candidateSplitRelevance: .5,
+      domainCoverageGain: 0,
+      recallEase: .8,
+      novelty: .5,
+      repetitionPenalty: 0,
+      privacyCost: 0,
+      utility: .5,
+      active: true,
+    },
+  });
+  store.cases.set(created.case.id, {
+    ...current.case,
+    currentQuestion: {
+      ...current.case.currentQuestion,
+      domain: "career",
+      targetEventId: event.eventId,
+      prompt: "分盘已表明甲组更有把握，请确认 D10 的结论。",
+    },
+  });
+
+  const regenerated = await service.regenerateQuestion({
+    userId,
+    caseId: created.case.id,
+    actionId: randomUUID(),
+    expectedCaseVersion: current.case.version,
+  });
+  assert.ok(regenerated?.case.currentQuestion);
+  assert.equal(regenerated.case.currentQuestion.domain, "career");
+  assert.equal(regenerated.case.currentQuestion.targetEventId, event.eventId);
+  assert.match(regenerated.case.currentQuestion.prompt, /2020年4月|石油化工研究院|实习|研究员/);
+  assert.doesNotMatch(regenerated.case.currentQuestion.prompt, /D10|分盘|测算|推演|甲组|头一组|前者占优/);
 }));
 
 test("legacy and shadow cases cannot call the V5 Agent question renderer", async () => {

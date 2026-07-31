@@ -24,7 +24,7 @@ export class RectificationV4RequestError extends Error {
   }
 }
 
-async function json<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
+async function json<T>(response: Response, schema: z.ZodType<T, z.ZodTypeDef, unknown>): Promise<T> {
   const payload = await response.json().catch(() => null);
   if (!response.ok) {
     throw new RectificationV4RequestError(

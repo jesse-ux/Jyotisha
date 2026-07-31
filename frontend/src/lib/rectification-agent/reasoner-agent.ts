@@ -8,6 +8,7 @@ import { chronologicalEvents } from "../rectification-v4/evidence-ledger.ts";
 import type { TargetDisposition } from "../rectification-v4/extraction.ts";
 import { deterministicDecision } from "./fallback-policy.ts";
 import { recordRectificationAgentTelemetry } from "./telemetry.ts";
+import { assertRectificationSkillLoaded } from "./skill-runtime.ts";
 import {
   rectificationDecisionSchema,
   rectificationDiagnosticSchema,
@@ -191,8 +192,10 @@ export async function runBoundedReasoner(input: Readonly<{
     instructions: "Choose one server-owned action. Never create an event id, candidate, score, date, question, calculation input, or birth minute. Ask only by opportunityId. Candidate ranges may only use currentSnapshotId. You may request or call one diagnostic, then must return a final non-diagnostic action. Return strict structured output.",
   }) : null;
   const isOpenAiProvider = model?.mode === "openai";
+  const skillReady = agent ? assertRectificationSkillLoaded(agent, { caseId: input.caseValue.id, modelId, deploymentSha }) : null;
   const generate: RectificationReasonerGenerator = input.generateDecision ?? (async (prompt) => {
-    if (!agent) throw new Error("reasoner_model_unavailable");
+    if (!agent || !skillReady) throw new Error("reasoner_model_unavailable");
+    await skillReady;
     let reasoningSummary = "";
     const stream = await agent.stream(prompt, {
       abortSignal: AbortSignal.timeout(input.timeoutMs ?? 20_000),

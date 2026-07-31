@@ -84,6 +84,15 @@ type AnalysisPhase = keyof typeof analysisPhaseLabels;
 
 const closedTargetDispositions = new Set<TargetDisposition>(["unknown", "declined", "direction_change"]);
 
+export function composeRectificationPublicTurn(message: Pick<StoredPublicMessage, "acknowledgement" | "evidenceExplanation" | "candidateUpdate" | "limitation" | "question">): string {
+  const question = message.question?.trim() ?? "";
+  const context = [message.acknowledgement, message.evidenceExplanation, message.candidateUpdate, message.limitation].filter((part): part is string => Boolean(part?.trim())).join("\n\n");
+  if (!question) return context.slice(0, 1_000);
+  const availableContext = Math.max(0, 1_000 - question.length - 2);
+  const prefix = context.slice(0, availableContext).trim();
+  return prefix ? `${prefix}\n\n${question}` : question;
+}
+
 export function mergeDirectorReconciliation(input: Readonly<{
   server: ReconciledV4Evidence;
   staged: ReconciledV4Evidence;
@@ -413,7 +422,8 @@ export async function processRectificationAgentTurn(input: Readonly<{
     });
     const publicMessage: StoredPublicMessage = {
       acknowledgement: plan.publicReply.acknowledgement,
-      candidateUpdate: candidateUpdateFor({ snapshot, previousSnapshot: claimed.case.latestSnapshot, decisionAction: decision.action }) ?? plan.publicReply.candidateCommentary,
+      evidenceExplanation: plan.publicReply.evidenceExplanation,
+      candidateUpdate: candidateUpdateFor({ snapshot, previousSnapshot: claimed.case.latestSnapshot, decisionAction: decision.action }),
       limitation: plan.publicReply.limitation,
       question: action.type === "ask_question" ? action.question : null,
       analysisTrace: {
@@ -428,7 +438,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
       id: randomUUID(),
       domain: action.focus.domain ?? targetEvent?.domain ?? "other",
       targetEventId: action.focus.targetEventId,
-      prompt: action.question,
+      prompt: composeRectificationPublicTurn(publicMessage),
       recallCost: "medium",
       reason: action.focus.rationaleCodes.join(",").slice(0, 240) || "agent_directed_focus",
     } : null;

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { CandidateSnapshot, EvidenceDomain, EventKind, LifeEventRevision, RectificationV4Turn } from "../rectification-v4/contracts.ts";
+import type { CandidateSnapshot, EvidenceDomain, LifeEventRevision, RectificationV4Turn } from "../rectification-v4/contracts.ts";
 import { domainScorerRegistry } from "../rectification-v4/domain-scorers.ts";
 import { chronologicalEvents, latestEventRevisions } from "../rectification-v4/evidence-ledger.ts";
 import type { TargetDisposition } from "../rectification-v4/extraction.ts";
@@ -9,64 +9,6 @@ const forbiddenMoves: SemanticQuestionOpportunity["forbiddenMoves"] = [
   "switch_target_event", "ask_multiple_questions", "claim_exact_birth_minute", "invent_event",
   "invent_date", "expose_private_score", "expose_internal_id", "expose_technique_trace",
 ];
-
-const domainPolicy: Readonly<Record<Exclude<EvidenceDomain, "family" | "other">, Readonly<{
-  goal: (anchor: string | null) => string;
-  fallbackPrompt: (anchor: string | null) => string;
-  recallCues: string;
-  signals: RegExp;
-  recallEase: number;
-  privacyCost: number;
-}>>> = {
-  education: {
-    goal: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}引导用户回忆一件学习路径变化，用复读、转学、换专业、毕业或重要考试等非穷举线索，不预设一定发生。`,
-    fallbackPrompt: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}有没有一件学习路径明显变化的经历，比如复读、转学、换专业、毕业或重要考试改变去向；如果有，大概是哪年哪月，没有或记不清也可以换一类经历？`,
-    recallCues: "复读、转学、换专业、毕业或重要考试改变去向",
-    signals: /大学|学校|入学|升学|毕业|考试|专业|读书|复读|转学/,
-    recallEase: .82,
-    privacyCost: .03,
-  },
-  relocation: {
-    goal: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}引导用户回忆一件真正改变居住基地的经历，用搬家、住校或到另一座城市长期生活等非穷举线索，不把当前事件换词重问。`,
-    fallbackPrompt: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}有没有一件真正改变居住地点的经历，比如独立搬家、住校或到另一座城市长期生活；如果有，大概是哪年哪月，没有或记不清也可以换一类经历？`,
-    recallCues: "独立搬家、住校或到另一座城市长期生活",
-    signals: /搬家|搬到|搬去|迁居|迁到|迁往|移居|定居|住校|长期居住|生活基地|离家|外地|异地/,
-    recallEase: .78,
-    privacyCost: .04,
-  },
-  relationship: {
-    goal: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}在用户愿意的前提下，引导回忆一件关系状态变化，用关系确立、分开、结婚或共同生活等非穷举线索，不预设一定发生。`,
-    fallbackPrompt: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}如果你愿意，有没有一件关系状态明显变化的经历，比如关系确立、分开、结婚或开始共同生活；如果有，大概是哪年哪月，没有或不想回答可以换一类经历？`,
-    recallCues: "关系确立、分开、结婚或开始共同生活",
-    signals: /恋爱|关系|结婚|离婚|分手|伴侣|对象|共同生活/,
-    recallEase: .62,
-    privacyCost: .22,
-  },
-  career: {
-    goal: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}引导用户回忆一件工作状态变化，用第一次正式入职、离职、换岗、创业或职责增加等非穷举线索，不预设一定发生。`,
-    fallbackPrompt: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}有没有一件工作状态明显变化的经历，比如第一次正式入职、离职、换岗、创业或职责明显增加；如果有，大概是哪年哪月，没有或记不清也可以换一类经历？`,
-    recallCues: "第一次正式入职、离职、换岗、创业或职责明显增加",
-    signals: /工作|实习|公司|研究院|职业|入职|离职|创业|负责|换岗|职责/,
-    recallEase: .85,
-    privacyCost: .03,
-  },
-  finance: {
-    goal: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}在用户愿意的前提下，引导回忆一件财务结构变化，用收入来源、负债、购房或重大投资等非穷举线索，不预设一定发生。`,
-    fallbackPrompt: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}如果方便，有没有一件财务结构明显变化的经历，比如收入来源改变、开始或还清大额负债、购房或重大投资；如果有，大概是哪年哪月，没有或不想回答可以换一类经历？`,
-    recallCues: "收入来源改变、开始或还清大额负债、购房或重大投资",
-    signals: /收入|负债|投资|资产|财务|买房|卖房|购房/,
-    recallEase: .6,
-    privacyCost: .18,
-  },
-  health_pressure: {
-    goal: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}在用户愿意的前提下，引导回忆一件本人健康或高压状态变化，用手术、住院、事故、确诊或明显恢复等非穷举线索，不预设一定发生。`,
-    fallbackPrompt: (anchor) => `${anchor ? `在“${anchor}”之外，` : ""}如果方便，你本人有没有一件健康或高压状态明显变化的经历，比如手术、住院、事故、确诊或明显恢复；如果有，大概是哪年哪月，没有或不想回答可以换一类经历？`,
-    recallCues: "手术、住院、事故、确诊或明显恢复",
-    signals: /住院|手术|事故|健康|生病|确诊|康复|高压|恢复/,
-    recallEase: .58,
-    privacyCost: .28,
-  },
-};
 
 function stableUuid(value: string): string {
   const hex = createHash("sha256").update(value).digest("hex").slice(0, 32).split("");
@@ -138,8 +80,9 @@ export function buildCandidateContrastPacket(input: Readonly<{
   const missingEvidence = (Object.entries(domainScorerRegistry) as [EvidenceDomain, (typeof domainScorerRegistry)[EvidenceDomain]][])
     .flatMap(([domain, policy]) => {
       if (!policy.techniqueLayers.some((layer) => discriminatingLayers.includes(layer))) return [];
-      const eventKind = policy.supportedKinds.find((kind) => !existingKinds.has(kind));
-      return eventKind ? [{ domain, eventKind, reason: "highest_candidate_separation" as const }] : [];
+      return policy.supportedKinds
+        .filter((eventKind) => !existingKinds.has(eventKind))
+        .map((eventKind) => ({ domain, eventKind, reason: "highest_candidate_separation" as const }));
     });
   return {
     primaryClusterRank: input.snapshot?.clusters[0]?.rank ?? null,
@@ -148,19 +91,6 @@ export function buildCandidateContrastPacket(input: Readonly<{
     relevantEventIds: [...split.eventIds],
     missingEvidence,
   };
-}
-
-function contrastQuestion(eventKind: EventKind, anchor: string | null): Readonly<{ goal: string; fallbackPrompt: string }> | null {
-  const prefix = anchor ? `在“${anchor}”之外，` : "";
-  if (eventKind === "relationship_start") return {
-    goal: `${prefix}在用户愿意的前提下，询问是否有一段关系正式确立或开始共同生活的经历及其大致年月，不预设一定发生。`,
-    fallbackPrompt: `${prefix}如果你愿意，有没有一段关系正式确立或开始共同生活的经历；如果有，大概是哪年哪月，没有、不知道或不想回答也可以换方向？`,
-  };
-  if (eventKind === "relationship_change") return {
-    goal: `${prefix}在用户愿意的前提下，询问是否有一段关系状态明显改变的经历及其大致年月，不预设一定发生。`,
-    fallbackPrompt: `${prefix}如果你愿意，有没有一段关系状态明显改变的经历；如果有，大概是哪年哪月，没有、不知道或不想回答也可以换方向？`,
-  };
-  return null;
 }
 
 export function buildQuestionOpportunities(input: Readonly<{
@@ -180,7 +110,6 @@ export function buildQuestionOpportunities(input: Readonly<{
   const scoreableDomains = new Set(input.events.filter((event) => event.scoreability === "scoreable").map((event) => event.domain));
   const refusedDomains = declinedSensitiveDomains(input.turns);
   const latestEvent = chronologicalEvents(input.events).at(-1);
-  const latestContext = input.turns.at(-1)?.answer ?? latestEvent?.rawText ?? "";
   const opportunities: QuestionOpportunity[] = [];
   const contrastPacket = buildCandidateContrastPacket(input);
 
@@ -266,40 +195,37 @@ export function buildQuestionOpportunities(input: Readonly<{
   }
 
   const scoreableCount = input.events.filter((event) => event.scoreability === "scoreable").length;
-  for (const [domain, policy] of Object.entries(domainPolicy) as [Exclude<EvidenceDomain, "family" | "other">, (typeof domainPolicy)[Exclude<EvidenceDomain, "family" | "other">]][]) {
-    if (refusedDomains.has(domain)) continue;
-    const covered = scoreableDomains.has(domain);
-    const latestEventText = latestEvent ? `${latestEvent.summary} ${latestEvent.rawText}` : latestContext;
-    const semanticOverlap = Boolean(latestEvent && latestEvent.domain !== domain && policy.signals.test(latestEventText));
-    const latestDomainContinuity = latestEvent?.domain === domain ? .22 : 0;
-    const pendingThemeBonus = !latestEvent && policy.signals.test(latestContext) ? .12 : 0;
-    const alreadyAsked = input.turns.some((turn) => turn.questionDomain === domain && !turn.questionTargetEventId);
-    const latestAnchor = latestEvent ? anchorFor(latestEvent) : null;
-    const contrastEvidence = contrastPacket?.missingEvidence.find((item) => item.domain === domain) ?? null;
-    const targetedQuestion = contrastEvidence ? contrastQuestion(contrastEvidence.eventKind, latestAnchor) : null;
-    opportunities.push(opportunity(input.caseId, {
-      kind: "ask_new_event", domain, targetEventId: null, goal: targetedQuestion?.goal ?? policy.goal(latestAnchor),
-      requestedFields: ["new_dated_event"], anchors: latestAnchor ? [latestAnchor] : [],
-      contextFacts: [
-        `已有 ${scoreableCount} 件可评分事件。`,
-        `该领域${covered ? "已有覆盖" : "尚未覆盖"}。`,
-        `可使用${policy.recallCues}作为非穷举回忆线索。`,
-        "这是存在性询问，不得假定用户一定经历过该事件。",
-        "只询问一件带大致年月的新事件，不要求用户逐项回答例子。",
-        "允许用户回答没有、记不清、不想回答或换方向。",
-        "不得发明年龄或日期窗口，只能引用 anchors 中已确认的经历。",
-        ...(contrastEvidence ? ["该类证据对当前候选区分力最高，应优先确认是否存在。"] : []),
-        ...(semanticOverlap ? ["该领域与最新事件语义重叠，必须降低优先级，避免把同一经历换词重问。"] : []),
-      ],
-      fallbackPrompt: targetedQuestion?.fallbackPrompt ?? policy.fallbackPrompt(latestAnchor), reason: contrastEvidence ? "补足当前候选分离所需的关键证据。" : covered ? "继续收集可区分候选的独立事件。" : "补足证据领域覆盖。",
-      expectedInformationGain: contrastEvidence ? .95 : covered ? .54 + latestDomainContinuity + pendingThemeBonus : .65 + pendingThemeBonus,
-      dateSensitivity: input.snapshot ? .5 : .35,
-      candidateSplitRelevance: contrastEvidence ? .98 : input.diagnostics?.candidateSplits.length ? .58 : .42,
-      domainCoverageGain: contrastEvidence ? 1 : covered ? 0 : scoreableDomains.size < 2 ? 1 : .15,
-      recallEase: policy.recallEase, novelty: contrastEvidence ? .95 : semanticOverlap ? .45 : alreadyAsked ? .35 : .9,
-      repetitionPenalty: contrastEvidence ? 0 : (alreadyAsked ? .3 : 0) + (semanticOverlap ? .2 : 0), privacyCost: policy.privacyCost,
-    }, contrastEvidence ? .08 : 0));
-  }
+  const latestAnchor = latestEvent ? anchorFor(latestEvent) : null;
+  const contrastEvidence = contrastPacket?.missingEvidence.filter((item) => !refusedDomains.has(item.domain)) ?? [];
+  opportunities.push(opportunity(input.caseId, {
+    kind: "ask_new_event",
+    domain: "other",
+    targetEventId: null,
+    goal: "根据完整事件账本、用户拒答记录和候选差异，自主选择最有区分力且不重复的经历方向，再自然询问一件大致时间明确的新经历；不要按固定领域顺序轮询。",
+    requestedFields: ["new_dated_event"],
+    anchors: latestAnchor ? [latestAnchor] : [],
+    contextFacts: [
+      `已有 ${scoreableCount} 件可评分事件。`,
+      `已覆盖领域：${[...scoreableDomains].sort().join(", ") || "无"}。`,
+      `已拒绝领域：${[...refusedDomains].sort().join(", ") || "无"}。`,
+      ...contrastEvidence.map((item) => `候选差异诊断建议优先考虑 ${item.domain}/${item.eventKind} 类型的独立证据；这是策略线索，不是必须照抄的公开问题。`),
+      "由 Agent 自主决定下一方向和措辞，不使用预写领域问题、关键词命中或测试样例作为脚本。",
+      "这是存在性询问，不得假定用户一定经历过该事件。",
+      "只询问一件带大致时间的新事件，不要求用户逐项回答例子。",
+      "允许用户回答没有、记不清、不想回答或换方向。",
+      "不得发明年龄或日期窗口，只能引用 anchors 中已确认的经历。",
+    ],
+    fallbackPrompt: `${latestAnchor ? `在“${latestAnchor}”之外，` : ""}你愿意再讲一件与已有经历不同、时间大致明确的经历吗？没有、记不清或不想回答也可以换个方向。`,
+    reason: contrastEvidence.length ? "候选差异仍需要新的独立证据，由 Agent 决定最有价值的询问方向。" : "仍需要一件与现有记录不同的独立事件，由 Agent 决定询问方向。",
+    expectedInformationGain: contrastEvidence.length ? .9 : .65,
+    dateSensitivity: input.snapshot ? .5 : .35,
+    candidateSplitRelevance: contrastEvidence.length ? .95 : input.diagnostics?.candidateSplits.length ? .58 : .42,
+    domainCoverageGain: scoreableDomains.size < 2 ? 1 : .15,
+    recallEase: .7,
+    novelty: .9,
+    repetitionPenalty: 0,
+    privacyCost: 0,
+  }, contrastEvidence.length ? .08 : 0));
 
   return opportunities
     .sort((left, right) => right.utility - left.utility || left.opportunityId.localeCompare(right.opportunityId))

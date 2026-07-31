@@ -5,6 +5,7 @@ import {
   lifeEventRevisionSchema,
   pendingEvidenceSchema,
   rectificationAnalysisItemSchema,
+  rectificationAssistantResponseSchema,
   rectificationV4CaseSchema,
   rectificationV4JobSchema,
   rectificationV4TurnSchema,
@@ -12,6 +13,7 @@ import {
   type LifeEventRevision,
   type PendingEvidence,
   type RectificationAnalysisItem,
+  type RectificationAssistantResponse,
   type RectificationV4Case,
   type RectificationV4Job,
   type RectificationV4Turn,
@@ -26,22 +28,33 @@ import { evidenceSetHash, rectificationFingerprint } from "./fingerprints.ts";
 
 type Row = Record<string, unknown>;
 
-export function projectAnalysisMessages(
+export function projectAssistantResponses(
   publicMessageRows: readonly Readonly<Row>[],
   jobRows: readonly Readonly<Row>[],
-): readonly RectificationAnalysisItem[] {
+): readonly RectificationAssistantResponse[] {
   const turnByJob = new Map(jobRows.map((row) => [String(row.id), row.turn_id]));
   return [...publicMessageRows]
     .sort((left, right) => timestamp(left.created_at).localeCompare(timestamp(right.created_at)))
     .flatMap((row) => {
       const message = storedPublicMessageSchema.safeParse(row.message);
-      if (!message.success || !message.data.analysisTrace) return [];
-      const item = rectificationAnalysisItemSchema.safeParse({
+      if (!message.success) return [];
+      const { analysisTrace, ...publicMessage } = message.data;
+      const item = rectificationAssistantResponseSchema.safeParse({
         sourceTurnId: turnByJob.get(String(row.job_id)),
-        trace: message.data.analysisTrace,
+        message: publicMessage,
+        trace: analysisTrace ?? null,
       });
       return item.success ? [item.data] : [];
     });
+}
+
+export function projectAnalysisMessages(
+  publicMessageRows: readonly Readonly<Row>[],
+  jobRows: readonly Readonly<Row>[],
+): readonly RectificationAnalysisItem[] {
+  return projectAssistantResponses(publicMessageRows, jobRows).flatMap((item) => item.trace
+    ? [rectificationAnalysisItemSchema.parse({ sourceTurnId: item.sourceTurnId, trace: item.trace })]
+    : []);
 }
 
 function timestamp(value: unknown): string {
@@ -234,7 +247,7 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
     return ((data ?? []) as Row[]).map(pendingEvidenceValue);
   }
 
-  async function loadAnalysisMessagesByCase(userId: string, caseId: string): Promise<readonly RectificationAnalysisItem[]> {
+  async function loadAssistantResponsesByCase(userId: string, caseId: string): Promise<readonly RectificationAssistantResponse[]> {
     if (!await loadCaseById(userId, caseId)) throw new RectificationV4StoreError("not_found");
     const { data, error } = await supabase.from("birth_time_rectification_public_messages")
       .select("job_id,message,created_at").eq("case_id", caseId).eq("user_id", userId)
@@ -246,7 +259,7 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
     const { data: jobData, error: jobError } = await supabase.from("birth_time_rectification_v4_jobs")
       .select("id,turn_id").eq("case_id", caseId).eq("user_id", userId).in("id", jobIds);
     if (jobError) throw storeError(jobError);
-    return projectAnalysisMessages(rows, (jobData ?? []) as Row[]);
+    return projectAssistantResponses(rows, (jobData ?? []) as Row[]);
   }
 
   async function rpc(name: string, args: Row): Promise<unknown> {
@@ -266,7 +279,12 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
     loadCase: loadCaseById,
     loadEvents: loadEventsByCase,
     loadTurns: loadTurnsByCase,
-    loadAnalysisMessages: loadAnalysisMessagesByCase,
+    async loadAnalysisMessages(userId, caseId) {
+      return (await loadAssistantResponsesByCase(userId, caseId)).flatMap((item) => item.trace
+        ? [{ sourceTurnId: item.sourceTurnId, trace: item.trace }]
+        : []);
+    },
+    loadAssistantResponses: loadAssistantResponsesByCase,
     async loadLatestValidatedDecision(userId, caseId): Promise<ValidatedDecision | null> {
       const { data, error } = await supabase.from("birth_time_rectification_agent_runs")
         .select("validated_decision_json").eq("case_id", caseId).eq("user_id", userId)

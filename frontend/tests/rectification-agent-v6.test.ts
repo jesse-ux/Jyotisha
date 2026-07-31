@@ -190,75 +190,7 @@ test("稳定候选范围相同不重复提示，实际变化才提示且不确�
   assert.equal(changed.canConfirmExactMinute, false);
 });
 
-test("Builder 的领域排序不受事件输入数组顺序影响", () => {
-  const education = event();
-  const career = event({ domain: "career", eventKind: "career_change", summary: "2023年开始负责商业巡演经纪公司", rawText: "2023年9月开始负责一家商业巡演经纪公司", dateRange: { start: "2023-09-01", end: "2023-09-30", precision: "month", label: "2023年9月" } });
-  const domains = (events: readonly LifeEventRevision[]) => buildQuestionOpportunities({ caseId, events, turns: [], snapshot: null, diagnostics: null }).map((item) => [item.kind, item.domain, item.utility]);
-  assert.deepEqual(domains([education, career]), domains([career, education]));
-});
-
-test("外地上大学不会被换词提升为迁居问题", () => {
-  const education = event({
-    summary: "离家去外地上大学",
-    rawText: "2016 年 9 月离家去外地上大学",
-  });
-  const opportunities = buildQuestionOpportunities({
-    caseId,
-    events: [education],
-    turns: [turn({ answer: education.rawText })],
-    snapshot: null,
-    diagnostics: null,
-  });
-
-  assert.notEqual(opportunities[0]?.domain, "relocation");
-  const relocation = opportunities.find((item) => item.kind === "ask_new_event" && item.domain === "relocation");
-  assert.ok(relocation);
-  assert.doesNotMatch(relocation.fallbackPrompt, /搬到新城市|长期离乡|以.*为(?:时间)?参照/);
-  assert.match(relocation.fallbackPrompt, /离家去外地上大学.*真正改变居住地点/);
-  assert.match(relocation.fallbackPrompt, /没有|记不清|换一类经历/);
-
-  const repeated = "以“离家去外地上大学”为时间参照，你哪次搬到新城市或长期离乡的年月最确定？";
-  assert.equal(validateQuestionRealization(repeated, relocation).valid, false);
-  assert.equal(validateQuestionRealization("离家去外地上大学这件事大概发生在哪年哪月？", relocation).valid, false);
-  assert.equal(validateQuestionRealization("除了离家去外地上大学，你哪次工作变化发生在哪年哪月？", relocation).valid, false);
-  const message = realizePublicMessage({ acknowledgement: "你提到的是 2016 年 9 月离家去外地上大学。", candidateUpdate: null, limitation: null, question: repeated }, {
-    latestAnswer: education.rawText,
-    acceptedEvents: [education],
-    pendingEvidence: [],
-    snapshot: null,
-    previousSnapshot: null,
-    validated: validated(relocation),
-  });
-  assert.equal(message.question, relocation.fallbackPrompt);
-});
-
-test("外地上大学场景的机会排序不受事件数组顺序影响", () => {
-  const education = event({
-    summary: "离家去外地上大学",
-    rawText: "2016 年 9 月离家去外地上大学",
-    createdAt: "2026-07-29T02:00:00.000Z",
-  });
-  const career = event({
-    domain: "career",
-    eventKind: "career_change",
-    summary: "开始第一份工作",
-    rawText: "2019 年 7 月开始第一份工作",
-    dateRange: { start: "2019-07-01", end: "2019-07-31", precision: "month", label: "2019年7月" },
-    createdAt: "2026-07-29T01:00:00.000Z",
-  });
-  const ranked = (events: readonly LifeEventRevision[]) => buildQuestionOpportunities({
-    caseId,
-    events,
-    turns: [turn({ answer: education.rawText, createdAt: education.createdAt })],
-    snapshot: null,
-    diagnostics: null,
-  }).map((item) => [item.kind, item.domain, item.utility, item.fallbackPrompt]);
-
-  assert.deepEqual(ranked([education, career]), ranked([career, education]));
-  assert.doesNotMatch(ranked([education, career]).map((item) => item[3]).join("\n"), /搬到新城市|长期离乡|以.*为(?:时间)?参照/);
-});
-
-test("研究院实习后优先延续最新主题，不被旧教育事件的离家关键词拉回迁居问卷", () => {
+test("Builder 只提供领域中立的新事件降级契约，不根据测试语料选题", () => {
   const education = event({
     summary: "离家去外地上大学",
     rawText: "2016年9月离家去外地上大学",
@@ -267,45 +199,64 @@ test("研究院实习后优先延续最新主题，不被旧教育事件的离�
   const career = event({
     domain: "career",
     eventKind: "career_change",
-    summary: "去石油化工研究院实习做研究员",
-    rawText: "2020年4月去石油化工研究院实习做研究员",
+    summary: "去研究院实习",
+    rawText: "2020年4月去研究院实习",
     dateRange: { start: "2020-04-01", end: "2020-04-30", precision: "month", label: "2020年4月" },
     createdAt: "2026-07-29T02:00:00.000Z",
   });
-  const opportunities = buildQuestionOpportunities({
-    caseId,
-    events: [education, career],
-    turns: [
-      turn({ answer: education.rawText, createdAt: "2026-07-29T01:00:00.000Z" }),
-      turn({ answer: career.rawText, createdAt: "2026-07-29T02:00:00.000Z" }),
-    ],
-    snapshot: null,
-    diagnostics: null,
-  });
+  const collect = (events: readonly LifeEventRevision[]) => buildQuestionOpportunities({
+    caseId, events, turns: [], snapshot: null, diagnostics: null,
+  }).filter((item) => item.kind === "ask_new_event");
 
-  assert.equal(opportunities.some((item) => item.kind === "refine_event_date"), false);
-  assert.equal(opportunities[0]?.kind, "ask_new_event");
-  assert.equal(opportunities[0]?.domain, "career");
-  assert.match(opportunities[0]?.fallbackPrompt ?? "", /研究院实习/);
-  assert.doesNotMatch(opportunities[0]?.fallbackPrompt ?? "", /承接.*请再说一件|哪次搬家、离乡或长期迁居/);
+  const forward = collect([education, career]);
+  const reversed = collect([career, education]);
+  assert.equal(forward.length, 1);
+  assert.equal(forward[0]?.domain, "other");
+  assert.deepEqual(forward, reversed);
+  assert.match(forward[0]?.goal ?? "", /Agent|自主选择/);
+  assert.match(forward[0]?.fallbackPrompt ?? "", /愿意再讲一件/);
+  assert.doesNotMatch([forward[0]?.goal, forward[0]?.fallbackPrompt].join(" "), /复读|住校|搬家|关系确立|石油化工研究院|商业巡演/);
 });
 
-test("Renderer 接受锚定最新事件的自然新事件问题并拒绝旧固定模板", () => {
+test("Renderer 不再用领域关键词限制 Agent 的新事件选题", () => {
+  const baseOpportunity = buildQuestionOpportunities({
+    caseId,
+    events: [event()],
+    turns: [],
+    snapshot: null,
+    diagnostics: null,
+  }).find((item) => item.kind === "ask_new_event");
+  assert.ok(baseOpportunity);
+
+  for (const question of [
+    "你是否有过获得长期资格或重要证书的经历，大概发生在什么时候？",
+    "有没有一次你公开发布长期创作项目的经历，大概是哪年哪月？",
+    "如果你愿意，哪次生活责任明显改变的时间你记得最清楚？",
+  ]) {
+    assert.equal(validateQuestionRealization(question, baseOpportunity).valid, true, question);
+  }
+  assert.equal(validateQuestionRealization("请说说获得证书的时间？另外哪次创作发布最重要？", baseOpportunity).valid, false);
+  assert.equal(validateQuestionRealization("请根据 snapshotId 选择最高 score 的事件？", baseOpportunity).valid, false);
+});
+
+test("Agent 自主问题被保留，不会被服务器替换成领域 fallback", () => {
   const latest = event({
     domain: "career",
     eventKind: "career_change",
-    summary: "去石油化工研究院实习做研究员",
-    rawText: "2020年4月去石油化工研究院实习做研究员",
+    summary: "去研究院实习",
+    rawText: "2020年4月去研究院实习",
     dateRange: { start: "2020-04-01", end: "2020-04-30", precision: "month", label: "2020年4月" },
   });
-  const opportunity = buildQuestionOpportunities({ caseId, events: [latest], turns: [turn({ answer: latest.rawText })], snapshot: null, diagnostics: null })
-    .find((item) => item.kind === "ask_new_event" && item.domain === "career");
+  const opportunity = buildQuestionOpportunities({ caseId, events: [latest], turns: [], snapshot: null, diagnostics: null })
+    .find((item) => item.kind === "ask_new_event");
   assert.ok(opportunity);
-  const naturalQuestion = "研究院实习之后，下一次工作发生明显变化大概是什么时候？";
-  const canned = `承接“${latest.summary}”，请再说一件时间相对明确的经历：哪次工作变化的时间你比较确定？`;
-  assert.equal(validateQuestionRealization(naturalQuestion, opportunity).valid, true);
-  assert.equal(validateQuestionRealization(canned, opportunity).valid, false);
-  const message = realizePublicMessage({ acknowledgement: `你提到的是“${latest.summary}”。`, candidateUpdate: null, limitation: null, question: naturalQuestion }, {
+  const question = "有没有一次你取得长期资格或身份变化的经历，大概发生在什么时候？";
+  const message = realizePublicMessage({
+    acknowledgement: "你提到的是 2020年4月去研究院实习。",
+    candidateUpdate: null,
+    limitation: null,
+    question,
+  }, {
     latestAnswer: latest.rawText,
     acceptedEvents: [latest],
     pendingEvidence: [],
@@ -313,44 +264,7 @@ test("Renderer 接受锚定最新事件的自然新事件问题并拒绝旧固�
     previousSnapshot: null,
     validated: validated(opportunity),
   });
-  assert.equal(message.question, naturalQuestion);
-  assert.notEqual(message.question, opportunity.fallbackPrompt);
-});
-
-test("ask_new_event 领域验证忽略承接 anchor，拒绝实际询问的跨领域事件", () => {
-  const latest = event({
-    domain: "career",
-    eventKind: "career_change",
-    summary: "去石油化工研究院实习做研究员",
-    rawText: "2020年4月去石油化工研究院实习做研究员",
-    dateRange: { start: "2020-04-01", end: "2020-04-30", precision: "month", label: "2020年4月" },
-  });
-  const opportunity = buildQuestionOpportunities({ caseId, events: [latest], turns: [turn({ answer: latest.rawText })], snapshot: null, diagnostics: null })
-    .find((item) => item.kind === "ask_new_event" && item.domain === "career");
-  assert.ok(opportunity);
-
-  const result = validateQuestionRealization("研究院实习之后，下一次升学大概发生在什么时候？", opportunity);
-  assert.equal(result.valid, false);
-  assert.ok(result.issues.includes("new_event_domain_mismatch"));
-});
-
-test("ask_new_event 允许明确代词承接并识别教育领域的升学事件", () => {
-  const latest = event({
-    domain: "career",
-    eventKind: "career_change",
-    summary: "去石油化工研究院实习做研究员",
-    rawText: "2020年4月去石油化工研究院实习做研究员",
-    dateRange: { start: "2020-04-01", end: "2020-04-30", precision: "month", label: "2020年4月" },
-  });
-  const baseOpportunity = buildQuestionOpportunities({ caseId, events: [latest], turns: [turn({ answer: latest.rawText })], snapshot: null, diagnostics: null })
-    .find((item) => item.kind === "ask_new_event" && item.domain === "career");
-  assert.ok(baseOpportunity);
-  const opportunity: QuestionOpportunity = { ...baseOpportunity, domain: "education" };
-
-  for (const reference of ["这次经历", "刚才那段", "你刚说的"]) {
-    const result = validateQuestionRealization(`${reference}之后，下一次升学大概发生在什么时候？`, opportunity);
-    assert.equal(result.valid, true, `${reference}: ${result.issues.join(",")}`);
-  }
+  assert.equal(message.question, question);
 });
 
 test("targetEventId 非空时只接受完整真实 anchor，不接受代词或四字片段", () => {
@@ -450,128 +364,14 @@ test("V8 Director migration advances only unfinished Agent cases", () => {
   assert.doesNotMatch(migration, /profiles\s*\.\s*active_birth_time|active_birth_time/i);
 });
 
-test("新事件机会提供具体回忆线索和退出方式，不把离家上大学换词重问成迁居", () => {
-  const university = event({ summary: "离家去外地上大学", rawText: "2016年9月离家去外地上大学" });
-  const opportunities = buildQuestionOpportunities({
-    caseId,
-    events: [university],
-    turns: [turn()],
-    snapshot: null,
-    diagnostics: null,
-  });
-  const career = opportunities.find((item) => item.kind === "ask_new_event" && item.domain === "career");
-  const relocation = opportunities.find((item) => item.kind === "ask_new_event" && item.domain === "relocation");
-  assert.ok(career);
-  assert.ok(relocation);
-  assert.ok(career.utility > relocation.utility);
-  assert.match(career.fallbackPrompt, /第一次正式入职|离职|换岗|创业|职责明显增加/);
-  assert.match(career.fallbackPrompt, /没有|记不清|换一类经历/);
-  assert.equal((career.fallbackPrompt.match(/[?？]/g) ?? []).length, 1);
-  assert.doesNotMatch(career.fallbackPrompt, /\b20\d{2}\b|\d+岁|A\/B\/C\/D/);
-  assert.ok(career.contextFacts.some((fact) => /不得假定/.test(fact)));
-  assert.ok(career.contextFacts.some((fact) => /没有、记不清、不想回答或换方向/.test(fact)));
-  assert.equal(validateQuestionRealization(career.fallbackPrompt, career).valid, true);
-});
-
-test("D9 候选差异优先请求缺失的关系事件语义而不是继续领域轮询", () => {
-  const events = [
-    event({ summary: "2015年复读", rawText: "2015年复读" }),
-    event({ eventId: randomUUID(), domain: "career", eventKind: "career_change", summary: "2020年开始工作", rawText: "2020年开始工作" }),
-    event({ eventId: randomUUID(), domain: "finance", eventKind: "finance_change", summary: "2026年开始负债", rawText: "2026年开始负债" }),
-  ];
-  const splitDiagnostics = diagnostics({
-    candidateSplits: [{
-      leftCluster: { start: "05:10", end: "05:14" },
-      rightCluster: { start: "05:16", end: "05:20" },
-      techniqueLayers: ["D9", "vimshottari"],
-      eventIds: [],
-    }],
-  });
-  const currentSnapshot = snapshot(["05:10", "05:14"], {
-    clusters: [
-      { rank: 1, startTime: "05:10", endTime: "05:14", representativeTime: "05:12", widthMinutes: 5, peakScore: 10, scoreMass: .55 },
-      { rank: 2, startTime: "05:16", endTime: "05:20", representativeTime: "05:18", widthMinutes: 5, peakScore: 9.8, scoreMass: .45 },
-    ],
-  });
-
-  const packet = buildCandidateContrastPacket({ events, snapshot: currentSnapshot, diagnostics: splitDiagnostics });
-  assert.deepEqual(packet?.missingEvidence[0], {
+test("Candidate Contrast 暴露全部缺失证据事实，但不替 Agent 选定公开领域", () => {
+  const relationshipEnd = event({
     domain: "relationship",
-    eventKind: "relationship_start",
-    reason: "highest_candidate_separation",
+    eventKind: "relationship_end",
+    summary: "一段关系结束",
+    rawText: "2024年7月一段关系结束",
+    dateRange: { start: "2024-07-01", end: "2024-07-31", precision: "month", label: "2024年7月" },
   });
-  assert.deepEqual(packet?.discriminatingLayers, ["D9"]);
-
-  const opportunities = buildQuestionOpportunities({ caseId, events, turns: [], snapshot: currentSnapshot, diagnostics: splitDiagnostics });
-  assert.equal(opportunities.some((item) => item.kind === "disambiguate_candidate_split" && item.targetEventId === null), false);
-  assert.equal(opportunities[0]?.kind, "ask_new_event");
-  assert.equal(opportunities[0]?.domain, "relationship");
-  assert.ok(opportunities[0]?.contextFacts.some((fact) => /候选区分力最高/.test(fact)));
-  assert.doesNotMatch(opportunities[0]?.contextFacts.join(" ") ?? "", /D9|05:1/);
-
-  const withStart = buildCandidateContrastPacket({
-    events: [...events, event({ eventId: randomUUID(), domain: "relationship", eventKind: "relationship_start", summary: "2022年确定关系", rawText: "2022年确定关系" })],
-    snapshot: currentSnapshot,
-    diagnostics: splitDiagnostics,
-  });
-  assert.equal(withStart?.missingEvidence[0]?.eventKind, "relationship_change");
-});
-
-test("真实用户回放按候选差异追问关系证据且不泄露内部候选", () => {
-  const replay = [
-    { rawText: "2015年复读", domain: "education", eventKind: "education_milestone" },
-    { rawText: "2016年离家去外地上大学", domain: "education", eventKind: "education_milestone" },
-    { rawText: "2020年开始工作", domain: "career", eventKind: "career_change" },
-    { rawText: "2024年分手", domain: "relationship", eventKind: "relationship_end" },
-    { rawText: "2026年开始负债", domain: "finance", eventKind: "finance_change" },
-  ] as const;
-  let events: LifeEventRevision[] = [];
-  const turns: RectificationV4Turn[] = [];
-
-  replay.forEach((item, index) => {
-    const sourceTurnId = randomUUID();
-    const dateText = item.rawText.slice(0, 5);
-    const assisted = validatedModelAssistedEvidence({
-      rawText: item.rawText,
-      sourceTurnId,
-      asOfDate: "2026-07-31",
-      extraction: {
-        sourceSpan: item.rawText,
-        summary: item.rawText.slice(5),
-        domain: item.domain,
-        eventKind: item.eventKind,
-        subject: "self",
-        relatedPerson: null,
-        dateText,
-      },
-    });
-    assert.ok(assisted);
-    const reconciled = reconcileV4Evidence({
-      caseId,
-      answer: item.rawText,
-      sourceTurnId,
-      asOfDate: "2026-07-31",
-      existing: events,
-      assistedEvidence: [assisted],
-      now: new Date(`2026-07-31T0${index}:00:00.000Z`),
-    });
-    assert.equal(reconciled.pending.length, 0);
-    events = [...events, ...reconciled.revisions];
-    turns.push(turn({
-      id: sourceTurnId,
-      caseVersion: index + 1,
-      questionDomain: item.domain,
-      answer: item.rawText,
-      createdAt: `2026-07-31T0${index}:00:00.000Z`,
-    }));
-  });
-
-  const breakup = events.find((item) => item.eventKind === "relationship_end");
-  assert.ok(breakup);
-  assert.equal(breakup.scoreability, "pending_review");
-  assert.equal(events.some((item) => item.eventKind === "relationship_end" && item.scoreability === "scoreable"), false);
-  assert.equal(events.some((item) => item.domain === "relocation"), false);
-
   const currentSnapshot = snapshot(["05:10", "05:14"], {
     canAcceptRange: false,
     gateReasons: ["insufficient_candidate_separation"],
@@ -585,28 +385,25 @@ test("真实用户回放按候选差异追问关系证据且不泄露内部候�
       leftCluster: { start: "05:10", end: "05:14" },
       rightCluster: { start: "05:16", end: "05:20" },
       techniqueLayers: ["D9", "vimshottari"],
-      eventIds: [breakup.eventId],
+      eventIds: [relationshipEnd.eventId],
     }],
   });
-  const packet = buildCandidateContrastPacket({ events, snapshot: currentSnapshot, diagnostics: splitDiagnostics });
-  assert.equal(packet?.missingEvidence[0]?.eventKind, "relationship_start");
 
-  const opportunities = buildQuestionOpportunities({ caseId, events, turns, snapshot: currentSnapshot, diagnostics: splitDiagnostics });
-  const next = opportunities[0];
+  const packet = buildCandidateContrastPacket({ events: [relationshipEnd], snapshot: currentSnapshot, diagnostics: splitDiagnostics });
+  assert.ok(packet?.missingEvidence.some((item) => item.eventKind === "relationship_start"));
+  assert.ok(packet?.missingEvidence.some((item) => item.eventKind === "relationship_change"));
+
+  const next = buildQuestionOpportunities({ caseId, events: [relationshipEnd], turns: [], snapshot: currentSnapshot, diagnostics: splitDiagnostics })
+    .find((item) => item.kind === "ask_new_event");
   assert.ok(next);
-  assert.equal(next.kind, "ask_new_event");
-  assert.equal(next.domain, "relationship");
-  assert.match(next.fallbackPrompt, /关系正式确立|开始共同生活/);
-  assert.match(next.fallbackPrompt, /没有/);
-  assert.match(next.fallbackPrompt, /不知道/);
-  assert.match(next.fallbackPrompt, /不想回答/);
-  assert.match(next.fallbackPrompt, /换方向/);
-  assert.doesNotMatch(next.fallbackPrompt, /搬家|迁居|离乡|外地/);
-  assert.doesNotMatch([next.goal, next.fallbackPrompt, ...next.contextFacts].join(" "), /D9|vimshottari|05:1[037]/i);
-  assert.equal(validateQuestionRealization(next.fallbackPrompt, next).valid, true);
+  assert.equal(next.domain, "other");
+  const fallbackWithoutAnchor = next.fallbackPrompt.replace("一段关系结束", "");
+  assert.doesNotMatch(fallbackWithoutAnchor, /关系|恋爱|分手|D9|05:1[037]/i);
+  assert.match(next.contextFacts.join(" "), /relationship_start/);
 });
 
-test("研究院实习后的迁居机会以存在性问题主动引导，不要求用户自己发明事件", () => {
+test("真实回放不会把大学和实习样例固化为下一问模板", () => {
+  const education = event({ summary: "离家去外地上大学", rawText: "2016年9月离家去外地上大学" });
   const internship = event({
     domain: "career",
     eventKind: "career_change",
@@ -614,18 +411,11 @@ test("研究院实习后的迁居机会以存在性问题主动引导，不要�
     rawText: "2020年4月去石油化工研究院实习做研究员",
     dateRange: { start: "2020-04-01", end: "2020-04-30", precision: "month", label: "2020年4月" },
   });
-  const relocation = buildQuestionOpportunities({
-    caseId,
-    events: [internship],
-    turns: [],
-    snapshot: null,
-    diagnostics: null,
-  }).find((item) => item.kind === "ask_new_event" && item.domain === "relocation");
-  assert.ok(relocation);
-  assert.match(relocation.fallbackPrompt, /有没有一件/);
-  assert.match(relocation.fallbackPrompt, /独立搬家|住校|另一座城市长期生活/);
-  assert.match(relocation.fallbackPrompt, /大概是哪年哪月/);
-  assert.match(relocation.fallbackPrompt, /没有|记不清|换一类经历/);
-  assert.doesNotMatch(relocation.fallbackPrompt, /你还记得哪次独立搬家|请继续讲另一件/);
-  assert.equal(validateQuestionRealization(relocation.fallbackPrompt, relocation).valid, true);
+  const next = buildQuestionOpportunities({ caseId, events: [education, internship], turns: [], snapshot: null, diagnostics: null })
+    .find((item) => item.kind === "ask_new_event");
+  assert.ok(next);
+  assert.equal(next.domain, "other");
+  const fallbackWithoutAnchor = next.anchors.reduce((text, anchor) => text.replace(anchor, ""), next.fallbackPrompt);
+  assert.doesNotMatch(fallbackWithoutAnchor, /大学|实习|研究院|搬家|关系|工作|健康|财务/);
+  assert.equal(validateQuestionRealization("有没有一次你取得长期资格或公开发布作品的经历，大概发生在什么时候？", next).valid, true);
 });
