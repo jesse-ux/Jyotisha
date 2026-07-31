@@ -18,6 +18,9 @@ const quantifiedStructurePattern = /(?:(?:D\d{1,2}|KP|Vimshottari|Narayana|Shadb
 const exactMinutePattern = /(?:\b(?:[01]?\d|2[0-3]):[0-5]\d\b|(?:凌晨|清晨|上午|中午|下午|傍晚|晚上)?\s*[零〇一二两三四五六七八九十百\d]{1,4}\s*[点时]\s*[零〇一二两三四五六七八九十百\d]{1,4}\s*分)/u;
 const questionClausePattern = /(?:请|你(?:还)?(?:记得|能否|是否|有没有)|再(?:说|补充|回忆)|哪(?:一|个|年|月|天)?|什么|多少|几(?:年|月|号|日)?|吗|呢)/u;
 const genericAcknowledgementPattern = /^(?:好的|明白了|知道了|收到|已记录|我记下了|我已按你的描述整理这轮线索)[。！!]?$/u;
+const methodMappingPattern = /(?:方法(?:论)?映射|一般(?:关联|参考)|通常(?:关联|参考|用于|检查)|可(?:以)?参考|主要关联|方法层|尚未计算|还没有计算|未计算)/u;
+const observedResultClaimPattern = /(?:(?:已(?:经)?|实际|结果|显示|表明|验证|证明|支持|排除|倾向|更符合|领先|指向|确认|确定)[^。！？\n]{0,48}(?:这次|该(?:事件|经历)|候选|区间|范围|分钟|出生|较早|较晚)|(?:这次|该(?:事件|经历)|候选|区间|范围|分钟|出生|较早|较晚)[^。！？\n]{0,48}(?:显示|表明|验证|证明|支持|排除|倾向|更符合|领先|指向|确认|确定))/u;
+const candidateConclusionPattern = /(?:候选|区间|范围|分钟|出生|时段|较早|较晚|更早|更晚|偏前|偏后|靠前|靠后|前一组|后一组|第一组|第二组)/u;
 const groundedPublicReplyRequirement = "When the latest answer adds or refines a concrete event, the final public reply must: acknowledge the exact event and its date precision; summarize one to three evidence signals found in the user wording; use evidenceExplanation to map those signals to public method layers from dossier.capabilities.publicTechniqueCapabilities; distinguish a general method mapping from calculations actually present in tool observations; explain why the next question helps; and ask at most one question. Public method names such as D4, D24, Vimshottari, Narayana, UL, and A10 are allowed. Never expose internal ids, raw scores, weights, contribution matrices, raw tool traces, candidate minutes, or hidden reasoning. Never claim a numeric structural fact such as a division switching N times unless the dossier contains the matching window_sensitivity observation and publicExplanationGrounding cites its fact key.";
 
 function containsExactMinute(value: string): boolean {
@@ -110,14 +113,18 @@ function fallback(dossier: RectificationCaseDossier, latestAnswer: string): Rect
   const targetQuestion = targetNeedsMonth
     ? `${safeTargetSummary}大概发生在哪个月，或一年中的哪个时间段？`
     : `关于${safeTargetSummary}，你还记得更具体的时间或阶段吗？`;
-  const question = keepTarget ? targetQuestion : "你愿意再讲一件与已有记录不同、时间大致明确的经历吗？没有、记不清或不想回答也可以换个方向。";
+  const activeEventCount = dossier.eventLedger.filter((event) => event.status === "active").length;
+  const neutralLead = ["unknown", "declined", "direction_change"].includes(dossier.interviewState.targetDisposition)
+    ? "那就先跳过刚才那一项。"
+    : `目前已有 ${activeEventCount} 条可继续核对的经历。`;
+  const question = keepTarget ? targetQuestion : `${neutralLead}你愿意再讲一件与已有记录不同、时间大致明确的经历吗？没有、记不清或不想回答也可以换个方向。`;
   const focus = keepTarget
     ? { mode: "clarify_existing_event" as const, targetEventId, domain: targetEvent?.domain ?? null, requestedFacts: [targetNeedsMonth ? "month" as const : "day_or_period" as const], rationaleCodes: ["unresolved_current_event"] }
     : { mode: "collect_independent_event" as const, targetEventId: null, domain: null, requestedFacts: ["independent_event" as const, "year" as const], rationaleCodes: ["model_unavailable_neutral_fallback"] };
   const techniqueLayers = groundedEvent ? domainScorerRegistry[groundedEvent.domain].techniqueLayers : [];
   const evidenceExplanation = safeSummary && techniqueLayers.length
-    ? `按当前校正能力，这类事件通常会参考 ${techniqueLayers.join("、")}；这里只是在说明方法映射，尚未把它写成某个候选时间的计算结论。`
-    : safeSummary ? "这条经历提供了可核对的时间和变化类型；目前只是整理证据，还不是候选时间的计算结论。" : null;
+    ? `按当前校正能力，这类事件通常会参考 ${techniqueLayers.join("、")}；这里只是在说明方法映射，尚未形成实际计算结果。`
+    : safeSummary ? "这条经历提供了可核对的时间和变化类型；目前只是整理证据，还不是实际计算结果。" : null;
   return {
     contractVersion: "rectification-turn-plan-v1",
     targetDisposition: dossier.interviewState.targetDisposition,
@@ -184,6 +191,14 @@ export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; d
     }
     if (!observationFacts.get(grounding.source)?.has(grounding.factKey)) issues.push("public_grounding_invalid");
   });
+  const hasCapabilityGrounding = plan.publicExplanationGrounding.some((grounding) => grounding.source === "capability_matrix");
+  const hasObservationGrounding = plan.publicExplanationGrounding.some((grounding) => grounding.source !== "capability_matrix");
+  if (hasCapabilityGrounding && !hasObservationGrounding && plan.publicReply.evidenceExplanation
+    && (!methodMappingPattern.test(plan.publicReply.evidenceExplanation)
+      || observedResultClaimPattern.test(plan.publicReply.evidenceExplanation)
+      || candidateConclusionPattern.test(plan.publicReply.evidenceExplanation))) {
+    issues.push("capability_claim_not_mapping");
+  }
   if (groundedEvent && plan.publicReply.evidenceExplanation) {
     const citedCapabilities = plan.publicExplanationGrounding.flatMap((grounding) => {
       const capability = grounding.source === "capability_matrix" ? capabilityFacts.get(grounding.factKey) : null;
@@ -205,7 +220,10 @@ export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; d
   if (plan.action.type === "ask_question") {
     if (asksMultipleQuestions(plan.action.question)) issues.push("multiple_questions");
     const nextQuestion = normalizedQuestion(plan.action.question);
-    if (nextQuestion && input.dossier.interviewState.askedTopics.some((question) => normalizedQuestion(question).endsWith(nextQuestion))) issues.push("question_repeated");
+    if (nextQuestion && input.dossier.interviewState.askedTopics.some((question) => {
+      const previousQuestion = normalizedQuestion(question);
+      return previousQuestion.endsWith(nextQuestion) || nextQuestion.endsWith(previousQuestion);
+    })) issues.push("question_repeated");
     if (input.phase === "final" && groundedEvent) {
       if (genericAcknowledgementPattern.test(plan.publicReply.acknowledgement.trim())) issues.push("event_acknowledgement_generic");
       if (!plan.publicReply.evidenceExplanation || plan.publicReply.evidenceExplanation.trim().length < 12) issues.push("event_explanation_missing");
@@ -216,7 +234,8 @@ export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; d
     if (currentTarget && ["unresolved", "answered_other_event"].includes(plan.targetDisposition)
       && plan.action.focus.targetEventId !== currentTarget) issues.push("unresolved_target_abandoned");
     if (["unknown", "declined", "direction_change"].includes(plan.targetDisposition)
-      && (plan.action.focus.targetEventId === input.dossier.interviewState.currentTargetEventId
+      && ((input.dossier.interviewState.currentTargetEventId !== null
+        && plan.action.focus.targetEventId === input.dossier.interviewState.currentTargetEventId)
         || ["clarify_existing_event", "resolve_conflict"].includes(plan.action.focus.mode))) issues.push("declined_target_reopened");
   }
   if (plan.action.type === "offer_candidate_range" && (!input.dossier.candidateState.publicRangeAllowed || plan.action.snapshotId !== input.dossier.candidateState.currentSnapshotId)) issues.push("candidate_range_gate_failed");
@@ -367,6 +386,16 @@ export async function runRectificationDirector(input: Readonly<{ caseValue: Rect
     if (!validated.plan) throw new Error(`director_plan_rejected:${validated.issues.join(",")}`);
     return { plan: validated.plan, dossier, mode: "agent" as const, fallbackReason: null, toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
   } catch (error) {
-    return { plan: fallback(dossier, input.latestAnswer), dossier, mode: "deterministic_fallback" as const, fallbackReason: error instanceof Error ? error.message.slice(0, 120) : "director_failed", toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
+    const fallbackPlan = fallback(dossier, input.latestAnswer);
+    const validatedFallback = validateRectificationTurnPlan({ plan: fallbackPlan, dossier, latestAnswer: input.latestAnswer, phase: input.phase });
+    const safePlan = validatedFallback.plan ?? {
+      contractVersion: "rectification-turn-plan-v1" as const,
+      targetDisposition: dossier.interviewState.targetDisposition,
+      evidenceProposals: [],
+      action: { type: "stop_low_confidence" as const, reasonCodes: ["deterministic_fallback_rejected"] },
+      publicReply: { acknowledgement: "本轮信息已经保留。", evidenceExplanation: null, candidateCommentary: null, limitation: "当前无法安全生成新的不重复问题，先暂停在这里。" },
+      publicExplanationGrounding: [],
+    };
+    return { plan: safePlan, dossier, mode: "deterministic_fallback" as const, fallbackReason: error instanceof Error ? error.message.slice(0, 120) : "director_failed", toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
   }
 }

@@ -497,7 +497,7 @@ test("final Director repairs a generic acknowledgement and missing evidence-valu
       prompts.push(prompt);
       return {
         object: phase === "repair"
-          ? plan({ publicReply: { acknowledgement: "你提到2020年4月去石油化工研究院实习做研究员。", evidenceExplanation: "这是一条职业状态变化线索，按能力矩阵可参考 D10 与 Vimshottari；目前只是方法映射，不是候选结论。", candidateCommentary: "这段经历的时间和工作状态变化都很明确，可以和其他独立事件交叉比较候选范围。", limitation: null }, publicExplanationGrounding: [{ source: "capability_matrix", factKey: "domain:career" }] })
+          ? plan({ publicReply: { acknowledgement: "你提到2020年4月去石油化工研究院实习做研究员。", evidenceExplanation: "这是一条职业状态变化线索，按能力矩阵可参考 D10 与 Vimshottari；目前只是方法映射，不是实际计算结果。", candidateCommentary: "这段经历的时间和工作状态变化都很明确，可以和其他独立事件交叉比较候选范围。", limitation: null }, publicExplanationGrounding: [{ source: "capability_matrix", factKey: "domain:career" }] })
           : plan(),
       };
     },
@@ -591,6 +591,24 @@ test("public explanations require real capability grounding for the current even
     publicExplanationGrounding: [{ source: "capability_matrix", factKey: "domain:career" }],
   });
   assert.deepEqual(validateRectificationTurnPlan({ plan: grounded, dossier: dossier([internship]), latestAnswer: internship.rawText, phase: "final" }).issues, []);
+
+  const inventedResult = plan({
+    publicReply: { ...base, evidenceExplanation: "D10 已经显示这次职业变化支持较早的候选区间。" },
+    publicExplanationGrounding: [{ source: "capability_matrix", factKey: "domain:career" }],
+  });
+  assert.ok(validateRectificationTurnPlan({ plan: inventedResult, dossier: dossier([internship]), latestAnswer: internship.rawText, phase: "final" }).issues.includes("capability_claim_not_mapping"));
+
+  const disguisedInventedResult = plan({
+    publicReply: { ...base, evidenceExplanation: "这只是方法映射；D10 已经证明这次经历更符合较早出生。" },
+    publicExplanationGrounding: [{ source: "capability_matrix", factKey: "domain:career" }],
+  });
+  assert.ok(validateRectificationTurnPlan({ plan: disguisedInventedResult, dossier: dossier([internship]), latestAnswer: internship.rawText, phase: "final" }).issues.includes("capability_claim_not_mapping"));
+
+  const uncaughtSynonym = plan({
+    publicReply: { ...base, evidenceExplanation: "这只是方法映射；D10 说明该经历对应出生时段偏前。" },
+    publicExplanationGrounding: [{ source: "capability_matrix", factKey: "domain:career" }],
+  });
+  assert.ok(validateRectificationTurnPlan({ plan: uncaughtSynonym, dossier: dossier([internship]), latestAnswer: internship.rawText, phase: "final" }).issues.includes("capability_claim_not_mapping"));
 });
 
 test("the final plan cannot repeat a previously asked question", () => {
@@ -604,6 +622,16 @@ test("the final plan cannot repeat a previously asked question", () => {
     },
   });
   assert.ok(validateRectificationTurnPlan({ plan: repeated, dossier: dossier([], [turn(0, { question: previous })]), latestAnswer: "", phase: "final" }).issues.includes("question_repeated"));
+  const prefixedRepeat = plan({
+    action: {
+      type: "ask_question",
+      focus: { mode: "collect_independent_event", targetEventId: null, domain: null, requestedFacts: ["independent_event"], rationaleCodes: ["test"] },
+      question: `目前已有 0 条可继续核对的经历。${previous}`,
+      optionalQuickReplies: [],
+    },
+  });
+  assert.ok(validateRectificationTurnPlan({ plan: prefixedRepeat, dossier: dossier([], [turn(0, { question: previous })]), latestAnswer: "", phase: "final" }).issues.includes("question_repeated"));
+
   const storedPublicReply = composeRectificationPublicTurn({
     acknowledgement: "你提到的是2020年4月去研究院实习。",
     evidenceExplanation: "这条经历有明确月份，可以和其他经历交叉比较。",
@@ -701,6 +729,38 @@ test("deterministic fallback refines the known year before collecting another ev
   assert.match(result.plan.action.question, /2016年离家去外地上大学/);
   assert.match(result.plan.action.question, /哪个月|时间段/);
   assert.doesNotMatch(result.plan.action.question, /另一件|还能想到一件/);
+});
+
+test("deterministic fallback pauses instead of repeating a persisted public question", async () => {
+  const repeatedQuestion = "目前已有 0 条可继续核对的经历。你愿意再讲一件与已有记录不同、时间大致明确的经历吗？没有、记不清或不想回答也可以换个方向。";
+  const persisted = composeRectificationPublicTurn({
+    acknowledgement: "本轮信息已经保留。",
+    evidenceExplanation: null,
+    candidateUpdate: null,
+    limitation: null,
+    question: repeatedQuestion,
+  });
+  const result = await runRectificationDirector({
+    caseValue,
+    dossier: buildRectificationCaseDossier({
+      caseValue,
+      turns: [turn(0, { question: persisted, answer: "2016年9月去外地上大学" })],
+      events: [],
+      snapshot: null,
+      diagnostics: null,
+      targetDisposition: "not_applicable",
+      currentTargetEventId: null,
+    }),
+    latestAnswer: "",
+    phase: "final",
+    diagnostics,
+    generatePlan: async () => { throw new Error("forced_fallback"); },
+  });
+
+  assert.equal(result.mode, "deterministic_fallback");
+  assert.equal(result.plan.action.type, "stop_low_confidence");
+  if (result.plan.action.type !== "stop_low_confidence") return;
+  assert.deepEqual(result.plan.action.reasonCodes, ["deterministic_fallback_rejected"]);
 });
 
 test("deterministic fallback stays domain-neutral when the Agent is unavailable", async () => {
