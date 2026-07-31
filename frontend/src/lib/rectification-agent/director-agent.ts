@@ -1,13 +1,12 @@
 import path from "node:path";
 import { Agent } from "@mastra/core/agent";
-import { z } from "zod";
 import { defaultLanguageModel, resolveLanguageModel } from "@/mastra/model";
 import type { CandidateSnapshot, EvidenceDomain, EventKind, LifeEventRevision, PendingEvidence, RectificationV4Case, RectificationV4Turn } from "../rectification-v4/contracts.ts";
 import type { TargetDisposition } from "../rectification-v4/extraction.ts";
 import { hasPolicyInvalidScoreableEvents } from "../rectification-v4/evidence-ledger.ts";
 import { domainScorerRegistry } from "../rectification-v4/domain-scorers.ts";
 import { buildCandidateContrastPacket } from "./opportunity-builder.ts";
-import { rectificationCaseDossierSchema, rectificationTurnPlanSchema, type DiagnosticsSummary, type RectificationAgentTool, type RectificationCaseDossier, type RectificationDiagnostic, type RectificationTurnPlan, type ToolCallTrace, type ToolObservation } from "./contracts.ts";
+import { rectificationCaseDossierSchema, rectificationTurnPlanSchema, type DiagnosticsSummary, type QuestionOpportunity, type RectificationAgentTool, type RectificationCaseDossier, type RectificationDiagnostic, type RectificationFocus, type RectificationTurnPlan, type ToolCallTrace, type ToolObservation } from "./contracts.ts";
 import { assertRectificationSkillLoaded } from "./skill-runtime.ts";
 
 const skillPath = process.env.RECTIFICATION_SKILL_PATH?.trim() || path.resolve(process.cwd(), "..", "skills", "birth-time-rectification");
@@ -16,11 +15,7 @@ const kinds: EventKind[] = ["education_milestone", "relocation", "relationship_s
 const privatePattern = /(?:[0-9a-f]{8}-[0-9a-f-]{27,}|opportunity(?:id)?|snapshot(?:id)?|event(?:id)?|targetEventId|(?:raw|原始)?\s*(?:score|评分|得分)|权重|rule[_ -]?id|贡献矩阵|tool[_ -]?call|cluster[_ -]?id|\b(?:case_read|candidate_scan|evidence_gap|diagnostic_read)\b|工具原始(?:输出|轨迹)|内部推理链)/iu;
 const quantifiedStructurePattern = /(?:(?:D\d{1,2}|KP|Vimshottari|Narayana|Shadbala|Ashtakavarga|Chaturvimshamsha|上升星座|宫位|分盘)[^。！？\n]{0,60}(?:切换|变化|变动|遍历)[^。！？\n]{0,16}(?:\d+|[一二三四五六七八九十百]+)\s*次|(?:\d+|[一二三四五六七八九十百]+)\s*次[^。！？\n]{0,60}(?:切换|变化|变动|遍历))/iu;
 const exactMinutePattern = /(?:\b(?:[01]?\d|2[0-3]):[0-5]\d\b|(?:凌晨|清晨|上午|中午|下午|傍晚|晚上)?\s*[零〇一二两三四五六七八九十百\d]{1,4}\s*[点时]\s*[零〇一二两三四五六七八九十百\d]{1,4}\s*分)/u;
-const questionClausePattern = /(?:请|你(?:还)?(?:记得|能否|是否|有没有)|再(?:说|补充|回忆)|哪(?:一|个|年|月|天)?|什么|多少|几(?:年|月|号|日)?|吗|呢)/u;
 const genericAcknowledgementPattern = /^(?:好的|明白了|知道了|收到|已记录|我记下了|我已按你的描述整理这轮线索)[。！!]?$/u;
-const methodMappingPattern = /(?:方法(?:论)?映射|一般(?:关联|参考)|通常(?:关联|参考|用于|检查)|可(?:以)?参考|主要关联|方法层|尚未计算|还没有计算|未计算)/u;
-const observedResultClaimPattern = /(?:(?:已(?:经)?|实际|结果|显示|表明|验证|证明|支持|排除|倾向|更符合|领先|指向|确认|确定)[^。！？\n]{0,48}(?:这次|该(?:事件|经历)|候选|区间|范围|分钟|出生|较早|较晚)|(?:这次|该(?:事件|经历)|候选|区间|范围|分钟|出生|较早|较晚)[^。！？\n]{0,48}(?:显示|表明|验证|证明|支持|排除|倾向|更符合|领先|指向|确认|确定))/u;
-const candidateConclusionPattern = /(?:候选|区间|范围|分钟|出生|时段|较早|较晚|更早|更晚|偏前|偏后|靠前|靠后|前一组|后一组|第一组|第二组)/u;
 const groundedPublicReplyRequirement = "When the latest answer adds or refines a concrete event, the final public reply must: acknowledge the exact event and its date precision; summarize one to three evidence signals found in the user wording; use evidenceExplanation to map those signals to public method layers from dossier.capabilities.publicTechniqueCapabilities; keep evidenceExplanation as a general method mapping rather than a calculated candidate conclusion; put only server-verifiable candidate updates in candidateCommentary; explain why the next question helps; and ask at most one question. Public method names such as D4, D24, Vimshottari, Narayana, UL, and A10 are allowed. Never expose internal ids, raw scores, weights, contribution matrices, raw tool traces, candidate minutes, or hidden reasoning. Never claim a numeric structural fact such as a division switching N times unless the dossier contains the matching window_sensitivity observation and publicExplanationGrounding cites its fact key.";
 
 function containsExactMinute(value: string): boolean {
@@ -28,23 +23,15 @@ function containsExactMinute(value: string): boolean {
 }
 
 function asksMultipleQuestions(value: string): boolean {
-  if ((value.match(/[?？]/g) ?? []).length > 1) return true;
-  return value.split(/[。；;！!\n]+|[，,]\s*(?=(?:请|你|再))/u)
-    .filter((part) => questionClausePattern.test(part))
-    .length > 1;
+  return (value.match(/[?？]/g) ?? []).length > 1;
 }
 
 function normalizedQuestion(value: string): string {
   return value.normalize("NFKC").toLocaleLowerCase().replace(/[\s?？。！!，,、；;：:“”‘’'"（）()]/gu, "");
 }
 
-function mentionsTechnique(value: string, technique: string): boolean {
-  const escaped = technique.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`(?<![A-Za-z0-9])${escaped}(?![A-Za-z0-9])`, "iu").test(value);
-}
 const declinedPattern = /(?:不想说|不方便说|不想回答|跳过|这个不说|换个方向|不聊这个)/u;
 type Generated = Readonly<{ object: unknown; totalUsage?: { inputTokens?: number; outputTokens?: number } | Promise<{ inputTokens?: number; outputTokens?: number }> }>;
-const regeneratedQuestionSchema = z.object({ question: z.string().trim().min(8).max(500) }).strict();
 export type RectificationDirectorGenerator = (prompt: string, phase: "evidence" | "final" | "after_observation" | "converge" | "repair") => Promise<Generated>;
 
 function summarizeEarlierTurns(turns: readonly RectificationV4Turn[]): string | null {
@@ -63,15 +50,19 @@ function diagnosticResult(kind: RectificationDiagnostic, value: DiagnosticsSumma
   }
 }
 
-export function buildRectificationCaseDossier(input: Readonly<{ caseValue: RectificationV4Case; turns: readonly RectificationV4Turn[]; events: readonly LifeEventRevision[]; pendingEvidence?: readonly PendingEvidence[]; snapshot: CandidateSnapshot | null; previousSnapshot?: CandidateSnapshot | null; diagnostics: DiagnosticsSummary | null; targetDisposition: TargetDisposition; currentTargetEventId: string | null }>): RectificationCaseDossier {
+function projectEventLedger(events: readonly LifeEventRevision[]): RectificationCaseDossier["eventLedger"] {
   const latest = new Map<string, number>();
-  input.events.forEach((event) => latest.set(event.eventId, Math.max(latest.get(event.eventId) ?? 0, event.revision)));
+  events.forEach((event) => latest.set(event.eventId, Math.max(latest.get(event.eventId) ?? 0, event.revision)));
+  return events.map((event) => ({ eventId: event.eventId, revision: event.revision, summary: event.summary, rawText: event.rawText, domain: event.domain, eventKind: event.eventKind, subject: event.subject, relatedPerson: event.relatedPerson, dateRange: event.dateRange, scoreability: event.scoreability, status: latest.get(event.eventId) === event.revision ? "active" as const : "superseded" as const }));
+}
+
+export function buildRectificationCaseDossier(input: Readonly<{ caseValue: RectificationV4Case; turns: readonly RectificationV4Turn[]; events: readonly LifeEventRevision[]; pendingEvidence?: readonly PendingEvidence[]; snapshot: CandidateSnapshot | null; previousSnapshot?: CandidateSnapshot | null; diagnostics: DiagnosticsSummary | null; targetDisposition: TargetDisposition; currentTargetEventId: string | null }>): RectificationCaseDossier {
   const recent = input.turns.slice(-12);
   const publicRangeAllowed = Boolean(input.snapshot?.canAcceptRange) && !hasPolicyInvalidScoreableEvents(input.events);
   return rectificationCaseDossierSchema.parse({
     case: { candidateWindow: input.caseValue.calculationSpec.candidateRange, birthDate: input.caseValue.calculationSpec.birthDate, location: { latitude: input.caseValue.calculationSpec.latitude, longitude: input.caseValue.calculationSpec.longitude, timezoneId: input.caseValue.calculationSpec.timezoneId ?? null, timezoneOffsetHours: input.caseValue.calculationSpec.timezoneOffsetHours }, birthTimeSource: input.caseValue.calculationSpec.birthTimeSource ?? null, algorithmVersion: input.caseValue.algorithmVersion },
     conversation: { recentRawTurns: recent.map(({ question, answer }) => ({ question, answer })), earlierConversationSummary: summarizeEarlierTurns(input.turns) },
-    eventLedger: input.events.map((event) => ({ eventId: event.eventId, revision: event.revision, summary: event.summary, rawText: event.rawText, domain: event.domain, eventKind: event.eventKind, subject: event.subject, relatedPerson: event.relatedPerson, dateRange: event.dateRange, scoreability: event.scoreability, status: latest.get(event.eventId) === event.revision ? "active" : "superseded" })),
+    eventLedger: projectEventLedger(input.events),
     interviewState: { currentTargetEventId: input.currentTargetEventId, declinedDomains: [...new Set(input.turns.flatMap((turn) => turn.questionDomain && declinedPattern.test(turn.answer) ? [turn.questionDomain] : []))], unresolvedTargets: [...new Set([...(input.currentTargetEventId && ["unresolved", "answered_other_event"].includes(input.targetDisposition) ? [input.currentTargetEventId] : []), ...(input.pendingEvidence ?? []).flatMap((item) => item.targetEventId ? [item.targetEventId] : [])])], pendingEvidence: (input.pendingEvidence ?? []).filter((item) => !item.resolvedAt).map(({ rawText, reasonCode, targetEventId, createdAt }) => ({ rawText, reasonCode, targetEventId, createdAt })), askedTopics: input.turns.slice(-50).map((turn) => turn.question), turnCount: input.turns.length, targetDisposition: input.targetDisposition },
     candidateState: { hasSnapshot: Boolean(input.snapshot), publicRangeAllowed, rangeChanged: input.previousSnapshot?.clusters[0]?.startTime !== input.snapshot?.clusters[0]?.startTime || input.previousSnapshot?.clusters[0]?.endTime !== input.snapshot?.clusters[0]?.endTime, topClusters: (input.snapshot?.clusters ?? []).slice(0, 4).map((cluster) => ({ rank: cluster.rank, widthMinutes: cluster.widthMinutes, stability: publicRangeAllowed ? "stable" : "unstable" })), contrasts: (input.diagnostics?.candidateSplits ?? []).map((split) => ({ techniqueLayers: split.techniqueLayers, relevantEventIds: split.eventIds })), contrastIntelligence: buildCandidateContrastPacket({ events: input.events, snapshot: input.snapshot, diagnostics: input.diagnostics }), eventDiagnostics: (input.diagnostics?.eventDateSensitivity ?? []).map((item) => ({ eventId: item.eventId, winnerRetentionRate: item.winnerRetentionRate, scoreVariance: item.scoreVariance })), gateReasons: input.snapshot?.gateReasons ?? [], currentSnapshotId: input.snapshot?.id ?? null },
     runtime: {
@@ -93,12 +84,77 @@ export function buildRectificationCaseDossier(input: Readonly<{ caseValue: Recti
   });
 }
 
-function latestGroundedEvent(dossier: RectificationCaseDossier, latestAnswer: string) {
+function latestGroundedEvent(dossier: Pick<RectificationCaseDossier, "eventLedger">, latestAnswer: string) {
   return [...dossier.eventLedger].reverse().find((event) => event.status === "active" && (event.rawText === latestAnswer || latestAnswer.includes(event.summary))) ?? null;
 }
 
+function groundedEvidenceExplanation(event: RectificationCaseDossier["eventLedger"][number], techniqueLayers: readonly string[]): string {
+  const labels = techniqueLayers.map((layer) => ({ vimshottari: "Vimshottari", narayana: "Narayana" }[layer.toLocaleLowerCase()] ?? layer));
+  return `“${event.summary.slice(0, 120)}”包含可核对的时间和事件变化；方法层通常参考 ${labels.join("、")}。这条线索可以和其他独立经历交叉核对；这里只说明校正时会检查的层面，不代表已经形成计算结论。`;
+}
+
+const publicDomainLabels: Readonly<Record<Exclude<EvidenceDomain, "other">, string>> = {
+  education: "学习路径变化",
+  relocation: "居住地变化",
+  relationship: "关系状态变化",
+  career: "工作状态变化",
+  finance: "财务结构变化",
+  health_pressure: "本人健康或高压状态变化",
+  family: "家庭变化",
+};
+
+export function focusForQuestionOpportunity(opportunity: QuestionOpportunity): RectificationFocus {
+  const targetEventId = opportunity.targetEventId;
+  const mode: RectificationFocus["mode"] = opportunity.kind === "pair_related_event"
+    ? "pair_related_event"
+    : opportunity.kind === "resolve_event_conflict"
+      ? "resolve_conflict"
+      : opportunity.kind === "disambiguate_candidate_split"
+        ? "distinguish_candidate_clusters"
+        : targetEventId ? "clarify_existing_event" : "collect_independent_event";
+  const requestedFacts: RectificationFocus["requestedFacts"] = opportunity.kind === "refine_event_date"
+    ? [opportunity.requestedFields.includes("event_month") ? "month" : "day_or_period"]
+    : opportunity.kind === "clarify_event_subject"
+      ? ["subject"]
+      : opportunity.kind === "pair_related_event"
+        ? ["paired_event"]
+        : opportunity.kind === "disambiguate_candidate_split"
+          ? ["event_stage"]
+          : opportunity.kind === "ask_new_event"
+            ? ["independent_event"]
+            : ["event_type"];
+  return { mode, targetEventId, domain: opportunity.domain, requestedFacts, rationaleCodes: ["legacy_opportunity_migration"] };
+}
+
+function publicQuestionForFocus(
+  dossier: Pick<RectificationCaseDossier, "eventLedger">,
+  latestAnswer: string,
+  focus: Extract<RectificationTurnPlan["action"], { type: "ask_question" }>["focus"],
+): string {
+  const target = focus.targetEventId
+    ? dossier.eventLedger.find((event) => event.eventId === focus.targetEventId && event.status === "active") ?? null
+    : null;
+  if (target) {
+    const anchor = !privatePattern.test(target.summary) && !containsExactMinute(target.summary) ? `“${target.summary.slice(0, 120)}”` : "刚才那件事";
+    if (focus.requestedFacts.includes("month")) return `你还记得${anchor}大概发生在哪个月，或一年中的哪个时间段吗？`;
+    if (focus.requestedFacts.includes("subject")) return `${anchor}主要发生在你本人、家人还是伴侣身上？`;
+    if (focus.requestedFacts.includes("event_type")) return `关于${anchor}，你能再说明当时具体发生了什么变化吗？`;
+    if (focus.requestedFacts.includes("paired_event")) return `在${anchor}前后，你还记得另一件与它相关、时间大致明确的经历吗？没有、记不清或不想回答也可以换个方向。`;
+    if (focus.requestedFacts.includes("event_stage")) return `关于${anchor}，当时更接近开始、结束还是明显转折的阶段？`;
+    return `关于${anchor}，你还记得更具体的时间或阶段吗？`;
+  }
+  const groundedEvent = latestGroundedEvent(dossier, latestAnswer);
+  const anchor = groundedEvent && !privatePattern.test(groundedEvent.summary) && !containsExactMinute(groundedEvent.summary)
+    ? `在“${groundedEvent.summary.slice(0, 120)}”之外，`
+    : "";
+  const domainLabel = focus.domain && focus.domain !== "other" ? publicDomainLabels[focus.domain] : null;
+  return domainLabel
+    ? `如果你愿意，${anchor}你还记得一件发生在你本人身上、时间大致明确的${domainLabel}吗？没有、记不清或不想回答也可以换个方向。`
+    : `你愿意${anchor}再讲一件与已有记录不同、时间大致明确的经历吗？没有、记不清或不想回答也可以换个方向。`;
+}
+
 function fallback(dossier: RectificationCaseDossier, latestAnswer: string): RectificationTurnPlan {
-  if (dossier.candidateState.publicRangeAllowed && dossier.candidateState.currentSnapshotId) return { contractVersion: "rectification-turn-plan-v1", targetDisposition: dossier.interviewState.targetDisposition, evidenceProposals: [], action: { type: "offer_candidate_range", snapshotId: dossier.candidateState.currentSnapshotId }, publicReply: { acknowledgement: "现有事件已经完成本轮复核。", evidenceExplanation: null, candidateCommentary: "候选范围已通过当前稳定性门槛，可以作为工作范围查看。", limitation: "这仍不是对某个精确出生分钟的确认。" }, publicExplanationGrounding: [] };
+  if (dossier.candidateState.publicRangeAllowed && dossier.candidateState.currentSnapshotId) return { contractVersion: "rectification-turn-plan-v1", targetDisposition: dossier.interviewState.targetDisposition, evidenceProposals: [], action: { type: "offer_candidate_range", snapshotId: dossier.candidateState.currentSnapshotId }, publicReply: { acknowledgement: "现有事件已经完成本轮复核。", evidenceExplanation: null, candidateCommentary: null, limitation: "这仍不是对某个精确出生分钟的确认。" }, publicExplanationGrounding: [] };
   const targetEventId = dossier.interviewState.currentTargetEventId;
   const keepTarget = Boolean(targetEventId && ["unresolved", "answered_other_event"].includes(dossier.interviewState.targetDisposition));
   const targetEvent = keepTarget ? dossier.eventLedger.find((event) => event.eventId === targetEventId && event.status === "active") : null;
@@ -106,21 +162,11 @@ function fallback(dossier: RectificationCaseDossier, latestAnswer: string): Rect
   const safeSummary = groundedEvent && !privatePattern.test(groundedEvent.summary) && !containsExactMinute(groundedEvent.summary)
     ? groundedEvent.summary.slice(0, 120)
     : null;
-  const safeTargetSummary = targetEvent && !privatePattern.test(targetEvent.summary) && !containsExactMinute(targetEvent.summary)
-    ? `“${targetEvent.summary.slice(0, 120)}”`
-    : "刚才那件事";
   const targetNeedsMonth = targetEvent?.dateRange.precision === "year" || targetEvent?.dateRange.precision === "quarter";
-  const targetQuestion = targetNeedsMonth
-    ? `${safeTargetSummary}大概发生在哪个月，或一年中的哪个时间段？`
-    : `关于${safeTargetSummary}，你还记得更具体的时间或阶段吗？`;
-  const activeEventCount = dossier.eventLedger.filter((event) => event.status === "active").length;
-  const neutralLead = ["unknown", "declined", "direction_change"].includes(dossier.interviewState.targetDisposition)
-    ? "那就先跳过刚才那一项。"
-    : `目前已有 ${activeEventCount} 条可继续核对的经历。`;
-  const question = keepTarget ? targetQuestion : `${neutralLead}你愿意再讲一件与已有记录不同、时间大致明确的经历吗？没有、记不清或不想回答也可以换个方向。`;
   const focus = keepTarget
     ? { mode: "clarify_existing_event" as const, targetEventId, domain: targetEvent?.domain ?? null, requestedFacts: [targetNeedsMonth ? "month" as const : "day_or_period" as const], rationaleCodes: ["unresolved_current_event"] }
     : { mode: "collect_independent_event" as const, targetEventId: null, domain: null, requestedFacts: ["independent_event" as const, "year" as const], rationaleCodes: ["model_unavailable_neutral_fallback"] };
+  const question = publicQuestionForFocus(dossier, latestAnswer, focus);
   const techniqueLayers = groundedEvent ? domainScorerRegistry[groundedEvent.domain].techniqueLayers : [];
   const evidenceExplanation = safeSummary && techniqueLayers.length
     ? `按当前校正能力，这类事件通常会参考 ${techniqueLayers.join("、")}；这里只是在说明方法映射，尚未形成实际计算结果。`
@@ -165,9 +211,6 @@ export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; d
     if (plan.targetDisposition === "resolved" && !revisedCurrentTarget) issues.push("resolved_target_not_revised");
     if (plan.targetDisposition === "answered_other_event" && !createdOtherEvent) issues.push("other_event_not_proposed");
   }
-  const publicText = [plan.publicReply.acknowledgement, plan.publicReply.evidenceExplanation, plan.publicReply.candidateCommentary, plan.publicReply.limitation, plan.action.type === "ask_question" ? plan.action.question : null].filter(Boolean).join(" ");
-  if (privatePattern.test(publicText)) issues.push("private_detail_exposed");
-  if (containsExactMinute(publicText)) issues.push("exact_minute_claimed");
   const groundedEvent = latestGroundedEvent(input.dossier, input.latestAnswer);
   const capabilityFacts = new Map(input.dossier.capabilities.publicTechniqueCapabilities.map((item) => [`domain:${item.domain}`, item]));
   const observationFacts = new Map<"window_sensitivity" | "candidate_scan" | "diagnostic", Set<string>>([
@@ -191,55 +234,65 @@ export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; d
     }
     if (!observationFacts.get(grounding.source)?.has(grounding.factKey)) issues.push("public_grounding_invalid");
   });
-  const hasCapabilityGrounding = plan.publicExplanationGrounding.some((grounding) => grounding.source === "capability_matrix");
-  const evidenceExplanation = plan.publicReply.evidenceExplanation;
-  if (evidenceExplanation && (observedResultClaimPattern.test(evidenceExplanation) || candidateConclusionPattern.test(evidenceExplanation))) {
-    issues.push("ungrounded_candidate_claim");
-  }
-  if (hasCapabilityGrounding && evidenceExplanation && !methodMappingPattern.test(evidenceExplanation)) {
-    issues.push("capability_claim_not_mapping");
-  }
-  if (groundedEvent && plan.publicReply.evidenceExplanation) {
-    const citedCapabilities = plan.publicExplanationGrounding.flatMap((grounding) => {
+  const groundedCapability = groundedEvent && plan.action.type === "ask_question"
+    ? plan.publicExplanationGrounding.flatMap((grounding) => {
       const capability = grounding.source === "capability_matrix" ? capabilityFacts.get(grounding.factKey) : null;
-      return capability && capability.domain === groundedEvent.domain ? [capability] : [];
-    });
-    const allowedTechniques = new Set(citedCapabilities.flatMap((item) => item.techniqueLayers.map((layer) => layer.toLocaleLowerCase())));
-    const knownTechniques = [...new Set([
-      ...input.dossier.capabilities.publicTechniqueCapabilities.flatMap((item) => item.techniqueLayers),
-      "KP", "Shadbala", "Ashtakavarga", "Chaturvimshamsha",
-    ])];
-    if (knownTechniques.some((technique) => mentionsTechnique(plan.publicReply.evidenceExplanation ?? "", technique)
-      && !allowedTechniques.has(technique.toLocaleLowerCase()))) issues.push("public_technique_not_grounded");
-  }
-  if (quantifiedStructurePattern.test(publicText)) {
-    const windowFactKeys = new Set(plan.publicExplanationGrounding.filter((item) => item.source === "window_sensitivity").map((item) => item.factKey));
-    const observedFactKeys = observationFacts.get("window_sensitivity") ?? new Set<string>();
-    if (![...windowFactKeys].some((factKey) => observedFactKeys.has(factKey))) issues.push("ungrounded_numeric_structure_claim");
-  }
-  if (plan.action.type === "ask_question") {
-    if (asksMultipleQuestions(plan.action.question)) issues.push("multiple_questions");
-    const nextQuestion = normalizedQuestion(plan.action.question);
+      return capability?.domain === groundedEvent.domain ? [capability] : [];
+    })[0] ?? null
+    : null;
+  if (groundedEvent && plan.action.type === "ask_question" && !groundedCapability) issues.push("event_explanation_grounding_missing");
+  const normalizedPlan: RectificationTurnPlan = {
+    ...plan,
+    action: plan.action.type === "ask_question"
+      ? { ...plan.action, question: publicQuestionForFocus(input.dossier, input.latestAnswer, plan.action.focus) }
+      : plan.action,
+    publicReply: {
+      acknowledgement: groundedEvent
+        ? `你提到的是“${groundedEvent.summary.slice(0, 120)}”。`
+        : plan.action.type === "offer_candidate_range"
+          ? "现有事件已经完成本轮复核。"
+          : input.latestAnswer.trim()
+            ? "我会保留你刚才的原始说法，不补写你没有确认的信息。"
+            : "我们先从真实经历建立事件线索。",
+      evidenceExplanation: groundedEvent && plan.action.type === "ask_question" && groundedCapability
+        ? groundedEvidenceExplanation(groundedEvent, groundedCapability.techniqueLayers)
+        : null,
+      candidateCommentary: null,
+      limitation: plan.action.type === "offer_candidate_range"
+        ? "这仍不是对某个精确出生分钟的确认。"
+        : plan.action.type === "stop_low_confidence"
+          ? "当前证据不足以安全缩小候选范围。"
+          : null,
+    },
+    publicExplanationGrounding: groundedEvent && plan.action.type === "ask_question" && groundedCapability
+      ? [{ source: "capability_matrix", factKey: `domain:${groundedEvent.domain}` }]
+      : [],
+  };
+  const publicText = [normalizedPlan.publicReply.acknowledgement, normalizedPlan.publicReply.evidenceExplanation, normalizedPlan.publicReply.limitation, normalizedPlan.action.type === "ask_question" ? normalizedPlan.action.question : null].filter(Boolean).join(" ");
+  if (privatePattern.test(publicText)) issues.push("private_detail_exposed");
+  if (containsExactMinute(publicText)) issues.push("exact_minute_claimed");
+  if (quantifiedStructurePattern.test(publicText)) issues.push("ungrounded_numeric_structure_claim");
+  if (normalizedPlan.action.type === "ask_question") {
+    if (asksMultipleQuestions(normalizedPlan.action.question)) issues.push("multiple_questions");
+    const nextQuestion = normalizedQuestion(normalizedPlan.action.question);
     if (nextQuestion && input.dossier.interviewState.askedTopics.some((question) => {
       const previousQuestion = normalizedQuestion(question);
       return previousQuestion.endsWith(nextQuestion) || nextQuestion.endsWith(previousQuestion);
     })) issues.push("question_repeated");
     if (input.phase === "final" && groundedEvent) {
       if (genericAcknowledgementPattern.test(plan.publicReply.acknowledgement.trim())) issues.push("event_acknowledgement_generic");
-      if (!plan.publicReply.evidenceExplanation || plan.publicReply.evidenceExplanation.trim().length < 12) issues.push("event_explanation_missing");
-      if (!plan.publicReply.candidateCommentary || plan.publicReply.candidateCommentary.trim().length < 12) issues.push("event_value_commentary_missing");
     }
-    if (plan.action.focus.targetEventId && !known.has(plan.action.focus.targetEventId)) issues.push("focus_target_invalid");
-    if (plan.action.focus.domain && input.dossier.interviewState.declinedDomains.includes(plan.action.focus.domain)) issues.push("declined_domain_reopened");
+    if (normalizedPlan.action.focus.targetEventId && !known.has(normalizedPlan.action.focus.targetEventId)) issues.push("focus_target_invalid");
+    if (normalizedPlan.action.focus.domain && input.dossier.interviewState.declinedDomains.includes(normalizedPlan.action.focus.domain)) issues.push("declined_domain_reopened");
     if (currentTarget && ["unresolved", "answered_other_event"].includes(plan.targetDisposition)
-      && plan.action.focus.targetEventId !== currentTarget) issues.push("unresolved_target_abandoned");
+      && normalizedPlan.action.focus.targetEventId !== currentTarget) issues.push("unresolved_target_abandoned");
     if (["unknown", "declined", "direction_change"].includes(plan.targetDisposition)
       && ((input.dossier.interviewState.currentTargetEventId !== null
-        && plan.action.focus.targetEventId === input.dossier.interviewState.currentTargetEventId)
-        || ["clarify_existing_event", "resolve_conflict"].includes(plan.action.focus.mode))) issues.push("declined_target_reopened");
+        && normalizedPlan.action.focus.targetEventId === input.dossier.interviewState.currentTargetEventId)
+        || ["clarify_existing_event", "resolve_conflict"].includes(normalizedPlan.action.focus.mode))) issues.push("declined_target_reopened");
   }
   if (plan.action.type === "offer_candidate_range" && (!input.dossier.candidateState.publicRangeAllowed || plan.action.snapshotId !== input.dossier.candidateState.currentSnapshotId)) issues.push("candidate_range_gate_failed");
-  return { plan: issues.length ? null : plan, issues };
+  return { plan: issues.length ? null : normalizedPlan, issues };
 }
 
 export async function regenerateDirectorQuestion(input: Readonly<{
@@ -250,31 +303,7 @@ export async function regenerateDirectorQuestion(input: Readonly<{
   focus: Extract<RectificationTurnPlan["action"], { type: "ask_question" }>["focus"];
   generateQuestion?: (prompt: string, phase: "regenerate" | "repair") => Promise<Generated>;
 }>): Promise<string> {
-  const model = (input.caseValue.orchestrationModelId ? resolveLanguageModel(input.caseValue.orchestrationModelId) : null) ?? defaultLanguageModel();
-  const agent = model ? new Agent({ id: `rectification-director-regenerate-${model.id}`, name: "Birth Time Rectification Director", model: model.model, skills: [skillPath], instructions: "Rewrite one natural interview question while preserving the supplied structured focus. Do not expose internal ids, scores, tools, or a birth minute. Return only structured output." }) : null;
-  const skillReady = agent ? assertRectificationSkillLoaded(agent, { caseId: input.caseValue.id, modelId: model?.id ?? null, deploymentSha: process.env.DEPLOYMENT_SHA?.trim() || null }) : null;
-  const generate = input.generateQuestion ?? (async (prompt: string) => {
-    if (!agent || !skillReady) throw new Error("director_model_unavailable");
-    await skillReady;
-    return agent.generate(prompt, { structuredOutput: { schema: regeneratedQuestionSchema, jsonPromptInjection: "inline" } });
-  });
-  const validate = (value: unknown) => {
-    const parsed = regeneratedQuestionSchema.safeParse(value);
-    if (!parsed.success) return { question: null, issues: ["question_schema_invalid"] };
-    const issues: string[] = [];
-    if (asksMultipleQuestions(parsed.data.question)) issues.push("multiple_questions");
-    if (privatePattern.test(parsed.data.question)) issues.push("private_detail_exposed");
-    if (containsExactMinute(parsed.data.question)) issues.push("exact_minute_claimed");
-    return { question: issues.length ? null : parsed.data.question, issues };
-  };
-  try {
-    const context = { task: "Rewrite the current question without changing its structured focus.", currentQuestion: input.currentQuestion, latestAnswer: input.latestAnswer, focus: input.focus, acceptedEvents: input.acceptedEvents.map(({ summary, domain, eventKind, dateRange }) => ({ summary, domain, eventKind, dateRange })) };
-    let result = validate((await generate(JSON.stringify(context), "regenerate")).object);
-    if (!result.question) result = validate((await generate(JSON.stringify({ ...context, task: "Repair the rejected rewrite once.", validationIssues: result.issues }), "repair")).object);
-    return result.question ?? input.currentQuestion;
-  } catch {
-    return input.currentQuestion;
-  }
+  return publicQuestionForFocus({ eventLedger: projectEventLedger(input.acceptedEvents) }, input.latestAnswer, input.focus);
 }
 
 export async function runRectificationDirector(input: Readonly<{ caseValue: RectificationV4Case; dossier: RectificationCaseDossier; latestAnswer: string; phase: "evidence" | "final"; diagnostics: DiagnosticsSummary; timeoutMs?: number; generatePlan?: RectificationDirectorGenerator }>) {

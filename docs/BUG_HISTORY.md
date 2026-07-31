@@ -1912,3 +1912,19 @@
 - 防复发：服务器只提供事实、能力和禁止项；正常 V8 选题与措辞归 Agent。测试案例只能验证不变量和复现回归，不能通过词表、权重或预写问题进入生产决策链。
 - 相关记录：BUG-105、BUG-106、BUG-107
 - 修复版本：staging branch / deployment manifest records exact SHA
+
+## BUG-109 | 生时校正模型文案可越过公开事实边界
+
+- 状态：resolved
+- 首次发现：2026-07-31
+- 最近更新：2026-07-31
+- 影响面：V5 Director 公开回复、下一问生成与手动重新生成
+- 用户现象：模型可能直接追问、遗漏服务器承接说明，或把未经计算的候选优劣写入公开问题。
+- 触发条件：Director 返回自由文案，或历史 `selectedOpportunity` 进入问题重新生成路径。
+- 根因：公开回复和问题 wording 曾由模型直接提供；历史兼容分支还可绕过新 focus 合同调用 renderer。
+- 修复：Agent 只选择结构化 focus；服务器根据事件账本、能力矩阵和 focus 生成承接、方法说明及单一问题；历史 `selectedOpportunity` 先转换为 focus，所有重新生成路径共用同一服务器 renderer。
+- 验证：Director、analysis trace、V4 service 聚焦测试 52/52；TypeScript、ESLint 通过；前端全量测试 1164/1164。
+- 防复发：回归测试覆盖模型伪造候选结论、手动 regenerate 以及历史 `selectedOpportunity` 持久化路径。
+- 相关记录：无
+- 复发自：无
+- 修复版本：待发布

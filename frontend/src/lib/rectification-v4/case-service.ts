@@ -8,8 +8,8 @@ import type {
 import { rectificationAgentV5Protocol, rectificationV4AlgorithmVersion, rectificationV4Protocol } from "./contracts.ts";
 import { selectRectificationDeploymentMode } from "../rectification-agent/feature-policy.ts";
 import { CURRENT_RECTIFICATION_PROMPT_VERSION, CURRENT_RECTIFICATION_SKILL_VERSION } from "../rectification-agent/contracts.ts";
-import { regenerateDirectorQuestion } from "../rectification-agent/director-agent.ts";
-import { generateOpeningQuestion, regenerateQuestionRealization } from "../rectification-agent/renderer-agent.ts";
+import { focusForQuestionOpportunity, regenerateDirectorQuestion } from "../rectification-agent/director-agent.ts";
+import { generateOpeningQuestion } from "../rectification-agent/renderer-agent.ts";
 import { calculationSpecHash, evidenceSetHash } from "./fingerprints.ts";
 import { hasPolicyInvalidScoreableEvents } from "./evidence-ledger.ts";
 import { openingQuestion } from "./opening-question.ts";
@@ -21,13 +21,11 @@ export function createRectificationV4CaseService(
   store: RectificationV4Store,
   options: {
     readonly now?: () => Date;
-    readonly regenerateQuestion?: typeof regenerateQuestionRealization;
     readonly regenerateDirectorQuestion?: typeof regenerateDirectorQuestion;
     readonly generateOpeningQuestion?: typeof generateOpeningQuestion;
   } = {},
 ) {
   const now = options.now ?? (() => new Date());
-  const realizeQuestion = options.regenerateQuestion ?? regenerateQuestionRealization;
   const redirectQuestion = options.regenerateDirectorQuestion ?? regenerateDirectorQuestion;
   const generateOpening = options.generateOpeningQuestion ?? generateOpeningQuestion;
 
@@ -155,25 +153,17 @@ export function createRectificationV4CaseService(
             store.loadEvents(input.userId, input.caseId),
             store.loadTurns(input.userId, input.caseId),
           ]);
-          let prompt: string;
-          if (validated.selectedOpportunity) {
-            prompt = await realizeQuestion({
-              caseValue: current,
-              currentPrompt: current.currentQuestion.prompt,
-              latestAnswer: turns.at(-1)?.answer ?? "",
-              acceptedEvents: events,
-              opportunity: validated.selectedOpportunity,
-            });
-          } else {
-            if (!("focus" in validated.decision)) return null;
-            prompt = await redirectQuestion({
-              caseValue: current,
-              currentQuestion: current.currentQuestion.prompt,
-              latestAnswer: turns.at(-1)?.answer ?? "",
-              acceptedEvents: events,
-              focus: validated.decision.focus,
-            });
-          }
+          const focus = validated.selectedOpportunity
+            ? focusForQuestionOpportunity(validated.selectedOpportunity)
+            : "focus" in validated.decision ? validated.decision.focus : null;
+          if (!focus) return null;
+          const prompt = await redirectQuestion({
+            caseValue: current,
+            currentQuestion: current.currentQuestion.prompt,
+            latestAnswer: turns.at(-1)?.answer ?? "",
+            acceptedEvents: events,
+            focus,
+          });
           return store.replaceCurrentQuestion({
             ...input,
             question: { ...current.currentQuestion, id: randomUUID(), prompt },

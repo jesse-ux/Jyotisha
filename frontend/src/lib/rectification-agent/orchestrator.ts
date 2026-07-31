@@ -423,7 +423,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     const publicMessage: StoredPublicMessage = {
       acknowledgement: plan.publicReply.acknowledgement,
       evidenceExplanation: plan.publicReply.evidenceExplanation,
-      candidateUpdate: candidateUpdateFor({ snapshot, previousSnapshot: claimed.case.latestSnapshot, decisionAction: decision.action }) ?? plan.publicReply.candidateCommentary,
+      candidateUpdate: candidateUpdateFor({ snapshot, previousSnapshot: claimed.case.latestSnapshot, decisionAction: decision.action }),
       limitation: plan.publicReply.limitation,
       question: action.type === "ask_question" ? action.question : null,
       analysisTrace: {

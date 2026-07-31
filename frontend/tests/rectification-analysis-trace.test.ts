@@ -557,7 +557,7 @@ test("a newly collected year-only event stays current until its month is refined
   assert.equal(created.dateRange.precision, "year");
   assert.equal(result.nextQuestion?.targetEventId, created.eventId);
   assert.match(result.nextQuestion?.prompt ?? "", /离家去外地上大学/);
-  assert.match(result.nextQuestion?.prompt ?? "", /交叉比较候选范围/);
+  assert.match(result.nextQuestion?.prompt ?? "", /交叉核对/);
   assert.match(result.nextQuestion?.prompt ?? "", /哪个月|时间段/);
   assert.doesNotMatch(result.nextQuestion?.prompt ?? "", /还能想到一件/);
 });
@@ -591,7 +591,7 @@ test("a completed internship answer is acknowledged, explained, and followed by 
   assert.notEqual(result.nextQuestion?.domain, "education");
   assert.notEqual(result.nextQuestion?.domain, "career");
   assert.match(result.nextQuestion?.prompt ?? "", /石油化工研究院|实习|研究员/);
-  assert.match(result.nextQuestion?.prompt ?? "", /交叉比较候选范围/);
+  assert.match(result.nextQuestion?.prompt ?? "", /交叉核对/);
   assert.doesNotMatch(result.nextQuestion?.prompt ?? "", /你还能想到一件发生在你本人身上、时间大致确定的重要经历吗/);
   assert.equal((result.nextQuestion?.prompt.match(/[?？]/g) ?? []).length, 1);
 });
