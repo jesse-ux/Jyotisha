@@ -21,7 +21,7 @@ const genericAcknowledgementPattern = /^(?:好的|明白了|知道了|收到|已
 const methodMappingPattern = /(?:方法(?:论)?映射|一般(?:关联|参考)|通常(?:关联|参考|用于|检查)|可(?:以)?参考|主要关联|方法层|尚未计算|还没有计算|未计算)/u;
 const observedResultClaimPattern = /(?:(?:已(?:经)?|实际|结果|显示|表明|验证|证明|支持|排除|倾向|更符合|领先|指向|确认|确定)[^。！？\n]{0,48}(?:这次|该(?:事件|经历)|候选|区间|范围|分钟|出生|较早|较晚)|(?:这次|该(?:事件|经历)|候选|区间|范围|分钟|出生|较早|较晚)[^。！？\n]{0,48}(?:显示|表明|验证|证明|支持|排除|倾向|更符合|领先|指向|确认|确定))/u;
 const candidateConclusionPattern = /(?:候选|区间|范围|分钟|出生|时段|较早|较晚|更早|更晚|偏前|偏后|靠前|靠后|前一组|后一组|第一组|第二组)/u;
-const groundedPublicReplyRequirement = "When the latest answer adds or refines a concrete event, the final public reply must: acknowledge the exact event and its date precision; summarize one to three evidence signals found in the user wording; use evidenceExplanation to map those signals to public method layers from dossier.capabilities.publicTechniqueCapabilities; distinguish a general method mapping from calculations actually present in tool observations; explain why the next question helps; and ask at most one question. Public method names such as D4, D24, Vimshottari, Narayana, UL, and A10 are allowed. Never expose internal ids, raw scores, weights, contribution matrices, raw tool traces, candidate minutes, or hidden reasoning. Never claim a numeric structural fact such as a division switching N times unless the dossier contains the matching window_sensitivity observation and publicExplanationGrounding cites its fact key.";
+const groundedPublicReplyRequirement = "When the latest answer adds or refines a concrete event, the final public reply must: acknowledge the exact event and its date precision; summarize one to three evidence signals found in the user wording; use evidenceExplanation to map those signals to public method layers from dossier.capabilities.publicTechniqueCapabilities; keep evidenceExplanation as a general method mapping rather than a calculated candidate conclusion; put only server-verifiable candidate updates in candidateCommentary; explain why the next question helps; and ask at most one question. Public method names such as D4, D24, Vimshottari, Narayana, UL, and A10 are allowed. Never expose internal ids, raw scores, weights, contribution matrices, raw tool traces, candidate minutes, or hidden reasoning. Never claim a numeric structural fact such as a division switching N times unless the dossier contains the matching window_sensitivity observation and publicExplanationGrounding cites its fact key.";
 
 function containsExactMinute(value: string): boolean {
   return exactMinutePattern.test(value);
@@ -192,13 +192,11 @@ export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; d
     if (!observationFacts.get(grounding.source)?.has(grounding.factKey)) issues.push("public_grounding_invalid");
   });
   const hasCapabilityGrounding = plan.publicExplanationGrounding.some((grounding) => grounding.source === "capability_matrix");
-  const hasObservationGrounding = plan.publicExplanationGrounding.some((grounding) => grounding.source !== "capability_matrix");
   const evidenceExplanation = plan.publicReply.evidenceExplanation;
-  if (evidenceExplanation && !hasObservationGrounding
-    && (observedResultClaimPattern.test(evidenceExplanation) || candidateConclusionPattern.test(evidenceExplanation))) {
+  if (evidenceExplanation && (observedResultClaimPattern.test(evidenceExplanation) || candidateConclusionPattern.test(evidenceExplanation))) {
     issues.push("ungrounded_candidate_claim");
   }
-  if (hasCapabilityGrounding && !hasObservationGrounding && evidenceExplanation && !methodMappingPattern.test(evidenceExplanation)) {
+  if (hasCapabilityGrounding && evidenceExplanation && !methodMappingPattern.test(evidenceExplanation)) {
     issues.push("capability_claim_not_mapping");
   }
   if (groundedEvent && plan.publicReply.evidenceExplanation) {

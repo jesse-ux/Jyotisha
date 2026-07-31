@@ -556,6 +556,20 @@ test("public reply allows method names but rejects private internals and ungroun
   const ungroundedCandidateClaim = plan({ publicReply: { acknowledgement: "已记录。", evidenceExplanation: "D10 已经显示较早候选更符合。", candidateCommentary: null, limitation: null } });
   assert.ok(validateRectificationTurnPlan({ plan: ungroundedCandidateClaim, dossier: dossier(), latestAnswer: "", phase: "final" }).issues.includes("ungrounded_candidate_claim"));
 
+  const emptyCandidateObservation = {
+    ...dossier(),
+    runtime: {
+      revision: 1,
+      hypotheses: [],
+      observations: [{ round: 1, tool: "candidate_scan" as const, diagnostic: null, outcome: "succeeded" as const, result: { candidateState: { hasSnapshot: false, publicRangeAllowed: false, topClusters: [], contrasts: [] } }, dossierRevision: 1, errorCode: null }],
+    },
+  };
+  const falselyObservedClaim = plan({
+    publicReply: { acknowledgement: "已记录。", evidenceExplanation: "D10 已经显示较早候选更符合。", candidateCommentary: null, limitation: null },
+    publicExplanationGrounding: [{ source: "candidate_scan", factKey: "candidateState" }],
+  });
+  assert.ok(validateRectificationTurnPlan({ plan: falselyObservedClaim, dossier: emptyCandidateObservation, latestAnswer: "", phase: "final" }).issues.includes("ungrounded_candidate_claim"));
+
   const multiple = plan({ action: { type: "ask_question", focus: { mode: "collect_independent_event", targetEventId: null, domain: null, requestedFacts: ["independent_event"], rationaleCodes: ["test"] }, question: "你记得它发生在哪一年。那时发生了什么。", optionalQuickReplies: [] } });
   assert.ok(validateRectificationTurnPlan({ plan: multiple, dossier: dossier(), latestAnswer: "", phase: "final" }).issues.includes("multiple_questions"));
   const single = plan({ action: { type: "ask_question", focus: { mode: "collect_independent_event", targetEventId: null, domain: null, requestedFacts: ["independent_event"], rationaleCodes: ["test"] }, question: "你还记得一件时间大致确定的重要经历吗？", optionalQuickReplies: [] } });
