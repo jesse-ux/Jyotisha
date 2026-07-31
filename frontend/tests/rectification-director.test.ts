@@ -553,6 +553,9 @@ test("public reply allows method names but rejects private internals and ungroun
   const numeric = plan({ publicReply: { acknowledgement: "这条经历已经保留。", evidenceExplanation: "D24 在候选窗内切换了 3 次。", candidateCommentary: null, limitation: null } });
   assert.ok(validateRectificationTurnPlan({ plan: numeric, dossier: dossier(), latestAnswer: "", phase: "final" }).issues.includes("ungrounded_numeric_structure_claim"));
 
+  const ungroundedCandidateClaim = plan({ publicReply: { acknowledgement: "已记录。", evidenceExplanation: "D10 已经显示较早候选更符合。", candidateCommentary: null, limitation: null } });
+  assert.ok(validateRectificationTurnPlan({ plan: ungroundedCandidateClaim, dossier: dossier(), latestAnswer: "", phase: "final" }).issues.includes("ungrounded_candidate_claim"));
+
   const multiple = plan({ action: { type: "ask_question", focus: { mode: "collect_independent_event", targetEventId: null, domain: null, requestedFacts: ["independent_event"], rationaleCodes: ["test"] }, question: "你记得它发生在哪一年。那时发生了什么。", optionalQuickReplies: [] } });
   assert.ok(validateRectificationTurnPlan({ plan: multiple, dossier: dossier(), latestAnswer: "", phase: "final" }).issues.includes("multiple_questions"));
   const single = plan({ action: { type: "ask_question", focus: { mode: "collect_independent_event", targetEventId: null, domain: null, requestedFacts: ["independent_event"], rationaleCodes: ["test"] }, question: "你还记得一件时间大致确定的重要经历吗？", optionalQuickReplies: [] } });
@@ -596,19 +599,19 @@ test("public explanations require real capability grounding for the current even
     publicReply: { ...base, evidenceExplanation: "D10 已经显示这次职业变化支持较早的候选区间。" },
     publicExplanationGrounding: [{ source: "capability_matrix", factKey: "domain:career" }],
   });
-  assert.ok(validateRectificationTurnPlan({ plan: inventedResult, dossier: dossier([internship]), latestAnswer: internship.rawText, phase: "final" }).issues.includes("capability_claim_not_mapping"));
+  assert.ok(validateRectificationTurnPlan({ plan: inventedResult, dossier: dossier([internship]), latestAnswer: internship.rawText, phase: "final" }).issues.includes("ungrounded_candidate_claim"));
 
   const disguisedInventedResult = plan({
     publicReply: { ...base, evidenceExplanation: "这只是方法映射；D10 已经证明这次经历更符合较早出生。" },
     publicExplanationGrounding: [{ source: "capability_matrix", factKey: "domain:career" }],
   });
-  assert.ok(validateRectificationTurnPlan({ plan: disguisedInventedResult, dossier: dossier([internship]), latestAnswer: internship.rawText, phase: "final" }).issues.includes("capability_claim_not_mapping"));
+  assert.ok(validateRectificationTurnPlan({ plan: disguisedInventedResult, dossier: dossier([internship]), latestAnswer: internship.rawText, phase: "final" }).issues.includes("ungrounded_candidate_claim"));
 
   const uncaughtSynonym = plan({
     publicReply: { ...base, evidenceExplanation: "这只是方法映射；D10 说明该经历对应出生时段偏前。" },
     publicExplanationGrounding: [{ source: "capability_matrix", factKey: "domain:career" }],
   });
-  assert.ok(validateRectificationTurnPlan({ plan: uncaughtSynonym, dossier: dossier([internship]), latestAnswer: internship.rawText, phase: "final" }).issues.includes("capability_claim_not_mapping"));
+  assert.ok(validateRectificationTurnPlan({ plan: uncaughtSynonym, dossier: dossier([internship]), latestAnswer: internship.rawText, phase: "final" }).issues.includes("ungrounded_candidate_claim"));
 });
 
 test("the final plan cannot repeat a previously asked question", () => {

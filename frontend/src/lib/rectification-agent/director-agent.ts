@@ -193,10 +193,12 @@ export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; d
   });
   const hasCapabilityGrounding = plan.publicExplanationGrounding.some((grounding) => grounding.source === "capability_matrix");
   const hasObservationGrounding = plan.publicExplanationGrounding.some((grounding) => grounding.source !== "capability_matrix");
-  if (hasCapabilityGrounding && !hasObservationGrounding && plan.publicReply.evidenceExplanation
-    && (!methodMappingPattern.test(plan.publicReply.evidenceExplanation)
-      || observedResultClaimPattern.test(plan.publicReply.evidenceExplanation)
-      || candidateConclusionPattern.test(plan.publicReply.evidenceExplanation))) {
+  const evidenceExplanation = plan.publicReply.evidenceExplanation;
+  if (evidenceExplanation && !hasObservationGrounding
+    && (observedResultClaimPattern.test(evidenceExplanation) || candidateConclusionPattern.test(evidenceExplanation))) {
+    issues.push("ungrounded_candidate_claim");
+  }
+  if (hasCapabilityGrounding && !hasObservationGrounding && evidenceExplanation && !methodMappingPattern.test(evidenceExplanation)) {
     issues.push("capability_claim_not_mapping");
   }
   if (groundedEvent && plan.publicReply.evidenceExplanation) {
