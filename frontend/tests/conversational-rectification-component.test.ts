@@ -4,7 +4,7 @@ import test from "node:test";
 import {
   canRegenerateRectificationMessage,
   rectificationV4ChatMessages,
-  rectificationPhaseLabel,
+  rectificationPhaseLabel, rectificationProgressLabel,
   toggleRectificationFeedback,
 } from "../src/components/rectification-v4-panel.tsx";
 import { applyRectificationV4JobUpdate } from "../src/hooks/use-rectification-v4.ts";
@@ -259,9 +259,13 @@ test("processing follows every server job phase returned by polling", () => {
     const message = rectificationV4ChatMessages(data, true).at(-1);
     assert.equal(message?.role, "assistant");
     assert.equal(message?.state, "thinking");
-    assert.equal(message?.text, label);
+    assert.equal(message?.text, rectificationProgressLabel(phase));
+    assert.match(message?.text ?? "", new RegExp(label));
   }
   assert.equal(rectificationPhaseLabel("checking_robustness"), "正在检查候选范围的稳定性…");
+  assert.equal(rectificationProgressLabel("extracting_evidence"), "正在整理你刚才提到的经历…\n正在分析：\n● 整理已确认事件\n○ 比较候选时间差异\n○ 确定下一步验证方向");
+  assert.equal(rectificationProgressLabel("checking_robustness"), "正在检查候选范围的稳定性…\n正在分析：\n✓ 整理已确认事件\n● 比较候选时间差异\n○ 确定下一步验证方向");
+  assert.equal(rectificationProgressLabel("reasoning"), "正在选择下一步动作…\n正在分析：\n✓ 整理已确认事件\n✓ 比较候选时间差异\n● 确定下一步验证方向");
 });
 
 test("polling ignores an older job response so the visible phase cannot move backward", () => {

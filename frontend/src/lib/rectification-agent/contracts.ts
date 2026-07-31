@@ -5,8 +5,8 @@ const uuid = z.string().uuid();
 const hash = z.string().regex(/^[a-f0-9]{64}$/);
 const nonblank = (max: number) => z.string().trim().min(1).max(max);
 
-export const CURRENT_RECTIFICATION_SKILL_VERSION = "birth-time-rectification-v6" as const;
-export const CURRENT_RECTIFICATION_PROMPT_VERSION = "rectification-director-v2" as const;
+export const CURRENT_RECTIFICATION_SKILL_VERSION = "birth-time-rectification-v8" as const;
+export const CURRENT_RECTIFICATION_PROMPT_VERSION = "rectification-director-v4" as const;
 
 export const rectificationDiagnosticSchema = z.enum([
   "leave_one_event_out",
@@ -16,6 +16,25 @@ export const rectificationDiagnosticSchema = z.enum([
   "candidate_split",
 ]);
 export type RectificationDiagnostic = z.infer<typeof rectificationDiagnosticSchema>;
+
+export const rectificationAgentToolSchema = z.enum([
+  "case_read",
+  "candidate_scan",
+  "evidence_gap",
+  "diagnostic_read",
+]);
+export type RectificationAgentTool = z.infer<typeof rectificationAgentToolSchema>;
+
+export const toolObservationSchema = z.object({
+  round: z.number().int().positive().max(10),
+  tool: rectificationAgentToolSchema,
+  diagnostic: rectificationDiagnosticSchema.nullable(),
+  outcome: z.enum(["succeeded", "failed"]),
+  result: z.record(z.string(), z.unknown()),
+  dossierRevision: z.number().int().positive().max(10),
+  errorCode: nonblank(120).nullable(),
+}).strict();
+export type ToolObservation = z.infer<typeof toolObservationSchema>;
 
 export const targetDispositionSchema = z.enum([
   "resolved",
@@ -71,6 +90,11 @@ const directorActionSchema = z.discriminatedUnion("type", [
     focus: rectificationFocusSchema,
     question: nonblank(240),
     optionalQuickReplies: z.array(z.object({ label: nonblank(40), value: nonblank(120) }).strict()).max(4),
+  }).strict(),
+  z.object({
+    type: z.literal("request_tool"),
+    tool: rectificationAgentToolSchema,
+    diagnostic: rectificationDiagnosticSchema.nullable(),
   }).strict(),
   z.object({ type: z.literal("request_diagnostic"), diagnostic: rectificationDiagnosticSchema }).strict(),
   z.object({ type: z.literal("offer_candidate_range"), snapshotId: uuid }).strict(),
@@ -158,11 +182,20 @@ export const rectificationCaseDossierSchema = z.object({
     gateReasons: z.array(z.string()).max(20),
     currentSnapshotId: uuid.nullable(),
   }).strict(),
+  runtime: z.object({
+    revision: z.number().int().nonnegative().max(10),
+    observations: z.array(toolObservationSchema).max(10),
+    hypotheses: z.array(z.object({
+      candidateRank: z.number().int().positive(),
+      supportingEventIds: z.array(uuid).max(100),
+      conflictingEventIds: z.array(uuid).max(100),
+    }).strict()).max(4),
+  }).strict(),
   capabilities: z.object({
     supportedDomains: z.array(evidenceDomainSchema),
     supportedEventKinds: z.array(eventKindSchema),
     maxQuestionsPerTurn: z.literal(1),
-    maxDiagnosticsPerRun: z.number().int().min(0).max(2),
+    maxToolRounds: z.literal(10),
     forbiddenPublicClaims: z.array(z.string()),
   }).strict(),
 }).strict();
@@ -456,7 +489,7 @@ export const agentRunSchema = z.object({
   deploymentMode: rectificationDeploymentModeSchema,
   decision: rectificationDecisionSchema.nullable(),
   validatedDecision: validatedDecisionSchema,
-  toolCalls: z.array(toolCallTraceSchema).max(8),
+  toolCalls: z.array(toolCallTraceSchema).max(10),
   fallbackReason: nonblank(120).nullable(),
   inputTokenCount: z.number().int().nonnegative().nullable(),
   outputTokenCount: z.number().int().nonnegative().nullable(),

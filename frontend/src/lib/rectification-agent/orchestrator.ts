@@ -383,8 +383,8 @@ export async function processRectificationAgentTurn(input: Readonly<{
     });
     const plan = directed.plan;
     const action = plan.action;
-    if (action.type === "request_diagnostic") {
-      throw new Error("rectification_director_diagnostic_loop_incomplete");
+    if (action.type === "request_diagnostic" || action.type === "request_tool") {
+      throw new Error("rectification_director_tool_loop_incomplete");
     }
     const decision = action.type === "ask_question"
       ? { action: "ask_question" as const, focus: action.focus, question: action.question }
@@ -400,7 +400,8 @@ export async function processRectificationAgentTurn(input: Readonly<{
     await enterPhase("rendering");
     finishPhase();
     for (const call of directed.toolCalls) analysisToolCalls.push({
-      category: "agent_diagnostic", label: call.diagnostic ? diagnosticLabels[call.diagnostic] : "只读诊断",
+      category: "agent_diagnostic",
+      label: call.diagnostic ? diagnosticLabels[call.diagnostic] : ({ case_read: "读取案件档案", candidate_scan: "读取候选扫描", evidence_gap: "检查证据缺口" } as Record<string, string>)[call.tool] ?? "只读诊断",
       outcome: call.outcome, durationMs: call.durationMs,
     });
     const publicMessage: StoredPublicMessage = {

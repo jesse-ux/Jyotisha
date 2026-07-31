@@ -441,6 +441,15 @@ test("V6 迁移只更新未完成 Case 版本且不写 active_birth_time", () =>
   assert.doesNotMatch(migration, /profiles\s*\.\s*active_birth_time|active_birth_time/i);
 });
 
+test("V8 Director migration advances only unfinished Agent cases", () => {
+  const migration = readFileSync(new URL("../supabase/migrations/20260731020000_rectification_director_v4_runtime.sql", import.meta.url), "utf8");
+  assert.match(migration, /alter column skill_version set default 'birth-time-rectification-v8'/);
+  assert.match(migration, /alter column prompt_version set default 'rectification-director-v4'/);
+  assert.match(migration, /where status in \('awaiting_answer', 'processing', 'paused'\)/);
+  assert.match(migration, /deployment_mode in \('v5_shadow', 'v5_agent'\)/);
+  assert.doesNotMatch(migration, /profiles\s*\.\s*active_birth_time|active_birth_time/i);
+});
+
 test("新事件机会提供具体回忆线索和退出方式，不把离家上大学换词重问成迁居", () => {
   const university = event({ summary: "离家去外地上大学", rawText: "2016年9月离家去外地上大学" });
   const opportunities = buildQuestionOpportunities({

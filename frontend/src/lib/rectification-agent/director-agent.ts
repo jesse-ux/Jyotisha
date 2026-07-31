@@ -6,7 +6,7 @@ import type { CandidateSnapshot, EvidenceDomain, EventKind, LifeEventRevision, P
 import type { TargetDisposition } from "../rectification-v4/extraction.ts";
 import { hasPolicyInvalidScoreableEvents } from "../rectification-v4/evidence-ledger.ts";
 import { buildCandidateContrastPacket } from "./opportunity-builder.ts";
-import { rectificationCaseDossierSchema, rectificationTurnPlanSchema, type DiagnosticsSummary, type RectificationCaseDossier, type RectificationDiagnostic, type RectificationTurnPlan, type ToolCallTrace } from "./contracts.ts";
+import { rectificationCaseDossierSchema, rectificationTurnPlanSchema, type DiagnosticsSummary, type RectificationAgentTool, type RectificationCaseDossier, type RectificationDiagnostic, type RectificationTurnPlan, type ToolCallTrace, type ToolObservation } from "./contracts.ts";
 
 const skillPath = process.env.RECTIFICATION_SKILL_PATH?.trim() || path.resolve(process.cwd(), "..", "skills", "birth-time-rectification");
 const domains: EvidenceDomain[] = ["education", "relocation", "relationship", "career", "finance", "health_pressure", "family", "other"];
@@ -28,7 +28,7 @@ function asksMultipleQuestions(value: string): boolean {
 const declinedPattern = /(?:不想说|不方便说|不想回答|跳过|这个不说|换个方向|不聊这个)/u;
 type Generated = Readonly<{ object: unknown; totalUsage?: { inputTokens?: number; outputTokens?: number } | Promise<{ inputTokens?: number; outputTokens?: number }> }>;
 const regeneratedQuestionSchema = z.object({ question: z.string().trim().min(8).max(500) }).strict();
-export type RectificationDirectorGenerator = (prompt: string, phase: "evidence" | "final" | "after_diagnostic" | "repair") => Promise<Generated>;
+export type RectificationDirectorGenerator = (prompt: string, phase: "evidence" | "final" | "after_observation" | "converge" | "repair") => Promise<Generated>;
 
 function summarizeEarlierTurns(turns: readonly RectificationV4Turn[]): string | null {
   const older = turns.slice(0, -12);
@@ -57,7 +57,15 @@ export function buildRectificationCaseDossier(input: Readonly<{ caseValue: Recti
     eventLedger: input.events.map((event) => ({ eventId: event.eventId, revision: event.revision, summary: event.summary, rawText: event.rawText, domain: event.domain, eventKind: event.eventKind, subject: event.subject, relatedPerson: event.relatedPerson, dateRange: event.dateRange, scoreability: event.scoreability, status: latest.get(event.eventId) === event.revision ? "active" : "superseded" })),
     interviewState: { currentTargetEventId: input.currentTargetEventId, declinedDomains: [...new Set(input.turns.flatMap((turn) => turn.questionDomain && declinedPattern.test(turn.answer) ? [turn.questionDomain] : []))], unresolvedTargets: [...new Set([...(input.currentTargetEventId && ["unresolved", "answered_other_event"].includes(input.targetDisposition) ? [input.currentTargetEventId] : []), ...(input.pendingEvidence ?? []).flatMap((item) => item.targetEventId ? [item.targetEventId] : [])])], pendingEvidence: (input.pendingEvidence ?? []).filter((item) => !item.resolvedAt).map(({ rawText, reasonCode, targetEventId, createdAt }) => ({ rawText, reasonCode, targetEventId, createdAt })), askedTopics: input.turns.slice(-50).map((turn) => turn.question), turnCount: input.turns.length, targetDisposition: input.targetDisposition },
     candidateState: { hasSnapshot: Boolean(input.snapshot), publicRangeAllowed, rangeChanged: input.previousSnapshot?.clusters[0]?.startTime !== input.snapshot?.clusters[0]?.startTime || input.previousSnapshot?.clusters[0]?.endTime !== input.snapshot?.clusters[0]?.endTime, topClusters: (input.snapshot?.clusters ?? []).slice(0, 4).map((cluster) => ({ rank: cluster.rank, widthMinutes: cluster.widthMinutes, stability: publicRangeAllowed ? "stable" : "unstable" })), contrasts: (input.diagnostics?.candidateSplits ?? []).map((split) => ({ techniqueLayers: split.techniqueLayers, relevantEventIds: split.eventIds })), contrastIntelligence: buildCandidateContrastPacket({ events: input.events, snapshot: input.snapshot, diagnostics: input.diagnostics }), eventDiagnostics: (input.diagnostics?.eventDateSensitivity ?? []).map((item) => ({ eventId: item.eventId, winnerRetentionRate: item.winnerRetentionRate, scoreVariance: item.scoreVariance })), gateReasons: input.snapshot?.gateReasons ?? [], currentSnapshotId: input.snapshot?.id ?? null },
-    capabilities: { supportedDomains: domains, supportedEventKinds: kinds, maxQuestionsPerTurn: 1, maxDiagnosticsPerRun: 2, forbiddenPublicClaims: ["exact_birth_minute", "private_scores", "internal_ids", "technique_trace"] },
+    runtime: {
+      revision: 0,
+      observations: [],
+      hypotheses: (input.snapshot?.clusters ?? []).slice(0, 4).map((cluster) => {
+        const candidate = input.snapshot?.candidates.find((item) => item.time === cluster.representativeTime);
+        return { candidateRank: cluster.rank, supportingEventIds: candidate?.supportingEventIds ?? [], conflictingEventIds: candidate?.conflictingEventIds ?? [] };
+      }),
+    },
+    capabilities: { supportedDomains: domains, supportedEventKinds: kinds, maxQuestionsPerTurn: 1, maxToolRounds: 10, forbiddenPublicClaims: ["exact_birth_minute", "private_scores", "internal_ids", "technique_trace"] },
   });
 }
 
@@ -146,7 +154,7 @@ export async function regenerateDirectorQuestion(input: Readonly<{
 export async function runRectificationDirector(input: Readonly<{ caseValue: RectificationV4Case; dossier: RectificationCaseDossier; latestAnswer: string; phase: "evidence" | "final"; diagnostics: DiagnosticsSummary; timeoutMs?: number; generatePlan?: RectificationDirectorGenerator }>) {
   const started = Date.now();
   const model = (input.caseValue.orchestrationModelId ? resolveLanguageModel(input.caseValue.orchestrationModelId) : null) ?? defaultLanguageModel();
-  const agent = model ? new Agent({ id: `rectification-director-${model.id}`, name: "Birth Time Rectification Director", model: model.model, skills: [skillPath], instructions: "Direct the interview from the complete dossier. Propose every explicit event in the latest answer, choose the current focus, and write the public reply plus at most one natural question. Never write scores, internal ids, profile values, candidate minutes, status, phase, or database mutations. Return strict structured output." }) : null;
+  const agent = model ? new Agent({ id: `rectification-director-${model.id}`, name: "Birth Time Rectification Director", model: model.model, skills: [skillPath], instructions: "Direct the interview from the server-owned dossier and tool observations. Propose every explicit event in the latest answer, choose the current focus, and write the public reply plus at most one natural question. In final planning, use the server-owned read-only tools to inspect the case, candidate scan, evidence gaps, or one diagnostic at a time. Adapt after every observation, never repeat an immutable tool call in the same run, and converge as soon as another tool adds no value. Never write scores, internal ids, profile values, candidate minutes, status, phase, or database mutations. Return strict structured output." }) : null;
   const generate = input.generatePlan ?? (async (prompt: string) => {
     if (!agent) throw new Error("director_model_unavailable");
     return agent.generate(prompt, { abortSignal: AbortSignal.timeout(input.timeoutMs ?? 25_000), structuredOutput: { schema: rectificationTurnPlanSchema, jsonPromptInjection: "inline" } });
@@ -154,7 +162,7 @@ export async function runRectificationDirector(input: Readonly<{ caseValue: Rect
   let inputTokens = 0, outputTokens = 0;
   let usageObserved = false;
   const toolCalls: ToolCallTrace[] = [];
-  const diagnosticResults: Array<{ diagnostic: RectificationDiagnostic; result: ReturnType<typeof diagnosticResult> }> = [];
+  let dossier = input.dossier;
   const addUsage = async (generated: Generated) => {
     if (!generated.totalUsage) return;
     const usage = await generated.totalUsage;
@@ -162,31 +170,91 @@ export async function runRectificationDirector(input: Readonly<{ caseValue: Rect
     outputTokens += Math.max(0, Math.trunc(usage.outputTokens ?? 0));
     usageObserved = true;
   };
+  const requestedTool = (action: RectificationTurnPlan["action"]): Readonly<{ tool: RectificationAgentTool; diagnostic: RectificationDiagnostic | null }> | null => {
+    if (action.type === "request_tool") {
+      if ((action.tool === "diagnostic_read") !== Boolean(action.diagnostic)) throw new Error("director_tool_request_invalid");
+      return { tool: action.tool, diagnostic: action.diagnostic };
+    }
+    if (action.type === "request_diagnostic") return { tool: "diagnostic_read", diagnostic: action.diagnostic };
+    return null;
+  };
+  const toolKey = (request: Readonly<{ tool: RectificationAgentTool; diagnostic: RectificationDiagnostic | null }>) => `${request.tool}:${request.diagnostic ?? ""}`;
+  const promptDossier = () => input.phase === "evidence" ? dossier : {
+    runtime: { revision: dossier.runtime.revision, observations: dossier.runtime.observations },
+    capabilities: dossier.capabilities,
+    availableTools: {
+      readOnly: ["case_read", "candidate_scan", "evidence_gap"],
+      diagnostics: ["leave_one_event_out", "leave_one_domain_out", "date_sensitivity", "neighbor_stability", "candidate_split"],
+    },
+  };
+  const executeTool = (request: Readonly<{ tool: RectificationAgentTool; diagnostic: RectificationDiagnostic | null }>, round: number): ToolObservation => {
+    const result = request.tool === "case_read"
+      ? { case: dossier.case, conversation: dossier.conversation, eventLedger: dossier.eventLedger, interviewState: dossier.interviewState }
+      : request.tool === "candidate_scan"
+        ? { candidateState: dossier.candidateState, hypotheses: dossier.runtime.hypotheses }
+        : request.tool === "evidence_gap"
+          ? { pendingEvidence: dossier.interviewState.pendingEvidence, contrastIntelligence: dossier.candidateState.contrastIntelligence, hypotheses: dossier.runtime.hypotheses }
+          : { diagnostic: request.diagnostic, result: diagnosticResult(request.diagnostic!, input.diagnostics) };
+    return { round, tool: request.tool, diagnostic: request.diagnostic, outcome: "succeeded", result, dossierRevision: dossier.runtime.revision + 1, errorCode: null };
+  };
   try {
-    const first = await generate(JSON.stringify({ task: input.phase === "evidence" ? "Interpret the latest answer and propose every explicit event. The action is provisional." : "Choose the final action and public response. evidenceProposals must be empty because staging is complete.", latestAnswer: input.latestAnswer, dossier: input.dossier }), input.phase);
+    const first = await generate(JSON.stringify({ task: input.phase === "evidence" ? "Interpret the latest answer and propose every explicit event. The action is provisional." : "Choose the final action and public response. evidenceProposals must be empty. Use a read-only tool only when its observation can materially change the next action.", latestAnswer: input.latestAnswer, dossier: promptDossier() }), input.phase);
     await addUsage(first);
     let candidate = rectificationTurnPlanSchema.parse(first.object);
-    while (input.phase === "final" && candidate.action.type === "request_diagnostic" && toolCalls.length < input.dossier.capabilities.maxDiagnosticsPerRun) {
+    const observedTools = new Set<string>();
+    let convergenceReason: "tool_repeated" | "tool_round_limit" | null = null;
+    let request = requestedTool(candidate.action);
+    while (input.phase === "final" && request) {
+      const key = toolKey(request);
+      if (observedTools.has(key)) {
+        convergenceReason = "tool_repeated";
+        break;
+      }
+      if (toolCalls.length >= dossier.capabilities.maxToolRounds) {
+        convergenceReason = "tool_round_limit";
+        break;
+      }
       const toolStarted = Date.now();
-      const result = diagnosticResult(candidate.action.diagnostic, input.diagnostics);
-      diagnosticResults.push({ diagnostic: candidate.action.diagnostic, result });
-      toolCalls.push({ tool: "run_rectification_diagnostics", diagnostic: candidate.action.diagnostic, outcome: "succeeded", durationMs: Date.now() - toolStarted, errorCode: null });
-      const second = await generate(JSON.stringify({ task: "Use the diagnostic results and return a final non-diagnostic action with no evidence proposals.", latestAnswer: input.latestAnswer, dossier: input.dossier, diagnosticResults }), "after_diagnostic");
-      await addUsage(second);
-      candidate = rectificationTurnPlanSchema.parse(second.object);
+      const observation = executeTool(request, toolCalls.length + 1);
+      observedTools.add(key);
+      dossier = rectificationCaseDossierSchema.parse({
+        ...dossier,
+        runtime: { ...dossier.runtime, revision: observation.dossierRevision, observations: [...dossier.runtime.observations, observation] },
+      });
+      toolCalls.push({ tool: request.tool, diagnostic: request.diagnostic, outcome: observation.outcome, durationMs: Date.now() - toolStarted, errorCode: observation.errorCode });
+      const next = await generate(JSON.stringify({
+        task: "Read the updated dossier and latest observation. Request another unobserved read-only tool only if it can materially change the interview strategy; otherwise converge to one final non-tool action. evidenceProposals must stay empty.",
+        latestAnswer: input.latestAnswer,
+        dossier: promptDossier(),
+        latestObservation: observation,
+        loopState: { round: toolCalls.length, maxRounds: dossier.capabilities.maxToolRounds, observedTools: [...observedTools] },
+      }), "after_observation");
+      await addUsage(next);
+      candidate = rectificationTurnPlanSchema.parse(next.object);
+      request = requestedTool(candidate.action);
     }
-    if (input.phase === "final" && candidate.action.type === "request_diagnostic") throw new Error("director_final_plan_not_final");
-    let validated = validateRectificationTurnPlan({ plan: candidate, dossier: input.dossier, latestAnswer: input.latestAnswer, phase: input.phase });
+    if (input.phase === "final" && requestedTool(candidate.action)) {
+      const converged = await generate(JSON.stringify({
+        task: "The tool loop has reached its convergence boundary. Return one safe final non-tool action now; do not request another tool and keep evidenceProposals empty.",
+        latestAnswer: input.latestAnswer,
+        dossier: promptDossier(),
+        loopState: { round: toolCalls.length, maxRounds: dossier.capabilities.maxToolRounds, observedTools: [...observedTools], convergenceReason: convergenceReason ?? "tool_round_limit" },
+      }), "converge");
+      await addUsage(converged);
+      candidate = rectificationTurnPlanSchema.parse(converged.object);
+      if (requestedTool(candidate.action)) throw new Error("director_final_plan_not_final");
+    }
+    let validated = validateRectificationTurnPlan({ plan: candidate, dossier, latestAnswer: input.latestAnswer, phase: input.phase });
     if (!validated.plan) {
-      const repaired = await generate(JSON.stringify({ task: "Repair the rejected plan once. Preserve grounded facts, return one safe final plan, and address every validation issue.", latestAnswer: input.latestAnswer, dossier: input.dossier, rejectedPlan: candidate, validationIssues: validated.issues }), "repair");
+      const repaired = await generate(JSON.stringify({ task: "Repair the rejected plan once. Preserve grounded facts, return one safe final plan, and address every validation issue.", latestAnswer: input.latestAnswer, dossier: promptDossier(), rejectedPlan: candidate, validationIssues: validated.issues }), "repair");
       await addUsage(repaired);
       candidate = rectificationTurnPlanSchema.parse(repaired.object);
-      if (candidate.action.type === "request_diagnostic") throw new Error("director_repair_requested_diagnostic");
-      validated = validateRectificationTurnPlan({ plan: candidate, dossier: input.dossier, latestAnswer: input.latestAnswer, phase: input.phase });
+      if (requestedTool(candidate.action)) throw new Error("director_repair_requested_tool");
+      validated = validateRectificationTurnPlan({ plan: candidate, dossier, latestAnswer: input.latestAnswer, phase: input.phase });
     }
     if (!validated.plan) throw new Error(`director_plan_rejected:${validated.issues.join(",")}`);
-    return { plan: validated.plan, mode: "agent" as const, fallbackReason: null, toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
+    return { plan: validated.plan, dossier, mode: "agent" as const, fallbackReason: null, toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
   } catch (error) {
-    return { plan: fallback(input.dossier, input.latestAnswer), mode: "deterministic_fallback" as const, fallbackReason: error instanceof Error ? error.message.slice(0, 120) : "director_failed", toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
+    return { plan: fallback(dossier, input.latestAnswer), dossier, mode: "deterministic_fallback" as const, fallbackReason: error instanceof Error ? error.message.slice(0, 120) : "director_failed", toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
   }
 }

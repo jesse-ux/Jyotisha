@@ -51,6 +51,18 @@ export function rectificationPhaseLabel(
   return phaseLabels[phase];
 }
 
+export function rectificationProgressLabel(
+  phase: NonNullable<RectificationV4ApiResponse["job"]>["phase"],
+): string {
+  const activeStep = ["collecting_evidence", "extracting_evidence"].includes(phase)
+    ? 0
+    : ["scoring_candidates", "checking_robustness"].includes(phase)
+      ? 1
+      : 2;
+  const steps = ["整理已确认事件", "比较候选时间差异", "确定下一步验证方向"];
+  return [`${rectificationPhaseLabel(phase)}\n正在分析：`, ...steps.map((step, index) => `${index < activeStep || phase === "complete" ? "✓" : index === activeStep ? "●" : "○"} ${step}`)].join("\n");
+}
+
 function durationLabel(durationMs: number | null): string | null {
   if (durationMs === null || durationMs < 0) return null;
   return durationMs < 1_000 ? `${durationMs} 毫秒` : `${(durationMs / 1_000).toFixed(1)} 秒`;
@@ -246,7 +258,7 @@ export function rectificationV4ChatMessages(
   if (processing) {
     messages.push({
       role: "assistant",
-      text: rectificationPhaseLabel(data.job?.phase ?? caseValue.phase),
+      text: rectificationProgressLabel(data.job?.phase ?? caseValue.phase),
       renderKey: `rectification-processing-${data.job?.id ?? caseValue.version}`,
       state: "thinking",
     });

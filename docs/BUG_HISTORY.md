@@ -1866,3 +1866,19 @@
 - 防复发：完整回放测试必须同时覆盖事件账本、问题排序、退出方式和公开文本；评分版本变化必须同步 Case 复用、数据库默认值和历史快照兼容；Case 创建测试必须随后真实调用一次 Answer。
 - 相关记录：BUG-101、BUG-102、BUG-104
 - 修复版本：local follow-up / `rectification-v5-matrix-scoring-2`
+
+## BUG-106 | Director 缺少统一工具 Observation 与可更新 Dossier
+
+- 状态：resolved
+- 首次发现：2026-07-31
+- 最近更新：2026-07-31
+- 影响面：V8 生时纠正 Director Runtime、Skill 决策策略、Agent Run 诊断轨迹和未完成 Case 版本元数据
+- 用户现象：Director 虽然能够请求只读诊断，但 Case、候选扫描和证据缺口仍由固定流程一次性塞入 prompt；取得结果后最多再读两次诊断，Dossier 本身不随观察更新，前端处理中也只显示单行状态。
+- 触发条件：最终决策需要依次读取案件、候选差异、证据缺口和某项稳定性诊断才能决定下一问；或模型重复请求本轮已经读取过的静态工具。
+- 根因：Director 合同只有 `request_diagnostic`，Dossier 没有 revision、Observation 和候选假设；Runtime 只累计旁路诊断数组，前端没有把既有 Job phase 投影成稳定的分析步骤。
+- 修复：新增服务器拥有的 `case_read`、`candidate_scan`、`evidence_gap`、`diagnostic_read` 统一只读工具；最终规划首轮只提供 Runtime 与工具可用性，不再预载这些工具拥有的完整数据。每次调用按需暴露当前权威服务器投影、生成结构化 Observation、递增 in-run Dossier revision，并把更新后的 Dossier 交回同一 Director。循环最多 10 轮，静态工具按工具+诊断去重，越界后只允许一次强制收敛；前端复用现有 Job phase 显示“整理事件 / 比较候选 / 确定验证方向”三步进度。Skill/Prompt 升级为 `birth-time-rectification-v8` / `rectification-director-v4`，向前迁移只推进未完成的 Agent Case，不改历史完成结果、评分算法或 Profile 出生时间。
+- 验证：Director 回归覆盖 `case_read → candidate_scan → evidence_gap → diagnostic_read → final`、每轮 Dossier revision/Observation 回灌、重复工具不重复执行、一次强制收敛和单问题最终动作；前端回归覆盖三个公开分析步骤；V8 迁移合同覆盖默认版本、未完成 Agent Case 范围和禁止写入 `active_birth_time`。
+- 安全边界：服务器继续拥有事件事实、工具结果、候选 Snapshot、公开范围门禁、持久化与最终输出验证；Observation 只存在于本次 Agent Run 的内存 Dossier，不成为第二业务真源，也不向前端公开原始结果、内部技术层、候选分钟或评分。
+- 防复发：不得把每次诊断后的 prompt 改回“必须立即结束”；增加新工具时必须定义 observation 是否会在同一 Turn 变化、重复调用策略和总轮次上限。
+- 相关记录：BUG-101、BUG-102、BUG-105
+- 修复版本：`birth-time-rectification-v8` / `rectification-director-v4`

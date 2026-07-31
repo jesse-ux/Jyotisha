@@ -38,8 +38,8 @@ const caseValue: RectificationV4Case = {
   latestSnapshot: null,
   orchestrationModelId: null,
   narrationModelId: null,
-  skillVersion: "birth-time-rectification-v6",
-  promptVersion: "rectification-director-v1",
+  skillVersion: "birth-time-rectification-v8",
+  promptVersion: "rectification-director-v4",
   algorithmVersion: "rectification-v5-matrix-scoring-1",
   deploymentMode: "v5_agent",
   agentMode: "agent",
@@ -319,7 +319,7 @@ test("explicit subject correction is grounded and enters pending review", () => 
   assert.equal(staged.revisions[0]?.scoreability, "pending_review");
 });
 
-test("declined targets cannot be reopened and diagnostics stay in a bounded tool loop", async () => {
+test("declined targets cannot be reopened and the Director adapts through server-owned observations", async () => {
   const target = event({ eventId: "00000000-0000-4000-8000-000000000706" });
   const targetDossier = buildRectificationCaseDossier({ caseValue, turns: [], events: [target], snapshot: null, diagnostics: null, targetDisposition: "declined", currentTargetEventId: target.eventId });
   const reopened = plan({ targetDisposition: "declined", action: { type: "ask_question", focus: { mode: "clarify_existing_event", targetEventId: target.eventId, domain: target.domain, requestedFacts: ["month"], rationaleCodes: ["retry"] }, question: "再说说那件事？", optionalQuickReplies: [] } });
@@ -327,6 +327,55 @@ test("declined targets cannot be reopened and diagnostics stay in a bounded tool
   const reopenedWithoutId = plan({ targetDisposition: "declined", action: { type: "ask_question", focus: { mode: "clarify_existing_event", targetEventId: null, domain: target.domain, requestedFacts: ["month"], rationaleCodes: ["retry"] }, question: "再说说那件事？", optionalQuickReplies: [] } });
   assert.ok(validateRectificationTurnPlan({ plan: reopenedWithoutId, dossier: targetDossier, latestAnswer: "不想说", phase: "final" }).issues.includes("declined_target_reopened"));
 
+  const phases: string[] = [];
+  const prompts: string[] = [];
+  const requests = [
+    { tool: "case_read", diagnostic: null },
+    { tool: "candidate_scan", diagnostic: null },
+    { tool: "evidence_gap", diagnostic: null },
+    { tool: "diagnostic_read", diagnostic: "candidate_split" },
+  ] as const;
+  const result = await runRectificationDirector({
+    caseValue,
+    dossier: dossier(),
+    latestAnswer: "",
+    phase: "final",
+    diagnostics,
+    generatePlan: async (prompt, phase) => {
+      phases.push(phase);
+      prompts.push(prompt);
+      const request = requests[phases.length - 1];
+      return { object: request ? plan({ action: { type: "request_tool", ...request } }) : plan() };
+    },
+  });
+  assert.equal(result.mode, "agent");
+  assert.deepEqual(phases, ["final", "after_observation", "after_observation", "after_observation", "after_observation"]);
+  assert.deepEqual(result.toolCalls.map(({ tool, diagnostic }) => [tool, diagnostic]), [
+    ["case_read", null],
+    ["candidate_scan", null],
+    ["evidence_gap", null],
+    ["diagnostic_read", "candidate_split"],
+  ]);
+  assert.equal(dossier().capabilities.maxToolRounds, 10);
+  const firstPrompt = JSON.parse(prompts[0]!);
+  assert.equal(firstPrompt.dossier.eventLedger, undefined);
+  assert.equal(firstPrompt.dossier.candidateState, undefined);
+  assert.equal(firstPrompt.dossier.runtime.hypotheses, undefined);
+  assert.deepEqual(firstPrompt.dossier.availableTools.readOnly, ["case_read", "candidate_scan", "evidence_gap"]);
+  const caseObservationPrompt = JSON.parse(prompts[1]!);
+  assert.ok(Array.isArray(caseObservationPrompt.latestObservation.result.eventLedger));
+  assert.equal(caseObservationPrompt.dossier.runtime.observations[0].tool, "case_read");
+  const candidateObservationPrompt = JSON.parse(prompts[2]!);
+  assert.equal(candidateObservationPrompt.latestObservation.result.candidateState.hasSnapshot, false);
+  assert.ok(Array.isArray(candidateObservationPrompt.latestObservation.result.hypotheses));
+  const finalPrompt = JSON.parse(prompts[4]!);
+  assert.equal(finalPrompt.dossier.runtime.revision, 4);
+  assert.deepEqual(finalPrompt.dossier.runtime.observations.map((item: { tool: string }) => item.tool), requests.map(({ tool }) => tool));
+  assert.equal(result.dossier.runtime.revision, 4);
+  assert.equal(result.plan.action.type, "ask_question");
+});
+
+test("repeated immutable tools are not executed twice and force one convergence decision", async () => {
   const phases: string[] = [];
   const prompts: string[] = [];
   const result = await runRectificationDirector({
@@ -338,13 +387,18 @@ test("declined targets cannot be reopened and diagnostics stay in a bounded tool
     generatePlan: async (prompt, phase) => {
       phases.push(phase);
       prompts.push(prompt);
-      return { object: phases.length <= 2 ? plan({ action: { type: "request_diagnostic", diagnostic: phases.length === 1 ? "candidate_split" : "date_sensitivity" } }) : plan() };
+      return { object: phase === "converge" ? plan() : plan({ action: { type: "request_tool", tool: "candidate_scan", diagnostic: null } }) };
     },
   });
   assert.equal(result.mode, "agent");
-  assert.deepEqual(phases, ["final", "after_diagnostic", "after_diagnostic"]);
-  assert.equal(result.toolCalls.length, 2);
-  assert.deepEqual(JSON.parse(prompts[2]!).diagnosticResults.map((item: { diagnostic: string }) => item.diagnostic), ["candidate_split", "date_sensitivity"]);
+  assert.deepEqual(phases, ["final", "after_observation", "converge"]);
+  assert.equal(result.toolCalls.length, 1);
+  assert.deepEqual(JSON.parse(prompts[2]!).loopState, {
+    round: 1,
+    maxRounds: 10,
+    observedTools: ["candidate_scan:"],
+    convergenceReason: "tool_repeated",
+  });
   assert.equal(result.plan.action.type, "ask_question");
 });
 
