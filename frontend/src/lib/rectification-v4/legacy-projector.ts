@@ -56,6 +56,7 @@ export function projectLegacyV4Turn(input: Readonly<{
         : input.latestAnswer
           ? "我保留了你刚才的原始描述；目前还没有足够明确的新日期可以直接进入评分。"
           : "我会继续根据已确认的人生事件比较候选范围。",
+      evidenceExplanation: null,
       candidateUpdate: primary
         ? `目前较集中的候选仍是 ${primary.startTime}–${primary.endTime}；这只是待验证范围，不代表其中某一分钟已被确认。`
         : null,

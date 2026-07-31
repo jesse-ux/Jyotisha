@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import {
   canRegenerateRectificationMessage,
+  rectificationPhaseActivityState,
   rectificationV4ChatMessages,
   rectificationPhaseLabel, rectificationProgressLabel,
   toggleRectificationFeedback,
@@ -246,13 +247,13 @@ test("processing follows every server job phase returned by polling", () => {
   } as const;
   let data = { ...base, job } as unknown as RectificationV4ApiResponse;
   const phases = [
-    ["extracting_evidence", "正在整理你刚才提到的经历…"],
-    ["planning_question", "正在生成语义问题机会…"],
-    ["reasoning", "正在选择下一步动作…"],
-    ["rendering", "正在生成安全回复…"],
+    ["extracting_evidence", "正在整理你刚才提到的经历…", "working"],
+    ["planning_question", "正在生成语义问题机会…", "shaping"],
+    ["reasoning", "正在选择下一步动作…", "solving"],
+    ["rendering", "正在生成安全回复…", "composing"],
   ] as const;
 
-  for (const [phase, label] of phases) {
+  for (const [phase, label, activityState] of phases) {
     const updated = applyRectificationV4JobUpdate(data, { ...job, phase });
     assert.ok(updated);
     data = updated;
@@ -260,12 +261,16 @@ test("processing follows every server job phase returned by polling", () => {
     assert.equal(message?.role, "assistant");
     assert.equal(message?.state, "thinking");
     assert.equal(message?.text, rectificationProgressLabel(phase));
-    assert.match(message?.text ?? "", new RegExp(label));
+    assert.equal(message?.text, label);
+    assert.equal(message?.activityState, activityState);
   }
   assert.equal(rectificationPhaseLabel("checking_robustness"), "正在检查候选范围的稳定性…");
-  assert.equal(rectificationProgressLabel("extracting_evidence"), "正在整理你刚才提到的经历…\n正在分析：\n● 整理已确认事件\n○ 比较候选时间差异\n○ 确定下一步验证方向");
-  assert.equal(rectificationProgressLabel("checking_robustness"), "正在检查候选范围的稳定性…\n正在分析：\n✓ 整理已确认事件\n● 比较候选时间差异\n○ 确定下一步验证方向");
-  assert.equal(rectificationProgressLabel("reasoning"), "正在选择下一步动作…\n正在分析：\n✓ 整理已确认事件\n✓ 比较候选时间差异\n● 确定下一步验证方向");
+  assert.equal(rectificationProgressLabel("extracting_evidence"), "正在整理你刚才提到的经历…");
+  assert.equal(rectificationProgressLabel("checking_robustness"), "正在检查候选范围的稳定性…");
+  assert.equal(rectificationProgressLabel("reasoning"), "正在选择下一步动作…");
+  assert.equal(rectificationPhaseActivityState("collecting_evidence"), "listening");
+  assert.equal(rectificationPhaseActivityState("scoring_candidates"), "searching");
+  assert.doesNotMatch(rectificationProgressLabel("reasoning"), /正在分析：|整理已确认事件|比较候选时间差异|确定下一步验证方向/);
 });
 
 test("polling ignores an older job response so the visible phase cannot move backward", () => {

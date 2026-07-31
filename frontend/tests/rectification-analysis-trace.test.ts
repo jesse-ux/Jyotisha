@@ -557,6 +557,41 @@ test("a newly collected year-only event stays current until its month is refined
   assert.equal(created.dateRange.precision, "year");
   assert.equal(result.nextQuestion?.targetEventId, created.eventId);
   assert.match(result.nextQuestion?.prompt ?? "", /离家去外地上大学/);
+  assert.match(result.nextQuestion?.prompt ?? "", /交叉比较候选范围/);
   assert.match(result.nextQuestion?.prompt ?? "", /哪个月|时间段/);
   assert.doesNotMatch(result.nextQuestion?.prompt ?? "", /还能想到一件/);
+});
+
+test("a completed internship answer is acknowledged, explained, and followed by one contrast-driven domain question", async () => {
+  const university = event("education", "education_milestone", "离家去外地上大学", "2016-09");
+  const base = makeClaimed([university]);
+  const earlierTurn: RectificationV4Turn = {
+    ...base.turn,
+    id: randomUUID(),
+    caseVersion: 1,
+    questionDomain: "education",
+    question: "请说一件时间比较确定的经历。",
+    answer: university.rawText,
+  };
+  const turn: RectificationV4Turn = {
+    ...base.turn,
+    id: randomUUID(),
+    caseVersion: 2,
+    questionDomain: "career",
+    question: "有没有一件工作状态明显变化的经历？",
+    answer: "2020 年 4 月去石油化工研究院实习做研究员",
+  };
+  const result = await processRectificationAgentTurn({
+    claimed: { ...base, turn, turns: [earlierTurn, turn] },
+    engine: { score: async () => { throw new Error("candidate_engine_should_not_run"); } },
+    now: new Date(now),
+  });
+
+  assert.equal(result.newEventRevisions.at(-1)?.domain, "career");
+  assert.notEqual(result.nextQuestion?.domain, "education");
+  assert.notEqual(result.nextQuestion?.domain, "career");
+  assert.match(result.nextQuestion?.prompt ?? "", /石油化工研究院|实习|研究员/);
+  assert.match(result.nextQuestion?.prompt ?? "", /交叉比较候选范围/);
+  assert.doesNotMatch(result.nextQuestion?.prompt ?? "", /你还能想到一件发生在你本人身上、时间大致确定的重要经历吗/);
+  assert.equal((result.nextQuestion?.prompt.match(/[?？]/g) ?? []).length, 1);
 });

@@ -6,6 +6,7 @@ import {
   type DiagnosticsSummary,
   type QuestionOpportunity,
 } from "../src/lib/rectification-agent/contracts.ts";
+import { assertRectificationSkillLoaded } from "../src/lib/rectification-agent/skill-runtime.ts";
 import { recordRectificationAgentTelemetry } from "../src/lib/rectification-agent/telemetry.ts";
 
 const caseId = "00000000-0000-4000-8000-000000000800";
@@ -129,6 +130,28 @@ test("agent telemetry rejects malformed events and warns on failures", () => {
   assert.equal(info.length, 0);
   assert.equal(warnings.length, 1);
   assert.match(warnings[0] ?? "", /\[rectification-agent\].*"outcome":"failed"/);
+});
+
+test("skill loading emits explicit success or failure telemetry without leaking a path", async () => {
+  const info: string[] = [];
+  const warnings: string[] = [];
+  const originalInfo = console.info;
+  const originalWarn = console.warn;
+  console.info = (message) => info.push(String(message));
+  console.warn = (message) => warnings.push(String(message));
+  try {
+    await assertRectificationSkillLoaded({ getSkill: async () => ({ name: "birth-time-rectification" }) }, { caseId, modelId: "test-model", deploymentSha: "test-sha" });
+    await assert.rejects(
+      assertRectificationSkillLoaded({ getSkill: async () => null }, { caseId, modelId: "test-model", deploymentSha: "test-sha" }),
+      /rectification_skill_not_loaded/,
+    );
+  } finally {
+    console.info = originalInfo;
+    console.warn = originalWarn;
+  }
+  assert.match(info[0] ?? "", /"phase":"skill".*"loadStatus":"loaded"/);
+  assert.match(warnings[0] ?? "", /"phase":"skill".*"errorCode":"rectification_skill_not_loaded"/);
+  assert.doesNotMatch([...info, ...warnings].join("\n"), /private\/tmp|SKILL\.md/);
 });
 
 test("durable event semantics migration validates and persists subject fields", () => {

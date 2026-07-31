@@ -2,11 +2,11 @@
 
 import { ArrowUp, Check, Copy, RotateCcw, ThumbsDown, ThumbsUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { AgentActivityStatus } from "@/components/agent-activity-status";
+import { AgentActivityStatus, type AgentActivityState } from "@/components/agent-activity-status";
 import { useRectificationV4 } from "@/hooks/use-rectification-v4";
 import type { ChatMessageView } from "@/lib/chat-message-view";
 import type { PublicLanguageModel } from "@/lib/public-models";
-import type { RectificationAnalysisItem, RectificationAnalysisTrace, RectificationV4ApiResponse } from "@/lib/rectification-v4/contracts";
+import type { RectificationAnalysisItem, RectificationAnalysisTrace, RectificationAssistantMessage, RectificationV4ApiResponse } from "@/lib/rectification-v4/contracts";
 import { AgentAvatar, ChatMessageRow } from "./chat-message-row";
 import { ModelSelector } from "./model-selector";
 import { Button } from "./ui/button";
@@ -32,7 +32,10 @@ type RectificationV4PanelProps = Readonly<{
 
 type RectificationChatMessageView = ChatMessageView & Readonly<{
   analysisTrace?: RectificationAnalysisTrace;
+  activityState?: AgentActivityState;
 }>;
+
+type RectificationPhase = NonNullable<RectificationV4ApiResponse["job"]>["phase"];
 
 const phaseLabels = {
   collecting_evidence: "正在准备继续收集经历…",
@@ -45,22 +48,31 @@ const phaseLabels = {
   complete: "分析已完成",
 } as const;
 
+const phaseActivityStates = {
+  collecting_evidence: "listening",
+  extracting_evidence: "working",
+  scoring_candidates: "searching",
+  checking_robustness: "solving",
+  planning_question: "shaping",
+  reasoning: "solving",
+  rendering: "composing",
+  complete: "shaping",
+} as const satisfies Record<RectificationPhase, AgentActivityState>;
+
 export function rectificationPhaseLabel(
-  phase: NonNullable<RectificationV4ApiResponse["job"]>["phase"],
+  phase: RectificationPhase,
 ): string {
   return phaseLabels[phase];
 }
 
 export function rectificationProgressLabel(
-  phase: NonNullable<RectificationV4ApiResponse["job"]>["phase"],
+  phase: RectificationPhase,
 ): string {
-  const activeStep = ["collecting_evidence", "extracting_evidence"].includes(phase)
-    ? 0
-    : ["scoring_candidates", "checking_robustness"].includes(phase)
-      ? 1
-      : 2;
-  const steps = ["整理已确认事件", "比较候选时间差异", "确定下一步验证方向"];
-  return [`${rectificationPhaseLabel(phase)}\n正在分析：`, ...steps.map((step, index) => `${index < activeStep || phase === "complete" ? "✓" : index === activeStep ? "●" : "○"} ${step}`)].join("\n");
+  return rectificationPhaseLabel(phase);
+}
+
+export function rectificationPhaseActivityState(phase: RectificationPhase): AgentActivityState {
+  return phaseActivityStates[phase];
 }
 
 function durationLabel(durationMs: number | null): string | null {
@@ -144,7 +156,7 @@ function RectificationMessageRow({ message }: Readonly<{ message: RectificationC
       <AgentAvatar />
       <div className="message-content">
         <div className="message-bubble">
-          <AgentActivityStatus state="working" label={message.text} />
+          <AgentActivityStatus state={message.activityState ?? "working"} label={message.text} />
         </div>
       </div>
     </article>
@@ -173,6 +185,13 @@ export function canRegenerateRectificationMessage(input: Readonly<{
     && input.canAnswer;
 }
 
+
+export function composeRectificationAssistantMessage(message: RectificationAssistantMessage): string {
+  return [message.acknowledgement, message.evidenceExplanation, message.candidateUpdate, message.limitation, message.question]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .join("\n\n");
+}
+
 export function rectificationV4ChatMessages(
   data: RectificationV4ApiResponse | null,
   processing: boolean,
@@ -188,6 +207,8 @@ export function rectificationV4ChatMessages(
   }
 
   const messages: RectificationChatMessageView[] = [];
+  const assistantResponses = data.case.deploymentMode === "v5_agent" ? data.assistantResponses ?? [] : [];
+  const responseBySourceTurnId = new Map(assistantResponses.map((item) => [item.sourceTurnId, item]));
   const analysis = data.case.deploymentMode === "v5_agent"
     ? (data as RectificationV4ApiResponse & {
       readonly analysis?: readonly RectificationAnalysisItem[];
@@ -203,15 +224,17 @@ export function rectificationV4ChatMessages(
     });
   }
 
-  let previousTurnId: string | null = null;
+  let previousTurn: RectificationV4ApiResponse["turns"][number] | undefined;
   for (const turn of data.turns) {
-    messages.push({
-      role: "assistant",
-      text: turn.question,
-      renderKey: `rectification-question-${turn.id}`,
-      state: "settled",
-      analysisTrace: previousTurnId ? analysisBySourceTurnId.get(previousTurnId) : undefined,
-    });
+    if (!previousTurn || !responseBySourceTurnId.has(previousTurn.id)) {
+      messages.push({
+        role: "assistant",
+        text: turn.question,
+        renderKey: `rectification-question-${turn.id}`,
+        state: "settled",
+        analysisTrace: previousTurn ? analysisBySourceTurnId.get(previousTurn.id) : undefined,
+      });
+    }
     if (turn.answer) {
       messages.push({
         role: "user",
@@ -220,13 +243,25 @@ export function rectificationV4ChatMessages(
         state: "settled",
       });
     }
-    previousTurnId = turn.id;
+    const response = responseBySourceTurnId.get(turn.id);
+    if (response) {
+      messages.push({
+        role: "assistant",
+        text: composeRectificationAssistantMessage(response.message),
+        renderKey: `rectification-response-${turn.id}`,
+        state: "settled",
+        analysisTrace: response.trace ?? undefined,
+      });
+    }
+    previousTurn = turn;
   }
 
   const caseValue = data.case;
   const primary = caseValue.latestSnapshot?.clusters[0];
-  const latestTurnTrace = analysisBySourceTurnId.get(data.turns.at(-1)?.id ?? "");
-  const terminalTrace = caseValue.currentQuestion ? undefined : latestTurnTrace;
+  const latestTurn = data.turns.at(-1);
+  const latestResponse = latestTurn ? responseBySourceTurnId.get(latestTurn.id) : undefined;
+  const latestTurnTrace = latestResponse?.trace ?? analysisBySourceTurnId.get(latestTurn?.id ?? "");
+  const terminalTrace = caseValue.currentQuestion ? undefined : latestTurnTrace ?? undefined;
   if (caseValue.acceptedRange) {
     messages.push({
       role: "assistant",
@@ -235,7 +270,7 @@ export function rectificationV4ChatMessages(
       state: "settled",
       analysisTrace: terminalTrace,
     });
-  } else if (caseValue.status === "range_ready" && primary) {
+  } else if (!latestResponse && caseValue.status === "range_ready" && primary) {
     messages.push({
       role: "assistant",
       text: `根据目前这些经历，可以先把范围稳定缩小到 ${primary.startTime}–${primary.endTime}。这是候选范围，不是已确认的出生分钟；你可以保存它，也可以继续补充经历。`,
@@ -245,24 +280,26 @@ export function rectificationV4ChatMessages(
     });
   }
 
-  if (!processing && caseValue.currentQuestion && !caseValue.acceptedRange) {
+  if (!processing && caseValue.currentQuestion && !caseValue.acceptedRange && !latestResponse) {
     messages.push({
       role: "assistant",
       text: caseValue.currentQuestion.prompt,
       renderKey: `rectification-current-${caseValue.currentQuestion.id}`,
       state: "settled",
-      analysisTrace: latestTurnTrace,
+      analysisTrace: latestTurnTrace ?? undefined,
     });
   }
 
   if (processing) {
+    const phase = data.job?.phase ?? caseValue.phase;
     messages.push({
       role: "assistant",
-      text: rectificationProgressLabel(data.job?.phase ?? caseValue.phase),
+      text: rectificationProgressLabel(phase),
       renderKey: `rectification-processing-${data.job?.id ?? caseValue.version}`,
       state: "thinking",
+      activityState: rectificationPhaseActivityState(phase),
     });
-  } else if (caseValue.status === "paused") {
+  } else if (caseValue.status === "paused" && !latestResponse) {
     messages.push({
       role: "assistant",
       text: "进度已经保存。准备好后，我们可以从这里继续。",

@@ -193,17 +193,17 @@ test("SHA-256 canary assignment is stable and deployment modes are explicit", ()
   }), "v4_legacy");
 });
 
-test("opportunities are ordered only by their published utility", () => {
-  const target = event();
+test("new-event fallback is a single domain-neutral contract", () => {
   const values = buildQuestionOpportunities({
     caseId,
-    events: [target],
+    events: [event()],
     turns: [],
     snapshot: null,
     diagnostics: null,
-  });
-  assert.ok(values.length >= 2);
-  assert.deepEqual(values.map((value) => value.utility), [...values].map((value) => value.utility).sort((a, b) => b - a));
+  }).filter((value) => value.kind === "ask_new_event");
+  assert.equal(values.length, 1);
+  assert.equal(values[0]?.domain, "other");
+  assert.doesNotMatch(values[0]?.fallbackPrompt ?? "", /教育|迁居|关系|职业|财务|健康/);
 });
 
 test("a previously asked unresolved target does not monopolize the next-question route", () => {

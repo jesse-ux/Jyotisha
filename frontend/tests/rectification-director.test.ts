@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { diagnosticsSummarySchema, type RectificationTurnPlan } from "../src/lib/rectification-agent/contracts.ts";
 import { buildRectificationCaseDossier, regenerateDirectorQuestion, runRectificationDirector, validateRectificationTurnPlan } from "../src/lib/rectification-agent/director-agent.ts";
-import { mergeDirectorReconciliation } from "../src/lib/rectification-agent/orchestrator.ts";
+import { composeRectificationPublicTurn, mergeDirectorReconciliation } from "../src/lib/rectification-agent/orchestrator.ts";
 import type { CalculationSpec, CandidateSnapshot, LifeEventRevision, PendingEvidence, RectificationV4Case, RectificationV4Turn } from "../src/lib/rectification-v4/contracts.ts";
 import { stageAgentEvidenceProposals } from "../src/lib/rectification-v4/extraction.ts";
 import { calculationSpecHash } from "../src/lib/rectification-v4/fingerprints.ts";
@@ -105,9 +105,11 @@ function plan(overrides: Partial<RectificationTurnPlan> = {}): RectificationTurn
     },
     publicReply: {
       acknowledgement: "我已按你的描述整理这轮线索。",
+      evidenceExplanation: null,
       candidateCommentary: null,
       limitation: "目前仍不足以确认具体出生分钟。",
     },
+    publicExplanationGrounding: [],
     ...overrides,
   };
 }
@@ -174,6 +176,58 @@ test("dossier keeps recent raw turns, useful earlier context, refusals, pending 
   assert.equal(value.case.location.timezoneId, "Asia/Shanghai");
 });
 
+test("a declined domain is a server-owned boundary, not a keyword rule", () => {
+  const turns = [turn(0, {
+    questionDomain: "relationship",
+    question: "如果你愿意，可以聊聊一段关系变化吗？",
+    answer: "不想回答，换个方向。",
+  })];
+  const value = dossier([], turns);
+  assert.deepEqual(value.interviewState.declinedDomains, ["relationship"]);
+
+  const reopened = plan({
+    action: {
+      type: "ask_question",
+      focus: {
+        mode: "collect_independent_event",
+        targetEventId: null,
+        domain: "relationship",
+        requestedFacts: ["independent_event"],
+        rationaleCodes: ["agent_selected_direction"],
+      },
+      question: "有没有一段关系状态变化的经历？",
+      optionalQuickReplies: [],
+    },
+  });
+  assert.ok(validateRectificationTurnPlan({
+    plan: reopened,
+    dossier: value,
+    latestAnswer: turns[0]!.answer,
+    phase: "final",
+  }).issues.includes("declined_domain_reopened"));
+
+  const changedDirection = plan({
+    action: {
+      type: "ask_question",
+      focus: {
+        mode: "collect_independent_event",
+        targetEventId: null,
+        domain: null,
+        requestedFacts: ["independent_event"],
+        rationaleCodes: ["agent_selected_direction"],
+      },
+      question: "你愿意从另一段时间大致明确的经历继续吗？",
+      optionalQuickReplies: [],
+    },
+  });
+  assert.deepEqual(validateRectificationTurnPlan({
+    plan: changedDirection,
+    dossier: value,
+    latestAnswer: turns[0]!.answer,
+    phase: "final",
+  }).issues, []);
+});
+
 test("a natural question and multiple grounded event proposals pass without domain keywords or anchors", () => {
   const latestAnswer = "2018年9月搬到北京，2020年4月开始第一份工作。";
   const value = plan({
@@ -193,7 +247,7 @@ test("server rejects invented sources, private details, exact minutes, and ungat
   const invented = plan({ evidenceProposals: [{ operation: "create", targetEventId: null, sourceSpan: "2020年工作", dateText: "2020年", proposedSummary: "开始工作", proposedDomain: "career", proposedEventKind: "career_change", proposedSubject: "self", proposedRelatedPerson: null, confidence: "low" }] });
   assert.ok(validateRectificationTurnPlan({ plan: invented, dossier: dossier(), latestAnswer, phase: "evidence" }).issues.includes("evidence_source_not_in_latest_answer"));
 
-  const unsafe = plan({ publicReply: { acknowledgement: "内部 eventId 是 00000000-0000-4000-8000-000000000799。", candidateCommentary: "出生时间是05:13。", limitation: null } });
+  const unsafe = plan({ publicReply: { acknowledgement: "内部 eventId 是 00000000-0000-4000-8000-000000000799。", evidenceExplanation: null, candidateCommentary: "出生时间是05:13。", limitation: null } });
   const unsafeIssues = validateRectificationTurnPlan({ plan: unsafe, dossier: dossier(), latestAnswer, phase: "final" }).issues;
   assert.ok(unsafeIssues.includes("private_detail_exposed"));
   assert.ok(unsafeIssues.includes("exact_minute_claimed"));
@@ -421,6 +475,41 @@ test("the same Director gets one repair attempt before deterministic fallback", 
 });
 
 
+test("final Director repairs a generic acknowledgement and missing evidence-value explanation", async () => {
+  const internship = event({
+    domain: "career",
+    eventKind: "career_change",
+    summary: "2020年4月去石油化工研究院实习做研究员",
+    rawText: "2020年4月去石油化工研究院实习做研究员",
+    dateRange: { start: "2020-04-01", end: "2020-04-30", precision: "month", label: "2020年4月" },
+  });
+  const phases: string[] = [];
+  const prompts: string[] = [];
+  const result = await runRectificationDirector({
+    caseValue,
+    dossier: dossier([internship]),
+    latestAnswer: internship.rawText,
+    phase: "final",
+    diagnostics,
+    generatePlan: async (prompt, phase) => {
+      phases.push(phase);
+      prompts.push(prompt);
+      return {
+        object: phase === "repair"
+          ? plan({ publicReply: { acknowledgement: "你提到2020年4月去石油化工研究院实习做研究员。", evidenceExplanation: "这是一条职业状态变化线索，按能力矩阵可参考 D10 与 Vimshottari；目前只是方法映射，不是候选结论。", candidateCommentary: "这段经历的时间和工作状态变化都很明确，可以和其他独立事件交叉比较候选范围。", limitation: null } })
+          : plan(),
+      };
+    },
+  });
+
+  assert.equal(result.mode, "agent");
+  assert.deepEqual(phases, ["final", "repair"]);
+  assert.match(JSON.parse(prompts[0]!).publicReplyRequirement, /acknowledge the exact event/);
+  assert.deepEqual(JSON.parse(prompts[1]!).validationIssues, ["event_acknowledgement_generic", "event_explanation_missing", "event_value_commentary_missing"]);
+  assert.match(result.plan.publicReply.acknowledgement, /石油化工研究院/);
+  assert.match(result.plan.publicReply.candidateCommentary ?? "", /交叉比较候选范围/);
+});
+
 test("manual question regeneration preserves focus and repairs unsafe text once", async () => {
   const phases: string[] = [];
   const question = await regenerateDirectorQuestion({
@@ -445,14 +534,24 @@ test("manual question regeneration preserves focus and repairs unsafe text once"
 });
 
 
-test("public reply rejects technique names and multiple independent questions without rejecting one natural question", () => {
-  for (const technique of ["D2", "D4", "D9", "D10", "D11", "D24", "D30", "KP", "Vimshottari", "Narayana", "Shadbala", "Ashtakavarga"]) {
+test("public reply allows method names but rejects private internals and ungrounded numeric structure claims", () => {
+  for (const technique of ["D2", "D4", "D9", "D10", "D11", "D24", "D30", "4 宫", "宫位", "分盘", "上升星座", "Chaturvimshamsha", "KP", "Vimshottari", "Narayana", "Shadbala", "Ashtakavarga"]) {
     const issues = validateRectificationTurnPlan({
-      plan: plan({ publicReply: { acknowledgement: `${technique} 更支持这段经历。`, candidateCommentary: null, limitation: null } }),
+      plan: plan({ publicReply: { acknowledgement: "这条经历已经保留。", evidenceExplanation: `${technique} 是这类事件可参考的公开方法层；目前只是方法映射。`, candidateCommentary: null, limitation: null } }),
       dossier: dossier(), latestAnswer: "", phase: "final",
     }).issues;
-    assert.ok(issues.includes("private_detail_exposed"), technique);
+    assert.ok(!issues.includes("private_detail_exposed"), technique);
   }
+  for (const privateDetail of ["原始评分 8.7", "权重 0.4", "贡献矩阵如下", "tool_call 原始输出"]) {
+    const issues = validateRectificationTurnPlan({
+      plan: plan({ publicReply: { acknowledgement: "这条经历已经保留。", evidenceExplanation: privateDetail, candidateCommentary: null, limitation: null } }),
+      dossier: dossier(), latestAnswer: "", phase: "final",
+    }).issues;
+    assert.ok(issues.includes("private_detail_exposed"), privateDetail);
+  }
+  const numeric = plan({ publicReply: { acknowledgement: "这条经历已经保留。", evidenceExplanation: "D24 在候选窗内切换了 3 次。", candidateCommentary: null, limitation: null } });
+  assert.ok(validateRectificationTurnPlan({ plan: numeric, dossier: dossier(), latestAnswer: "", phase: "final" }).issues.includes("ungrounded_numeric_structure_claim"));
+
   const multiple = plan({ action: { type: "ask_question", focus: { mode: "collect_independent_event", targetEventId: null, domain: null, requestedFacts: ["independent_event"], rationaleCodes: ["test"] }, question: "你记得它发生在哪一年。那时发生了什么。", optionalQuickReplies: [] } });
   assert.ok(validateRectificationTurnPlan({ plan: multiple, dossier: dossier(), latestAnswer: "", phase: "final" }).issues.includes("multiple_questions"));
   const single = plan({ action: { type: "ask_question", focus: { mode: "collect_independent_event", targetEventId: null, domain: null, requestedFacts: ["independent_event"], rationaleCodes: ["test"] }, question: "你还记得一件时间大致确定的重要经历吗？", optionalQuickReplies: [] } });
@@ -546,4 +645,67 @@ test("deterministic fallback refines the known year before collecting another ev
   assert.match(result.plan.action.question, /2016年离家去外地上大学/);
   assert.match(result.plan.action.question, /哪个月|时间段/);
   assert.doesNotMatch(result.plan.action.question, /另一件|还能想到一件/);
+});
+
+test("deterministic fallback stays domain-neutral when the Agent is unavailable", async () => {
+  const university = event({
+    summary: "2016年9月离家去外地上大学",
+    rawText: "2016年9月离家去外地上大学",
+    createdAt: "2026-07-30T01:00:00.000Z",
+  });
+  const internship = event({
+    domain: "career",
+    eventKind: "career_change",
+    summary: "2020年4月去石油化工研究院实习做研究员",
+    rawText: "2020年4月去石油化工研究院实习做研究员",
+    dateRange: { start: "2020-04-01", end: "2020-04-30", precision: "month", label: "2020年4月" },
+    createdAt: "2026-07-30T02:00:00.000Z",
+  });
+  const turns = [
+    turn(0, { questionDomain: "education", question: "请说一件时间比较确定的经历。", answer: university.rawText }),
+    turn(1, { questionDomain: "career", question: "你是否有过工作状态变化？", answer: internship.rawText }),
+  ];
+
+  const result = await runRectificationDirector({
+    caseValue,
+    dossier: buildRectificationCaseDossier({
+      caseValue,
+      turns,
+      events: [university, internship],
+      snapshot: null,
+      diagnostics: null,
+      targetDisposition: "not_applicable",
+      currentTargetEventId: null,
+    }),
+    latestAnswer: internship.rawText,
+    phase: "final",
+    diagnostics,
+    generatePlan: async () => { throw new Error("forced_fallback"); },
+  });
+
+  assert.equal(result.mode, "deterministic_fallback");
+  assert.equal(result.plan.action.type, "ask_question");
+  if (result.plan.action.type !== "ask_question") return;
+  assert.equal(result.plan.action.focus.targetEventId, null);
+  assert.equal(result.plan.action.focus.domain, null);
+  assert.deepEqual(result.plan.action.focus.rationaleCodes, ["model_unavailable_neutral_fallback"]);
+  assert.match(result.plan.action.question, /愿意再讲一件/);
+  assert.match(result.plan.action.question, /没有|记不清|不想回答|换/);
+  assert.doesNotMatch(result.plan.action.question, /教育|迁居|关系|职业|财务|健康|大学|实习|搬家/);
+  assert.match(result.plan.publicReply.acknowledgement, /2020年4月|石油化工研究院|实习|研究员/);
+});
+
+test("the visible assistant turn includes acknowledgement, evidence value, and exactly one question", () => {
+  const text = composeRectificationPublicTurn({
+    acknowledgement: "你提到的是“2020年4月去石油化工研究院实习做研究员”。",
+    evidenceExplanation: "这条职业变化可参考 D10 与 Vimshottari；目前只是方法映射。",
+    candidateUpdate: "这条线索有明确时间，也说明了具体发生的变化，可以和其他独立经历交叉比较候选范围。",
+    limitation: null,
+    question: "如果你愿意，有没有一次长期资格或身份发生变化的经历，大概是哪年哪月？",
+  });
+
+  assert.match(text, /石油化工研究院/);
+  assert.match(text, /交叉比较候选范围/);
+  assert.match(text, /长期资格|身份发生变化/);
+  assert.equal((text.match(/[?？]/g) ?? []).length, 1);
 });

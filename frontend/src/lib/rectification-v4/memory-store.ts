@@ -76,6 +76,16 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
         .sort((left, right) => turns.get(left.turnId)!.caseVersion - turns.get(right.turnId)!.caseVersion)
         .map((job) => ({ sourceTurnId: job.turnId, trace: publicMessages.get(job.id)!.analysisTrace! }));
     },
+    async loadAssistantResponses(userId, caseId) {
+      owned(userId, caseId);
+      return [...jobs.values()]
+        .filter((job) => job.caseId === caseId && publicMessages.has(job.id))
+        .sort((left, right) => turns.get(left.turnId)!.caseVersion - turns.get(right.turnId)!.caseVersion)
+        .map((job) => {
+          const { analysisTrace, ...message } = publicMessages.get(job.id)!;
+          return { sourceTurnId: job.turnId, message, trace: analysisTrace ?? null };
+        });
+    },
     async loadLatestValidatedDecision(userId, caseId) {
       const caseValue = cases.get(caseId);
       if (!caseValue || caseValue.userId !== userId) return null;

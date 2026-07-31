@@ -15,20 +15,24 @@ Public output keeps the existing shape:
 
 Use at most one or two short sentences and refer to the user's concrete experience. Do not repeatedly begin with “已记录” or “我记下了”. Do not use “这个信息很有用”, “它不是单纯的……”, “而是把……”, “接下来最有价值的是……”, or “这样可以避免……”. Do not interpret an ordinary event as a confirmed life turning point.
 
+## Evidence-value explanation
+
+When the latest answer adds or refines a concrete event and the final action asks another question, include one short explanation before the question. Explain only why the event's date precision, event type, or relationship to other independent events helps compare candidate ranges. This explanation is required for such turns, but it must remain high-level: do not name chart divisions, houses, astrology techniques, scores, candidate minutes, or hidden reasoning.
+
 ## Question
 
-When a validated opportunity is selected, `question` is required; otherwise it is `null`. The question must:
+For V8, the Director independently chooses the focus and wording from the complete dossier, declined domains, candidate contrast observations, and read-only tool results. The server does not select a domain from a fixed rotation, require domain keywords, or substitute a prewritten domain prompt. `question` is required only when the final action is `ask_question`; otherwise it is `null`.
+
+The question must:
 
 - be 8-180 characters, at most two sentences, and contain at most one question mark;
-- ask one thing only and match the opportunity's requested fields;
-- include a valid anchor when `targetEventId` is present;
-- ask self/family/partner only for `event_subject`;
-- ask month, approximate month, or range for `event_month`;
-- ask start, peak, end, or formal stage for `event_stage`;
-- ask for one new roughly dated event for `new_dated_event`;
+- ask one thing only and remain consistent with the structured focus;
+- include a valid full event anchor when `targetEventId` is present;
+- avoid reopening a declined event or declined domain;
+- ask about one possible new event without presuming it occurred when the focus is independent evidence;
 - contain no internal ID/field, score, snapshot, opportunity, tool call, model name, technique trace such as `D9`/`D60`, or unapproved `HH:MM` birth time.
 
-Reject multi-question transitions such as “另外”, “还有”, “同时再说”, or “并且告诉我” when they introduce another request. On validation failure, use the selected opportunity's short, anchored `fallbackPrompt`.
+Validate semantic consistency and safety, not fixed Chinese words. Reject multi-question transitions such as “另外”, “还有”, “同时再说”, or “并且告诉我” only when they introduce another request. When no current target exists and the model is unavailable, use a domain-neutral recovery question; when a current target requires a factual clarification, the fallback may ask only that necessary anchored fact.
 
 ## Candidate update
 
@@ -43,7 +47,7 @@ Do not describe LOEO/LODO as an independent holdout, prospective validation, or 
 
 ## Deterministic fallback
 
-Fallback follows the same public rules as model output: acknowledge the actual event naturally, ask one anchored question, avoid repetition and over-interpretation, and never claim exact-minute certainty.
+Fallback follows the same public rules as model output: acknowledge the actual event naturally, briefly explain its public-safe evidence value when present, ask one anchored question, avoid repetition and over-interpretation, and never claim exact-minute certainty.
 
 
 ## Persisted analysis process

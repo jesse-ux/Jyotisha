@@ -56,7 +56,7 @@ Before choosing an action, read the contracts in `references/`. Treat `assets/re
 1. During evidence interpretation, read the complete Case Dossier: recent raw turns, full revision ledger, current target disposition, pending evidence, candidate contrasts, event sensitivity, and range gate. During final planning, do not assume those server-owned views are already loaded; request only the focused tool observations needed for the decision.
 2. Propose every explicit event in the latest answer. Use exact source spans and declared date text; propose `revise` only with a server-issued event ID already present in the Dossier.
 3. After the server stages valid revisions and recomputes diagnostics, choose the single most useful focus. Read focused server observations through `case_read`, `candidate_scan`, `evidence_gap`, or `diagnostic_read`; each result advances the in-run Dossier revision and must inform the next decision. Stop the loop as soon as the evidence supports one useful question, a gated range, or an honest low-confidence result. Do not rotate through domains or ask for finer dates unless the observations show value.
-4. Write one short natural question and the public reply in the same TurnPlan. Do not expose internal IDs, scores, contribution details, tools, or candidate minutes.
+4. Write the public reply and one short natural question in the same TurnPlan. When the latest answer adds or refines a concrete event, first summarize that event in the user's own terms, then add one short public-safe sentence explaining why its date and type of change help compare candidate ranges, and only then ask the question. Do not expose internal IDs, scores, contribution details, tools, candidate minutes, chart divisions, houses, or technique names.
 5. If server validation rejects the TurnPlan, repair it once. If it still fails, accept the generic safety fallback. Offer a range only when the current server Snapshot allows it; otherwise stop honestly at low confidence when no useful question remains.
 
 A user who answers with a different complete event may have that event saved without overwriting the old target. The old target may receive at most one gentle clarification; repeated diversion closes it and moves the conversation on.
@@ -72,7 +72,7 @@ A user who answers with a different complete event may have that event saved wit
 
 ## Public language
 
-Use a brief acknowledgement tied to the user's actual event, an optional gated candidate update, an optional limitation, and at most one question. Do not repeat an unchanged range, over-interpret the event, or turn sparse/conflicting evidence into certainty.
+Use a brief acknowledgement tied to the user's actual event, a brief high-level explanation of why that event helps candidate comparison when an event was added or refined, an optional gated candidate update or limitation, and at most one question. The explanation should describe only observable features such as date precision, event type, or cross-event comparison; it must not name D-charts, houses, astrology techniques, scores, candidate minutes, or hidden reasoning. Do not repeat an unchanged range, over-interpret the event, or turn sparse/conflicting evidence into certainty.
 
 
 ## Analysis process receipt

@@ -5,15 +5,20 @@ import { defaultLanguageModel, resolveLanguageModel } from "@/mastra/model";
 import type { CandidateSnapshot, EvidenceDomain, EventKind, LifeEventRevision, PendingEvidence, RectificationV4Case, RectificationV4Turn } from "../rectification-v4/contracts.ts";
 import type { TargetDisposition } from "../rectification-v4/extraction.ts";
 import { hasPolicyInvalidScoreableEvents } from "../rectification-v4/evidence-ledger.ts";
+import { domainScorerRegistry } from "../rectification-v4/domain-scorers.ts";
 import { buildCandidateContrastPacket } from "./opportunity-builder.ts";
 import { rectificationCaseDossierSchema, rectificationTurnPlanSchema, type DiagnosticsSummary, type RectificationAgentTool, type RectificationCaseDossier, type RectificationDiagnostic, type RectificationTurnPlan, type ToolCallTrace, type ToolObservation } from "./contracts.ts";
+import { assertRectificationSkillLoaded } from "./skill-runtime.ts";
 
 const skillPath = process.env.RECTIFICATION_SKILL_PATH?.trim() || path.resolve(process.cwd(), "..", "skills", "birth-time-rectification");
 const domains: EvidenceDomain[] = ["education", "relocation", "relationship", "career", "finance", "health_pressure", "family", "other"];
 const kinds: EventKind[] = ["education_milestone", "relocation", "relationship_start", "relationship_end", "relationship_change", "career_change", "finance_change", "self_health_event", "family_health_event", "family_bereavement", "family_event", "other"];
-const privatePattern = /(?:[0-9a-f]{8}-[0-9a-f-]{27,}|opportunity(?:id)?|snapshot(?:id)?|event(?:id)?|targetEventId|score|评分|得分|权重|rule[_ -]?id|贡献矩阵|tool[_ -]?call|cluster[_ -]?id|\bD\d{1,2}\b|\bKP\b|Vimshottari|Narayana|Shadbala|Ashtakavarga)/iu;
+const privatePattern = /(?:[0-9a-f]{8}-[0-9a-f-]{27,}|opportunity(?:id)?|snapshot(?:id)?|event(?:id)?|targetEventId|(?:raw|原始)?\s*(?:score|评分|得分)|权重|rule[_ -]?id|贡献矩阵|tool[_ -]?call|cluster[_ -]?id|工具原始(?:输出|轨迹)|内部推理链)/iu;
+const quantifiedStructurePattern = /(?:(?:D\d{1,2}|KP|Vimshottari|Narayana|Shadbala|Ashtakavarga|Chaturvimshamsha|上升星座|宫位|分盘)[^。！？\n]{0,60}(?:切换|变化|变动|遍历)[^。！？\n]{0,16}(?:\d+|[一二三四五六七八九十百]+)\s*次|(?:\d+|[一二三四五六七八九十百]+)\s*次[^。！？\n]{0,60}(?:切换|变化|变动|遍历))/iu;
 const exactMinutePattern = /(?:\b(?:[01]?\d|2[0-3]):[0-5]\d\b|(?:凌晨|清晨|上午|中午|下午|傍晚|晚上)?\s*[零〇一二两三四五六七八九十百\d]{1,4}\s*[点时]\s*[零〇一二两三四五六七八九十百\d]{1,4}\s*分)/u;
 const questionClausePattern = /(?:请|你(?:还)?(?:记得|能否|是否|有没有)|再(?:说|补充|回忆)|哪(?:一|个|年|月|天)?|什么|多少|几(?:年|月|号|日)?|吗|呢)/u;
+const genericAcknowledgementPattern = /^(?:好的|明白了|知道了|收到|已记录|我记下了|我已按你的描述整理这轮线索)[。！!]?$/u;
+const groundedPublicReplyRequirement = "When the latest answer adds or refines a concrete event, the final public reply must: acknowledge the exact event and its date precision; summarize one to three evidence signals found in the user wording; use evidenceExplanation to map those signals to public method layers from dossier.capabilities.publicTechniqueCapabilities; distinguish a general method mapping from calculations actually present in tool observations; explain why the next question helps; and ask at most one question. Public method names such as D4, D24, Vimshottari, Narayana, UL, and A10 are allowed. Never expose internal ids, raw scores, weights, contribution matrices, raw tool traces, candidate minutes, or hidden reasoning. Never claim a numeric structural fact such as a division switching N times unless the dossier contains the matching window_sensitivity observation and publicExplanationGrounding cites its fact key.";
 
 function containsExactMinute(value: string): boolean {
   return exactMinutePattern.test(value);
@@ -65,18 +70,29 @@ export function buildRectificationCaseDossier(input: Readonly<{ caseValue: Recti
         return { candidateRank: cluster.rank, supportingEventIds: candidate?.supportingEventIds ?? [], conflictingEventIds: candidate?.conflictingEventIds ?? [] };
       }),
     },
-    capabilities: { supportedDomains: domains, supportedEventKinds: kinds, maxQuestionsPerTurn: 1, maxToolRounds: 10, forbiddenPublicClaims: ["exact_birth_minute", "private_scores", "internal_ids", "technique_trace"] },
+    capabilities: {
+      supportedDomains: domains,
+      supportedEventKinds: kinds,
+      publicTechniqueCapabilities: domains.map((domain) => ({ domain, techniqueLayers: [...domainScorerRegistry[domain].techniqueLayers] })),
+      maxQuestionsPerTurn: 1,
+      maxToolRounds: 10,
+      forbiddenPublicClaims: ["exact_birth_minute", "private_scores", "internal_ids", "raw_technique_trace", "ungrounded_numeric_structure"],
+    },
   });
 }
 
+function latestGroundedEvent(dossier: RectificationCaseDossier, latestAnswer: string) {
+  return [...dossier.eventLedger].reverse().find((event) => event.status === "active" && (event.rawText === latestAnswer || latestAnswer.includes(event.summary))) ?? null;
+}
+
 function fallback(dossier: RectificationCaseDossier, latestAnswer: string): RectificationTurnPlan {
-  if (dossier.candidateState.publicRangeAllowed && dossier.candidateState.currentSnapshotId) return { contractVersion: "rectification-turn-plan-v1", targetDisposition: dossier.interviewState.targetDisposition, evidenceProposals: [], action: { type: "offer_candidate_range", snapshotId: dossier.candidateState.currentSnapshotId }, publicReply: { acknowledgement: "现有事件已经完成本轮复核。", candidateCommentary: "候选范围已通过当前稳定性门槛，可以作为工作范围查看。", limitation: "这仍不是对某个精确出生分钟的确认。" } };
+  if (dossier.candidateState.publicRangeAllowed && dossier.candidateState.currentSnapshotId) return { contractVersion: "rectification-turn-plan-v1", targetDisposition: dossier.interviewState.targetDisposition, evidenceProposals: [], action: { type: "offer_candidate_range", snapshotId: dossier.candidateState.currentSnapshotId }, publicReply: { acknowledgement: "现有事件已经完成本轮复核。", evidenceExplanation: null, candidateCommentary: "候选范围已通过当前稳定性门槛，可以作为工作范围查看。", limitation: "这仍不是对某个精确出生分钟的确认。" }, publicExplanationGrounding: [] };
   const targetEventId = dossier.interviewState.currentTargetEventId;
   const keepTarget = Boolean(targetEventId && ["unresolved", "answered_other_event"].includes(dossier.interviewState.targetDisposition));
   const targetEvent = keepTarget ? dossier.eventLedger.find((event) => event.eventId === targetEventId && event.status === "active") : null;
-  const latestGroundedEvent = [...dossier.eventLedger].reverse().find((event) => event.status === "active" && (event.rawText === latestAnswer || latestAnswer.includes(event.summary)));
-  const safeSummary = latestGroundedEvent && !privatePattern.test(latestGroundedEvent.summary) && !containsExactMinute(latestGroundedEvent.summary)
-    ? latestGroundedEvent.summary.slice(0, 120)
+  const groundedEvent = latestGroundedEvent(dossier, latestAnswer);
+  const safeSummary = groundedEvent && !privatePattern.test(groundedEvent.summary) && !containsExactMinute(groundedEvent.summary)
+    ? groundedEvent.summary.slice(0, 120)
     : null;
   const safeTargetSummary = targetEvent && !privatePattern.test(targetEvent.summary) && !containsExactMinute(targetEvent.summary)
     ? `“${targetEvent.summary.slice(0, 120)}”`
@@ -85,7 +101,27 @@ function fallback(dossier: RectificationCaseDossier, latestAnswer: string): Rect
   const targetQuestion = targetNeedsMonth
     ? `${safeTargetSummary}大概发生在哪个月，或一年中的哪个时间段？`
     : `关于${safeTargetSummary}，你还记得更具体的时间或阶段吗？`;
-  return { contractVersion: "rectification-turn-plan-v1", targetDisposition: dossier.interviewState.targetDisposition, evidenceProposals: [], action: { type: "ask_question", focus: { mode: keepTarget ? "clarify_existing_event" : "collect_independent_event", targetEventId: keepTarget ? targetEventId : null, domain: keepTarget ? targetEvent?.domain ?? null : null, requestedFacts: keepTarget ? [targetNeedsMonth ? "month" : "day_or_period"] : ["independent_event", "year"], rationaleCodes: [keepTarget ? "unresolved_current_event" : "need_independent_dated_event"] }, question: keepTarget ? targetQuestion : "你还能想到一件发生在你本人身上、时间大致确定的重要经历吗？", optionalQuickReplies: [] }, publicReply: { acknowledgement: safeSummary ? `你提到的“${safeSummary}”已经纳入本轮事件线索。` : latestAnswer.trim() ? "我已按你刚才的描述继续整理事件线索。" : "我们先从真实经历建立事件线索。", candidateCommentary: null, limitation: "在证据通过稳定性门槛前，我不会把某个具体分钟当成确定出生时间。" } };
+  const question = keepTarget ? targetQuestion : "你愿意再讲一件与已有记录不同、时间大致明确的经历吗？没有、记不清或不想回答也可以换个方向。";
+  const focus = keepTarget
+    ? { mode: "clarify_existing_event" as const, targetEventId, domain: targetEvent?.domain ?? null, requestedFacts: [targetNeedsMonth ? "month" as const : "day_or_period" as const], rationaleCodes: ["unresolved_current_event"] }
+    : { mode: "collect_independent_event" as const, targetEventId: null, domain: null, requestedFacts: ["independent_event" as const, "year" as const], rationaleCodes: ["model_unavailable_neutral_fallback"] };
+  const techniqueLayers = groundedEvent ? domainScorerRegistry[groundedEvent.domain].techniqueLayers : [];
+  const evidenceExplanation = safeSummary && techniqueLayers.length
+    ? `按当前校正能力，这类事件通常会参考 ${techniqueLayers.join("、")}；这里只是在说明方法映射，尚未把它写成某个候选时间的计算结论。`
+    : safeSummary ? "这条经历提供了可核对的时间和变化类型；目前只是整理证据，还不是候选时间的计算结论。" : null;
+  return {
+    contractVersion: "rectification-turn-plan-v1",
+    targetDisposition: dossier.interviewState.targetDisposition,
+    evidenceProposals: [],
+    action: { type: "ask_question", focus, question, optionalQuickReplies: [] },
+    publicReply: {
+      acknowledgement: safeSummary ? `你提到的是“${safeSummary}”。` : latestAnswer.trim() ? "我会保留你刚才的原始说法，不补写你没有确认的信息。" : "我们先从真实经历建立事件线索。",
+      evidenceExplanation,
+      candidateCommentary: safeSummary ? "这条线索有明确时间，也说明了具体发生的变化，可以和其他独立经历交叉比较候选范围。" : null,
+      limitation: null,
+    },
+    publicExplanationGrounding: groundedEvent ? [{ source: "capability_matrix", factKey: `domain:${groundedEvent.domain}` }] : [],
+  };
 }
 
 export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; dossier: RectificationCaseDossier; latestAnswer: string; phase: "evidence" | "final" }>): Readonly<{ plan: RectificationTurnPlan | null; issues: readonly string[] }> {
@@ -113,12 +149,31 @@ export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; d
     if (plan.targetDisposition === "resolved" && !revisedCurrentTarget) issues.push("resolved_target_not_revised");
     if (plan.targetDisposition === "answered_other_event" && !createdOtherEvent) issues.push("other_event_not_proposed");
   }
-  const publicText = [plan.publicReply.acknowledgement, plan.publicReply.candidateCommentary, plan.publicReply.limitation, plan.action.type === "ask_question" ? plan.action.question : null].filter(Boolean).join(" ");
+  const publicText = [plan.publicReply.acknowledgement, plan.publicReply.evidenceExplanation, plan.publicReply.candidateCommentary, plan.publicReply.limitation, plan.action.type === "ask_question" ? plan.action.question : null].filter(Boolean).join(" ");
   if (privatePattern.test(publicText)) issues.push("private_detail_exposed");
   if (containsExactMinute(publicText)) issues.push("exact_minute_claimed");
+  if (quantifiedStructurePattern.test(publicText)) {
+    const windowFactKeys = new Set(plan.publicExplanationGrounding.filter((item) => item.source === "window_sensitivity").map((item) => item.factKey));
+    const observedFactKeys = new Set(input.dossier.runtime.observations.flatMap((observation) => {
+      if (observation.outcome !== "succeeded") return [];
+      const result = observation.result;
+      const direct = Object.keys(result);
+      const nested = result.windowSensitivity && typeof result.windowSensitivity === "object" && !Array.isArray(result.windowSensitivity)
+        ? Object.keys(result.windowSensitivity as Record<string, unknown>)
+        : [];
+      return [...direct, ...nested];
+    }));
+    if (![...windowFactKeys].some((factKey) => observedFactKeys.has(factKey))) issues.push("ungrounded_numeric_structure_claim");
+  }
   if (plan.action.type === "ask_question") {
     if (asksMultipleQuestions(plan.action.question)) issues.push("multiple_questions");
+    if (input.phase === "final" && latestGroundedEvent(input.dossier, input.latestAnswer)) {
+      if (genericAcknowledgementPattern.test(plan.publicReply.acknowledgement.trim())) issues.push("event_acknowledgement_generic");
+      if (!plan.publicReply.evidenceExplanation || plan.publicReply.evidenceExplanation.trim().length < 12) issues.push("event_explanation_missing");
+      if (!plan.publicReply.candidateCommentary || plan.publicReply.candidateCommentary.trim().length < 12) issues.push("event_value_commentary_missing");
+    }
     if (plan.action.focus.targetEventId && !known.has(plan.action.focus.targetEventId)) issues.push("focus_target_invalid");
+    if (plan.action.focus.domain && input.dossier.interviewState.declinedDomains.includes(plan.action.focus.domain)) issues.push("declined_domain_reopened");
     if (currentTarget && ["unresolved", "answered_other_event"].includes(plan.targetDisposition)
       && plan.action.focus.targetEventId !== currentTarget) issues.push("unresolved_target_abandoned");
     if (["unknown", "declined", "direction_change"].includes(plan.targetDisposition)
@@ -139,8 +194,10 @@ export async function regenerateDirectorQuestion(input: Readonly<{
 }>): Promise<string> {
   const model = (input.caseValue.orchestrationModelId ? resolveLanguageModel(input.caseValue.orchestrationModelId) : null) ?? defaultLanguageModel();
   const agent = model ? new Agent({ id: `rectification-director-regenerate-${model.id}`, name: "Birth Time Rectification Director", model: model.model, skills: [skillPath], instructions: "Rewrite one natural interview question while preserving the supplied structured focus. Do not expose internal ids, scores, tools, or a birth minute. Return only structured output." }) : null;
+  const skillReady = agent ? assertRectificationSkillLoaded(agent, { caseId: input.caseValue.id, modelId: model?.id ?? null, deploymentSha: process.env.DEPLOYMENT_SHA?.trim() || null }) : null;
   const generate = input.generateQuestion ?? (async (prompt: string) => {
-    if (!agent) throw new Error("director_model_unavailable");
+    if (!agent || !skillReady) throw new Error("director_model_unavailable");
+    await skillReady;
     return agent.generate(prompt, { structuredOutput: { schema: regeneratedQuestionSchema, jsonPromptInjection: "inline" } });
   });
   const validate = (value: unknown) => {
@@ -165,9 +222,11 @@ export async function regenerateDirectorQuestion(input: Readonly<{
 export async function runRectificationDirector(input: Readonly<{ caseValue: RectificationV4Case; dossier: RectificationCaseDossier; latestAnswer: string; phase: "evidence" | "final"; diagnostics: DiagnosticsSummary; timeoutMs?: number; generatePlan?: RectificationDirectorGenerator }>) {
   const started = Date.now();
   const model = (input.caseValue.orchestrationModelId ? resolveLanguageModel(input.caseValue.orchestrationModelId) : null) ?? defaultLanguageModel();
-  const agent = model ? new Agent({ id: `rectification-director-${model.id}`, name: "Birth Time Rectification Director", model: model.model, skills: [skillPath], instructions: "Direct the interview from the server-owned dossier and tool observations. Propose every explicit event in the latest answer, choose the current focus, and write the public reply plus at most one natural question. In final planning, use the server-owned read-only tools to inspect the case, candidate scan, evidence gaps, or one diagnostic at a time. Adapt after every observation, never repeat an immutable tool call in the same run, and converge as soon as another tool adds no value. Never write scores, internal ids, profile values, candidate minutes, status, phase, or database mutations. Return strict structured output." }) : null;
+  const agent = model ? new Agent({ id: `rectification-director-${model.id}`, name: "Birth Time Rectification Director", model: model.model, skills: [skillPath], instructions: `Direct the interview from the server-owned dossier and tool observations. Propose every explicit event in the latest answer, independently choose the current focus and wording from the full ledger, declined domains, candidate contrasts, and observations, and write the public reply plus at most one natural question. Do not follow a fixed domain rotation or treat examples, tests, or prior wording as a script. In final planning, use the server-owned read-only tools to inspect the case, candidate scan, evidence gaps, or one diagnostic at a time. Adapt after every observation, never repeat an immutable tool call in the same run, and converge as soon as another tool adds no value. ${groundedPublicReplyRequirement} Never write scores, internal ids, profile values, candidate minutes, status, phase, or database mutations. Return strict structured output.` }) : null;
+  const skillReady = agent ? assertRectificationSkillLoaded(agent, { caseId: input.caseValue.id, modelId: model?.id ?? null, deploymentSha: process.env.DEPLOYMENT_SHA?.trim() || null }) : null;
   const generate = input.generatePlan ?? (async (prompt: string) => {
-    if (!agent) throw new Error("director_model_unavailable");
+    if (!agent || !skillReady) throw new Error("director_model_unavailable");
+    await skillReady;
     return agent.generate(prompt, { abortSignal: AbortSignal.timeout(input.timeoutMs ?? 25_000), structuredOutput: { schema: rectificationTurnPlanSchema, jsonPromptInjection: "inline" } });
   });
   let inputTokens = 0, outputTokens = 0;
@@ -209,7 +268,7 @@ export async function runRectificationDirector(input: Readonly<{ caseValue: Rect
     return { round, tool: request.tool, diagnostic: request.diagnostic, outcome: "succeeded", result, dossierRevision: dossier.runtime.revision + 1, errorCode: null };
   };
   try {
-    const first = await generate(JSON.stringify({ task: input.phase === "evidence" ? "Interpret the latest answer and propose every explicit event. The action is provisional." : "Choose the final action and public response. evidenceProposals must be empty. Use a read-only tool only when its observation can materially change the next action.", latestAnswer: input.latestAnswer, dossier: promptDossier() }), input.phase);
+    const first = await generate(JSON.stringify({ task: input.phase === "evidence" ? "Interpret the latest answer and propose every explicit event. The action is provisional." : "Choose the final action and public response. evidenceProposals must be empty. Use a read-only tool only when its observation can materially change the next action.", publicReplyRequirement: input.phase === "final" ? groundedPublicReplyRequirement : undefined, latestAnswer: input.latestAnswer, dossier: promptDossier() }), input.phase);
     await addUsage(first);
     let candidate = rectificationTurnPlanSchema.parse(first.object);
     const observedTools = new Set<string>();
@@ -235,6 +294,7 @@ export async function runRectificationDirector(input: Readonly<{ caseValue: Rect
       toolCalls.push({ tool: request.tool, diagnostic: request.diagnostic, outcome: observation.outcome, durationMs: Date.now() - toolStarted, errorCode: observation.errorCode });
       const next = await generate(JSON.stringify({
         task: "Read the updated dossier and latest observation. Request another unobserved read-only tool only if it can materially change the interview strategy; otherwise converge to one final non-tool action. evidenceProposals must stay empty.",
+        publicReplyRequirement: groundedPublicReplyRequirement,
         latestAnswer: input.latestAnswer,
         dossier: promptDossier(),
         latestObservation: observation,
@@ -247,6 +307,7 @@ export async function runRectificationDirector(input: Readonly<{ caseValue: Rect
     if (input.phase === "final" && requestedTool(candidate.action)) {
       const converged = await generate(JSON.stringify({
         task: "The tool loop has reached its convergence boundary. Return one safe final non-tool action now; do not request another tool and keep evidenceProposals empty.",
+        publicReplyRequirement: groundedPublicReplyRequirement,
         latestAnswer: input.latestAnswer,
         dossier: promptDossier(),
         loopState: { round: toolCalls.length, maxRounds: dossier.capabilities.maxToolRounds, observedTools: [...observedTools], convergenceReason: convergenceReason ?? "tool_round_limit" },
@@ -257,7 +318,7 @@ export async function runRectificationDirector(input: Readonly<{ caseValue: Rect
     }
     let validated = validateRectificationTurnPlan({ plan: candidate, dossier, latestAnswer: input.latestAnswer, phase: input.phase });
     if (!validated.plan) {
-      const repaired = await generate(JSON.stringify({ task: "Repair the rejected plan once. Preserve grounded facts, return one safe final plan, and address every validation issue.", latestAnswer: input.latestAnswer, dossier: promptDossier(), rejectedPlan: candidate, validationIssues: validated.issues }), "repair");
+      const repaired = await generate(JSON.stringify({ task: "Repair the rejected plan once. Preserve grounded facts, return one safe final plan, and address every validation issue.", publicReplyRequirement: input.phase === "final" ? groundedPublicReplyRequirement : undefined, latestAnswer: input.latestAnswer, dossier: promptDossier(), rejectedPlan: candidate, validationIssues: validated.issues }), "repair");
       await addUsage(repaired);
       candidate = rectificationTurnPlanSchema.parse(repaired.object);
       if (requestedTool(candidate.action)) throw new Error("director_repair_requested_tool");

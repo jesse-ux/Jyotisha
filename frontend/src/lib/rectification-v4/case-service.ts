@@ -32,11 +32,11 @@ export function createRectificationV4CaseService(
   const generateOpening = options.generateOpeningQuestion ?? generateOpeningQuestion;
 
   async function response(userId: string, caseValue: RectificationV4Case, jobId?: string): Promise<RectificationV4ApiResponse> {
-    const [events, turns, analysis, job] = await Promise.all([
+    const [events, turns, assistantResponses, job] = await Promise.all([
       store.loadEvents(userId, caseValue.id),
       store.loadTurns(userId, caseValue.id),
       caseValue.deploymentMode === "v5_agent"
-        ? store.loadAnalysisMessages(userId, caseValue.id)
+        ? store.loadAssistantResponses(userId, caseValue.id)
         : Promise.resolve([]),
       jobId
         ? store.loadJob(userId, jobId)
@@ -47,7 +47,8 @@ export function createRectificationV4CaseService(
       job,
       events: [...events],
       turns: [...turns],
-      analysis: [...analysis],
+      analysis: assistantResponses.flatMap((item) => item.trace ? [{ sourceTurnId: item.sourceTurnId, trace: item.trace }] : []),
+      assistantResponses: [...assistantResponses],
     };
   }
 

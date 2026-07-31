@@ -348,12 +348,29 @@ export const rectificationAnalysisItemSchema = z.object({
 }).strict();
 export type RectificationAnalysisItem = z.infer<typeof rectificationAnalysisItemSchema>;
 
+export const rectificationAssistantMessageSchema = z.object({
+  acknowledgement: z.string().trim().min(1).max(1_000),
+  evidenceExplanation: z.string().trim().min(1).max(1_600).nullable().default(null),
+  candidateUpdate: z.string().trim().min(1).max(1_000).nullable(),
+  limitation: z.string().trim().min(1).max(1_000).nullable(),
+  question: z.string().trim().min(1).max(1_000).nullable(),
+}).strict();
+export type RectificationAssistantMessage = z.infer<typeof rectificationAssistantMessageSchema>;
+
+export const rectificationAssistantResponseSchema = z.object({
+  sourceTurnId: z.string().uuid(),
+  message: rectificationAssistantMessageSchema,
+  trace: rectificationAnalysisTraceSchema.nullable(),
+}).strict();
+export type RectificationAssistantResponse = z.infer<typeof rectificationAssistantResponseSchema>;
+
 export const rectificationV4ApiResponseSchema = z.object({
   case: rectificationV4CaseSchema,
   job: rectificationV4JobSchema.nullable(),
   events: z.array(lifeEventRevisionSchema),
   turns: z.array(rectificationV4TurnSchema),
   analysis: z.array(rectificationAnalysisItemSchema).optional(),
+  assistantResponses: z.array(rectificationAssistantResponseSchema).optional(),
 }).strict();
 export type RectificationV4ApiResponse = z.infer<typeof rectificationV4ApiResponseSchema>;
 

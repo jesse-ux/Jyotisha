@@ -4,6 +4,7 @@ import type {
   LifeEventRevision,
   PendingEvidence,
   RectificationAnalysisItem,
+  RectificationAssistantResponse,
   RectificationV4Case,
   RectificationV4Job,
   RectificationV4Phase,
@@ -59,6 +60,7 @@ export interface RectificationV4Store {
   loadEvents(userId: string, caseId: string): Promise<readonly LifeEventRevision[]>;
   loadTurns(userId: string, caseId: string): Promise<readonly RectificationV4Turn[]>;
   loadAnalysisMessages(userId: string, caseId: string): Promise<readonly RectificationAnalysisItem[]>;
+  loadAssistantResponses(userId: string, caseId: string): Promise<readonly RectificationAssistantResponse[]>;
   loadLatestValidatedDecision(userId: string, caseId: string): Promise<ValidatedDecision | null>;
   loadActionCase(userId: string, actionId: string): Promise<RectificationV4Case | null>;
   createCase(input: { readonly case: RectificationV4Case; readonly actionId: string }): Promise<RectificationV4Case>;

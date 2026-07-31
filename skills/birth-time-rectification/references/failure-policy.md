@@ -3,7 +3,7 @@
 ## Conversation failures
 
 - Invalid Reasoner output, an unavailable model, or exhausted diagnostic budget uses the deterministic server policy.
-- Invalid Renderer output uses the selected opportunity's validated `fallbackPrompt`.
+- Invalid V8 Director output gets one repair attempt, then uses a server-owned fallback. Without a current target the fallback is domain-neutral; with a current target it asks only the necessary anchored factual clarification. Legacy Renderer paths may still use a validated opportunity fallback for compatibility.
 - A failed or unavailable model-assisted event extraction leaves deterministic extraction and pending evidence intact; it must not fabricate an event or date.
 - `unknown`, `declined`, and `direction_change` are valid conversation outcomes, not parsing failures and not life events.
 - After a refusal or direction change, close the target and do not repeat it.

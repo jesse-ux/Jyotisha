@@ -1,21 +1,20 @@
 # Question policy
 
-## Semantic opportunities
+## Agent-directed focus
 
-Question opportunities describe meaning, not final prose. New opportunities use `semantic-question-v2` and carry a goal, requested fields, anchors, context facts, forbidden moves, a natural fallback prompt, utility inputs, target event, and active state. Historical opportunities with only `prompt` remain readable by normalizing that text to `fallbackPrompt`.
+In V8, the dossier and read-only tools expose facts, constraints, and candidate-contrast observations. The Director decides which evidence direction is most useful and writes the question. The server must not rotate through a fixed domain list, rank domains with hand-authored recall/privacy weights, require domain keywords, or turn test transcripts and example events into production scripts.
 
-The builder produces several candidates and publishes at most five active opportunities. Rank them by evidence and context: expected information gain, candidate-split relevance, date sensitivity, domain coverage, recent user topics, recall ease, novelty, repetition penalty, and privacy cost. Never select the first missing domain from a fixed education/relocation/relationship/career/finance/health sequence.
+Candidate contrast may identify discriminating technique layers and all supported missing event kinds. Treat these as observations the Agent can weigh against the complete event ledger, recent conversation, refusals, privacy, and expected value. They are not a server-selected question and must not be copied mechanically into public wording.
 
-Use the latest answer and latest accepted event as the current topic. Do not let keywords from older turns pull the conversation back to a stale domain, and do not give an uncovered domain both a coverage reward and a second topic reward from the same older event. Once the minimum domain coverage is already present, continuity and information gain should outweigh collecting another domain merely because it is missing.
+Legacy semantic opportunities remain readable for compatibility and deterministic target clarification. Their `fallbackPrompt` is a failure-recovery surface, not the normal V8 topic selector. A no-target fallback must stay domain-neutral; a targeted fallback may ask only the server-known missing fact for that event.
 
-### New-event existence and recall cues
+### New-event questions
 
-- Ask whether a relevant event exists before asking for its details. Use an existence form such as “过去是否有过……” or “如果有……”, not a presuppositional form that implies the user must have had that event.
-- Offer 2–5 concrete recall cues as non-exhaustive examples. Make it explicit that they are examples, allow any other relevant event, and allow the user to say that none occurred.
-- Recall cues may name ordinary event types supported by the selected domain, but must not assert that any cue happened to this user.
-- Do not invent an age, life stage, year, month, date range, or relative time window. A time or age may appear only when it already comes from accepted user evidence or another server-owned fact allowed by the opportunity contract.
-- Compare every new-event opportunity with the latest accepted event even when their domain labels differ. If they overlap semantically in subject, action, transition, or outcome, apply a utility penalty before ranking. If the candidate is merely a cross-domain paraphrase of the latest event, suppress it instead of asking the same event again with different words.
-- Domain coverage must not override semantic continuity or duplicate-event protection. A missing domain is not sufficient reason to ask a semantically overlapping question.
+- Ask whether one relevant event exists; do not imply the user must have experienced a particular category.
+- The Agent may use its own natural recall cues when useful, but examples are non-exhaustive and never server-required keywords.
+- Do not invent an age, life stage, year, month, date range, or relative time window. A time or age may appear only when it already comes from accepted user evidence or another server-owned fact.
+- Compare a proposed direction with the complete event ledger so the next question does not paraphrase an event already supplied.
+- A missing domain alone is not a reason to ask about it. If no safe, useful question remains, stop with low confidence.
 
 ## One-turn rule
 

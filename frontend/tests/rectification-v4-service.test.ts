@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
+import { composeRectificationPublicTurn } from "../src/lib/rectification-agent/orchestrator.ts";
 import { createRectificationV4CaseService } from "../src/lib/rectification-v4/case-service.ts";
 import type { CalculationSpec, CandidateSnapshot, LifeEventRevision, PendingEvidence } from "../src/lib/rectification-v4/contracts.ts";
 import { createRectificationV4MemoryStore } from "../src/lib/rectification-v4/memory-store.ts";
@@ -174,7 +175,10 @@ test("V5 agent fallback persists the Director decision, Public Message and next 
   assert.equal(done?.case.currentQuestion?.targetEventId, null);
   assert.ok((done?.case.currentQuestion?.prompt ?? "").length > 0);
   assert.doesNotMatch(done?.case.currentQuestion?.prompt ?? "", /具体哪一天|几号/);
-  assert.equal(message.question, done?.case.currentQuestion?.prompt);
+  assert.equal(done?.case.currentQuestion?.prompt, composeRectificationPublicTurn(message));
+  assert.match(done?.case.currentQuestion?.prompt ?? "", /离家去外地上大学/);
+  assert.match(done?.case.currentQuestion?.prompt ?? "", /交叉比较候选范围/);
+  assert.ok(message.question && done?.case.currentQuestion?.prompt.includes(message.question));
   assert.equal(done?.case.latestSnapshot, null);
 }));
 
