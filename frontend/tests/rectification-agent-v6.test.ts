@@ -121,6 +121,33 @@ test("不知道或换方向不产生 pending，也不再生成同 target 机会"
   assert.ok(opportunities.some((item) => item.kind === "ask_new_event"));
 });
 
+test("month-only answer refines the targeted year event", () => {
+  const target = event({
+    summary: "离家去外地上大学",
+    rawText: "2016 年离家去外地上大学",
+    dateRange: { start: "2016-01-01", end: "2016-12-31", precision: "year", label: "2016年" },
+  });
+  const result = reconcileV4Evidence({
+    caseId,
+    answer: "9 月",
+    sourceTurnId: randomUUID(),
+    asOfDate: "2026-07-31",
+    existing: [target],
+    targetEventId: target.eventId,
+    now: new Date(now),
+  });
+
+  assert.equal(result.targetDisposition, "resolved");
+  assert.equal(result.unansweredTargetEventId, null);
+  assert.deepEqual(result.pending, []);
+  assert.equal(result.revisions.length, 1);
+  assert.equal(result.revisions[0]?.eventId, target.eventId);
+  assert.equal(result.revisions[0]?.revision, 2);
+  assert.equal(result.revisions[0]?.dateRange.start, "2016-09-01");
+  assert.equal(result.revisions[0]?.dateRange.end, "2016-09-30");
+  assert.equal(result.revisions[0]?.dateRange.precision, "month");
+});
+
 test("无 target 的换方向表达也不会被记为 event_unparsed", () => {
   const result = reconcileV4Evidence({ caseId, answer: "后来有一次搬家，但我记不清时间了，换一个吧。", sourceTurnId: randomUUID(), asOfDate: "2026-07-29", existing: [] });
   assert.equal(result.targetDisposition, "direction_change");

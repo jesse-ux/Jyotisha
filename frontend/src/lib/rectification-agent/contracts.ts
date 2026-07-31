@@ -161,6 +161,11 @@ export const rectificationCaseDossierSchema = z.object({
     dateRange: z.object({ start: nonblank(10), end: nonblank(10), precision: nonblank(20), label: nonblank(80) }).strict(),
     scoreability: nonblank(40),
     status: z.enum(["active", "superseded", "pending"]),
+    publicSignals: z.array(z.object({
+      domain: evidenceDomainSchema,
+      role: z.enum(["primary", "secondary"]),
+      techniqueLayers: z.array(nonblank(80)).max(20),
+    }).strict()).min(1).max(8),
   }).strict()),
   interviewState: z.object({
     currentTargetEventId: uuid.nullable(),
@@ -494,7 +499,7 @@ export const agentRunSchema = z.object({
   decision: rectificationDecisionSchema.nullable(),
   validatedDecision: validatedDecisionSchema,
   toolCalls: z.array(toolCallTraceSchema).max(10),
-  fallbackReason: nonblank(120).nullable(),
+  fallbackReason: nonblank(240).nullable(),
   inputTokenCount: z.number().int().nonnegative().nullable(),
   outputTokenCount: z.number().int().nonnegative().nullable(),
   latencyMs: z.number().int().nonnegative().max(300_000),

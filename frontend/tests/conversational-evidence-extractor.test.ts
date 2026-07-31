@@ -1,9 +1,26 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { extractLifeEventEvidence } from "../src/lib/conversational-rectification/evidence-extractor.ts";
+import { extractLifeEventEvidence, publicEvidenceDomainsFor } from "../src/lib/conversational-rectification/evidence-extractor.ts";
 import { lifeEventEvidenceSchema } from "../src/lib/conversational-rectification/persistence-contracts.ts";
 
 const sourceTurnId = "00000000-0000-4000-8000-000000000610";
+
+test("exposes compound public domains without creating another evidence event", () => {
+  assert.deepEqual(publicEvidenceDomainsFor({
+    summary: "离家去外地上大学",
+    primaryDomain: "education",
+    subject: "self",
+  }), ["education", "relocation"]);
+});
+
+test("does not project a family health event as self health evidence", () => {
+  assert.deepEqual(publicEvidenceDomainsFor({
+    summary: "父亲住院接受手术",
+    primaryDomain: "family",
+    subject: "family",
+  }), ["family"]);
+});
+
 
 test("preserves raw text and splits two clear facts sharing an explicit month", () => {
   const rawText = "2021年7月毕业并去外地工作";

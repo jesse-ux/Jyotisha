@@ -562,6 +562,48 @@ test("a newly collected year-only event stays current until its month is refined
   assert.doesNotMatch(result.nextQuestion?.prompt ?? "", /还能想到一件/);
 });
 
+test("a month-only answer closes the targeted event even when the Agent is unavailable", async () => {
+  const university: LifeEventRevision = {
+    ...event("education", "education_milestone", "离家去外地上大学", "2016-01"),
+    dateRange: { start: "2016-01-01", end: "2016-12-31", precision: "year", label: "2016年" },
+  };
+  const base = makeClaimed([university]);
+  const earlierTurn: RectificationV4Turn = {
+    ...base.turn,
+    id: randomUUID(),
+    caseVersion: 1,
+    questionDomain: "education",
+    questionTargetEventId: null,
+    question: "请先说一段自己记得比较清楚的人生经历。",
+    answer: "2016 年离家去外地上大学",
+  };
+  const turn: RectificationV4Turn = {
+    ...base.turn,
+    id: randomUUID(),
+    caseVersion: 2,
+    questionDomain: "education",
+    questionTargetEventId: university.eventId,
+    question: "你还记得“离家去外地上大学”大概发生在哪个月，或一年中的哪个时间段吗？",
+    answer: "9 月",
+  };
+  const result = await processRectificationAgentTurn({
+    claimed: { ...base, turn, turns: [earlierTurn, turn] },
+    engine: { score: async () => { throw new Error("candidate_engine_should_not_run"); } },
+    generateDirectorPlan: async () => { throw new Error("forced_agent_unavailable"); },
+    now: new Date(now),
+  });
+
+  const revision = result.newEventRevisions[0];
+  assert.equal(revision?.eventId, university.eventId);
+  assert.equal(revision?.revision, 2);
+  assert.deepEqual(revision?.dateRange, { start: "2016-09-01", end: "2016-09-30", precision: "month", label: "9 月" });
+  assert.deepEqual(result.pendingEvidence, []);
+  assert.equal(result.status, "awaiting_answer");
+  assert.notEqual(result.nextQuestion?.targetEventId, university.eventId);
+  assert.doesNotMatch(result.nextQuestion?.prompt ?? "", /哪个月|一年中的哪个时间段/);
+  assert.doesNotMatch(result.nextQuestion?.prompt ?? "", /当前无法安全生成新的不重复问题|先暂停在这里/);
+});
+
 test("a completed internship answer is acknowledged, explained, and followed by one contrast-driven domain question", async () => {
   const university = event("education", "education_milestone", "离家去外地上大学", "2016-09");
   const base = makeClaimed([university]);

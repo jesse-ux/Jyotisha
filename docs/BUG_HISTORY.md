@@ -1928,3 +1928,35 @@
 - 相关记录：无
 - 复发自：无
 - 修复版本：待发布
+
+## BUG-110 | 月份简答未继承目标事件年份导致重复追问并暂停
+
+- 状态：resolved（local）
+- 首次发现：2026-07-31
+- 最近更新：2026-07-31
+- 影响面：V5 生时校正的目标事件日期补充、Director fallback 与下一问生成
+- 用户现象：已有“2016 年离家去外地上大学”事件时，用户回答“9 月”后没有生成同一事件的新 revision；系统仍把目标视为 unresolved，重复月份问题，随后因 `question_repeated` 进入暂停。
+- 触发条件：当前问题绑定一个仅有年份或季度精度的事件，用户只回答月份、月日、半年或月份区间，且 Agent 不可用或返回重复的临时问题。
+- 根因：确定性 reconciliation 只接受答案中重新出现完整年份的日期；Evidence 阶段又提前校验临时公开问题，导致有效证据提议可能被重复问题校验一并拒绝。
+- 修复：复用目标事件已有年份补全局部日期回答，成功后追加同一 Event ID 的 revision 并关闭目标；Evidence 阶段只验证证据和 target disposition，公开问题只在 final 阶段验证；fallback reason 同时保留原始异常和二次拒绝原因。
+- 验证：回归覆盖“2016 年事件 + 9 月 + Agent 强制不可用”的完整 Orchestrator 流程，确认生成 `2016-09` revision、无 pending、下一问不再绑定原事件且状态保持 `awaiting_answer`；Director 测试确认记录 `fallback_rejected:question_repeated`。
+- 防复发：单元测试分别锁定确定性日期继承、Evidence 阶段边界、fallback 原因和完整两轮回放。
+- 相关记录：BUG-104、BUG-107、BUG-109
+- 复发自：无
+- 修复版本：local / pending release
+
+## BUG-111 | Director 校验器覆盖 Agent 公开回复且复合事件缺少公开语义
+
+- 状态：resolved（local）
+- 首次发现：2026-07-31
+- 最近更新：2026-07-31
+- 影响面：V5 Director 公开承接、方法说明、下一问、手动重新生成与复合事件语义
+- 用户现象：Agent 已生成自然承接和下一问时，服务器仍会替换为固定模板；“离家去外地上大学”只暴露教育语义，公开解释无法同时说明教育与迁居层面。
+- 触发条件：最新事件同时包含多个可核对维度，或 Director / 手动 regenerate 返回合规的自然文案。
+- 根因：最终计划校验器同时承担验证和重写职责；事件账本只暴露单一主评分领域；手动 regenerate 路径完全忽略模型输出并直接调用服务器问题模板。
+- 修复：事件账本为同一事件增加只读 `publicSignals`，保留一个主评分身份并补充公开 secondary signals，不新增 Event、不重复计分；最终校验器只验证 grounding、技术边界、候选结论、隐私、单问题、重复问题和目标连续性，不再覆盖合规 Agent 文案；手动 regenerate 改为 Agent 生成、服务器两轮安全校验，不合规后才使用确定性 fallback。
+- 验证：回归覆盖“离家去外地上大学”只保留一条事件但公开 education + relocation、D24 + D4 合法 grounding、家人健康不投射为本人 D30、合规 Agent 文案原样保留、未 grounding 技法与候选结论被拒绝、手动 regenerate 的 repair 与 fallback。
+- 防复发：公开语义只解释用户原话中已存在的复合信号；服务器继续拥有事件身份、评分、事实 grounding 和安全门，正常措辞与提问归 Agent。
+- 相关记录：BUG-107、BUG-108、BUG-109、BUG-110
+- 复发自：BUG-109
+- 修复版本：local / pending release

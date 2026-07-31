@@ -242,24 +242,42 @@ export function reconcileV4Evidence(input: {
       revisions.push(clarified);
       targetResolved = true;
     } else {
-      const targetAnswer = extracted.find((event) => event.dateValue && event.datePrecision !== "unknown" && describesTarget(event, target));
-      if (targetAnswer?.dateValue && targetAnswer.datePrecision !== "unknown") {
-        const dateRange = dateRangeFromDeclared(targetAnswer.dateValue, targetAnswer.datePrecision);
-        if (dateRange.start <= input.asOfDate) {
-          revisions.push(appendEventRevision(input.existing, {
-            eventId: target.eventId,
-            domain: target.domain,
-            eventKind: target.eventKind,
-            subject: target.subject,
-            relatedPerson: target.relatedPerson,
-            summary: target.summary,
-            rawText: input.answer,
-            dateRange,
-            ...eventDateProvenance(target),
-            scoreability: target.scoreability,
-          }, { id: targetAnswer.id, now: input.now }));
-          consumed.add(targetAnswer.id);
-          targetResolved = true;
+      const inheritedDateRange = inferredTargetDateRange(input.answer, target, input.asOfDate);
+      if (inheritedDateRange && inheritedDateRange.start <= input.asOfDate) {
+        revisions.push(appendEventRevision(input.existing, {
+          eventId: target.eventId,
+          domain: target.domain,
+          eventKind: target.eventKind,
+          subject: target.subject,
+          relatedPerson: target.relatedPerson,
+          summary: target.summary,
+          rawText: input.answer,
+          dateRange: inheritedDateRange,
+          ...eventDateProvenance(target),
+          scoreability: target.scoreability,
+        }, { now: input.now }));
+        extracted.forEach((event) => consumed.add(event.id));
+        targetResolved = true;
+      } else {
+        const targetAnswer = extracted.find((event) => event.dateValue && event.datePrecision !== "unknown" && describesTarget(event, target));
+        if (targetAnswer?.dateValue && targetAnswer.datePrecision !== "unknown") {
+          const dateRange = dateRangeFromDeclared(targetAnswer.dateValue, targetAnswer.datePrecision);
+          if (dateRange.start <= input.asOfDate) {
+            revisions.push(appendEventRevision(input.existing, {
+              eventId: target.eventId,
+              domain: target.domain,
+              eventKind: target.eventKind,
+              subject: target.subject,
+              relatedPerson: target.relatedPerson,
+              summary: target.summary,
+              rawText: input.answer,
+              dateRange,
+              ...eventDateProvenance(target),
+              scoreability: target.scoreability,
+            }, { id: targetAnswer.id, now: input.now }));
+            consumed.add(targetAnswer.id);
+            targetResolved = true;
+          }
         }
       }
     }
@@ -285,7 +303,7 @@ export function reconcileV4Evidence(input: {
   const suppressPending = targetDisposition === "unknown"
     || targetDisposition === "declined"
     || targetDisposition === "direction_change";
-  if (extracted.length === 0 && !suppressPending) unresolvedReason = "event_unparsed";
+  if (extracted.length === 0 && !suppressPending && !targetResolved) unresolvedReason = "event_unparsed";
   const pending = unresolvedReason && !suppressPending ? [
     pendingEvidence({
       caseId: input.caseId,
