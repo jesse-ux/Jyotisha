@@ -242,6 +242,50 @@ test("a natural question and multiple grounded event proposals pass without doma
   assert.deepEqual(new Set(staged.revisions.map((item) => item.domain)), new Set(["relocation", "career"]));
 });
 
+test("evidence proposal survives a repeated provisional question", () => {
+  const target = event({
+    summary: "离家去外地上大学",
+    rawText: "2016 年离家去外地上大学",
+    dateRange: { start: "2016-01-01", end: "2016-12-31", precision: "year", label: "2016年" },
+  });
+  const repeatedQuestion = "你还记得“离家去外地上大学”大概发生在哪个月，或一年中的哪个时间段吗？";
+  const targetDossier = buildRectificationCaseDossier({
+    caseValue,
+    turns: [turn(0, { question: repeatedQuestion, answer: target.rawText, questionTargetEventId: target.eventId })],
+    events: [target],
+    pendingEvidence: [],
+    snapshot: null,
+    diagnostics: null,
+    targetDisposition: "unresolved",
+    currentTargetEventId: target.eventId,
+  });
+  const value = plan({
+    targetDisposition: "resolved",
+    evidenceProposals: [{
+      operation: "revise_date",
+      targetEventId: target.eventId,
+      sourceSpan: "9 月",
+      dateText: "9 月",
+      proposedSummary: target.summary,
+      proposedDomain: target.domain,
+      proposedEventKind: target.eventKind,
+      proposedSubject: target.subject,
+      proposedRelatedPerson: target.relatedPerson,
+      confidence: "high",
+    }],
+    action: {
+      type: "ask_question",
+      focus: { mode: "clarify_existing_event", targetEventId: target.eventId, domain: target.domain, requestedFacts: ["month"], rationaleCodes: ["provisional"] },
+      question: repeatedQuestion,
+      optionalQuickReplies: [],
+    },
+  });
+
+  const validated = validateRectificationTurnPlan({ plan: value, dossier: targetDossier, latestAnswer: "9 月", phase: "evidence" });
+  assert.deepEqual(validated.issues, []);
+  assert.equal(validated.plan?.evidenceProposals[0]?.operation, "revise_date");
+});
+
 test("server rejects invented sources, private details, exact minutes, and ungated ranges", () => {
   const latestAnswer = "2018年9月搬到北京。";
   const invented = plan({ evidenceProposals: [{ operation: "create", targetEventId: null, sourceSpan: "2020年工作", dateText: "2020年", proposedSummary: "开始工作", proposedDomain: "career", proposedEventKind: "career_change", proposedSubject: "self", proposedRelatedPerson: null, confidence: "low" }] });
@@ -822,6 +866,8 @@ test("deterministic fallback pauses instead of repeating a persisted public ques
   assert.equal(result.plan.action.type, "stop_low_confidence");
   if (result.plan.action.type !== "stop_low_confidence") return;
   assert.deepEqual(result.plan.action.reasonCodes, ["deterministic_fallback_rejected"]);
+  assert.match(result.fallbackReason ?? "", /forced_fallback/);
+  assert.match(result.fallbackReason ?? "", /fallback_rejected:question_repeated/);
 });
 
 test("deterministic fallback stays domain-neutral when the Agent is unavailable", async () => {

@@ -4,7 +4,7 @@ import { buildCandidateClusters } from "../rectification-v4/candidate-clusters.t
 import type { CandidateSnapshot, RectificationAnalysisTrace, RectificationV4Question } from "../rectification-v4/contracts.ts";
 import { evaluateDecisionGate } from "../rectification-v4/decision-gate.ts";
 import { reconcileV4Evidence, stageAgentEvidenceProposals, type ReconciledV4Evidence, type TargetDisposition } from "../rectification-v4/extraction.ts";
-import { buildRectificationCaseDossier, runRectificationDirector } from "./director-agent.ts";
+import { buildRectificationCaseDossier, runRectificationDirector, type RectificationDirectorGenerator } from "./director-agent.ts";
 import { candidateUpdateFor } from "./renderer-agent.ts";
 import { extractEventWithModel } from "./event-extractor-agent.ts";
 import { evidenceSetHash } from "../rectification-v4/fingerprints.ts";
@@ -138,6 +138,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
   engine: RectificationV4CandidateEngine;
   now: Date;
   onPhase?: (phase: "extracting_evidence" | "scoring_candidates" | "checking_robustness" | "planning_question" | "reasoning" | "rendering") => Promise<void>;
+  generateDirectorPlan?: RectificationDirectorGenerator;
 }>): Promise<Readonly<{
   newEventRevisions: ClaimedRectificationV4Job["events"];
   pendingEvidence: import("../rectification-v4/contracts.ts").PendingEvidence[];
@@ -190,7 +191,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
       currentTargetEventId: claimed.turn.questionTargetEventId,
     });
     evidenceDirector = await runRectificationDirector({
-      caseValue: claimed.case, dossier, latestAnswer: claimed.turn.answer, phase: "evidence", diagnostics: provisionalDiagnostics,
+      caseValue: claimed.case, dossier, latestAnswer: claimed.turn.answer, phase: "evidence", diagnostics: provisionalDiagnostics, generatePlan: input.generateDirectorPlan,
     });
     const serverReconciliation = reconcileV4Evidence({ caseId: claimed.case.id, answer: claimed.turn.answer, sourceTurnId: claimed.turn.id, asOfDate, existing: claimed.events, targetEventId: claimed.turn.questionTargetEventId, now });
     reconciliation = claimed.case.deploymentMode === "v5_agent" && evidenceDirector.mode === "agent" && evidenceDirector.plan.evidenceProposals.length
@@ -395,7 +396,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     });
     await enterPhase("reasoning");
     const directed = await runRectificationDirector({
-      caseValue: claimed.case, dossier, latestAnswer: claimed.turn.answer, phase: "final", diagnostics: safeDiagnostics,
+      caseValue: claimed.case, dossier, latestAnswer: claimed.turn.answer, phase: "final", diagnostics: safeDiagnostics, generatePlan: input.generateDirectorPlan,
     });
     const plan = directed.plan;
     const action = plan.action;
@@ -447,7 +448,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
         : "awaiting_answer" as const;
     const totalInput = [evidenceDirector?.inputTokenCount, directed.inputTokenCount].filter((value): value is number => value !== null && value !== undefined).reduce((sum, value) => sum + value, 0);
     const totalOutput = [evidenceDirector?.outputTokenCount, directed.outputTokenCount].filter((value): value is number => value !== null && value !== undefined).reduce((sum, value) => sum + value, 0);
-    const fallbackReason = [evidenceDirector?.fallbackReason, directed.fallbackReason].filter(Boolean).join(";").slice(0, 120) || null;
+    const fallbackReason = [evidenceDirector?.fallbackReason, directed.fallbackReason].filter(Boolean).join(";").slice(0, 240) || null;
     const agentRun: AgentRun = {
       id: randomUUID(), caseId: claimed.case.id, jobId: claimed.job.id, caseVersion: claimed.case.version,
       modelId: claimed.case.orchestrationModelId, skillVersion: claimed.case.skillVersion, promptVersion: claimed.case.promptVersion,

@@ -494,7 +494,7 @@ export const agentRunSchema = z.object({
   decision: rectificationDecisionSchema.nullable(),
   validatedDecision: validatedDecisionSchema,
   toolCalls: z.array(toolCallTraceSchema).max(10),
-  fallbackReason: nonblank(120).nullable(),
+  fallbackReason: nonblank(240).nullable(),
   inputTokenCount: z.number().int().nonnegative().nullable(),
   outputTokenCount: z.number().int().nonnegative().nullable(),
   latencyMs: z.number().int().nonnegative().max(300_000),

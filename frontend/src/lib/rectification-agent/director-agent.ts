@@ -211,6 +211,7 @@ export function validateRectificationTurnPlan(input: Readonly<{ plan: unknown; d
     if (plan.targetDisposition === "resolved" && !revisedCurrentTarget) issues.push("resolved_target_not_revised");
     if (plan.targetDisposition === "answered_other_event" && !createdOtherEvent) issues.push("other_event_not_proposed");
   }
+  if (input.phase === "evidence") return { plan: issues.length ? null : plan, issues };
   const groundedEvent = latestGroundedEvent(input.dossier, input.latestAnswer);
   const capabilityFacts = new Map(input.dossier.capabilities.publicTechniqueCapabilities.map((item) => [`domain:${item.domain}`, item]));
   const observationFacts = new Map<"window_sensitivity" | "candidate_scan" | "diagnostic", Set<string>>([
@@ -425,6 +426,9 @@ export async function runRectificationDirector(input: Readonly<{ caseValue: Rect
       publicReply: { acknowledgement: "本轮信息已经保留。", evidenceExplanation: null, candidateCommentary: null, limitation: "当前无法安全生成新的不重复问题，先暂停在这里。" },
       publicExplanationGrounding: [],
     };
-    return { plan: safePlan, dossier, mode: "deterministic_fallback" as const, fallbackReason: error instanceof Error ? error.message.slice(0, 120) : "director_failed", toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
+    const primaryReason = error instanceof Error ? error.message : "director_failed";
+    const fallbackValidationReason = validatedFallback.plan ? null : `fallback_rejected:${validatedFallback.issues.join(",")}`;
+    const fallbackReason = [primaryReason, fallbackValidationReason].filter((value): value is string => Boolean(value)).join(";").slice(0, 240);
+    return { plan: safePlan, dossier, mode: "deterministic_fallback" as const, fallbackReason, toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
   }
 }

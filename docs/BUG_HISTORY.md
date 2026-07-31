@@ -1928,3 +1928,19 @@
 - 相关记录：无
 - 复发自：无
 - 修复版本：待发布
+
+## BUG-110 | 月份简答未继承目标事件年份导致重复追问并暂停
+
+- 状态：resolved（local）
+- 首次发现：2026-07-31
+- 最近更新：2026-07-31
+- 影响面：V5 生时校正的目标事件日期补充、Director fallback 与下一问生成
+- 用户现象：已有“2016 年离家去外地上大学”事件时，用户回答“9 月”后没有生成同一事件的新 revision；系统仍把目标视为 unresolved，重复月份问题，随后因 `question_repeated` 进入暂停。
+- 触发条件：当前问题绑定一个仅有年份或季度精度的事件，用户只回答月份、月日、半年或月份区间，且 Agent 不可用或返回重复的临时问题。
+- 根因：确定性 reconciliation 只接受答案中重新出现完整年份的日期；Evidence 阶段又提前校验临时公开问题，导致有效证据提议可能被重复问题校验一并拒绝。
+- 修复：复用目标事件已有年份补全局部日期回答，成功后追加同一 Event ID 的 revision 并关闭目标；Evidence 阶段只验证证据和 target disposition，公开问题只在 final 阶段验证；fallback reason 同时保留原始异常和二次拒绝原因。
+- 验证：回归覆盖“2016 年事件 + 9 月 + Agent 强制不可用”的完整 Orchestrator 流程，确认生成 `2016-09` revision、无 pending、下一问不再绑定原事件且状态保持 `awaiting_answer`；Director 测试确认记录 `fallback_rejected:question_repeated`。
+- 防复发：单元测试分别锁定确定性日期继承、Evidence 阶段边界、fallback 原因和完整两轮回放。
+- 相关记录：BUG-104、BUG-107、BUG-109
+- 复发自：无
+- 修复版本：local / pending release
