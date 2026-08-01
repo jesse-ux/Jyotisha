@@ -6,6 +6,7 @@ import {
   pendingEvidenceSchema,
   rectificationAnalysisItemSchema,
   rectificationAssistantResponseSchema,
+  rectificationRuntimeTraceSchema,
   rectificationV4CaseSchema,
   rectificationV4JobSchema,
   rectificationV4TurnSchema,
@@ -14,6 +15,7 @@ import {
   type PendingEvidence,
   type RectificationAnalysisItem,
   type RectificationAssistantResponse,
+  type RectificationRuntimeTrace,
   type RectificationV4Case,
   type RectificationV4Job,
   type RectificationV4Turn,
@@ -285,6 +287,25 @@ export function createRectificationV4SupabaseStore(supabase: SupabaseClient): Re
         : []);
     },
     loadAssistantResponses: loadAssistantResponsesByCase,
+    async loadLatestRuntimeTrace(userId, caseId): Promise<RectificationRuntimeTrace | null> {
+      const { data, error } = await supabase.from("birth_time_rectification_agent_runs")
+        .select("deployment_mode,model_id,skill_version,deployment_sha,fallback_reason,validated_decision_json")
+        .eq("case_id", caseId).eq("user_id", userId)
+        .order("case_version", { ascending: false }).order("created_at", { ascending: false })
+        .limit(1).maybeSingle();
+      if (error) throw storeError(error);
+      if (!data) return null;
+      const row = data as Row;
+      const validated = row.validated_decision_json as Row | null;
+      return rectificationRuntimeTraceSchema.parse({
+        deploymentMode: row.deployment_mode as RectificationRuntimeTrace["deploymentMode"],
+        executionMode: validated?.mode === "agent" ? "agent" : "deterministic_fallback",
+        modelId: row.model_id ? String(row.model_id) : null,
+        skillVersion: String(row.skill_version),
+        deploymentSha: row.deployment_sha ? String(row.deployment_sha) : null,
+        fallbackCode: row.fallback_reason ? String(row.fallback_reason) : null,
+      });
+    },
     async loadLatestValidatedDecision(userId, caseId): Promise<ValidatedDecision | null> {
       const { data, error } = await supabase.from("birth_time_rectification_agent_runs")
         .select("validated_decision_json").eq("case_id", caseId).eq("user_id", userId)

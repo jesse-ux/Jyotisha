@@ -174,6 +174,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
   };
   await enterPhase("extracting_evidence");
   const asOfDate = now.toISOString().slice(0, 10);
+  const selectedModelId = claimed.turn.modelId ?? claimed.case.orchestrationModelId;
   const provisionalDisposition = claimed.turn.questionTargetEventId ? "unresolved" as const : "not_applicable" as const;
   const provisionalDiagnostics = diagnosticsSummarySchema.parse({
     id: randomUUID(), caseId: claimed.case.id, snapshotId: claimed.case.latestSnapshot?.id ?? randomUUID(),
@@ -191,7 +192,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
       currentTargetEventId: claimed.turn.questionTargetEventId,
     });
     evidenceDirector = await runRectificationDirector({
-      caseValue: claimed.case, dossier, latestAnswer: claimed.turn.answer, phase: "evidence", diagnostics: provisionalDiagnostics, generatePlan: input.generateDirectorPlan,
+      caseValue: claimed.case, modelId: selectedModelId, dossier, latestAnswer: claimed.turn.answer, phase: "evidence", diagnostics: provisionalDiagnostics, generatePlan: input.generateDirectorPlan,
     });
     const serverReconciliation = reconcileV4Evidence({ caseId: claimed.case.id, answer: claimed.turn.answer, sourceTurnId: claimed.turn.id, asOfDate, existing: claimed.events, targetEventId: claimed.turn.questionTargetEventId, now });
     reconciliation = claimed.case.deploymentMode === "v5_agent" && evidenceDirector.mode === "agent" && evidenceDirector.plan.evidenceProposals.length
@@ -216,7 +217,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     || reconciliation.revisions.some((event) => event.scoreability === "pending_review" || event.scoreability === "unsupported")
   );
   if (needsAssistance) {
-    const assisted = await extractEventWithModel({ rawText: claimed.turn.answer, sourceTurnId: claimed.turn.id, asOfDate, modelId: claimed.case.orchestrationModelId });
+    const assisted = await extractEventWithModel({ rawText: claimed.turn.answer, sourceTurnId: claimed.turn.id, asOfDate, modelId: selectedModelId });
     if (assisted) reconciliation = reconcileV4Evidence({ caseId: claimed.case.id, answer: claimed.turn.answer, sourceTurnId: claimed.turn.id, asOfDate, existing: claimed.events, targetEventId: claimed.turn.questionTargetEventId, assistedEvidence: [assisted], now });
   }
   const extracted = reconciliation.revisions;
@@ -396,7 +397,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     });
     await enterPhase("reasoning");
     const directed = await runRectificationDirector({
-      caseValue: claimed.case, dossier, latestAnswer: claimed.turn.answer, phase: "final", diagnostics: safeDiagnostics, generatePlan: input.generateDirectorPlan,
+      caseValue: claimed.case, modelId: selectedModelId, dossier, latestAnswer: claimed.turn.answer, phase: "final", diagnostics: safeDiagnostics, generatePlan: input.generateDirectorPlan,
     });
     const plan = directed.plan;
     const action = plan.action;
@@ -451,7 +452,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     const fallbackReason = [evidenceDirector?.fallbackReason, directed.fallbackReason].filter(Boolean).join(";").slice(0, 240) || null;
     const agentRun: AgentRun = {
       id: randomUUID(), caseId: claimed.case.id, jobId: claimed.job.id, caseVersion: claimed.case.version,
-      modelId: claimed.case.orchestrationModelId, skillVersion: claimed.case.skillVersion, promptVersion: claimed.case.promptVersion,
+      modelId: directed.modelId, skillVersion: claimed.case.skillVersion, promptVersion: claimed.case.promptVersion,
       deploymentMode: claimed.case.deploymentMode, deploymentSha: process.env.DEPLOYMENT_SHA?.trim() || null,
       decision, validatedDecision, toolCalls: [...directed.toolCalls], fallbackReason,
       inputTokenCount: totalInput || null, outputTokenCount: totalOutput || null,
@@ -491,6 +492,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
   await enterPhase("reasoning");
   const reasoned = await runBoundedReasoner({
     caseValue: claimed.case,
+    modelId: claimed.turn.modelId ?? claimed.case.orchestrationModelId,
     snapshot,
     diagnostics: safeDiagnostics,
     opportunities,
@@ -520,7 +522,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
   if (!validation.decision) {
     recordRectificationAgentTelemetry({
       caseId: claimed.case.id, phase: "fallback", outcome: "rejected",
-      modelId: claimed.case.orchestrationModelId, toolName: null,
+      modelId: reasoned.modelId, toolName: null,
       decisionAction: rawDecision.action, durationMs: reasoned.latencyMs,
       errorCode: "policy_validator_rejected", deploymentSha: process.env.DEPLOYMENT_SHA?.trim() || null,
     });
@@ -583,7 +585,7 @@ export async function processRectificationAgentTurn(input: Readonly<{
     caseId: claimed.case.id,
     jobId: claimed.job.id,
     caseVersion: claimed.case.version,
-    modelId: claimed.case.orchestrationModelId,
+    modelId: reasoned.modelId,
     skillVersion: claimed.case.skillVersion,
     promptVersion: claimed.case.promptVersion,
     deploymentMode: claimed.case.deploymentMode,

@@ -9,6 +9,7 @@ import type {
   RectificationV4Job,
   RectificationV4Phase,
   RectificationV4Question,
+  RectificationRuntimeTrace,
   RectificationV4Turn,
 } from "./contracts.ts";
 export type { RectificationV4Turn } from "./contracts.ts";
@@ -61,6 +62,7 @@ export interface RectificationV4Store {
   loadTurns(userId: string, caseId: string): Promise<readonly RectificationV4Turn[]>;
   loadAnalysisMessages(userId: string, caseId: string): Promise<readonly RectificationAnalysisItem[]>;
   loadAssistantResponses(userId: string, caseId: string): Promise<readonly RectificationAssistantResponse[]>;
+  loadLatestRuntimeTrace(userId: string, caseId: string): Promise<RectificationRuntimeTrace | null>;
   loadLatestValidatedDecision(userId: string, caseId: string): Promise<ValidatedDecision | null>;
   loadActionCase(userId: string, actionId: string): Promise<RectificationV4Case | null>;
   createCase(input: { readonly case: RectificationV4Case; readonly actionId: string }): Promise<RectificationV4Case>;

@@ -28,6 +28,7 @@ type RectificationV4PanelProps = Readonly<{
   continuationPending?: boolean;
   onPendingChange?: (pending: boolean) => void;
   onContinueOriginalQuestion?: (continuation: RectificationV4Continuation) => void;
+  onUseAgentic?: () => void;
 }>;
 
 type RectificationChatMessageView = ChatMessageView & Readonly<{
@@ -358,8 +359,9 @@ export function RectificationV4Panel(props: RectificationV4PanelProps) {
     && handoff?.status === "pending"
     && props.onContinueOriginalQuestion,
   );
+  const canUseAgentic = Boolean(caseValue && caseValue.status !== "abandoned" && props.onUseAgentic);
   const showControls = Boolean(caseValue && caseValue.status !== "abandoned" && (
-    canAnswer || canAcceptRange || canContinue || caseValue.status === "paused"
+    canAnswer || canAcceptRange || canContinue || caseValue.status === "paused" || canUseAgentic
   ));
 
   useEffect(() => {
@@ -408,6 +410,11 @@ export function RectificationV4Panel(props: RectificationV4PanelProps) {
       caseVersion: caseValue.version,
       acceptedRange: caseValue.acceptedRange,
     });
+  }
+
+  async function startAgentic() {
+    const result = await controller.abandon();
+    if (result) props.onUseAgentic?.();
   }
 
   return (
@@ -482,6 +489,7 @@ export function RectificationV4Panel(props: RectificationV4PanelProps) {
               </div>
             );
           })}
+          {controller.data?.runtimeTrace && <RectificationRuntimeDetails trace={controller.data.runtimeTrace} />}
           {controller.error && <p className="error-message" role="alert">{controller.error}</p>}
           <div ref={conversationEnd} />
         </div>
@@ -489,7 +497,7 @@ export function RectificationV4Panel(props: RectificationV4PanelProps) {
 
       {showControls && (
         <div className="composer-wrap">
-          {(canAcceptRange || canContinue || caseValue?.status === "paused") && (
+          {(canAcceptRange || canContinue || caseValue?.status === "paused" || canUseAgentic) && (
             <div className="composer-suggestions" aria-label="生时校正操作">
               {canAcceptRange && (
                 <button type="button" disabled={controller.pending} onClick={() => void controller.acceptRange()}>
@@ -504,6 +512,11 @@ export function RectificationV4Panel(props: RectificationV4PanelProps) {
               {caseValue?.status === "paused" && (
                 <button type="button" disabled={controller.pending} onClick={() => void controller.resume()}>
                   继续校正
+                </button>
+              )}
+              {canUseAgentic && (
+                <button type="button" disabled={controller.pending} onClick={() => void startAgentic()}>
+                  结束旧版并使用新版 Agent
                 </button>
               )}
             </div>
@@ -542,5 +555,30 @@ export function RectificationV4Panel(props: RectificationV4PanelProps) {
         </div>
       )}
     </>
+  );
+}
+
+
+function RectificationRuntimeDetails({ trace }: Readonly<{ trace: RectificationV4ApiResponse["runtimeTrace"] }>) {
+  const rows = [
+    ["Runtime", trace.deploymentMode, "当前校正路由"],
+    ["Execution", trace.executionMode, trace.fallbackCode ?? "无 fallback code"],
+    ["Model", trace.modelId ?? "default / unavailable", "本轮实际选择"],
+    ["Skill", trace.skillVersion, "已注册版本"],
+    ["Deployment SHA", trace.deploymentSha ?? "unknown", "当前部署"],
+  ] as const;
+  return (
+    <details className="evidence-audit-panel" open={trace.executionMode === "deterministic_fallback"}>
+      <summary>运行信息 · {trace.executionMode}</summary>
+      <div className="evidence-audit-table" role="table" aria-label="生时校正运行信息">
+        {rows.map(([label, value, note]) => (
+          <div className="evidence-audit-row" role="row" key={label}>
+            <span role="cell">{label}</span>
+            <b role="cell">{value}</b>
+            <small role="cell">{note}</small>
+          </div>
+        ))}
+      </div>
+    </details>
   );
 }

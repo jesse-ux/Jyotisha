@@ -1960,3 +1960,18 @@
 - 相关记录：BUG-107、BUG-108、BUG-109、BUG-110
 - 复发自：BUG-109
 - 修复版本：local / pending release
+
+## BUG-112 | 活动旧 Case 静默阻止新版 Agentic 生时校正
+
+- 状态：resolved（staging pending deployment）
+- 首次发现：2026-08-01
+- 最近更新：2026-08-01
+- 影响面：生时校正前端入口、V4 面板、V4 Reasoner 模型选择与运行信息
+- 用户现象：账户存在未结束的旧 Case 时，页面始终进入 `/api/rectification/v4/cases/*`；没有切换新版 Agent 的入口，模型选择器也不影响本轮 Reasoner，fallback 原因与部署版本不可见。
+- 触发条件：打开生时校正时 `loadActiveRectificationV4()` 返回活动 Case。
+- 根因：入口用 `existing ? "v4" : "agentic"` 静默分流；UI 未调用已有 `abandon()`；Reasoner 只读取 Case 固定模型；API 未返回最新 Agent Run 的安全运行摘要。
+- 修复：活动旧 Case 改为显式二选一；进入新版前先结束旧 Case；V4 面板增加同一切换操作；本轮 Turn 模型优先传给 Reasoner并记录实际模型；Case API 只公开最新运行的 mode、model、skill、deployment SHA 与 fallback code。
+- 验证：`frontend/tests/conversational-rectification-component.test.ts`、`frontend/tests/rectification-v4-service.test.ts`。
+- 防复发：入口合同禁止恢复静默 V4 分流；服务测试锁定本轮模型优先级与 runtime trace。
+- 相关记录：BUG-085、BUG-086、BUG-111
+- 修复版本：local / staging pending deployment

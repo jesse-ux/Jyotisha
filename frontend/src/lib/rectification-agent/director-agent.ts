@@ -369,11 +369,13 @@ export async function regenerateDirectorQuestion(input: Readonly<{
   return fallbackQuestion;
 }
 
-export async function runRectificationDirector(input: Readonly<{ caseValue: RectificationV4Case; dossier: RectificationCaseDossier; latestAnswer: string; phase: "evidence" | "final"; diagnostics: DiagnosticsSummary; timeoutMs?: number; generatePlan?: RectificationDirectorGenerator }>) {
+export async function runRectificationDirector(input: Readonly<{ caseValue: RectificationV4Case; modelId?: string | null; dossier: RectificationCaseDossier; latestAnswer: string; phase: "evidence" | "final"; diagnostics: DiagnosticsSummary; timeoutMs?: number; generatePlan?: RectificationDirectorGenerator }>) {
   const started = Date.now();
-  const model = (input.caseValue.orchestrationModelId ? resolveLanguageModel(input.caseValue.orchestrationModelId) : null) ?? defaultLanguageModel();
+  const requestedModelId = input.modelId ?? input.caseValue.orchestrationModelId;
+  const model = (requestedModelId ? resolveLanguageModel(requestedModelId) : null) ?? defaultLanguageModel();
+  const modelId = model?.id ?? requestedModelId;
   const agent = model ? new Agent({ id: `rectification-director-${model.id}`, name: "Birth Time Rectification Director", model: model.model, skills: [skillPath], instructions: `Direct the interview from the server-owned dossier and tool observations. Propose every explicit event in the latest answer, independently choose the current focus and wording from the full ledger, declined domains, candidate contrasts, and observations, and write the public reply plus at most one natural question. Do not follow a fixed domain rotation or treat examples, tests, or prior wording as a script. In final planning, use the server-owned read-only tools to inspect the case, candidate scan, evidence gaps, or one diagnostic at a time. Adapt after every observation, never repeat an immutable tool call in the same run, and converge as soon as another tool adds no value. ${groundedPublicReplyRequirement} Never write scores, internal ids, profile values, candidate minutes, status, phase, or database mutations. Return strict structured output.` }) : null;
-  const skillReady = agent ? assertRectificationSkillLoaded(agent, { caseId: input.caseValue.id, modelId: model?.id ?? null, deploymentSha: process.env.DEPLOYMENT_SHA?.trim() || null }) : null;
+  const skillReady = agent ? assertRectificationSkillLoaded(agent, { caseId: input.caseValue.id, modelId, deploymentSha: process.env.DEPLOYMENT_SHA?.trim() || null }) : null;
   const generate = input.generatePlan ?? (async (prompt: string) => {
     if (!agent || !skillReady) throw new Error("director_model_unavailable");
     await skillReady;
@@ -476,7 +478,7 @@ export async function runRectificationDirector(input: Readonly<{ caseValue: Rect
       validated = validateRectificationTurnPlan({ plan: candidate, dossier, latestAnswer: input.latestAnswer, phase: input.phase });
     }
     if (!validated.plan) throw new Error(`director_plan_rejected:${validated.issues.join(",")}`);
-    return { plan: validated.plan, dossier, mode: "agent" as const, fallbackReason: null, toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
+    return { plan: validated.plan, dossier, mode: "agent" as const, modelId, fallbackReason: null, toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
   } catch (error) {
     const fallbackPlan = fallback(dossier, input.latestAnswer);
     const validatedFallback = validateRectificationTurnPlan({ plan: fallbackPlan, dossier, latestAnswer: input.latestAnswer, phase: input.phase });
@@ -491,6 +493,6 @@ export async function runRectificationDirector(input: Readonly<{ caseValue: Rect
     const primaryReason = error instanceof Error ? error.message : "director_failed";
     const fallbackValidationReason = validatedFallback.plan ? null : `fallback_rejected:${validatedFallback.issues.join(",")}`;
     const fallbackReason = [primaryReason, fallbackValidationReason].filter((value): value is string => Boolean(value)).join(";").slice(0, 240);
-    return { plan: safePlan, dossier, mode: "deterministic_fallback" as const, fallbackReason, toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
+    return { plan: safePlan, dossier, mode: "deterministic_fallback" as const, modelId, fallbackReason, toolCalls, inputTokenCount: usageObserved ? inputTokens : null, outputTokenCount: usageObserved ? outputTokens : null, latencyMs: Date.now() - started };
   }
 }
