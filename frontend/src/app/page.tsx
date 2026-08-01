@@ -3038,6 +3038,7 @@ export default function Home() {
             continuationPending={rectificationContinuationPending}
             onPendingChange={setRectificationMutationPending}
             onContinueOriginalQuestion={(continuation) => void continueRectificationOriginalQuestion(continuation)}
+            onSaved={() => void refreshAccount()}
           />
         )}
 
