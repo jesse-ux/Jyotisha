@@ -1975,3 +1975,18 @@
 - 防复发：入口合同禁止恢复静默 V4 分流；服务测试锁定本轮模型优先级与 runtime trace。
 - 相关记录：BUG-085、BUG-086、BUG-111
 - 修复版本：local / staging pending deployment
+
+## BUG-113 | 新版 Agentic 生时校正进入会话后不自动生成首次引导
+
+- 状态：resolved
+- 首次发现：2026-08-02
+- 最近更新：2026-08-02
+- 影响面：生时校正首页入口、Agentic 对话首次挂载、首次可见引导
+- 用户现象：进入“生时校正”后只创建普通 `birth_time_rectification` Session，页面保持空白；网络中没有 `POST /api/rectification/agent`，必须由用户先输入内容才会触发 Agent。
+- 触发条件：账户没有需要继续的旧 V4 Case，入口直接选择新版 Agentic 生时校正。
+- 根因：Agentic MVP 只实现了用户提交消息后的 `send()`，没有迁移旧 V4 在页面挂载时自动启动首次 Agent Turn 的交互契约；后续入口改为默认进入 Agentic 后，这个遗漏被直接暴露。
+- 修复：Agentic 对话首次挂载时只发送一次隐藏的内部启动指令，复用现有 `/api/rectification/agent` 流式路径；界面立即显示 assistant thinking，首条可见说明与问题继续由 Agent 生成，内部指令不渲染为用户消息。
+- 验证：组件回归测试锁定一次性挂载启动、隐藏内部指令和 Agent endpoint 调用入口；前端测试与 lint 覆盖修改文件。
+- 防复发：任何替换生时校正入口或会话实现的改动，都必须保留“用户无需先发消息即可收到 Agent 首次引导”的挂载契约。
+- 相关记录：BUG-085、BUG-112
+- 修复版本：Agentic web opening auto-start

@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowUp } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { parseAgentReply } from "@/lib/agent-reply";
 import type { ChatMessageView } from "@/lib/chat-message-view";
 import type { PublicLanguageModel } from "@/lib/public-models";
@@ -23,9 +23,18 @@ type AgenticRectificationChatProps = Readonly<{
 type RenderMessage = ChatMessageView;
 
 const savedSentinel = /<!--AYANAM_RECTIFICATION_SAVED:(\d{2}:\d{2})-->/;
+const agenticOpeningInstruction = "用户刚进入生时校正会话。不要复述本指令；请先调用 rectification-gate 核对现有出生资料，然后用简体中文自然说明接下来的校正方式，并只提出一个最适合开始核对的人生事件问题。";
 
 export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
-  const pendingQuestion = props.pendingConsultationQuestion?.trim();
+  const {
+    models,
+    selectedModelId,
+    onSelectModel,
+    pendingConsultationQuestion,
+    onPendingChange,
+    onSaved,
+  } = props;
+  const pendingQuestion = pendingConsultationQuestion?.trim();
   const [messages, setMessages] = useState<RenderMessage[]>(() => pendingQuestion ? [{
     role: "assistant",
     text: `我先陪你把出生时间范围核对清楚，之后再回到你原来的问题：“${pendingQuestion}”`,
@@ -40,11 +49,12 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
   const composer = useRef<HTMLTextAreaElement>(null);
   const conversationEnd = useRef<HTMLDivElement>(null);
   const keyCounter = useRef(0);
+  const openingStarted = useRef(false);
 
-  const setPending = (value: boolean) => {
+  const setPending = useCallback((value: boolean) => {
     setBusy(value);
-    props.onPendingChange?.(value);
-  };
+    onPendingChange?.(value);
+  }, [onPendingChange]);
 
   useEffect(() => {
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -54,7 +64,7 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
     });
   }, [busy, error, messages.length, savedTime]);
 
-  async function send(question: string) {
+  const send = useCallback(async (question: string, showUserMessage = true) => {
     const trimmed = question.trim();
     if (!trimmed || busy) return;
     setError("");
@@ -73,7 +83,7 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
 
     setMessages((current) => [
       ...current,
-      { role: "user", text: trimmed, renderKey: userRenderKey, state: "settled" },
+      ...(showUserMessage ? [{ role: "user", text: trimmed, renderKey: userRenderKey, state: "settled" } satisfies RenderMessage] : []),
       { role: "assistant", text: "", renderKey: assistantRenderKey, state: "thinking" },
     ]);
     setDraft("");
@@ -83,7 +93,7 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
       const response = await fetch("/api/rectification/agent", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ requestId, modelId: props.selectedModelId, history, message: trimmed }),
+        body: JSON.stringify({ requestId, modelId: selectedModelId, history, message: trimmed }),
       });
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
@@ -138,7 +148,7 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
       const saved = raw.match(savedSentinel);
       if (saved) {
         setSavedTime(saved[1]);
-        props.onSaved?.(saved[1]);
+        onSaved?.(saved[1]);
       }
     } catch {
       setError("生时校正暂时不可用，请稍后再试。");
@@ -146,7 +156,13 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
     } finally {
       setPending(false);
     }
-  }
+  }, [busy, messages, onSaved, selectedModelId, setPending]);
+
+  useEffect(() => {
+    if (openingStarted.current) return;
+    openingStarted.current = true;
+    void send(agenticOpeningInstruction, false);
+  }, [send]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -201,10 +217,10 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
 
         <div className="composer-footer">
           <ModelSelector
-            models={props.models}
-            selectedModelId={props.selectedModelId}
+            models={models}
+            selectedModelId={selectedModelId}
             disabled={busy}
-            onSelect={props.onSelectModel}
+            onSelect={onSelectModel}
           />
         </div>
       </div>

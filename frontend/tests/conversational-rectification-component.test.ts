@@ -108,6 +108,18 @@ function analysisTrace(label: string) {
   } as const;
 }
 
+test("agentic rectification requests an Agent-generated opening when the surface mounts", () => {
+  const component = readFileSync(new URL("../src/components/rectification-agentic-chat.tsx", import.meta.url), "utf8");
+
+  assert.match(component, /const openingStarted = useRef\(false\)/);
+  assert.match(
+    component,
+    /useEffect\(\(\) => \{[\s\S]*?openingStarted\.current = true;[\s\S]*?void send\(agenticOpeningInstruction, false\);[\s\S]*?\}, \[send\]\);/,
+  );
+  assert.match(component, /const send = useCallback\(async \(question: string, showUserMessage = true\) =>/);
+  assert.match(component, /\.\.\.\(showUserMessage \? \[\{ role: "user", text: trimmed, renderKey: userRenderKey, state: "settled" \} satisfies RenderMessage\] : \[\]\)/);
+});
+
 test("v4 rectification reuses the ordinary session message list, composer, and model selector", () => {
   const component = readFileSync(new URL("../src/components/rectification-v4-panel.tsx", import.meta.url), "utf8");
   const wrapper = readFileSync(new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url), "utf8");
