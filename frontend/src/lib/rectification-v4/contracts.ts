@@ -364,6 +364,16 @@ export const rectificationAssistantResponseSchema = z.object({
 }).strict();
 export type RectificationAssistantResponse = z.infer<typeof rectificationAssistantResponseSchema>;
 
+export const rectificationRuntimeTraceSchema = z.object({
+  deploymentMode: rectificationDeploymentModeSchema,
+  executionMode: z.enum(["agent", "deterministic_fallback"]),
+  modelId: z.string().trim().min(1).max(120).nullable(),
+  skillVersion: z.string().trim().min(1).max(120),
+  deploymentSha: z.string().trim().min(1).max(80).nullable(),
+  fallbackCode: z.string().trim().min(1).max(120).nullable(),
+}).strict();
+export type RectificationRuntimeTrace = z.infer<typeof rectificationRuntimeTraceSchema>;
+
 export const rectificationV4ApiResponseSchema = z.object({
   case: rectificationV4CaseSchema,
   job: rectificationV4JobSchema.nullable(),
@@ -371,6 +381,7 @@ export const rectificationV4ApiResponseSchema = z.object({
   turns: z.array(rectificationV4TurnSchema),
   analysis: z.array(rectificationAnalysisItemSchema).optional(),
   assistantResponses: z.array(rectificationAssistantResponseSchema).optional(),
+  runtimeTrace: rectificationRuntimeTraceSchema,
 }).strict();
 export type RectificationV4ApiResponse = z.infer<typeof rectificationV4ApiResponseSchema>;
 

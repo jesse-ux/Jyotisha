@@ -155,7 +155,7 @@ test("V5 agent fallback persists the Director decision, Public Message and next 
   const created = await service.createCase({ userId, actionId: randomUUID(), calculationSpec: spec });
   const queued = await service.answer({
     userId, caseId: created.case.id, actionId: randomUUID(), expectedCaseVersion: 0,
-    answer: "2016年9月离家去外地上大学",
+    answer: "2016年9月离家去外地上大学", modelId: "gpt-5.5",
   });
   assert.ok(queued?.job);
   const worker = createRectificationV4Worker({
@@ -169,6 +169,7 @@ test("V5 agent fallback persists the Director decision, Public Message and next 
   const message = store.publicMessages.get(queued.job.id);
   assert.ok(event && run && message);
   assert.equal(run.deploymentMode, "v5_agent");
+  assert.equal(run.modelId, "gpt-5.5");
   assert.equal(run.validatedDecision.mode, "deterministic_fallback");
   assert.equal(run.validatedDecision.decision.action, "ask_question");
   assert.equal(run.validatedDecision.selectedOpportunity, null);
@@ -180,6 +181,9 @@ test("V5 agent fallback persists the Director decision, Public Message and next 
   assert.match(done?.case.currentQuestion?.prompt ?? "", /交叉核对/);
   assert.ok(message.question && done?.case.currentQuestion?.prompt.includes(message.question));
   assert.equal(done?.case.latestSnapshot, null);
+  assert.equal(done?.runtimeTrace.modelId, "gpt-5.5");
+  assert.equal(done?.runtimeTrace.executionMode, "deterministic_fallback");
+  assert.equal(done?.runtimeTrace.fallbackCode, run.fallbackReason);
 }));
 
 test("V5 shadow runs and persists V5 artifacts but keeps the legacy visible projection", async () => withMode("v5_shadow", async () => {

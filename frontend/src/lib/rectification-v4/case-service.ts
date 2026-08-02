@@ -30,7 +30,7 @@ export function createRectificationV4CaseService(
   const generateOpening = options.generateOpeningQuestion ?? generateOpeningQuestion;
 
   async function response(userId: string, caseValue: RectificationV4Case, jobId?: string): Promise<RectificationV4ApiResponse> {
-    const [events, turns, assistantResponses, job] = await Promise.all([
+    const [events, turns, assistantResponses, job, latestRuntime] = await Promise.all([
       store.loadEvents(userId, caseValue.id),
       store.loadTurns(userId, caseValue.id),
       caseValue.deploymentMode === "v5_agent"
@@ -39,6 +39,7 @@ export function createRectificationV4CaseService(
       jobId
         ? store.loadJob(userId, jobId)
         : caseValue.status === "processing" ? store.loadActiveJob(userId, caseValue.id) : null,
+      store.loadLatestRuntimeTrace(userId, caseValue.id),
     ]);
     return {
       case: caseValue,
@@ -47,6 +48,14 @@ export function createRectificationV4CaseService(
       turns: [...turns],
       analysis: assistantResponses.flatMap((item) => item.trace ? [{ sourceTurnId: item.sourceTurnId, trace: item.trace }] : []),
       assistantResponses: [...assistantResponses],
+      runtimeTrace: latestRuntime ?? {
+        deploymentMode: caseValue.deploymentMode,
+        executionMode: caseValue.agentMode,
+        modelId: caseValue.orchestrationModelId,
+        skillVersion: caseValue.skillVersion,
+        deploymentSha: process.env.DEPLOYMENT_SHA?.trim() || null,
+        fallbackCode: null,
+      },
     };
   }
 

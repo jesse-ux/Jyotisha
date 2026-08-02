@@ -4,6 +4,7 @@ import type {
   PendingEvidence,
   RectificationV4Case,
   RectificationV4Job,
+  RectificationRuntimeTrace,
 } from "./contracts.ts";
 import type {
   ClaimedRectificationV4Job,
@@ -85,6 +86,20 @@ export function createRectificationV4MemoryStore(): RectificationV4Store & {
           const { analysisTrace, ...message } = publicMessages.get(job.id)!;
           return { sourceTurnId: job.turnId, message, trace: analysisTrace ?? null };
         });
+    },
+    async loadLatestRuntimeTrace(userId, caseId): Promise<RectificationRuntimeTrace | null> {
+      owned(userId, caseId);
+      const run = [...agentRuns.values()]
+        .filter((value) => value.caseId === caseId)
+        .sort((left, right) => right.caseVersion - left.caseVersion || right.createdAt.localeCompare(left.createdAt))[0];
+      return run ? {
+        deploymentMode: run.deploymentMode,
+        executionMode: run.validatedDecision.mode,
+        modelId: run.modelId,
+        skillVersion: run.skillVersion,
+        deploymentSha: run.deploymentSha,
+        fallbackCode: run.fallbackReason,
+      } : null;
     },
     async loadLatestValidatedDecision(userId, caseId) {
       const caseValue = cases.get(caseId);

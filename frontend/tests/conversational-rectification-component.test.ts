@@ -63,6 +63,14 @@ function response(overrides: Record<string, unknown> = {}): RectificationV4ApiRe
     job: null,
     events: [],
     analysis: [],
+    runtimeTrace: {
+      deploymentMode: "v5_agent",
+      executionMode: "deterministic_fallback",
+      modelId: "gpt-5.5",
+      skillVersion: "birth-time-rectification-v5",
+      deploymentSha: "abc123",
+      fallbackCode: "reasoner_model_unavailable",
+    },
     turns: [{
       id: "00000000-0000-4000-8000-000000000903",
       caseId: id,
@@ -129,7 +137,15 @@ test("v4 rectification reuses the ordinary session message list, composer, and m
   assert.match(component, /caseValue\?\.deploymentMode === "v5_agent"/);
   assert.match(component, /controller\.regenerate\(\)/);
   assert.match(component, /controller\.answer\(answer, props\.selectedModelId \|\| null\)/);
-  assert.match(wrapper, /<RectificationV4Panel \{\.\.\.props\} \/>/);
+  assert.doesNotMatch(wrapper, /existing \? "v4" : "agentic"/);
+  assert.match(wrapper, /继续旧版校正/);
+  assert.match(wrapper, /结束旧版并使用新版 Agent/);
+  assert.match(wrapper, /transitionRectificationV4\(existing\.case\.id, existing\.case\.version, "abandon"\)/);
+  assert.match(wrapper, /<RectificationV4Panel \{\.\.\.props\} onUseAgentic=/);
+  assert.match(component, /controller\.abandon\(\)/);
+  assert.match(component, /Runtime/);
+  assert.match(component, /Deployment SHA/);
+  assert.match(component, /fallbackCode/);
   assert.match(page, /\{!rectificationSurfaceOpen && \(\s*<div className=\{`conversation/);
   assert.match(page, /\{rectificationSurfaceOpen && \(\s*<ConversationalBirthTimeRectification/);
   assert.doesNotMatch(page, /is-rectification/);

@@ -115,10 +115,12 @@ export async function runBoundedReasoner(input: Readonly<{
   maxToolCalls?: number;
   timeoutMs?: number;
   enabled?: boolean;
+  modelId?: string | null;
   generateDecision?: RectificationReasonerGenerator;
 }>): Promise<Readonly<{
   decision: RectificationDecision;
   mode: "agent" | "deterministic_fallback";
+  modelId: string | null;
   fallbackReason: string | null;
   toolCalls: readonly ToolCallTrace[];
   inputTokenCount: number | null;
@@ -128,8 +130,9 @@ export async function runBoundedReasoner(input: Readonly<{
 }>> {
   const started = Date.now();
   const deploymentSha = process.env.DEPLOYMENT_SHA?.trim() || null;
-  const model = (input.caseValue.orchestrationModelId ? resolveLanguageModel(input.caseValue.orchestrationModelId) : null) ?? defaultLanguageModel();
-  const modelId = model?.id ?? input.caseValue.orchestrationModelId;
+  const requestedModelId = input.modelId ?? input.caseValue.orchestrationModelId;
+  const model = (requestedModelId ? resolveLanguageModel(requestedModelId) : null) ?? defaultLanguageModel();
+  const modelId = model?.id ?? requestedModelId;
   const toolCalls: ToolCallTrace[] = [];
   let inputTokenCount = 0;
   let outputTokenCount = 0;
@@ -142,7 +145,7 @@ export async function runBoundedReasoner(input: Readonly<{
     });
     return {
       decision: deterministicDecision(input), mode: "deterministic_fallback" as const,
-      fallbackReason: reason, toolCalls: [...toolCalls],
+      modelId, fallbackReason: reason, toolCalls: [...toolCalls],
       inputTokenCount: usageObserved ? inputTokenCount : null,
       outputTokenCount: usageObserved ? outputTokenCount : null,
       latencyMs: Date.now() - started,
@@ -260,7 +263,7 @@ export async function runBoundedReasoner(input: Readonly<{
     const latencyMs = Date.now() - started;
     recordRectificationAgentTelemetry({ caseId: input.caseValue.id, phase: "reasoner", outcome: "succeeded", modelId, toolName: null, decisionAction: decision.action, durationMs: latencyMs, errorCode: null, deploymentSha });
     return {
-      decision, mode: "agent", fallbackReason: null, toolCalls,
+      decision, mode: "agent", modelId, fallbackReason: null, toolCalls,
       inputTokenCount: usageObserved ? inputTokenCount : null,
       outputTokenCount: usageObserved ? outputTokenCount : null,
       latencyMs,
