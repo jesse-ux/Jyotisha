@@ -2013,13 +2013,13 @@
 - 状态：resolved（local）
 - 首次发现：2026-08-03
 - 最近更新：2026-08-03
-- 影响面：`POST /api/rectification/agent`、首页 Session 自动恢复、`GET /api/account` 请求频率
-- 用户现象：账户接口已返回完整出生日期、时间线索和地点，Agent opening 仍返回 `profile_incomplete`；页面随后重复请求 `/api/account` 和 `/api/rectification/agent`。
+- 影响面：`POST /api/rectification/agent`、首页账户资料重新加载、Session 自动恢复、`GET /api/account` 请求频率
+- 用户现象：账户接口已返回完整出生日期、时间线索和地点，Agent opening 仍返回 `profile_incomplete`；页面随后重复请求 `/api/account` 和 `/api/rectification/agent`。部署首轮修复后，刷新页面还会错误回到“先完成出生资料”。
 - 触发条件：数据库驱动把出生日期投影为 `YYYY-MM-DDT00:00:00.000Z`，同时当前活动 Session 是 `birth_time_rectification`。
-- 根因：Agentic profile loader 只接受纯 `YYYY-MM-DD`；失败回调清空 `rectificationSessionId` 却未设置现有的自动恢复暂停状态，resume effect 立即重新挂载聊天并再次发送 opening。
-- 修复：在共享 profile loader 边界提取并复用现有日历日期校验；服务端资料失败时先设置 `rectificationError` 暂停自动恢复，资料成功保存后再清除暂停状态。
-- 验证：回归覆盖 ISO 日期规范化、非法日历日期拒绝，以及 profile failure 在清空 Session 前设置自动恢复暂停状态。
-- 防复发：数据库日期边界不得假设唯一 JavaScript 序列化形态；任何自动挂载请求的失败回调都必须先阻断对应的自动恢复条件。
+- 根因：Agentic profile loader 和首页 `readProfile()` 都把持久化日期直接交给只接受纯 `YYYY-MM-DD` 的资料完整性校验；失败回调清空 `rectificationSessionId` 却未设置现有的自动恢复暂停状态，resume effect 立即重新挂载聊天并再次发送 opening。
+- 修复：增加共享持久化日期规范化函数，由 Agent loader 与首页账户重新加载共同复用；服务端资料失败时先设置 `rectificationError` 暂停自动恢复，资料成功保存后再清除暂停状态。
+- 验证：回归覆盖数据库 ISO 日期在 Agent loader 与首页重新加载中的规范化、非法日历日期拒绝，以及 profile failure 在清空 Session 前设置自动恢复暂停状态。
+- 防复发：数据库日期边界不得假设唯一 JavaScript 序列化形态；所有从账户持久化资料进入完整性校验的路径必须先走同一规范化函数；任何自动挂载请求的失败回调都必须先阻断对应的自动恢复条件。
 - 相关记录：BUG-016、BUG-114
 - 复发自：BUG-114
 - 修复版本：待本次 staging 修复提交与部署验收

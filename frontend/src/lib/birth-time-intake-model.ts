@@ -63,6 +63,13 @@ export function parseBirthDate(value: string): Date | undefined {
   return parsed;
 }
 
+export function normalizePersistedBirthDate(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const persisted = value.trim();
+  const date = persisted.slice(0, 10);
+  return parseBirthDate(date) && (persisted.length === 10 || persisted[10] === "T") ? date : "";
+}
+
 export function isBirthClockTime(value: string): boolean {
   return birthClockPattern.test(value);
 }

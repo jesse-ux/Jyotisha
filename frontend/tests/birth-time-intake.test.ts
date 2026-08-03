@@ -11,6 +11,7 @@ import {
   isDeclaredBirthProfileComplete,
   isBirthTimeReadyForConsultation,
   isBirthTimeDraftReady,
+  normalizePersistedBirthDate,
   parseBirthDate,
   type BirthTimeDraft,
 } from "../src/lib/birth-time-intake-model.ts";
@@ -265,6 +266,13 @@ test("birth date values round trip leap days and reject invalid input", () => {
   assert.equal(leapDay === undefined ? undefined : formatBirthDate(leapDay), "2000-02-29");
   assert.equal(parseBirthDate(""), undefined);
   assert.equal(parseBirthDate("2001-02-29"), undefined);
+});
+
+test("persisted birth dates normalize database ISO values without accepting invalid dates", () => {
+  assert.equal(normalizePersistedBirthDate("1997-08-08T00:00:00.000Z"), "1997-08-08");
+  assert.equal(normalizePersistedBirthDate("1997-08-08"), "1997-08-08");
+  assert.equal(normalizePersistedBirthDate("1997-02-30T00:00:00.000Z"), "");
+  assert.equal(normalizePersistedBirthDate("1997-08-08junk"), "");
 });
 
 test("candidate copy does not claim an unconfirmed minute is automatically in use", () => {

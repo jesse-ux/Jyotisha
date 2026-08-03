@@ -58,3 +58,11 @@ test("server profile failures pause automatic rectification resume", () => {
       < incompleteHandler.indexOf("setRectificationSessionId(null)"),
   );
 });
+
+test("account rehydration normalizes persisted ISO birth dates before completeness checks", () => {
+  const profileReader = page.slice(
+    page.indexOf("function readProfile"),
+    page.indexOf("function readSessions"),
+  );
+  assert.match(profileReader, /const date = normalizePersistedBirthDate\(/);
+});
