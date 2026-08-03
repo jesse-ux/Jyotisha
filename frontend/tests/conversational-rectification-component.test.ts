@@ -114,7 +114,7 @@ test("agentic rectification requests a server-owned opening when the surface mou
   assert.match(component, /const openingStarted = useRef\(false\)/);
   assert.match(
     component,
-    /useEffect\(\(\) => \{[\s\S]*?openingStarted\.current = true;[\s\S]*?void send\(\{ action: "opening" \}, false\);[\s\S]*?\}, \[send\]\);/,
+    /useEffect\(\(\) => \{[\s\S]*?initialMessages\.length > 0[\s\S]*?openingStarted\.current = true;[\s\S]*?void send\(\{ action: "opening" \}, false\);[\s\S]*?\}, \[initialMessages\.length, send\]\);/,
   );
   assert.match(component, /const send = useCallback\(async \(request: AgenticRectificationRequest, showUserMessage = true\) =>/);
   assert.match(component, /showUserMessage && request\.action === "message"/);

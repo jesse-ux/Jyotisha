@@ -117,19 +117,20 @@ test("a stale v4 mutation refreshes the same case after a 409", () => {
   assert.match(hook, /loadRectificationV4\(caseId\)/);
 });
 
-test("homepage birth-time card opens its dedicated session before the Agent starts", () => {
+test("homepage creates a new dedicated session before the Agent surface starts", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   const start = source.indexOf("async function openBirthTimeRectification");
   const end = source.indexOf("function handleConversationalRectificationTurn", start);
   const handler = source.slice(start, end);
   const create = handler.indexOf('createSession(modelCatalog.defaultModelId, "birth_time_rectification")');
-  const firstAwait = handler.indexOf("await ");
+  const persist = handler.indexOf("await rectificationPersistence.current.enqueue");
+  const addToSessionList = handler.indexOf("setSessions((current) => [", persist);
   const reveal = handler.indexOf("setActiveSessionId(rectificationSession.id)");
 
   assert.ok(create >= 0);
-  assert.ok(firstAwait > create);
-  assert.ok(reveal > create && reveal < firstAwait);
-  assert.ok(handler.indexOf("setSessions((current) => [") < firstAwait);
+  assert.ok(persist > create);
+  assert.ok(addToSessionList > persist);
+  assert.ok(reveal > addToSessionList);
   assert.match(handler, /rectificationOpenInFlight\.current/);
   assert.match(handler, /rectificationOpenInFlight\.current = true;[\s\S]*?finally \{[\s\S]*?rectificationOpenInFlight\.current = false;/);
   assert.doesNotMatch(handler, /onNarrativeDelta|sendConversationalRectificationCommand/);
