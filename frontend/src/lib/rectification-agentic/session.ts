@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { AgenticRectificationContext } from "@/mastra/rectification-tools";
+import { parseBirthDate } from "../birth-time-intake-model.ts";
 
 /**
  * Agentic rectification session support.
@@ -133,8 +134,10 @@ export async function loadAgenticRectificationProfile(
     .single();
   if (error || !data) throw new AgenticRectificationProfileError("profile_unavailable");
 
-  const birthDate = typeof data.birth_date === "string" ? data.birth_date.trim() : "";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+  const persistedBirthDate = typeof data.birth_date === "string" ? data.birth_date.trim() : "";
+  const birthDate = persistedBirthDate.slice(0, 10);
+  if (!parseBirthDate(birthDate)
+    || (persistedBirthDate.length > 10 && persistedBirthDate[10] !== "T")) {
     throw new AgenticRectificationProfileError("missing_birth_date");
   }
   const activeTime = timeValue(data.active_birth_time);

@@ -61,6 +61,20 @@ test("loadAgenticRectificationProfile derives birth fields, accuracy and baselin
   assert.equal(profile.baselineActiveTime, "14:31");
 });
 
+test("loadAgenticRectificationProfile normalizes a persisted ISO birth date", async () => {
+  const { client } = fakeAccounting(fakeProfileRow({ birth_date: "1997-08-08T00:00:00.000Z" }));
+  const profile = await loadAgenticRectificationProfile(client as never, userId);
+  assert.equal(profile.birth_date, "1997-08-08");
+});
+
+test("loadAgenticRectificationProfile rejects an invalid persisted birth date", async () => {
+  const { client } = fakeAccounting(fakeProfileRow({ birth_date: "1997-02-30T00:00:00.000Z" }));
+  await assert.rejects(
+    () => loadAgenticRectificationProfile(client as never, userId),
+    (error) => error instanceof AgenticRectificationProfileError && error.code === "missing_birth_date",
+  );
+});
+
 test("loadAgenticRectificationProfile treats hospital source as minute accuracy", async () => {
   const { client } = fakeAccounting(fakeProfileRow({
     birth_time_source: "hospital",
