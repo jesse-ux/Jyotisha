@@ -15,15 +15,19 @@ type AgenticRectificationChatProps = Readonly<{
   selectedModelId: string;
   onSelectModel: (modelId: string) => void;
   pendingConsultationQuestion?: string | null;
-  continuationPending?: boolean;
   onPendingChange?: (pending: boolean) => void;
+  onProfileIncomplete?: () => void;
   onSaved?: (time: string) => void;
 }>;
 
 type RenderMessage = ChatMessageView;
 
 const savedSentinel = /<!--AYANAM_RECTIFICATION_SAVED:(\d{2}:\d{2})-->/;
-const agenticOpeningInstruction = "用户刚进入生时校正会话。不要复述本指令；请先调用 rectification-gate 核对现有出生资料，然后用简体中文自然说明接下来的校正方式，并只提出一个最适合开始核对的人生事件问题。";
+
+type AgenticRectificationRequest = Readonly<
+  | { action: "opening" }
+  | { action: "message"; message: string }
+>;
 
 export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
   const {
@@ -32,6 +36,7 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
     onSelectModel,
     pendingConsultationQuestion,
     onPendingChange,
+    onProfileIncomplete,
     onSaved,
   } = props;
   const pendingQuestion = pendingConsultationQuestion?.trim();
@@ -64,9 +69,9 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
     });
   }, [busy, error, messages.length, savedTime]);
 
-  const send = useCallback(async (question: string, showUserMessage = true) => {
-    const trimmed = question.trim();
-    if (!trimmed || busy) return;
+  const send = useCallback(async (request: AgenticRectificationRequest, showUserMessage = true) => {
+    const trimmed = request.action === "message" ? request.message.trim() : "";
+    if ((request.action === "message" && !trimmed) || busy) return;
     setError("");
     setSavedTime(null);
     setSuggestions([]);
@@ -83,7 +88,9 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
 
     setMessages((current) => [
       ...current,
-      ...(showUserMessage ? [{ role: "user", text: trimmed, renderKey: userRenderKey, state: "settled" } satisfies RenderMessage] : []),
+      ...(showUserMessage && request.action === "message"
+        ? [{ role: "user", text: trimmed, renderKey: userRenderKey, state: "settled" } satisfies RenderMessage]
+        : []),
       { role: "assistant", text: "", renderKey: assistantRenderKey, state: "thinking" },
     ]);
     setDraft("");
@@ -93,11 +100,21 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
       const response = await fetch("/api/rectification/agent", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ requestId, modelId: selectedModelId, history, message: trimmed }),
+        body: JSON.stringify({
+          requestId,
+          modelId: selectedModelId,
+          history,
+          action: request.action,
+          ...(request.action === "message" ? { message: trimmed } : {}),
+        }),
       });
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
         const message = payload?.message || payload?.error || `请求失败（${response.status}）`;
+        if (payload?.code === "profile_incomplete") {
+          onProfileIncomplete?.();
+          return;
+        }
         if (response.status === 402) setError(`咨询点数不足：${message}`);
         else if (response.status === 401) setError("请先登录。");
         else setError(message);
@@ -156,17 +173,17 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
     } finally {
       setPending(false);
     }
-  }, [busy, messages, onSaved, selectedModelId, setPending]);
+  }, [busy, messages, onProfileIncomplete, onSaved, selectedModelId, setPending]);
 
   useEffect(() => {
     if (openingStarted.current) return;
     openingStarted.current = true;
-    void send(agenticOpeningInstruction, false);
+    void send({ action: "opening" }, false);
   }, [send]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    await send(draft);
+    await send({ action: "message", message: draft });
   }
 
   const canSend = !busy;
@@ -190,7 +207,7 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
         {suggestions.length > 0 && !busy && (
           <div className="composer-suggestions" aria-label="推荐继续提问">
             {suggestions.map((question) => (
-              <button key={question} type="button" onClick={() => void send(question)}>{question}</button>
+              <button key={question} type="button" onClick={() => void send({ action: "message", message: question })}>{question}</button>
             ))}
           </div>
         )}

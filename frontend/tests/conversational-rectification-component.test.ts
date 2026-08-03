@@ -108,56 +108,34 @@ function analysisTrace(label: string) {
   } as const;
 }
 
-test("agentic rectification requests an Agent-generated opening when the surface mounts", () => {
+test("agentic rectification requests a server-owned opening when the surface mounts", () => {
   const component = readFileSync(new URL("../src/components/rectification-agentic-chat.tsx", import.meta.url), "utf8");
 
   assert.match(component, /const openingStarted = useRef\(false\)/);
   assert.match(
     component,
-    /useEffect\(\(\) => \{[\s\S]*?openingStarted\.current = true;[\s\S]*?void send\(agenticOpeningInstruction, false\);[\s\S]*?\}, \[send\]\);/,
+    /useEffect\(\(\) => \{[\s\S]*?openingStarted\.current = true;[\s\S]*?void send\(\{ action: "opening" \}, false\);[\s\S]*?\}, \[send\]\);/,
   );
-  assert.match(component, /const send = useCallback\(async \(question: string, showUserMessage = true\) =>/);
-  assert.match(component, /\.\.\.\(showUserMessage \? \[\{ role: "user", text: trimmed, renderKey: userRenderKey, state: "settled" \} satisfies RenderMessage\] : \[\]\)/);
+  assert.match(component, /const send = useCallback\(async \(request: AgenticRectificationRequest, showUserMessage = true\) =>/);
+  assert.match(component, /showUserMessage && request\.action === "message"/);
+  assert.doesNotMatch(component, /agenticOpeningInstruction|用户刚进入生时校正会话/);
 });
 
-test("v4 rectification reuses the ordinary session message list, composer, and model selector", () => {
-  const component = readFileSync(new URL("../src/components/rectification-v4-panel.tsx", import.meta.url), "utf8");
+test("latest Agentic rectification reuses the ordinary session message list, composer, and model selector", () => {
+  const component = readFileSync(new URL("../src/components/rectification-agentic-chat.tsx", import.meta.url), "utf8");
   const wrapper = readFileSync(new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url), "utf8");
   const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   const css = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
 
-  assert.match(
-    component,
-    /<>\s*<section className="conversation"[\s\S]*?<\/section>\s*\{showControls && \(\s*<div className="composer-wrap"/,
-  );
+  assert.match(component, /<section className="conversation"/);
   assert.match(component, /className="message-list"/);
   assert.match(component, /<ChatMessageRow/);
   assert.match(component, /className="composer-wrap"/);
   assert.match(component, /className="composer"/);
   assert.match(component, /<Textarea/);
   assert.match(component, /<ModelSelector/);
-  assert.match(component, /aria-label="赞"/);
-  assert.match(component, /aria-label="踩"/);
-  assert.match(component, /aria-label="复制回答"/);
-  assert.match(component, /aria-label="重新生成回答"/);
-  assert.match(component, /<details className="rectification-analysis">/);
-  assert.match(component, /<span>分析过程<\/span>/);
-  assert.match(
-    component,
-    /<RectificationAnalysisDetails trace=\{message\.analysisTrace\} \/>[\s\S]*?<RectificationMessageRow[\s\S]*?<div className="rectification-message-actions"/,
-  );
-  assert.match(component, /caseValue\?\.deploymentMode === "v5_agent"/);
-  assert.match(component, /controller\.regenerate\(\)/);
-  assert.match(component, /controller\.answer\(answer, props\.selectedModelId \|\| null\)/);
-  assert.doesNotMatch(wrapper, /existing \? "v4" : "agentic"/);
-  assert.match(wrapper, /继续旧版校正/);
-  assert.match(wrapper, /结束旧版并使用新版 Agent/);
-  assert.match(wrapper, /transitionRectificationV4\(existing\.case\.id, existing\.case\.version, "abandon"\)/);
-  assert.match(wrapper, /<RectificationV4Panel \{\.\.\.props\} onUseAgentic=/);
-  assert.match(component, /controller\.abandon\(\)/);
-  assert.match(component, /Runtime/);
-  assert.match(component, /Deployment SHA/);
-  assert.match(component, /fallbackCode/);
+  assert.match(wrapper, /return <AgenticRectificationChat \{\.\.\.props\} \/>/);
+  assert.doesNotMatch(wrapper, /RectificationV4Panel|继续旧版校正|transitionRectificationV4/);
   assert.match(page, /\{!rectificationSurfaceOpen && \(\s*<div className=\{`conversation/);
   assert.match(page, /\{rectificationSurfaceOpen && \(\s*<ConversationalBirthTimeRectification/);
   assert.doesNotMatch(page, /is-rectification/);

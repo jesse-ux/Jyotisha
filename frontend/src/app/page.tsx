@@ -15,7 +15,6 @@ import {
 import { BirthTimeIntakeFields } from "@/components/birth-time-intake";
 import { AppLoadingIndicator } from "@/components/app-loading-indicator";
 import { ConversationalBirthTimeRectification } from "@/components/conversational-birth-time-rectification";
-import type { RectificationV4Continuation } from "@/components/rectification-v4-panel";
 import { ChatMessageContent } from "@/components/chat-message-content";
 import { AgentAvatar, ChatMessageRow } from "@/components/chat-message-row";
 import { ModelSelector } from "@/components/model-selector";
@@ -54,7 +53,6 @@ import {
   type RectificationCardAction,
 } from "@/lib/birth-time-consultation-consent";
 import type { ConsultationBirthTimeMode } from "@/lib/consultation-birth-time-mode";
-import { claimRectificationV4Handoff } from "@/lib/rectification-v4/client";
 import {
   createRectificationQuestionHandoffCoordinator,
 } from "@/lib/rectification-question-handoff";
@@ -946,11 +944,9 @@ export default function Home() {
     createBirthTimeConsultationConsentState,
   );
   const [rectificationSessionId, setRectificationSessionId] = useState<string | null>(null);
-  const [rectificationReturnSessionId, setRectificationReturnSessionId] = useState<string | null>(null);
   const [rectificationPendingQuestion, setRectificationPendingQuestion] = useState<string | null>(null);
   const [rectificationLoading, setRectificationLoading] = useState(false);
   const [rectificationMutationPending, setRectificationMutationPending] = useState(false);
-  const [rectificationContinuationPending, setRectificationContinuationPending] = useState(false);
   const [rectificationError, setRectificationError] = useState("");
   const [hydrated, setHydrated] = useState(false);
   const [profileSaving, setProfileSaving] = useState(false);
@@ -990,7 +986,6 @@ export default function Home() {
   const rectificationQuestionHandoff = useRef(createRectificationQuestionHandoffCoordinator<Theme>());
   const resumeRectificationSession = useRef<(session: ChatSession) => void>(() => undefined);
   const rectificationOpenInFlight = useRef(false);
-  const rectificationContinuationInFlight = useRef(false);
   const uiPreview = useRef(false);
   const uiPreviewMode = useRef<string | null>(null);
   const birthTimeRevisionPending = useRef(false);
@@ -1016,7 +1011,6 @@ export default function Home() {
     || cancellationPending
     || creatingSession
     || rectificationMutationPending
-    || rectificationContinuationPending
     || !account
     || !modelCatalog;
   const activeStreamingText = streamingReply && streamingReply.sessionId === activeSession?.id ? streamingReply.text : "";
@@ -1041,8 +1035,7 @@ export default function Home() {
       || activeSession.id === rectificationSessionId
       || rectificationLoading
       || rectificationMutationPending
-      || rectificationContinuationPending
-      || creatingSession
+        || creatingSession
       || rectificationError) return;
     resumeRectificationSession.current(activeSession);
   }, [
@@ -1051,7 +1044,6 @@ export default function Home() {
     creatingSession,
     hydrated,
     modelCatalog,
-    rectificationContinuationPending,
     rectificationError,
     rectificationLoading,
     rectificationMutationPending,
@@ -2032,7 +2024,15 @@ export default function Home() {
     sourceSessionOverride: ChatSession | null = null,
   ) {
     if (!account || !modelCatalog || creatingSession || rectificationLoading || rectificationOpenInFlight.current
-      || rectificationMutationPending || rectificationContinuationInFlight.current) return;
+      || rectificationMutationPending) return;
+    const missingStep = missingProfileStep(profile);
+    if (missingStep) {
+      setRectificationSessionId(null);
+      setRectificationPendingQuestion(null);
+      setOnboardingStep(missingStep);
+      setComposerNotice("请先完成出生资料，再开始生时校正。");
+      return;
+    }
     const sourceSession = sourceSessionOverride ?? activeSession;
     if (!sourceSession) return;
     const existing = sourceSession.sessionType === "birth_time_rectification"
@@ -2048,7 +2048,6 @@ export default function Home() {
     setDraft("");
     setDraftTheme(null);
     setDraftEntrypoint(null);
-    if (sourceSession.id !== rectificationSession.id) setRectificationReturnSessionId(sourceSession.id);
     setRectificationSessionId(rectificationSession.id);
     activeSessionIdRef.current = rectificationSession.id;
     setActiveSessionId(rectificationSession.id);
@@ -2072,6 +2071,20 @@ export default function Home() {
   resumeRectificationSession.current = (session) => {
     void openBirthTimeRectification(null, session);
   };
+
+  function handleRectificationProfileIncomplete() {
+    setRectificationSessionId(null);
+    setRectificationPendingQuestion(null);
+    const missingStep = missingProfileStep(profile);
+    if (missingStep) {
+      setOnboardingStep(missingStep);
+      setComposerNotice("请先完成出生资料，再开始生时校正。");
+      return;
+    }
+    openAccountDialog("profile");
+    setProfileNotice("服务端未能读取完整出生资料，请重新确认并保存。");
+    void refreshAccount();
+  }
 
   async function draftSynastryQuestionFromChart(record: ChartLibraryRecord, relationshipType: SynastryRelationshipType) {
     if (record.role !== "other") return;
@@ -2585,96 +2598,6 @@ export default function Home() {
   }
 
 
-  async function continueRectificationOriginalQuestion(continuation: RectificationV4Continuation) {
-    const question = continuation.question;
-    if (rectificationContinuationInFlight.current || rectificationMutationPending
-      || rectificationLoading || !activeSession || !account) return;
-    if (account.credits <= 0) {
-      openAccountDialog("redeem", creditTrigger.current);
-      return;
-    }
-    if (rectificationQuestionHandoff.current.peek()
-      && !sessions.some((session) => session.id === rectificationQuestionHandoff.current.peek()?.sessionId)) {
-      rectificationQuestionHandoff.current.clear();
-    }
-    const localHandoff = rectificationQuestionHandoff.current.peek();
-    const returnSession = (localHandoff
-      ? sessions.find((session) => session.id === localHandoff.sessionId)
-      : null)
-      ?? (rectificationReturnSessionId
-        ? sessions.find((session) => session.id === rectificationReturnSessionId)
-        : null)
-      ?? sessions.find((session) => session.sessionType === "consultation")
-      ?? null;
-    if (!returnSession) {
-      setComposerNotice("没有找到原问题所在的会话，请从会话列表打开原问题后重试。");
-      return;
-    }
-
-    rectificationContinuationInFlight.current = true;
-    setRectificationContinuationPending(true);
-    setRectificationError("");
-    try {
-      const durableClaim = await claimRectificationV4Handoff({
-        caseId: continuation.caseId,
-        caseVersion: continuation.caseVersion,
-        question,
-      });
-      if (durableClaim.status === "in_progress") {
-        setComposerNotice("原问题正在另一设备继续回答；完成后刷新即可查看，不会重复扣点。");
-        return;
-      }
-      if (durableClaim.status === "consumed") {
-        activeSessionIdRef.current = returnSession.id;
-        setActiveSessionId(returnSession.id);
-        setRectificationPendingQuestion(null);
-        setComposerNotice("原问题已经继续回答，不会再次发送或扣点。");
-        return;
-      }
-      if (durableClaim.status !== "claimed") {
-        setComposerNotice("原问题仍保留，请刷新校正状态后重试。");
-        return;
-      }
-      const completed = await rectificationQuestionHandoff.current.continueOriginalQuestion(
-        question,
-        { sessionId: returnSession.id, theme: returnSession.theme },
-        async (context) => {
-          activeSessionIdRef.current = context.sessionId;
-          setActiveSessionId(context.sessionId);
-          setBirthTimeConsultationConsent((current) => clearBirthTimeConsultationConsent(
-            current,
-            context.sessionId,
-          ));
-          return send(
-            context.question,
-            context.theme,
-            null,
-            null,
-            context.sessionId,
-            {
-              protocol: "rectification-evidence-v4",
-              caseId: durableClaim.caseId,
-              caseVersion: durableClaim.caseVersion,
-              claimActionId: durableClaim.claimActionId,
-              requestId: durableClaim.requestId,
-            },
-          );
-        },
-      );
-      if (completed) {
-        setRectificationPendingQuestion(null);
-        setComposerNotice("已按候选范围边界继续回答原问题。");
-      } else {
-        setComposerNotice("原问题仍保留，可再次点击继续回答。");
-      }
-    } catch {
-      setComposerNotice("原问题仍保留，可再次点击继续回答。");
-    } finally {
-      rectificationContinuationInFlight.current = false;
-      setRectificationContinuationPending(false);
-    }
-  }
-
   useGSAP(() => {
     if (!starterHomeVisible || !starterWorkbench.current) return;
     const motion = gsap.matchMedia();
@@ -3035,9 +2958,8 @@ export default function Home() {
             selectedModelId={activeSession?.modelId ?? ""}
             onSelectModel={(modelId) => void selectSessionModel(modelId)}
             pendingConsultationQuestion={rectificationPendingQuestion}
-            continuationPending={rectificationContinuationPending}
             onPendingChange={setRectificationMutationPending}
-            onContinueOriginalQuestion={(continuation) => void continueRectificationOriginalQuestion(continuation)}
+            onProfileIncomplete={handleRectificationProfileIncomplete}
             onSaved={() => void refreshAccount()}
           />
         )}

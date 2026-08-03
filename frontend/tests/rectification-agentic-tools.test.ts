@@ -52,6 +52,7 @@ function makeCtx(applyConfirmedBirthTime?: AgenticRectificationContext["applyCon
     userId: "user-1",
     engineBase: "http://engine.test",
     birth,
+    candidateRange: { start_time: "14:00", end_time: "15:00" },
     declaredAccuracy: "15min",
     timeSource: "family_clear",
     applyConfirmedBirthTime: applyConfirmedBirthTime ?? (async (time) => ({ ok: true as const, saved_time: time })),
@@ -196,7 +197,7 @@ test("score tool normalizes year-precision events into the V5 date range contrac
   engine.restore();
 });
 
-test("scan tool posts the reported time and uncertainty to /api/rectification/sensitivity_scan", async () => {
+test("scan tool derives its center and uncertainty from the server-owned range", async () => {
   const engine = installEngine([
     {
       path: "/api/rectification/sensitivity_scan",
@@ -223,13 +224,55 @@ test("scan tool posts the reported time and uncertainty to /api/rectification/se
     },
   ]);
   const tools = createAgenticRectificationTools(makeCtx());
-  const result = await runTool(tools, "rectification-scan", { uncertainty_minutes: 30 });
+  const result = await runTool(tools, "rectification-scan", {});
   const sent = requestBody(engine);
   assert.equal(sent.hour, 14);
   assert.equal(sent.minute, 30);
   assert.equal(sent.time_uncertainty_minutes, 30);
   assert.equal(result.candidate_count, 13);
   assert.deepEqual(result.supported_vargas, ["D4", "D9", "D10"]);
+  engine.restore();
+});
+
+test("gate keeps period-only profiles on the server-owned range without inventing a minute", async () => {
+  const engine = installEngine([]);
+  const tools = createAgenticRectificationTools({
+    ...makeCtx(),
+    birth: { ...birth, reported_time: null },
+    candidateRange: { start_time: "23:00", end_time: "03:59" },
+    declaredAccuracy: "unknown",
+  });
+  const result = await runTool(tools, "rectification-gate", {});
+  assert.equal(engine.calls.length, 0);
+  assert.equal(result.endpoint, "server_owned_rectification_preflight");
+  assert.deepEqual(result.candidate_range, { start_time: "23:00", end_time: "03:59" });
+  engine.restore();
+});
+
+test("scan defers an unknown full-day range instead of using a fake noon birth time", async () => {
+  const engine = installEngine([]);
+  const tools = createAgenticRectificationTools({
+    ...makeCtx(),
+    birth: { ...birth, reported_time: null },
+    candidateRange: { start_time: "00:00", end_time: "23:59" },
+  });
+  const result = await runTool(tools, "rectification-scan", {});
+  assert.equal(engine.calls.length, 0);
+  assert.equal(result.status, "deferred_wide_range");
+  engine.restore();
+});
+
+test("score rejects an Agent-invented range", async () => {
+  const engine = installEngine([]);
+  const tools = createAgenticRectificationTools(makeCtx());
+  await assert.rejects(
+    () => runTool(tools, "rectification-score", {
+      candidate_range: { start_time: "14:15", end_time: "14:45" },
+      events: sampleEvents,
+    }),
+    /candidate_range_mismatch/,
+  );
+  assert.equal(engine.calls.length, 0);
   engine.restore();
 });
 

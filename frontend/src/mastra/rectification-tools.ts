@@ -23,16 +23,22 @@ const timePattern = /^\d{2}:\d{2}$/;
 /** Birth fields supplied by the server from the user profile (never by the LLM). */
 export type AgenticRectificationBirth = Readonly<{
   birth_date: string;
-  reported_time: string;
+  reported_time: string | null;
   lat: number;
   lon: number;
   tz: number;
+}>;
+
+export type AgenticRectificationCandidateRange = Readonly<{
+  start_time: string;
+  end_time: string;
 }>;
 
 export type AgenticRectificationContext = Readonly<{
   userId: string;
   engineBase?: string;
   birth: AgenticRectificationBirth;
+  candidateRange: AgenticRectificationCandidateRange;
   declaredAccuracy?: "minute" | "15min" | "1hour" | "unknown";
   timeSource?: "hospital" | "family_clear" | "family_vague" | "unknown";
   applyConfirmedBirthTime: (time: string) => Promise<Readonly<{
@@ -60,6 +66,33 @@ export const candidateRangeSchema = z.object({
   start_time: z.string().regex(timePattern),
   end_time: z.string().regex(timePattern),
 });
+
+function clockMinute(value: string): number {
+  const [hour = 0, minute = 0] = value.split(":").map(Number);
+  return hour * 60 + minute;
+}
+
+function rangeScanWindow(range: AgenticRectificationCandidateRange) {
+  const start = clockMinute(range.start_time);
+  let end = clockMinute(range.end_time);
+  if (end < start) end += 1_440;
+  const width = end - start;
+  const center = Math.round((start + end) / 2) % 1_440;
+  return {
+    width,
+    centerTime: `${String(Math.floor(center / 60)).padStart(2, "0")}:${String(center % 60).padStart(2, "0")}`,
+    uncertaintyMinutes: Math.max(1, Math.ceil(width / 2)),
+  };
+}
+
+function requireServerCandidateRange(
+  requested: AgenticRectificationCandidateRange,
+  serverOwned: AgenticRectificationCandidateRange,
+) {
+  if (requested.start_time !== serverOwned.start_time || requested.end_time !== serverOwned.end_time) {
+    throw new Error(`candidate_range_mismatch: use ${serverOwned.start_time}-${serverOwned.end_time}`);
+  }
+}
 
 const defaultEventKind: Record<RectificationDomain, string> = {
   education: "education_milestone",
@@ -226,6 +259,24 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
       time_source: z.enum(["hospital", "family_clear", "family_vague", "unknown"]).optional(),
     }).strict(),
     execute: async (input) => {
+      if (!ctx.birth.reported_time) {
+        return {
+          endpoint: "server_owned_rectification_preflight",
+          effective_accuracy: ctx.declaredAccuracy ?? "unknown",
+          candidate_range: ctx.candidateRange,
+          lagna_boundary: { is_sensitive: null, note: "requires_dated_event_scoring_across_candidate_range" },
+          enabled_vargas: {},
+          summary: {
+            headline: "broad_candidate_range",
+            enabled: [],
+            warned: ["candidate_range_requires_event_scoring"],
+            disabled: ["single_minute_precision_claims"],
+            confidence_floor: "low",
+            recommended_events: ["education", "career", "relationship", "relocation"],
+            next_action: "collect one clearly dated life event",
+          },
+        };
+      }
       const body = {
         year: Number(ctx.birth.birth_date.slice(0, 4)),
         month: Number(ctx.birth.birth_date.slice(5, 7)),
@@ -245,6 +296,7 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
       return {
         endpoint: data.endpoint,
         effective_accuracy: data.effective_accuracy,
+        candidate_range: ctx.candidateRange,
         lagna_boundary: data.lagna_boundary,
         enabled_vargas: data.enabled_vargas,
         summary: {
@@ -263,22 +315,30 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
   const scanTool = createTool({
     id: "rectification-scan",
     description:
-      "Scan how chart layers (D1/D4/D9/D10/D24/D30 ascendants, arudhas, KP cusps) change minute-to-minute across the candidate window around the reported birth time. Use this to understand which layers are sensitive and where transitions happen.",
+      "Scan how chart layers change minute-to-minute across the server-owned candidate range. Wide ranges are deferred until dated-event scoring narrows the evidence.",
     inputSchema: z.object({
-      uncertainty_minutes: z.number().int().min(1).max(180).optional(),
       step_minutes: z.number().int().min(1).max(30).optional(),
     }).strict(),
     execute: async (input) => {
+      const scanWindow = rangeScanWindow(ctx.candidateRange);
+      if (scanWindow.width > 360) {
+        return {
+          scope: "candidate_time_sensitivity_scan",
+          status: "deferred_wide_range",
+          candidate_range: ctx.candidateRange,
+          boundary: "Collect dated events and score the server-owned full range before running a local sensitivity scan.",
+        };
+      }
       const body = {
         year: Number(ctx.birth.birth_date.slice(0, 4)),
         month: Number(ctx.birth.birth_date.slice(5, 7)),
         day: Number(ctx.birth.birth_date.slice(8, 10)),
-        hour: Number(ctx.birth.reported_time.slice(0, 2)),
-        minute: Number(ctx.birth.reported_time.slice(3, 5)),
+        hour: Number(scanWindow.centerTime.slice(0, 2)),
+        minute: Number(scanWindow.centerTime.slice(3, 5)),
         lat: ctx.birth.lat,
         lon: ctx.birth.lon,
         tz: ctx.birth.tz,
-        time_uncertainty_minutes: input.uncertainty_minutes,
+        time_uncertainty_minutes: scanWindow.uncertaintyMinutes,
         step_minutes: input.step_minutes,
       };
       const data = await postEngine(base, "/api/rectification/sensitivity_scan", body);
@@ -286,6 +346,7 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
       return {
         scope: data.scope,
         status: data.status,
+        candidate_range: ctx.candidateRange,
         center_time: data.center_time,
         uncertainty_minutes: data.uncertainty_minutes,
         step_minutes: data.step_minutes,
@@ -326,6 +387,7 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
       events: z.array(agenticRectificationEventSchema).min(1).max(40),
     }).strict(),
     execute: async (input) => {
+      requireServerCandidateRange(input.candidate_range, ctx.candidateRange);
       const data = await postEngine(base, "/api/rectification/v5/score", v5Request(ctx, input.candidate_range, input.events));
       return compactScoreResult(data);
     },
@@ -340,6 +402,7 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
       events: z.array(agenticRectificationEventSchema).min(1).max(40),
     }).strict(),
     execute: async (input) => {
+      requireServerCandidateRange(input.candidate_range, ctx.candidateRange);
       const data = await postEngine(base, "/api/rectification/v5/diagnostics", v5Request(ctx, input.candidate_range, input.events));
       const diagnostics = (data.diagnostics && typeof data.diagnostics === "object")
         ? data.diagnostics as Record<string, unknown>
@@ -375,6 +438,7 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
       candidate_range: candidateRangeSchema,
     }).strict(),
     execute: async (input) => {
+      requireServerCandidateRange(input.candidate_range, ctx.candidateRange);
       const data = await postEngine(base, "/api/rectification/v5/candidate-features", {
         birth_date: ctx.birth.birth_date,
         start_time: input.candidate_range.start_time,
@@ -408,6 +472,7 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
       events: z.array(agenticRectificationEventSchema).min(1).max(40),
     }).strict(),
     execute: async (input) => {
+      requireServerCandidateRange(input.candidate_range, ctx.candidateRange);
       const body = {
         birth_date: ctx.birth.birth_date,
         start_time: input.candidate_range.start_time,

@@ -25,7 +25,8 @@ export class AgenticRectificationProfileError extends Error {
 
 export type AgenticRectificationProfile = Readonly<{
   birth_date: string;
-  reported_time: string;
+  reported_time: string | null;
+  candidateRange: AgenticRectificationContext["candidateRange"];
   lat: number;
   lon: number;
   tz: number;
@@ -35,9 +36,58 @@ export type AgenticRectificationProfile = Readonly<{
 }>;
 
 const timeValue = (value: unknown): string | null => {
-  if (typeof value !== "string" || !value) return null;
-  return value.length >= 5 ? value.slice(0, 5) : null;
+  const time = typeof value === "string" ? value.slice(0, 5) : "";
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(time) ? time : null;
 };
+
+const periodRanges = {
+  early_morning: { start_time: "04:00", end_time: "07:59" },
+  morning: { start_time: "08:00", end_time: "11:59" },
+  afternoon: { start_time: "12:00", end_time: "17:59" },
+  evening: { start_time: "18:00", end_time: "22:59" },
+  late_night: { start_time: "23:00", end_time: "03:59" },
+} as const;
+
+function shiftedTime(time: string, offsetMinutes: number): string {
+  const [hour = 0, minute = 0] = time.split(":").map(Number);
+  const normalized = ((hour * 60 + minute + offsetMinutes) % 1_440 + 1_440) % 1_440;
+  return `${String(Math.floor(normalized / 60)).padStart(2, "0")}:${String(normalized % 60).padStart(2, "0")}`;
+}
+
+function candidateRangeFrom(input: {
+  activeTime: string | null;
+  reportedTime: string | null;
+  source: string;
+  period: unknown;
+  uncertaintyBefore: number | null;
+  uncertaintyAfter: number | null;
+}): AgenticRectificationContext["candidateRange"] {
+  const referenceTime = input.activeTime ?? input.reportedTime;
+  if (referenceTime) {
+    const fallback = input.source === "hospital_record" || input.source === "hospital"
+      ? 2
+      : input.source === "family_exact" || input.source === "family_clear"
+        ? 15
+        : input.source === "approximate" || input.source === "family_vague"
+          ? 60
+          : 2;
+    return {
+      start_time: shiftedTime(referenceTime, -(input.uncertaintyBefore ?? fallback)),
+      end_time: shiftedTime(referenceTime, input.uncertaintyAfter ?? fallback),
+    };
+  }
+  if (input.source === "period_only" || input.source === "legacy_import") {
+    const period = typeof input.period === "string"
+      ? periodRanges[input.period as keyof typeof periodRanges]
+      : null;
+    if (period) return period;
+    if (input.source === "period_only") throw new AgenticRectificationProfileError("missing_birth_time_period");
+  }
+  if (input.source === "unknown" || input.source === "legacy_import") {
+    return { start_time: "00:00", end_time: "23:59" };
+  }
+  throw new AgenticRectificationProfileError("missing_birth_time");
+}
 
 function declaredAccuracyFrom(uncertaintyBefore: number | null, uncertaintyAfter: number | null, timeSource: string | null): AgenticRectificationContext["declaredAccuracy"] {
   const before = uncertaintyBefore ?? 0;
@@ -50,16 +100,21 @@ function declaredAccuracyFrom(uncertaintyBefore: number | null, uncertaintyAfter
     return "unknown";
   }
   switch (timeSource) {
-    case "hospital": return "minute";
-    case "family_clear": return "15min";
-    case "family_vague": return "1hour";
+    case "hospital":
+    case "hospital_record": return "minute";
+    case "family_clear":
+    case "family_exact": return "15min";
+    case "family_vague":
+    case "approximate": return "1hour";
     default: return "unknown";
   }
 }
 
 function timeSourceFrom(value: unknown): AgenticRectificationContext["timeSource"] {
   const source = typeof value === "string" ? value.trim() : "";
-  if (source === "hospital" || source === "family_clear" || source === "family_vague") return source;
+  if (source === "hospital" || source === "hospital_record") return "hospital";
+  if (source === "family_clear" || source === "family_exact") return "family_clear";
+  if (source === "family_vague" || source === "approximate" || source === "period_only") return "family_vague";
   return "unknown";
 }
 
@@ -82,10 +137,8 @@ export async function loadAgenticRectificationProfile(
   if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
     throw new AgenticRectificationProfileError("missing_birth_date");
   }
-  const reportedTime = timeValue(data.active_birth_time ?? data.reported_birth_time);
-  if (!reportedTime || !/^\d{2}:\d{2}$/.test(reportedTime)) {
-    throw new AgenticRectificationProfileError("missing_birth_time");
-  }
+  const activeTime = timeValue(data.active_birth_time);
+  const reportedTime = timeValue(data.reported_birth_time);
   const lat = numberOrNull(data.latitude);
   const lon = numberOrNull(data.longitude);
   const tz = numberOrNull(data.timezone_offset);
@@ -95,16 +148,25 @@ export async function loadAgenticRectificationProfile(
   const timeSource = timeSourceFrom(data.birth_time_source);
   const uncertaintyBefore = numberOrNull(data.uncertainty_before_minutes);
   const uncertaintyAfter = numberOrNull(data.uncertainty_after_minutes);
+  const candidateRange = candidateRangeFrom({
+    activeTime,
+    reportedTime,
+    source: typeof data.birth_time_source === "string" ? data.birth_time_source.trim() : "",
+    period: data.birth_time_period,
+    uncertaintyBefore,
+    uncertaintyAfter,
+  });
 
   return {
     birth_date: birthDate,
-    reported_time: reportedTime,
+    reported_time: activeTime ?? reportedTime,
+    candidateRange,
     lat,
     lon,
     tz,
     declaredAccuracy: declaredAccuracyFrom(uncertaintyBefore, uncertaintyAfter, data.birth_time_source),
     timeSource,
-    baselineActiveTime: timeValue(data.active_birth_time),
+    baselineActiveTime: activeTime,
   };
 }
 
@@ -122,6 +184,7 @@ export function createAgenticRectificationContext(
       lon: profile.lon,
       tz: profile.tz,
     },
+    candidateRange: profile.candidateRange,
     declaredAccuracy: profile.declaredAccuracy,
     timeSource: profile.timeSource,
     async applyConfirmedBirthTime(time) {
