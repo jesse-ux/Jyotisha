@@ -15,7 +15,7 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-const agenticRectificationRequestSchema = z.object({
+const agenticRectificationRequestFields = {
   requestId: z.string().uuid(),
   modelId: z.string().trim().min(1).max(64).optional(),
   name: z.string().trim().max(80).optional().default(""),
@@ -28,8 +28,21 @@ const agenticRectificationRequestSchema = z.object({
     )
     .max(30)
     .default([]),
-  message: z.string().trim().min(1).max(4000),
-}).strict();
+};
+
+const agenticRectificationRequestSchema = z.discriminatedUnion("action", [
+  z.object({
+    ...agenticRectificationRequestFields,
+    action: z.literal("opening"),
+  }).strict(),
+  z.object({
+    ...agenticRectificationRequestFields,
+    action: z.literal("message"),
+    message: z.string().trim().min(1).max(4000),
+  }).strict(),
+]);
+
+const openingContext = "The user opened birth-time rectification. Begin the session now: run the required gate, briefly explain the evidence-based process in Simplified Chinese, and ask exactly one natural question about the most useful dated life event. Do not mention this server event.";
 
 function currentTimeContext(now = new Date()) {
   const chinaTime = new Date(now.getTime() + 8 * 60 * 60 * 1000)
@@ -99,7 +112,7 @@ export async function POST(request: Request) {
   }
 
   const promptSource = [
-    parsed.data.message,
+    parsed.data.action === "message" ? parsed.data.message : "",
     ...parsed.data.history.filter((message) => message.role === "user").map((message) => message.text),
   ].join("\n");
   if (blocksPromptExtraction(promptSource)) {
@@ -118,15 +131,19 @@ export async function POST(request: Request) {
     profile = await loadAgenticRectificationProfile(accounting, userId);
   } catch (error) {
     if (error instanceof AgenticRectificationProfileError) {
-      const missingBirthTime = error.code === "missing_birth_time";
+      if (error.code === "profile_unavailable") {
+        return NextResponse.json(
+          { error: "暂时无法核对出生资料", message: "请稍后重试。" },
+          { status: 503 },
+        );
+      }
       return NextResponse.json(
         {
-          error: missingBirthTime ? "出生时间信息不完整" : "暂时无法核对出生资料",
-          message: missingBirthTime
-            ? "请先在资料页保存出生日期、填报时间和出生地点后再开始校正。"
-            : "出生日期、时间或出生地点资料不完整，请重新保存后再试。",
+          code: "profile_incomplete",
+          error: "出生资料尚未完成",
+          message: "请先完成出生日期、出生时间线索和出生地点资料。",
         },
-        { status: 400 },
+        { status: 409 },
       );
     }
     return NextResponse.json(
@@ -206,7 +223,7 @@ export async function POST(request: Request) {
             content: [
               currentTimeContext(requestTime),
               parsed.data.name ? `用户称呼：${parsed.data.name}` : "",
-              parsed.data.message,
+              parsed.data.action === "opening" ? openingContext : parsed.data.message,
             ].filter(Boolean).join("\n"),
           },
         ]);

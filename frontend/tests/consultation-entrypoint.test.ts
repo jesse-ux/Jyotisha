@@ -78,35 +78,35 @@ test("ordinary product drafts keep the public question and clear hidden routing 
   assert.match(source, /setDraft\(pending\.question\);[\s\S]*?setDraftTheme\(pending\.theme\);[\s\S]*?setDraftEntrypoint\(pending\.entrypoint\);/);
 });
 
-test("homepage birth-time card opens the v4 evidence surface instead of ordinary consultation", () => {
+test("homepage birth-time card opens the latest Agentic surface instead of ordinary consultation", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const component = readFileSync(new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url), "utf8");
 
   assert.match(source, /function openBirthTimeRectification/);
-  const component = readFileSync(new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url), "utf8");
   assert.match(source, /<ConversationalBirthTimeRectification/);
-  assert.match(component, /<RectificationV4Panel/);
+  assert.match(component, /<AgenticRectificationChat \{\.\.\.props\} \/>/);
+  assert.doesNotMatch(component, /RectificationV4Panel|loadActiveRectificationV4|transitionRectificationV4/);
   assert.match(source, /pendingConsultationQuestion=\{rectificationPendingQuestion\}/);
   assert.doesNotMatch(source.slice(
     source.indexOf("async function openBirthTimeRectification"),
     source.indexOf("function handleConversationalRectificationTurn"),
-  ), /sendConversationalRectificationCommand/);
+  ), /sendConversationalRectificationCommand|rectification\/v4/);
   assert.doesNotMatch(source, /chooseSuggestedQuestion\([\s\S]{0,180}"birth_time_rectification"/);
   assert.doesNotMatch(source, /draftBirthTimeRectificationQuestion/);
 });
 
-test("homepage opens the v4 panel without invoking the retired v3 start command", () => {
+test("homepage mounts the Agentic surface without invoking retired rectification starters", () => {
   const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  const hook = readFileSync(new URL("../src/hooks/use-rectification-v4.ts", import.meta.url), "utf8");
+  const component = readFileSync(new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url), "utf8");
+  const chat = readFileSync(new URL("../src/components/rectification-agentic-chat.tsx", import.meta.url), "utf8");
   const start = page.indexOf("async function openBirthTimeRectification");
   const end = page.indexOf("function handleConversationalRectificationTurn", start);
   const handler = page.slice(start, end);
 
-  assert.doesNotMatch(handler, /sendConversationalRectificationCommand/);
-  const component = readFileSync(new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(handler, /sendConversationalRectificationCommand|loadRectificationV4Handoff|createRectificationV4/);
   assert.match(page, /<ConversationalBirthTimeRectification/);
-  assert.match(component, /<RectificationV4Panel/);
-  assert.match(hook, /await loadRectificationV4Handoff\(\)/);
-  assert.match(hook, /await createRectificationV4\(\)/);
+  assert.match(component, /<AgenticRectificationChat/);
+  assert.match(chat, /void send\(\{ action: "opening" \}, false\)/);
 });
 
 test("a stale v4 mutation refreshes the same case after a 409", () => {
@@ -117,7 +117,7 @@ test("a stale v4 mutation refreshes the same case after a 409", () => {
   assert.match(hook, /loadRectificationV4\(caseId\)/);
 });
 
-test("homepage birth-time card opens its dedicated session before v4 data loads", () => {
+test("homepage birth-time card opens its dedicated session before the Agent starts", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
   const start = source.indexOf("async function openBirthTimeRectification");
   const end = source.indexOf("function handleConversationalRectificationTurn", start);
@@ -132,30 +132,32 @@ test("homepage birth-time card opens its dedicated session before v4 data loads"
   assert.ok(handler.indexOf("setSessions((current) => [") < firstAwait);
   assert.match(handler, /rectificationOpenInFlight\.current/);
   assert.match(handler, /rectificationOpenInFlight\.current = true;[\s\S]*?finally \{[\s\S]*?rectificationOpenInFlight\.current = false;/);
-  assert.match(handler, /setRectificationReturnSessionId\(sourceSession\.id\)/);
   assert.doesNotMatch(handler, /onNarrativeDelta|sendConversationalRectificationCommand/);
   assert.match(source, /const rectificationSurfaceOpen = activeRectificationSession\s*&& activeSession\.id === rectificationSessionId/);
   assert.match(source, /rectificationSurfaceOpen && \([\s\S]*?<ConversationalBirthTimeRectification[\s\S]*?pendingConsultationQuestion=\{rectificationPendingQuestion\}/);
 });
 
-test("the v4 panel owns case recovery while the page persists only the dedicated session shell", () => {
+test("the page persists only the dedicated session shell while the Agent owns opening", () => {
   const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  const hook = readFileSync(new URL("../src/hooks/use-rectification-v4.ts", import.meta.url), "utf8");
+  const component = readFileSync(new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url), "utf8");
   const start = page.indexOf("async function openBirthTimeRectification");
   const end = page.indexOf("function handleConversationalRectificationTurn", start);
   const handler = page.slice(start, end);
 
   assert.match(handler, /persistSession\(rectificationSession, "create"\)/);
-  assert.match(hook, /const existingHandoff = await loadRectificationV4Handoff\(\)/);
-  assert.match(hook, /existingHandoff[\s\S]*?loadRectificationV4\(existingHandoff\.caseId\)[\s\S]*?createRectificationV4\(\)/);
+  assert.match(component, /<AgenticRectificationChat/);
+  assert.doesNotMatch(component, /loadRectificationV4Handoff|createRectificationV4/);
 });
 
-test("a direct homepage start restores any active v4 case before creating another", () => {
-  const hook = readFileSync(new URL("../src/hooks/use-rectification-v4.ts", import.meta.url), "utf8");
+test("a direct homepage start does not restore or create a V4 case", () => {
+  const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const component = readFileSync(new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url), "utf8");
+  const start = page.indexOf("async function openBirthTimeRectification");
+  const end = page.indexOf("function handleConversationalRectificationTurn", start);
+  const handler = page.slice(start, end);
 
-  assert.match(hook, /const existingHandoff = await loadRectificationV4Handoff\(\)/);
-  assert.match(hook, /existingHandoff\s*\? await loadRectificationV4\(existingHandoff\.caseId\)\s*:\s*await createRectificationV4\(\)/);
-  assert.doesNotMatch(hook, /sendConversationalRectificationCommand/);
+  assert.doesNotMatch(handler, /loadRectificationV4Handoff|createRectificationV4|rectification\/v4/);
+  assert.doesNotMatch(component, /loadRectificationV4Handoff|createRectificationV4|RectificationV4Panel/);
 });
 
 test("rectification cards render only inside the active rectification session", () => {
@@ -181,28 +183,28 @@ test("selecting a rectification session resumes it without an intermediate confi
   assert.match(source, /<ConversationalBirthTimeRectification/);
 });
 
-test("homepage reuses the dedicated rectification session while v4 restores the active case", () => {
+test("homepage reuses the dedicated rectification session for the Agentic surface", () => {
   const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  const hook = readFileSync(new URL("../src/hooks/use-rectification-v4.ts", import.meta.url), "utf8");
+  const component = readFileSync(new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url), "utf8");
   const start = page.indexOf("async function openBirthTimeRectification");
   const end = page.indexOf("function handleConversationalRectificationTurn", start);
   const handler = page.slice(start, end);
 
   assert.match(handler, /sessions\.find\(\(session\) => session\.sessionType === "birth_time_rectification"\)/);
   assert.match(handler, /existing \?\? createSession/);
-  assert.match(hook, /loadRectificationV4Handoff|createRectificationV4/);
+  assert.match(component, /<AgenticRectificationChat/);
 });
 
-test("a bound rectification session and a homepage restart share the v4 active-case loader", () => {
+test("a bound rectification session and homepage restart share the same Agentic session shell", () => {
   const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
-  const hook = readFileSync(new URL("../src/hooks/use-rectification-v4.ts", import.meta.url), "utf8");
+  const component = readFileSync(new URL("../src/components/conversational-birth-time-rectification.tsx", import.meta.url), "utf8");
   const start = page.indexOf("async function openBirthTimeRectification");
   const end = page.indexOf("function handleConversationalRectificationTurn", start);
   const handler = page.slice(start, end);
 
   assert.match(handler, /sourceSession\.sessionType === "birth_time_rectification"[\s\S]*?sourceSession[\s\S]*?sessions\.find/);
-  assert.match(hook, /loadRectificationV4Handoff\(\)/);
-  assert.match(hook, /loadRectificationV4\(existingHandoff\.caseId\)/);
+  assert.match(component, /<AgenticRectificationChat/);
+  assert.doesNotMatch(component, /loadRectificationV4Handoff|loadRectificationV4/);
 });
 
 test("rectify-first suggestions hand the source question to a dedicated rectification session", () => {
@@ -219,17 +221,14 @@ test("rectify-first suggestions hand the source question to a dedicated rectific
   assert.match(source, /onClick=\{\(\) => chooseConversationSuggestion\(question\)\}/);
 });
 
-test("completed handoffs return only after the user clicks and target the source session", () => {
+test("rectify-first handoffs stay as Agent context without a V4 continuation claim", () => {
   const source = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+  const chat = readFileSync(new URL("../src/components/rectification-agentic-chat.tsx", import.meta.url), "utf8");
 
-  assert.doesNotMatch(source, /automaticRectificationContinuation/);
-  assert.match(source, /const returnSession = \(localHandoff/);
-  assert.match(source, /session\.sessionType === "consultation"/);
-  assert.match(source, /onContinueOriginalQuestion=\{\(continuation\) => void continueRectificationOriginalQuestion\(continuation\)\}/);
-  assert.match(source, /claimRectificationV4Handoff\(\{[\s\S]*?caseId: continuation\.caseId,[\s\S]*?caseVersion: continuation\.caseVersion,[\s\S]*?question/);
-  assert.match(source, /sessionId: returnSession\.id/);
-  assert.match(source, /setActiveSessionId\(context\.sessionId\)/);
-  assert.match(source, /clearBirthTimeConsultationConsent\([\s\S]*?context\.sessionId/);
+  assert.match(source, /pendingConsultationQuestion=\{rectificationPendingQuestion\}/);
+  assert.match(chat, /pendingConsultationQuestion\?\.trim\(\)/);
+  assert.match(chat, /之后再回到你原来的问题/);
+  assert.doesNotMatch(source, /onContinueOriginalQuestion|continueRectificationOriginalQuestion|claimRectificationV4Handoff/);
 });
 
 test("ordinary consultation uses current birth data without a rectification notice", () => {

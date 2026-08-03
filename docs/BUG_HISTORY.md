@@ -1990,3 +1990,20 @@
 - 防复发：任何替换生时校正入口或会话实现的改动，都必须保留“用户无需先发消息即可收到 Agent 首次引导”的挂载契约。
 - 相关记录：BUG-085、BUG-112
 - 修复版本：Agentic web opening auto-start
+
+## BUG-114 | Agentic 生时校正启动指令伪装成用户消息且未知时间被误判为资料缺失
+
+- 状态：resolved
+- 首次发现：2026-08-03
+- 最近更新：2026-08-03
+- 影响面：首页生时校正入口、`/api/rectification/agent` 首次启动合同、出生资料门、候选范围与确认写入安全门
+- 用户现象：进入生时校正后浏览器发送一段“用户刚进入生时校正会话……”的隐藏 `message`；服务端随后返回“出生日期、时间或出生地点资料不完整”。同时产品入口仍可能恢复或创建 V4 Case，与当前 Agentic 工具链并存。
+- 触发条件：用户从首页进入生时校正；资料使用合法的“只知道时段”或“完全不知道时间”声明，或客户端与服务端出生资料状态不同步。
+- 根因：BUG-113 用伪装成用户消息的字符串补上自动启动，没有建立服务端拥有的 opening operation；产品 wrapper 仍保留 V4 active-case 分流；Agentic profile loader 又把没有具体分钟一律当成缺失，因此合法的不确定时间无法进入最新流程。
+- 修复：产品 wrapper 只挂载 `AgenticRectificationChat`，不再调用或恢复 V4 Case；首次请求改为 `action: "opening"`，服务端把 opening context 注入 Agent Turn，客户端不再发送或渲染隐藏用户指令；首页在创建 Session 前复用 onboarding 资料门，服务端以 `profile_incomplete` 明确回退；`period_only` 使用已声明时段，`unknown` 使用 `00:00–23:59`，跨午夜范围保持原样；gate 返回服务端候选范围，score、diagnostics、features、confirm 拒绝 Agent 自行发明范围，全天宽范围 scan 延后而不伪造中午出生时间。
+- 验证：Agentic 入口、Session、工具、首页入口与组件合同测试覆盖无 V4 产品分流、opening operation、资料回退、时段/未知时间、跨午夜、宽范围降级、候选范围一致性和确认写入门；前端完整测试、lint、build 与 staging 真实 smoke 随本次发布执行。
+- 数据边界：仅废弃 V4 产品入口，历史 V4 代码与数据暂时保留，不在本次发布中做破坏性删除或迁移。
+- 防复发：自动首轮必须是服务端明确 operation，不得伪装成用户文本；“不知道具体分钟”是合法资料状态，不得等同于资料缺失；所有评分与确认工具只能使用服务端候选范围。
+- 相关记录：BUG-112、BUG-113
+- 复发自：BUG-113
+- 修复版本：待本次 staging 修复提交与部署验收

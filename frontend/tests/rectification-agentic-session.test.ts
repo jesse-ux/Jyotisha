@@ -52,6 +52,7 @@ test("loadAgenticRectificationProfile derives birth fields, accuracy and baselin
   const profile = await loadAgenticRectificationProfile(client as never, userId);
   assert.equal(profile.birth_date, "1990-05-12");
   assert.equal(profile.reported_time, "14:31");
+  assert.deepEqual(profile.candidateRange, { start_time: "14:21", end_time: "14:41" });
   assert.equal(profile.lat, 31.23);
   assert.equal(profile.lon, 121.47);
   assert.equal(profile.tz, 8);
@@ -68,6 +69,43 @@ test("loadAgenticRectificationProfile treats hospital source as minute accuracy"
   const profile = await loadAgenticRectificationProfile(client as never, userId);
   assert.equal(profile.declaredAccuracy, "minute");
   assert.equal(profile.timeSource, "hospital");
+  assert.deepEqual(profile.candidateRange, { start_time: "09:03", end_time: "09:07" });
+});
+
+test("loadAgenticRectificationProfile accepts a period-only declaration without a fake minute", async () => {
+  const { client } = fakeAccounting(fakeProfileRow({
+    reported_birth_time: null,
+    active_birth_time: null,
+    birth_time_source: "period_only",
+    birth_time_period: "late_night",
+  }));
+  const profile = await loadAgenticRectificationProfile(client as never, userId);
+  assert.equal(profile.reported_time, null);
+  assert.deepEqual(profile.candidateRange, { start_time: "23:00", end_time: "03:59" });
+  assert.equal(profile.declaredAccuracy, "unknown");
+});
+
+test("loadAgenticRectificationProfile accepts an unknown time as the full day", async () => {
+  const { client } = fakeAccounting(fakeProfileRow({
+    reported_birth_time: null,
+    active_birth_time: null,
+    birth_time_source: "unknown",
+  }));
+  const profile = await loadAgenticRectificationProfile(client as never, userId);
+  assert.equal(profile.reported_time, null);
+  assert.deepEqual(profile.candidateRange, { start_time: "00:00", end_time: "23:59" });
+});
+
+test("loadAgenticRectificationProfile preserves a cross-midnight uncertainty range", async () => {
+  const { client } = fakeAccounting(fakeProfileRow({
+    reported_birth_time: "00:10:00",
+    active_birth_time: null,
+    birth_time_source: "approximate",
+    uncertainty_before_minutes: 30,
+    uncertainty_after_minutes: 30,
+  }));
+  const profile = await loadAgenticRectificationProfile(client as never, userId);
+  assert.deepEqual(profile.candidateRange, { start_time: "23:40", end_time: "00:40" });
 });
 
 test("loadAgenticRectificationProfile rejects a missing birth date", async () => {
