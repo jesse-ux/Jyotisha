@@ -269,8 +269,10 @@ test("birth date values round trip leap days and reject invalid input", () => {
 });
 
 test("persisted birth dates normalize database ISO values without accepting invalid dates", () => {
+  assert.equal(normalizePersistedBirthDate(new Date("1997-08-08T00:00:00.000Z")), "1997-08-08");
   assert.equal(normalizePersistedBirthDate("1997-08-08T00:00:00.000Z"), "1997-08-08");
   assert.equal(normalizePersistedBirthDate("1997-08-08"), "1997-08-08");
+  assert.equal(normalizePersistedBirthDate(new Date("invalid")), "");
   assert.equal(normalizePersistedBirthDate("1997-02-30T00:00:00.000Z"), "");
   assert.equal(normalizePersistedBirthDate("1997-08-08junk"), "");
 });

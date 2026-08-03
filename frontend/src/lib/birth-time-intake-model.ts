@@ -64,6 +64,9 @@ export function parseBirthDate(value: string): Date | undefined {
 }
 
 export function normalizePersistedBirthDate(value: unknown): string {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? "" : value.toISOString().slice(0, 10);
+  }
   if (typeof value !== "string") return "";
   const persisted = value.trim();
   const date = persisted.slice(0, 10);
