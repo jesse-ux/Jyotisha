@@ -43,6 +43,7 @@ const agenticRectificationRequestSchema = z.discriminatedUnion("action", [
 ]);
 
 const openingContext = "The user opened birth-time rectification. Begin the session now: run the required gate, briefly explain the evidence-based process in Simplified Chinese, and ask exactly one natural question about the most useful dated life event. Do not mention this server event.";
+const agenticRectificationMaxSteps = 8;
 
 function currentTimeContext(now = new Date()) {
   const chinaTime = new Date(now.getTime() + 8 * 60 * 60 * 1000)
@@ -214,24 +215,26 @@ export async function POST(request: Request) {
         controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
       };
       try {
-        const result = await agent.stream([
-          ...parsed.data.history.map((message) => message.role === "user"
-            ? { role: "user" as const, content: message.text }
-            : { role: "assistant" as const, content: message.text }),
-          {
-            role: "user",
-            content: [
-              currentTimeContext(requestTime),
-              parsed.data.name ? `用户称呼：${parsed.data.name}` : "",
-              parsed.data.action === "opening" ? openingContext : parsed.data.message,
-            ].filter(Boolean).join("\n"),
-          },
-        ]);
+        const result = await agent.stream(
+          [
+            ...parsed.data.history.map((message) => message.role === "user"
+              ? { role: "user" as const, content: message.text }
+              : { role: "assistant" as const, content: message.text }),
+            {
+              role: "user",
+              content: [
+                currentTimeContext(requestTime),
+                parsed.data.name ? `用户称呼：${parsed.data.name}` : "",
+                parsed.data.action === "opening" ? openingContext : parsed.data.message,
+              ].filter(Boolean).join("\n"),
+            },
+          ],
+          { maxSteps: agenticRectificationMaxSteps },
+        );
         for await (const chunk of result.textStream) {
           if (/\S/.test(chunk)) emitted = true;
           send({ type: "delta", text: chunk });
         }
-        send({ type: "done", emitted });
         void recordModelUsage(
           accounting,
           userId,
@@ -239,7 +242,15 @@ export async function POST(request: Request) {
           selectedModel.id,
           result.totalUsage,
         );
-        await settle(emitted);
+        if (!emitted) {
+          console.warn(`[agentic-rectification] empty response request=${requestId}`);
+          send({ type: "error", message: "生时校正没有生成有效回复，本次不会扣除点数，请重新发送。" });
+          await settle(false);
+          controller.close();
+          return;
+        }
+        send({ type: "done", emitted: true });
+        await settle(true);
         controller.close();
       } catch (error) {
         const reason = error instanceof Error ? error.name : "UnknownError";

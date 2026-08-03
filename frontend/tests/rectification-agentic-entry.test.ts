@@ -66,3 +66,10 @@ test("account rehydration normalizes persisted ISO birth dates before completene
   );
   assert.match(profileReader, /const date = normalizePersistedBirthDate\(/);
 });
+
+test("agent tool calls leave a final step for visible prose and never end silently", () => {
+  assert.match(route, /const agenticRectificationMaxSteps = 8/);
+  assert.match(route, /\{ maxSteps: agenticRectificationMaxSteps \}/);
+  assert.match(route, /if \(!emitted\) \{[\s\S]*type: "error"[\s\S]*await settle\(false\)[\s\S]*return;/);
+  assert.doesNotMatch(route, /send\(\{ type: "done", emitted \}\)/);
+});
