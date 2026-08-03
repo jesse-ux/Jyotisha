@@ -37,6 +37,7 @@ import {
   describeBirthTimeDraft,
   isDeclaredBirthProfileComplete,
   isBirthTimeDraftReady,
+  normalizePersistedBirthDate,
   type BirthTimeDraft,
   type BirthTimeSource,
 } from "@/lib/birth-time-intake-model";
@@ -607,7 +608,9 @@ function readProfile(value: unknown): Profile {
     longitude?: unknown;
     timezone_offset?: unknown;
   };
-  const date = typeof profile.birth_date === "string" ? profile.birth_date : profile.date;
+  const date = normalizePersistedBirthDate(
+    typeof profile.birth_date === "string" ? profile.birth_date : profile.date,
+  );
   const legacyTime = typeof profile.birth_time === "string" ? profile.birth_time.slice(0, 5) : profile.time;
   const time = typeof profile.active_birth_time === "string"
     ? profile.active_birth_time.slice(0, 5)
