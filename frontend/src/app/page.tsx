@@ -2048,24 +2048,24 @@ export default function Home() {
     rectificationOpenInFlight.current = true;
     setRectificationLoading(true);
     setRectificationError("");
-    setRectificationPendingQuestion(requestedQuestion);
-    setDraft("");
-    setDraftTheme(null);
-    setDraftEntrypoint(null);
-    setRectificationSessionId(rectificationSession.id);
-    activeSessionIdRef.current = rectificationSession.id;
-    setActiveSessionId(rectificationSession.id);
 
     try {
       if (!existing) {
-        setSessions((current) => [rectificationSession, ...current.filter((session) => session.id !== rectificationSession.id)]);
         await rectificationPersistence.current.enqueue(
           rectificationSession.id,
           () => persistSession(rectificationSession, "create"),
         );
+        setSessions((current) => [rectificationSession, ...current.filter((session) => session.id !== rectificationSession.id)]);
       }
+      setRectificationPendingQuestion(requestedQuestion);
+      setDraft("");
+      setDraftTheme(null);
+      setDraftEntrypoint(null);
+      setRectificationSessionId(rectificationSession.id);
+      activeSessionIdRef.current = rectificationSession.id;
+      setActiveSessionId(rectificationSession.id);
     } catch {
-      setComposerNotice("生时校正已打开，但会话列表暂时未同步到云端。");
+      setComposerNotice("生时校正会话暂时无法创建，请稍后重试。");
     } finally {
       rectificationOpenInFlight.current = false;
       setRectificationLoading(false);
@@ -2089,6 +2089,15 @@ export default function Home() {
     openAccountDialog("profile");
     setProfileNotice("服务端未能读取完整出生资料，请重新确认并保存。");
     void refreshAccount();
+  }
+
+  function handleRectificationMessagesChange(messages: Message[]) {
+    if (!rectificationSessionId) return;
+    updateSession(rectificationSessionId, (session) => ({
+      ...session,
+      messages,
+      updatedAt: timestamp(),
+    }));
   }
 
   async function draftSynastryQuestionFromChart(record: ChartLibraryRecord, relationshipType: SynastryRelationshipType) {
@@ -2959,9 +2968,14 @@ export default function Home() {
 
         {rectificationSurfaceOpen && (
           <ConversationalBirthTimeRectification
+            key={rectificationSessionId}
+            sessionId={rectificationSessionId}
+            initialMessages={activeSession?.messages ?? []}
             models={modelCatalog?.models ?? []}
             selectedModelId={activeSession?.modelId ?? ""}
             onSelectModel={(modelId) => void selectSessionModel(modelId)}
+            onMessagesChange={handleRectificationMessagesChange}
+            onCompleted={() => void refreshAccount()}
             pendingConsultationQuestion={rectificationPendingQuestion}
             onPendingChange={setRectificationMutationPending}
             onProfileIncomplete={handleRectificationProfileIncomplete}

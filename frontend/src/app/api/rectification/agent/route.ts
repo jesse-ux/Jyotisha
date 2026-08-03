@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { parseAgentReply } from "@/lib/agent-reply";
+import type { ChatMessage } from "@/lib/chat-message-view";
 import { getAgenticRectificationAgent } from "@/mastra/agentic-rectification";
 import { defaultLanguageModel, resolveLanguageModel } from "@/mastra/model";
 import { blocksPromptExtraction } from "@/lib/consult-safety";
@@ -17,6 +19,7 @@ export const maxDuration = 120;
 
 const agenticRectificationRequestFields = {
   requestId: z.string().uuid(),
+  sessionId: z.string().uuid(),
   modelId: z.string().trim().min(1).max(64).optional(),
   name: z.string().trim().max(80).optional().default(""),
   history: z
@@ -44,6 +47,22 @@ const agenticRectificationRequestSchema = z.discriminatedUnion("action", [
 
 const openingContext = "The user opened birth-time rectification. Begin the session now: run the required gate, briefly explain the evidence-based process in Simplified Chinese, and ask exactly one natural question about the most useful dated life event. Do not mention this server event.";
 const agenticRectificationMaxSteps = 8;
+
+function readPersistedMessages(value: unknown): ChatMessage[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item): ChatMessage[] => {
+    if (!item || typeof item !== "object") return [];
+    const message = item as Partial<ChatMessage>;
+    if ((message.role !== "user" && message.role !== "assistant") || typeof message.text !== "string") return [];
+    return [{
+      role: message.role,
+      text: message.text.slice(0, 100_000),
+      ...(Array.isArray(message.suggestions)
+        ? { suggestions: message.suggestions.filter((suggestion): suggestion is string => typeof suggestion === "string").slice(0, 3) }
+        : {}),
+    }];
+  });
+}
 
 function currentTimeContext(now = new Date()) {
   const chinaTime = new Date(now.getTime() + 8 * 60 * 60 * 1000)
@@ -127,6 +146,32 @@ export async function POST(request: Request) {
   const requestId = parsed.data.requestId;
   const requestTime = new Date();
 
+  const { data: chatSession, error: chatSessionError } = await supabase
+    .from("chat_sessions")
+    .select("id,messages,session_type")
+    .eq("id", parsed.data.sessionId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (chatSessionError) {
+    return NextResponse.json(
+      { error: "暂时无法读取生时校正会话", message: "请稍后重试。" },
+      { status: 503 },
+    );
+  }
+  if (!chatSession || chatSession.session_type !== "birth_time_rectification") {
+    return NextResponse.json(
+      { error: "生时校正会话不存在", message: "请重新进入生时校正。" },
+      { status: 404 },
+    );
+  }
+  const persistedMessages = readPersistedMessages(chatSession.messages);
+  if (parsed.data.action === "opening" && persistedMessages.length > 0) {
+    return NextResponse.json(
+      { code: "opening_already_started", error: "生时校正已开始", message: "已有校正记录，无需重复生成首次引导。" },
+      { status: 409 },
+    );
+  }
+
   let profile;
   try {
     profile = await loadAgenticRectificationProfile(accounting, userId);
@@ -196,6 +241,7 @@ export async function POST(request: Request) {
   const body = new ReadableStream<Uint8Array>({
     async start(controller) {
       let emitted = false;
+      let raw = "";
       let settled = false;
       const settle = async (complete: boolean) => {
         if (settled) return;
@@ -233,6 +279,7 @@ export async function POST(request: Request) {
         );
         for await (const chunk of result.textStream) {
           if (/\S/.test(chunk)) emitted = true;
+          raw += chunk;
           send({ type: "delta", text: chunk });
         }
         void recordModelUsage(
@@ -242,13 +289,37 @@ export async function POST(request: Request) {
           selectedModel.id,
           result.totalUsage,
         );
-        if (!emitted) {
+        const reply = parseAgentReply(raw, "general");
+        if (!emitted || !reply.text) {
           console.warn(`[agentic-rectification] empty response request=${requestId}`);
           send({ type: "error", message: "生时校正没有生成有效回复，本次不会扣除点数，请重新发送。" });
           await settle(false);
           controller.close();
           return;
         }
+        const requestHistory = parsed.data.history.map((message) => ({
+          role: message.role,
+          text: message.text,
+        } satisfies ChatMessage));
+        const baseMessages = requestHistory.length > persistedMessages.length
+          ? requestHistory
+          : persistedMessages;
+        const nextMessages: ChatMessage[] = [
+          ...baseMessages,
+          ...(parsed.data.action === "message"
+            ? [{ role: "user" as const, text: parsed.data.message }]
+            : []),
+          { role: "assistant" as const, text: reply.text, suggestions: reply.suggestions },
+        ].slice(-500);
+        const { data: savedSession, error: saveError } = await supabase
+          .from("chat_sessions")
+          .update({ messages: nextMessages, updated_at: new Date().toISOString() })
+          .eq("id", parsed.data.sessionId)
+          .eq("user_id", userId)
+          .eq("session_type", "birth_time_rectification")
+          .select("id")
+          .maybeSingle();
+        if (saveError || !savedSession) throw new Error("RectificationSessionPersistenceError");
         send({ type: "done", emitted: true });
         await settle(true);
         controller.close();

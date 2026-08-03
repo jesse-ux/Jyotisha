@@ -3,7 +3,7 @@
 import { ArrowUp } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { parseAgentReply } from "@/lib/agent-reply";
-import type { ChatMessageView } from "@/lib/chat-message-view";
+import type { ChatMessage, ChatMessageView } from "@/lib/chat-message-view";
 import type { PublicLanguageModel } from "@/lib/public-models";
 import { ChatMessageRow } from "./chat-message-row";
 import { ModelSelector } from "./model-selector";
@@ -11,9 +11,13 @@ import { Button } from "./ui/button";
 import { Textarea } from "./ui/textarea";
 
 type AgenticRectificationChatProps = Readonly<{
+  sessionId: string;
+  initialMessages: readonly ChatMessage[];
   models: readonly PublicLanguageModel[];
   selectedModelId: string;
   onSelectModel: (modelId: string) => void;
+  onMessagesChange?: (messages: ChatMessage[]) => void;
+  onCompleted?: () => void;
   pendingConsultationQuestion?: string | null;
   onPendingChange?: (pending: boolean) => void;
   onProfileIncomplete?: () => void;
@@ -31,21 +35,32 @@ type AgenticRectificationRequest = Readonly<
 
 export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
   const {
+    sessionId,
+    initialMessages,
     models,
     selectedModelId,
     onSelectModel,
+    onMessagesChange,
+    onCompleted,
     pendingConsultationQuestion,
     onPendingChange,
     onProfileIncomplete,
     onSaved,
   } = props;
   const pendingQuestion = pendingConsultationQuestion?.trim();
-  const [messages, setMessages] = useState<RenderMessage[]>(() => pendingQuestion ? [{
-    role: "assistant",
-    text: `我先陪你把出生时间范围核对清楚，之后再回到你原来的问题：“${pendingQuestion}”`,
-    renderKey: "agentic-pending-consultation",
-    state: "settled",
-  }] : []);
+  const [messages, setMessages] = useState<RenderMessage[]>(() => [
+    ...initialMessages.map((message, index) => ({
+      ...message,
+      renderKey: `agentic-message-${index}`,
+      state: "settled" as const,
+    })),
+    ...(initialMessages.length === 0 && pendingQuestion ? [{
+      role: "assistant" as const,
+      text: `我先陪你把出生时间范围核对清楚，之后再回到你原来的问题：“${pendingQuestion}”`,
+      renderKey: "agentic-pending-consultation",
+      state: "settled" as const,
+    }] : []),
+  ]);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -79,9 +94,14 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
 
     keyCounter.current += 1;
     const requestId = globalThis.crypto.randomUUID();
-    const history = messages
+    const settledMessages = messages
       .filter((message) => message.state === "settled")
-      .map((message) => ({ role: message.role, text: message.text }));
+      .map((message) => ({
+        role: message.role,
+        text: message.text,
+        ...(message.suggestions ? { suggestions: message.suggestions } : {}),
+      }));
+    const history = settledMessages.map((message) => ({ role: message.role, text: message.text }));
     const turnKey = keyCounter.current;
     const userRenderKey = `agentic-user-${turnKey}`;
     const assistantRenderKey = `agentic-assistant-${turnKey}`;
@@ -102,6 +122,7 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           requestId,
+          sessionId,
           modelId: selectedModelId,
           history,
           action: request.action,
@@ -111,6 +132,7 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
         const message = payload?.message || payload?.error || `请求失败（${response.status}）`;
+        setMessages((current) => current.filter((item) => item.renderKey !== assistantRenderKey));
         if (payload?.code === "profile_incomplete") {
           onProfileIncomplete?.();
           return;
@@ -121,6 +143,7 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
         return;
       }
       if (!response.body) {
+        setMessages((current) => current.filter((message) => message.renderKey !== assistantRenderKey));
         setError("服务暂时不可用，请稍后再试。");
         return;
       }
@@ -128,6 +151,8 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let completed = false;
+      let streamFailed = false;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -152,16 +177,30 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
             const saved = raw.match(savedSentinel);
             if (saved) setSavedTime(saved[1]);
           } else if (event.type === "error") {
+            streamFailed = true;
             setError(event.message || "生时校正暂时不可用，请稍后再试。");
+          } else if (event.type === "done") {
+            completed = true;
           }
         }
       }
 
       const parsed = parseAgentReply(raw, "general");
-      setMessages((current) => current.map((message) => message.renderKey === assistantRenderKey
-        ? { ...message, text: parsed.text, state: "settled" }
-        : message));
-      setSuggestions(parsed.suggestions);
+      const succeeded = completed && !streamFailed && Boolean(parsed.text);
+      setMessages((current) => succeeded
+        ? current.map((message) => message.renderKey === assistantRenderKey
+          ? { ...message, text: parsed.text, suggestions: parsed.suggestions, state: "settled" }
+          : message)
+        : current.filter((message) => message.renderKey !== assistantRenderKey));
+      setSuggestions(succeeded ? parsed.suggestions : []);
+      if (succeeded) {
+        onMessagesChange?.([
+          ...settledMessages,
+          ...(request.action === "message" ? [{ role: "user" as const, text: trimmed }] : []),
+          { role: "assistant", text: parsed.text, suggestions: parsed.suggestions },
+        ]);
+        onCompleted?.();
+      }
       const saved = raw.match(savedSentinel);
       if (saved) {
         setSavedTime(saved[1]);
@@ -173,13 +212,13 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
     } finally {
       setPending(false);
     }
-  }, [busy, messages, onProfileIncomplete, onSaved, selectedModelId, setPending]);
+  }, [busy, messages, onCompleted, onMessagesChange, onProfileIncomplete, onSaved, selectedModelId, sessionId, setPending]);
 
   useEffect(() => {
-    if (openingStarted.current) return;
+    if (initialMessages.length > 0 || openingStarted.current) return;
     openingStarted.current = true;
     void send({ action: "opening" }, false);
-  }, [send]);
+  }, [initialMessages.length, send]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();

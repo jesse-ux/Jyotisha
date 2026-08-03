@@ -2024,9 +2024,18 @@
 - 复发自：BUG-114
 - 修复版本：待本次 staging 修复提交与部署验收
 
-## 2026-08-03 — Agentic rectification could finish after tool calls without a visible reply
+## BUG-116 | Agent 工具步骤耗尽后静默完成且校正对话刷新即丢失
 
-- Symptom: `/api/rectification/agent` returned `{"type":"done","emitted":false}` after a user supplied another dated life event.
-- Root cause: the Mastra stream used its default step limit. A turn that consumed all available steps on `rectification-*` tool calls ended before the model could produce the final user-facing Chinese response, while the route treated an empty `textStream` as a normal `done` event.
-- Fix: allow eight Agent steps so the existing tool workflow can continue from tool results to a final response. Empty streams now return an explicit recoverable error event and remain on the existing refund path instead of silently reporting completion.
-- Regression coverage: `frontend/tests/rectification-agentic-entry.test.ts` checks the multi-step stream boundary and rejects the former silent `done` contract.
+- 状态：resolved（local，空流修复已先部署）
+- 首次发现：2026-08-03
+- 最近更新：2026-08-03
+- 影响面：`POST /api/rectification/agent`、Agentic 生时校正消息持久化、首次 opening、余额显示与刷新恢复
+- 用户现象：提交新的人生事件后接口只返回 `{"type":"done","emitted":false}`，页面没有 Agent 回复；刷新页面后此前校正对话全部消失，并再次自动发送 opening、再次预扣咨询点数；页面余额可能保持旧值，让一次请求看起来像多次扣费。
+- 触发条件：Agent 在默认步骤上限内连续调用 `rectification-*` 工具但没有剩余步骤生成公开文本；或 Agentic 校正组件卸载/刷新，而 `chat_sessions.messages` 仍为空。
+- 根因：Mastra 默认步骤上限不足，路由又把空 `textStream` 当作正常完成；新版组件只把消息保存在 React 本地状态，没有复用现有 `chat_sessions` 持久化边界，自动 opening 也只检查本次组件实例的 ref；新 Session 还可能在数据库创建完成前挂载 Agent；请求完成后没有刷新账户余额。
+- 修复：Agent 步骤上限提升为 8，解析后仍无可见文本时返回明确 error 并退款，不再发送 `done false`；请求绑定当前用户的 `birth_time_rectification` Session，成功回复先原子更新完整消息再发送 `done` 并完成扣费；已有持久化消息拒绝重复 opening；客户端从 Session 初始化、成功后同步首页状态并刷新一次账户余额，未收到持久化成功的 `done` 时移除临时 Assistant；新 Session 先创建成功再挂载 Agent，并按 Session key 重建本地对话状态。
+- 验证：`frontend/tests/rectification-agentic-entry.test.ts` 覆盖多步公开回复、空流退款合同、Session 归属与写回、刷新抑制 opening、失败流清理、新 Session 创建顺序；完整测试、lint、build 与 staging 真实刷新/扣费 smoke 随本次发布执行。
+- 数据边界：复用现有 `chat_sessions.messages`，不新增平行对话存储；不从用户粘贴内容擅自回填旧 Session；不修改身份、credits 历史或出生资料。
+- 防复发：公开回复必须同时满足“可见文本 + Session 持久化成功”才能发送完成事件；自动 opening 必须以服务端 Session 历史为准，不能只依赖组件内存。
+- 相关记录：BUG-113、BUG-114、BUG-115
+- 修复版本：空流修复 `e65c8eeda2ff5916f88f18dd345c02beff045e8b` / Session 持久化待本次 staging 发布
