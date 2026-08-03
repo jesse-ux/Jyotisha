@@ -2023,3 +2023,10 @@
 - 相关记录：BUG-016、BUG-114
 - 复发自：BUG-114
 - 修复版本：待本次 staging 修复提交与部署验收
+
+## 2026-08-03 — Agentic rectification could finish after tool calls without a visible reply
+
+- Symptom: `/api/rectification/agent` returned `{"type":"done","emitted":false}` after a user supplied another dated life event.
+- Root cause: the Mastra stream used its default step limit. A turn that consumed all available steps on `rectification-*` tool calls ended before the model could produce the final user-facing Chinese response, while the route treated an empty `textStream` as a normal `done` event.
+- Fix: allow eight Agent steps so the existing tool workflow can continue from tool results to a final response. Empty streams now return an explicit recoverable error event and remain on the existing refund path instead of silently reporting completion.
+- Regression coverage: `frontend/tests/rectification-agentic-entry.test.ts` checks the multi-step stream boundary and rejects the former silent `done` contract.
