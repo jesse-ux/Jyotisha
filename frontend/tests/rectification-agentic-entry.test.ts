@@ -41,3 +41,20 @@ test("incomplete profiles stay in the shared onboarding flow", () => {
   );
   assert.match(chat, /payload\?\.code === "profile_incomplete"/);
 });
+
+test("server profile failures pause automatic rectification resume", () => {
+  const resumeEffect = page.slice(
+    page.indexOf('useEffect(() => {\n    if (!hydrated'),
+    page.indexOf('useEffect(() => {\n    if (!hydrated || !accountId'),
+  );
+  const incompleteHandler = page.slice(
+    page.indexOf("function handleRectificationProfileIncomplete"),
+    page.indexOf("async function draftSynastryQuestionFromChart"),
+  );
+  assert.match(resumeEffect, /\|\| rectificationError\) return/);
+  assert.match(incompleteHandler, /setRectificationError\("profile_incomplete"\)/);
+  assert.ok(
+    incompleteHandler.indexOf('setRectificationError("profile_incomplete")')
+      < incompleteHandler.indexOf("setRectificationSessionId(null)"),
+  );
+});

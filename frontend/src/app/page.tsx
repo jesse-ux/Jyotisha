@@ -1816,6 +1816,7 @@ export default function Home() {
       await persistProfile(profileDraft);
       setProfile(profileDraft);
       setProfileDraft(profileDraft);
+      setRectificationError("");
       if (declarationChanged) {
         setBirthTimeConsultationConsent(createBirthTimeConsultationConsentState());
         setAccount((current) => current ? { ...current, rectificationCase: null } : current);
@@ -2073,6 +2074,7 @@ export default function Home() {
   };
 
   function handleRectificationProfileIncomplete() {
+    setRectificationError("profile_incomplete");
     setRectificationSessionId(null);
     setRectificationPendingQuestion(null);
     const missingStep = missingProfileStep(profile);
