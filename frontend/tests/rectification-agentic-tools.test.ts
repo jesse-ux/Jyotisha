@@ -98,7 +98,11 @@ const confirmedEngineResponse = () => ({
     domain_count: 3,
     can_apply: true,
     winning_segment: { start_time: "14:28", end_time: "14:32", representative_time: "14:30", width_minutes: 4 },
-    technique_contract: { confirmation_allowed: true, decision: "confirm_minute" },
+    technique_contract: {
+      confirmation_allowed: true,
+      decision: "confirm_minute",
+      external_engines: { status: "pass", validation: { reason: "validated" } },
+    },
     reasons: [],
     missing_layers: [],
     candidate_ranking_summary: [
@@ -372,6 +376,42 @@ test("confirm persists ranked candidates with relative support totaling 100", as
   ]);
   assert.equal((result.candidates as Array<{ relative_support: number }>).reduce((sum, candidate) => sum + candidate.relative_support, 0), 100);
   assert.equal(persisted.length, 1);
+  engine.restore();
+});
+
+test("confirm distinguishes skipped external validation from a failed VedAstro run", async () => {
+  const engine = installEngine([{
+    path: "/api/active_rectification_events",
+    respond: () => {
+      const response = confirmedEngineResponse();
+      return {
+        ...response,
+        body: {
+          ...response.body,
+          can_apply: false,
+          technique_contract: {
+            confirmation_allowed: false,
+            decision: "continue_rectification",
+            external_engines: {
+              status: "not_evaluated",
+              validation: { reason: "local_candidate_not_ready_for_external_validation" },
+            },
+          },
+        },
+      };
+    },
+  }]);
+  const tools = createAgenticRectificationTools(makeCtx());
+
+  const result = await runTool(tools, "rectification-confirm", {
+    candidate_range: { start_time: "14:00", end_time: "15:00" },
+    events: sampleEvents,
+  });
+
+  assert.equal(result.selection_allowed, true);
+  assert.equal(result.external_validation_status, "not_evaluated");
+  assert.equal(result.external_validation_invoked, false);
+  assert.equal(result.external_validation_reason, "local_candidate_not_ready_for_external_validation");
   engine.restore();
 });
 
