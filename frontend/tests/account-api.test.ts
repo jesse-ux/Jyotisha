@@ -27,6 +27,11 @@ test("account API reads and returns the server-configured rectification price", 
   assert.doesNotMatch(source, /RECTIFICATION_PRICE_CREDITS[^\n]*\?\?\s*["']1["']/);
 });
 
+test("account API separates engine confirmation from an accepted usable chart time", () => {
+  assert.match(source, /hasConfirmedBirthTime:\s*profile\.birth_time_status === "confirmed"/);
+  assert.match(source, /hasUsableBirthTime:\s*\(profile\.birth_time_status === "accepted" \|\| profile\.birth_time_status === "confirmed"\)/);
+});
+
 test("account API projects only the minimum case state needed by the homepage", () => {
   const caseSelect = source.match(/\.from\("birth_time_rectification_cases"\)[\s\S]*?\.limit\(\d+\)/)?.[0] ?? "";
 
@@ -418,6 +423,15 @@ test("ordinary declaration edits clear stale candidate application but never ove
   }
   assert.deepEqual(resolveAccountBirthTimeApplicationPatch({
     ...candidate,
+    birth_time_status: "accepted",
+  }, edited), {
+    active_birth_time: null,
+    birth_time: null,
+    birth_time_status: "reported",
+    rectification_case_id: null,
+  });
+  assert.deepEqual(resolveAccountBirthTimeApplicationPatch({
+    ...candidate,
     birth_time_status: "confirmed",
   }, edited), {});
   assert.deepEqual(resolveAccountBirthTimeApplicationPatch({
@@ -457,6 +471,15 @@ test("ordinary declaration edits clear stale candidate application but never ove
     rectification_case_id: null,
   });
   assert.deepEqual(resolveAccountBirthTimeApplicationPatch(null, edited), {
+    active_birth_time: null,
+    birth_time: null,
+    birth_time_status: "reported",
+    rectification_case_id: null,
+  });
+  assert.deepEqual(resolveAccountBirthTimeApplicationPatch({
+    ...candidate,
+    birth_time_status: "accepted",
+  }, edited), {
     active_birth_time: null,
     birth_time: null,
     birth_time_status: "reported",

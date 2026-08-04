@@ -186,15 +186,15 @@ test("card action resumes unfinished account cases and otherwise starts or revis
     preservesActiveTime: true,
   } as const;
 
-  assert.equal(resolveRectificationCardAction({ rectificationCase: null, hasConfirmedBirthTime: false }), "start");
-  assert.equal(resolveRectificationCardAction({ rectificationCase: unfinishedCase, hasConfirmedBirthTime: true }), "resume");
+  assert.equal(resolveRectificationCardAction({ rectificationCase: null, hasUsableBirthTime: false }), "start");
+  assert.equal(resolveRectificationCardAction({ rectificationCase: unfinishedCase, hasUsableBirthTime: true }), "resume");
   assert.equal(resolveRectificationCardAction({
     rectificationCase: { ...unfinishedCase, status: "completed" },
-    hasConfirmedBirthTime: true,
+    hasUsableBirthTime: true,
   }), "revise");
   assert.equal(resolveRectificationCardAction({
     rectificationCase: { ...unfinishedCase, status: "abandoned" },
-    hasConfirmedBirthTime: false,
+    hasUsableBirthTime: false,
   }), "start");
 });
 

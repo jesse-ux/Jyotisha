@@ -10,15 +10,14 @@ import { z } from "zod";
  * requests engine computations on demand instead of inventing results. Every
  * tool wraps one Python-engine HTTP endpoint (or a server-owned write).
  *
- * Hard boundary: the agent never writes a birth minute directly. The
- * `rectification-save-birth-time` tool only applies a minute that the engine's
- * high-rigor confirmation gate already produced in the same session, so the
- * LLM can never persist an arbitrary or invented time.
+ * Hard boundary: the agent never writes a birth minute directly. Server-owned
+ * candidate identity, session ownership, profile baseline, and candidate membership
+ * decide whether a user-selected minute is accepted or engine-confirmed.
  */
 
 const engineBase = process.env.JYOTISH_API_BASE ?? "http://127.0.0.1:5200";
 
-const timePattern = /^\d{2}:\d{2}$/;
+const timePattern = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
 /** Birth fields supplied by the server from the user profile (never by the LLM). */
 export type AgenticRectificationBirth = Readonly<{
@@ -34,13 +33,44 @@ export type AgenticRectificationCandidateRange = Readonly<{
   end_time: string;
 }>;
 
+export type AgenticRectificationCandidate = Readonly<{
+  rank: number;
+  time: string;
+  relative_support: number;
+  tied_minute_count: number;
+}>;
+
+export type AgenticRectificationCandidateResult = Readonly<{
+  engineResultId: string;
+  canonicalInputHash: string;
+  algorithmVersion: string;
+  candidateRange: AgenticRectificationCandidateRange;
+  candidates: readonly AgenticRectificationCandidate[];
+  overallConfidence: "low" | "medium" | "high";
+  marginPercent: number | null;
+  selectionAllowed: boolean;
+  confirmationAllowed: boolean;
+  representativeTime: string | null;
+}>;
+
 export type AgenticRectificationContext = Readonly<{
   userId: string;
+  sessionId: string;
   engineBase?: string;
   birth: AgenticRectificationBirth;
   candidateRange: AgenticRectificationCandidateRange;
   declaredAccuracy?: "minute" | "15min" | "1hour" | "unknown";
   timeSource?: "hospital" | "family_clear" | "family_vague" | "unknown";
+  persistCandidateResult: (result: AgenticRectificationCandidateResult) => Promise<Readonly<{
+    ok: true;
+    result_id: string;
+  } | { ok: false; reason: string }>>;
+  acceptCandidate: (time: string, resultId?: string) => Promise<Readonly<{
+    ok: true;
+    saved_time: string;
+    status: "accepted" | "confirmed";
+    result_id: string;
+  } | { ok: false; reason: string }>>;
   applyConfirmedBirthTime: (time: string) => Promise<Readonly<{
     ok: true;
     saved_time: string;
@@ -218,6 +248,41 @@ function compactRobustness(value: unknown): Record<string, unknown> | null {
     leave_one_domain_out_retention_rate: robustness.leave_one_domain_out_retention_rate,
     date_sensitivity_retention_rate: robustness.date_sensitivity_retention_rate,
   };
+}
+
+function timeInRange(time: string, range: AgenticRectificationCandidateRange): boolean {
+  const value = clockMinute(time);
+  const start = clockMinute(range.start_time);
+  const end = clockMinute(range.end_time);
+  return end >= start ? value >= start && value <= end : value >= start || value <= end;
+}
+
+function normalizedCandidates(
+  value: unknown,
+  range: AgenticRectificationCandidateRange,
+): AgenticRectificationCandidate[] {
+  if (!Array.isArray(value)) return [];
+  const rows = value.flatMap((item): Array<{ rank: number; time: string; score: number; tied: number }> => {
+    if (!item || typeof item !== "object") return [];
+    const row = item as Record<string, unknown>;
+    const time = typeof row.time === "string" ? row.time : "";
+    const rank = typeof row.rank === "number" ? Math.trunc(row.rank) : 0;
+    const score = typeof row.score === "number" && Number.isFinite(row.score) ? row.score : 0;
+    const tied = typeof row.tied_minute_count === "number" ? Math.max(1, Math.trunc(row.tied_minute_count)) : 1;
+    if (!timePattern.test(time) || rank < 1 || !timeInRange(time, range)) return [];
+    return [{ rank, time, score, tied }];
+  }).sort((left, right) => left.rank - right.rank).slice(0, 3);
+  if (rows.length === 0) return [];
+  const weights = rows.map((row) => Math.max(0, row.score));
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  const supports = weights.map((weight) => total > 0 ? Math.round((weight / total) * 100) : Math.floor(100 / rows.length));
+  supports[0] += 100 - supports.reduce((sum, support) => sum + support, 0);
+  return rows.map((row, index) => ({
+    rank: row.rank,
+    time: row.time,
+    relative_support: supports[index] ?? 0,
+    tied_minute_count: row.tied,
+  }));
 }
 
 function compactScoreResult(data: Record<string, unknown>): Record<string, unknown> {
@@ -495,17 +560,41 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
         : {};
       const confirmationAllowed = technique?.confirmation_allowed === true
         && technique?.decision === "confirm_minute";
-      const representativeTime = winning ? String(winning.representative_time ?? "") : "";
-      if (confirmationAllowed && representativeTime) {
-        confirmedGate = { time: representativeTime, resultId: String(data.result_id ?? "") };
+      const representativeTime = winning && timePattern.test(String(winning.representative_time ?? ""))
+        ? String(winning.representative_time)
+        : null;
+      const rankedCandidates = normalizedCandidates(data.candidate_ranking_summary, ctx.candidateRange);
+      const candidates = rankedCandidates.length > 0 || !representativeTime
+        ? rankedCandidates
+        : [{ rank: 1, time: representativeTime, relative_support: 100, tied_minute_count: 1 }];
+      const eventCount = typeof data.event_count === "number" ? data.event_count : 0;
+      const domainCount = typeof data.domain_count === "number" ? data.domain_count : 0;
+      const selectionAllowed = eventCount >= 3 && domainCount >= 2 && candidates.length > 0;
+      const persisted = await ctx.persistCandidateResult({
+        engineResultId: String(data.result_id ?? ""),
+        canonicalInputHash: String(data.canonical_input_hash ?? ""),
+        algorithmVersion: String(data.algorithm_version ?? "unknown"),
+        candidateRange: ctx.candidateRange,
+        candidates,
+        overallConfidence: data.confidence === "high" || data.confidence === "medium" ? data.confidence : "low",
+        marginPercent: typeof data.margin_percent === "number" ? data.margin_percent : null,
+        selectionAllowed,
+        confirmationAllowed,
+        representativeTime,
+      });
+      if (confirmationAllowed && representativeTime && persisted.ok) {
+        confirmedGate = { time: representativeTime, resultId: persisted.result_id };
       }
       return {
         endpoint: data.endpoint,
         result_id: data.result_id,
+        candidate_result_id: persisted.ok ? persisted.result_id : null,
+        candidate_persistence_error: persisted.ok ? null : persisted.reason,
         confidence: data.confidence,
-        event_count: data.event_count,
-        domain_count: data.domain_count,
+        event_count: eventCount,
+        domain_count: domainCount,
         can_apply: data.can_apply === true,
+        selection_allowed: selectionAllowed && persisted.ok,
         confirmation_allowed: confirmationAllowed,
         representative_time: representativeTime,
         winning_segment: winning ? {
@@ -535,9 +624,7 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
           boundary: technique?.boundary,
         },
         missing_layers: data.missing_layers,
-        candidate_ranking_summary: Array.isArray(data.candidate_ranking_summary)
-          ? (data.candidate_ranking_summary as unknown[]).slice(0, 5)
-          : [],
+        candidates,
         boundary: data.boundary,
       };
     },
@@ -563,11 +650,26 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
           reason: `time_mismatch: the engine confirmed ${confirmedGate.time}, not ${input.time}. Only the confirmed minute can be saved.`,
         };
       }
-      const applied = await ctx.applyConfirmedBirthTime(input.time);
+      const applied = await ctx.acceptCandidate(input.time, confirmedGate.resultId);
       if (!applied.ok) {
         return { ok: false, reason: `profile_write_failed: ${applied.reason}` };
       }
-      return { ok: true, saved_time: applied.saved_time, result_id: confirmedGate.resultId };
+      return { ok: true, saved_time: applied.saved_time, status: applied.status, result_id: applied.result_id };
+    },
+  });
+
+  const acceptCandidateTool = createTool({
+    id: "rectification-accept-candidate",
+    description:
+      "Apply a server-persisted candidate after the user explicitly chooses that exact time. The server validates ownership, session, expiry, profile baseline, and candidate membership. A non-confirmed choice is saved as accepted, not as an engine-confirmed unique minute.",
+    inputSchema: z.object({
+      time: z.string().regex(timePattern),
+    }).strict(),
+    execute: async (input) => {
+      const applied = await ctx.acceptCandidate(input.time);
+      return applied.ok
+        ? { ok: true, saved_time: applied.saved_time, status: applied.status, result_id: applied.result_id }
+        : { ok: false, reason: applied.reason };
     },
   });
 
@@ -578,6 +680,7 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
     "rectification-diagnostics": diagnosticsTool,
     "rectification-candidate-features": featuresTool,
     "rectification-confirm": confirmTool,
+    "rectification-accept-candidate": acceptCandidateTool,
     "rectification-save-birth-time": saveTool,
   };
 }

@@ -47,15 +47,27 @@ const birth = {
   tz: 8,
 };
 
-function makeCtx(applyConfirmedBirthTime?: AgenticRectificationContext["applyConfirmedBirthTime"]): AgenticRectificationContext {
+function makeCtx(
+  acceptCandidate?: AgenticRectificationContext["acceptCandidate"],
+  persistCandidateResult?: AgenticRectificationContext["persistCandidateResult"],
+): AgenticRectificationContext {
   return {
     userId: "user-1",
+    sessionId: "session-1",
     engineBase: "http://engine.test",
     birth,
     candidateRange: { start_time: "14:00", end_time: "15:00" },
     declaredAccuracy: "15min",
     timeSource: "family_clear",
-    applyConfirmedBirthTime: applyConfirmedBirthTime ?? (async (time) => ({ ok: true as const, saved_time: time })),
+    persistCandidateResult: persistCandidateResult
+      ?? (async () => ({ ok: true as const, result_id: "candidate-result-1" })),
+    acceptCandidate: acceptCandidate ?? (async (time) => ({
+      ok: true as const,
+      saved_time: time,
+      status: "confirmed" as const,
+      result_id: "candidate-result-1",
+    })),
+    applyConfirmedBirthTime: async (time) => ({ ok: true as const, saved_time: time }),
   };
 }
 
@@ -79,6 +91,8 @@ const confirmedEngineResponse = () => ({
     success: true,
     endpoint: "active_rectification_events",
     result_id: "r1",
+    algorithm_version: "fixture",
+    canonical_input_hash: "fixture-hash",
     confidence: "high",
     event_count: 4,
     domain_count: 3,
@@ -87,7 +101,10 @@ const confirmedEngineResponse = () => ({
     technique_contract: { confirmation_allowed: true, decision: "confirm_minute" },
     reasons: [],
     missing_layers: [],
-    candidate_ranking_summary: [],
+    candidate_ranking_summary: [
+      { rank: 1, time: "14:30", score: 30, tied_minute_count: 1 },
+      { rank: 2, time: "14:31", score: 20, tied_minute_count: 1 },
+    ],
     boundary: "test",
   },
 });
@@ -281,7 +298,7 @@ test("save tool rejects before a confirmation gate exists", async () => {
   const applied: string[] = [];
   const tools = createAgenticRectificationTools(makeCtx(async (time) => {
     applied.push(time);
-    return { ok: true as const, saved_time: time };
+    return { ok: true as const, saved_time: time, status: "confirmed" as const, result_id: "candidate-result-1" };
   }));
   const result = await runTool(tools, "rectification-save-birth-time", { time: "14:30" });
   assert.equal(result.ok, false);
@@ -297,7 +314,7 @@ test("save tool rejects a time that does not equal the confirmed minute", async 
   const applied: string[] = [];
   const tools = createAgenticRectificationTools(makeCtx(async (time) => {
     applied.push(time);
-    return { ok: true as const, saved_time: time };
+    return { ok: true as const, saved_time: time, status: "confirmed" as const, result_id: "candidate-result-1" };
   }));
   await runTool(tools, "rectification-confirm", {
     candidate_range: { start_time: "14:00", end_time: "15:00" },
@@ -317,7 +334,7 @@ test("confirm then save with the matching minute applies the write", async () =>
   const applied: string[] = [];
   const tools = createAgenticRectificationTools(makeCtx(async (time) => {
     applied.push(time);
-    return { ok: true as const, saved_time: time };
+    return { ok: true as const, saved_time: time, status: "confirmed" as const, result_id: "candidate-result-1" };
   }));
   const confirm = await runTool(tools, "rectification-confirm", {
     candidate_range: { start_time: "14:00", end_time: "15:00" },
@@ -331,4 +348,51 @@ test("confirm then save with the matching minute applies the write", async () =>
   assert.equal(saved.saved_time, "14:30");
   assert.deepEqual(applied, ["14:30"]);
   engine.restore();
+});
+
+test("confirm persists ranked candidates with relative support totaling 100", async () => {
+  const engine = installEngine([
+    { path: "/api/active_rectification_events", respond: confirmedEngineResponse },
+  ]);
+  const persisted: unknown[] = [];
+  const tools = createAgenticRectificationTools(makeCtx(undefined, async (result) => {
+    persisted.push(result);
+    return { ok: true as const, result_id: "candidate-result-1" };
+  }));
+
+  const result = await runTool(tools, "rectification-confirm", {
+    candidate_range: { start_time: "14:00", end_time: "15:00" },
+    events: sampleEvents,
+  });
+
+  assert.equal(result.selection_allowed, true);
+  assert.deepEqual(result.candidates, [
+    { rank: 1, time: "14:30", relative_support: 60, tied_minute_count: 1 },
+    { rank: 2, time: "14:31", relative_support: 40, tied_minute_count: 1 },
+  ]);
+  assert.equal((result.candidates as Array<{ relative_support: number }>).reduce((sum, candidate) => sum + candidate.relative_support, 0), 100);
+  assert.equal(persisted.length, 1);
+  engine.restore();
+});
+
+test("accept candidate tool delegates the exact persisted candidate and preserves accepted status", async () => {
+  const calls: Array<{ time: string; resultId?: string }> = [];
+  const tools = createAgenticRectificationTools(makeCtx(async (time, resultId) => {
+    calls.push({ time, resultId });
+    return {
+      ok: true as const,
+      saved_time: time,
+      status: "accepted" as const,
+      result_id: "candidate-result-1",
+    };
+  }));
+
+  const result = await runTool(tools, "rectification-accept-candidate", { time: "14:31" });
+  assert.deepEqual(calls, [{ time: "14:31", resultId: undefined }]);
+  assert.deepEqual(result, {
+    ok: true,
+    saved_time: "14:31",
+    status: "accepted",
+    result_id: "candidate-result-1",
+  });
 });

@@ -3,11 +3,14 @@ import test from "node:test";
 
 import {
   AgenticRectificationProfileError,
+  acceptAgenticRectificationCandidate,
   createAgenticRectificationContext,
   loadAgenticRectificationProfile,
+  loadLatestAgenticRectificationResult,
 } from "../src/lib/rectification-agentic/session.ts";
 
 const userId = "00000000-0000-4000-8000-000000000001";
+const sessionId = "00000000-0000-4000-8000-000000000002";
 
 function fakeProfileRow(overrides: Record<string, unknown> = {}) {
   return {
@@ -59,6 +62,7 @@ test("loadAgenticRectificationProfile derives birth fields, accuracy and baselin
   assert.equal(profile.declaredAccuracy, "15min");
   assert.equal(profile.timeSource, "family_vague");
   assert.equal(profile.baselineActiveTime, "14:31");
+  assert.equal(profile.baselineBirthTimePeriod, null);
 });
 
 test("loadAgenticRectificationProfile normalizes a persisted ISO birth date", async () => {
@@ -103,6 +107,7 @@ test("loadAgenticRectificationProfile accepts a period-only declaration without 
   assert.equal(profile.reported_time, null);
   assert.deepEqual(profile.candidateRange, { start_time: "23:00", end_time: "03:59" });
   assert.equal(profile.declaredAccuracy, "unknown");
+  assert.equal(profile.baselineBirthTimePeriod, "late_night");
 });
 
 test("loadAgenticRectificationProfile accepts an unknown time as the full day", async () => {
@@ -139,7 +144,7 @@ test("loadAgenticRectificationProfile rejects a missing birth date", async () =>
 test("applyConfirmedBirthTime calls the service-role RPC with the confirmed minute", async () => {
   const { client, rpcCalls } = fakeAccounting(fakeProfileRow({ active_birth_time: "14:30:00" }));
   const profile = await loadAgenticRectificationProfile(client as never, userId);
-  const ctx = createAgenticRectificationContext(client as never, userId, profile);
+  const ctx = createAgenticRectificationContext(client as never, userId, profile, sessionId);
   const result = await ctx.applyConfirmedBirthTime("14:30");
   assert.equal(result.ok, true);
   if (result.ok) assert.equal(result.saved_time, "14:30");
@@ -154,7 +159,7 @@ test("applyConfirmedBirthTime calls the service-role RPC with the confirmed minu
 test("applyConfirmedBirthTime rejects a malformed time before calling the RPC", async () => {
   const { client, rpcCalls } = fakeAccounting(fakeProfileRow());
   const profile = await loadAgenticRectificationProfile(client as never, userId);
-  const ctx = createAgenticRectificationContext(client as never, userId, profile);
+  const ctx = createAgenticRectificationContext(client as never, userId, profile, sessionId);
   const result = await ctx.applyConfirmedBirthTime("14:30:00");
   assert.equal(result.ok, false);
   assert.equal(rpcCalls.length, 0);
@@ -176,9 +181,143 @@ test("applyConfirmedBirthTime surfaces an RPC error as a failure", async () => {
     },
   };
   const profile = await loadAgenticRectificationProfile(client as never, userId);
-  const ctx = createAgenticRectificationContext(client as never, userId, profile);
+  const ctx = createAgenticRectificationContext(client as never, userId, profile, sessionId);
   const result = await ctx.applyConfirmedBirthTime("14:30");
   assert.equal(result.ok, false);
   assert.match(String(result.reason), /baseline_changed/);
   assert.equal(rpcCalls.length, 1);
+});
+
+test("candidate persistence binds the engine result to user, session and profile baseline", async () => {
+  const { client: profileClient } = fakeAccounting(fakeProfileRow({
+    active_birth_time: "14:31:00",
+    uncertainty_before_minutes: 10,
+    uncertainty_after_minutes: 10,
+  }));
+  const profile = await loadAgenticRectificationProfile(profileClient as never, userId);
+  const writes: Record<string, unknown>[] = [];
+  let conflict = "";
+  const client = {
+    from: (table: string) => {
+      assert.equal(table, "agentic_rectification_results");
+      return {
+        upsert(values: Record<string, unknown>, options: { onConflict: string }) {
+          writes.push(values);
+          conflict = options.onConflict;
+          return {
+            select: () => ({
+              single: async () => ({ data: { id: "candidate-result-1" }, error: null }),
+            }),
+          };
+        },
+      };
+    },
+  };
+  const ctx = createAgenticRectificationContext(client as never, userId, profile, sessionId);
+  const result = await ctx.persistCandidateResult({
+    engineResultId: "engine-result-1",
+    canonicalInputHash: "fixture-hash",
+    algorithmVersion: "fixture-v1",
+    candidateRange: { start_time: "14:21", end_time: "14:41" },
+    candidates: [{ rank: 1, time: "14:31", relative_support: 100, tied_minute_count: 1 }],
+    overallConfidence: "medium",
+    marginPercent: 20,
+    selectionAllowed: true,
+    confirmationAllowed: false,
+    representativeTime: "14:31",
+  });
+
+  assert.deepEqual(result, { ok: true, result_id: "candidate-result-1" });
+  assert.equal(conflict, "user_id,session_id,engine_result_id");
+  assert.equal(writes[0]?.user_id, userId);
+  assert.equal(writes[0]?.session_id, sessionId);
+  assert.equal(writes[0]?.baseline_birth_date, "1990-05-12");
+  assert.equal(writes[0]?.baseline_reported_birth_time, "14:30");
+  assert.equal(writes[0]?.baseline_active_birth_time, "14:31");
+  assert.equal(writes[0]?.baseline_birth_time_period, null);
+  assert.equal(writes[0]?.baseline_uncertainty_before_minutes, 10);
+  assert.equal(writes[0]?.baseline_latitude, 31.23);
+});
+
+test("candidate acceptance calls the service-role RPC with exact ownership and result identity", async () => {
+  const calls: Array<{ name: string; args: Record<string, unknown> }> = [];
+  const client = {
+    rpc: async (name: string, args: Record<string, unknown>) => {
+      calls.push({ name, args });
+      return {
+        data: {
+          success: true,
+          saved_time: "14:31",
+          status: "accepted",
+          result_id: "candidate-result-1",
+        },
+        error: null,
+      };
+    },
+  };
+
+  const result = await acceptAgenticRectificationCandidate(
+    client as never,
+    userId,
+    sessionId,
+    "14:31",
+    "candidate-result-1",
+  );
+
+  assert.deepEqual(result, {
+    ok: true,
+    saved_time: "14:31",
+    status: "accepted",
+    result_id: "candidate-result-1",
+  });
+  assert.deepEqual(calls, [{
+    name: "accept_agentic_rectification_candidate",
+    args: {
+      p_user_id: userId,
+      p_session_id: sessionId,
+      p_result_id: "candidate-result-1",
+      p_time: "14:31",
+    },
+  }]);
+});
+
+test("latest candidate result maps persisted support and selection state for session recovery", async () => {
+  const query = {
+    select() { return this; },
+    eq() { return this; },
+    is() { return this; },
+    gt() { return this; },
+    order() { return this; },
+    limit() { return this; },
+    async maybeSingle() {
+      return {
+        data: {
+          id: "candidate-result-1",
+          candidates: [{ rank: 1, time: "14:31", relative_support: 64, tied_minute_count: 1 }],
+          overall_confidence: "medium",
+          margin_percent: 18,
+          selection_allowed: true,
+          confirmation_allowed: false,
+          representative_time: "14:31:00",
+          selected_time: "14:31:00",
+          selection_kind: "user_accepted",
+        },
+        error: null,
+      };
+    },
+  };
+  const client = { from: () => query };
+
+  const result = await loadLatestAgenticRectificationResult(client as never, userId, sessionId);
+  assert.deepEqual(result, {
+    resultId: "candidate-result-1",
+    candidates: [{ rank: 1, time: "14:31", relative_support: 64, tied_minute_count: 1 }],
+    overallConfidence: "medium",
+    marginPercent: 18,
+    selectionAllowed: true,
+    confirmationAllowed: false,
+    representativeTime: "14:31",
+    selectedTime: "14:31",
+    selectionStatus: "accepted",
+  });
 });

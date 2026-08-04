@@ -21,10 +21,22 @@ type AgenticRectificationChatProps = Readonly<{
   pendingConsultationQuestion?: string | null;
   onPendingChange?: (pending: boolean) => void;
   onProfileIncomplete?: () => void;
-  onSaved?: (time: string) => void;
+  onSaved?: (time: string, status: "accepted" | "confirmed") => void;
 }>;
 
 type RenderMessage = ChatMessageView;
+
+type CandidateResult = Readonly<{
+  resultId: string;
+  candidates: readonly Readonly<{ rank: number; time: string; relative_support: number; tied_minute_count: number }>[];
+  overallConfidence: "low" | "medium" | "high";
+  marginPercent: number | null;
+  selectionAllowed: boolean;
+  confirmationAllowed: boolean;
+  representativeTime: string | null;
+  selectedTime: string | null;
+  selectionStatus: "accepted" | "confirmed" | null;
+}>;
 
 const savedSentinel = /<!--AYANAM_RECTIFICATION_SAVED:(\d{2}:\d{2})-->/;
 
@@ -65,6 +77,9 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [savedTime, setSavedTime] = useState<string | null>(null);
+  const [savedStatus, setSavedStatus] = useState<"accepted" | "confirmed" | null>(null);
+  const [candidateResult, setCandidateResult] = useState<CandidateResult | null>(null);
+  const [acceptingTime, setAcceptingTime] = useState<string | null>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const composer = useRef<HTMLTextAreaElement>(null);
   const conversationEnd = useRef<HTMLDivElement>(null);
@@ -88,7 +103,6 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
     const trimmed = request.action === "message" ? request.message.trim() : "";
     if ((request.action === "message" && !trimmed) || busy) return;
     setError("");
-    setSavedTime(null);
     setSuggestions([]);
     setPending(true);
 
@@ -116,6 +130,7 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
     setDraft("");
 
     let raw = "";
+    let streamedSavedStatus: "accepted" | "confirmed" | null = null;
     try {
       const response = await fetch("/api/rectification/agent", {
         method: "POST",
@@ -161,9 +176,9 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
         buffer = lines.pop() ?? "";
         for (const line of lines) {
           if (!line.trim()) continue;
-          let event: { type: string; text?: string; message?: string };
+          let event: { type: string; text?: string; message?: string; result?: CandidateResult };
           try {
-            event = JSON.parse(line) as { type: string; text?: string; message?: string };
+            event = JSON.parse(line) as { type: string; text?: string; message?: string; result?: CandidateResult };
           } catch {
             continue;
           }
@@ -176,6 +191,13 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
             setSuggestions(parsed.suggestions);
             const saved = raw.match(savedSentinel);
             if (saved) setSavedTime(saved[1]);
+          } else if (event.type === "candidates" && event.result) {
+            setCandidateResult(event.result);
+            if (event.result.selectedTime && event.result.selectionStatus) {
+              setSavedTime(event.result.selectedTime);
+              streamedSavedStatus = event.result.selectionStatus;
+              setSavedStatus(event.result.selectionStatus);
+            }
           } else if (event.type === "error") {
             streamFailed = true;
             setError(event.message || "生时校正暂时不可用，请稍后再试。");
@@ -204,7 +226,7 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
       const saved = raw.match(savedSentinel);
       if (saved) {
         setSavedTime(saved[1]);
-        onSaved?.(saved[1]);
+        onSaved?.(saved[1], streamedSavedStatus ?? savedStatus ?? "accepted");
       }
     } catch {
       setError("生时校正暂时不可用，请稍后再试。");
@@ -212,7 +234,53 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
     } finally {
       setPending(false);
     }
-  }, [busy, messages, onCompleted, onMessagesChange, onProfileIncomplete, onSaved, selectedModelId, sessionId, setPending]);
+  }, [busy, messages, onCompleted, onMessagesChange, onProfileIncomplete, onSaved, savedStatus, selectedModelId, sessionId, setPending]);
+
+  useEffect(() => {
+    let active = true;
+    void fetch(`/api/rectification/agent?sessionId=${encodeURIComponent(sessionId)}`)
+      .then((response) => response.ok ? response.json() : null)
+      .then((payload) => {
+        const result = payload?.result as CandidateResult | null | undefined;
+        if (!active || !result) return;
+        setCandidateResult(result);
+        if (result.selectedTime && result.selectionStatus) {
+          setSavedTime(result.selectedTime);
+          setSavedStatus(result.selectionStatus);
+        }
+      })
+      .catch(() => undefined);
+    return () => { active = false; };
+  }, [sessionId]);
+
+  const acceptCandidate = useCallback(async (time: string) => {
+    if (!candidateResult || acceptingTime) return;
+    setError("");
+    setAcceptingTime(time);
+    try {
+      const response = await fetch("/api/rectification/agent", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "accept_candidate",
+          sessionId,
+          resultId: candidateResult.resultId,
+          time,
+        }),
+      });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok || payload?.ok !== true) throw new Error(payload?.message || payload?.error || "暂时无法采用该候选时间");
+      const status = payload.status === "confirmed" ? "confirmed" : "accepted";
+      setCandidateResult((current) => current ? { ...current, selectedTime: payload.saved_time, selectionStatus: status } : current);
+      setSavedTime(payload.saved_time);
+      setSavedStatus(status);
+      onSaved?.(payload.saved_time, status);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "暂时无法采用该候选时间");
+    } finally {
+      setAcceptingTime(null);
+    }
+  }, [acceptingTime, candidateResult, onSaved, sessionId]);
 
   useEffect(() => {
     if (initialMessages.length > 0 || openingStarted.current) return;
@@ -232,9 +300,39 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
       <section className="conversation" aria-label="生时校正对话" aria-busy={busy}>
         <div className="message-list" aria-live="polite">
           {messages.map((message) => <ChatMessageRow key={message.renderKey} message={message} />)}
+          {candidateResult?.selectionAllowed && candidateResult.candidates.length > 0 && (
+            <section className="rectification-candidates" aria-label="生时校正候选时间">
+              <div className="rectification-candidates-heading">
+                <strong>{candidateResult.confirmationAllowed ? "已通过确认门" : "请选择校正采用时间"}</strong>
+                <span>相对支持度仅用于本次候选比较，不是统计概率。</span>
+              </div>
+              <div className="rectification-candidate-list">
+                {candidateResult.candidates.map((candidate) => {
+                  const selected = candidateResult.selectedTime === candidate.time;
+                  return (
+                    <div className={`rectification-candidate${selected ? " is-selected" : ""}`} key={`${candidateResult.resultId}-${candidate.time}`}>
+                      <div>
+                        <strong>{candidate.time}</strong>
+                        <span>相对支持度 {candidate.relative_support}%</span>
+                      </div>
+                      <div className="rectification-support" aria-hidden="true"><i style={{ width: `${candidate.relative_support}%` }} /></div>
+                      <Button
+                        type="button"
+                        variant={selected ? "secondary" : "outline"}
+                        disabled={Boolean(candidateResult.selectedTime) || Boolean(acceptingTime)}
+                        onClick={() => void acceptCandidate(candidate.time)}
+                      >
+                        {selected ? "已采用" : acceptingTime === candidate.time ? "保存中…" : `采用 ${candidate.time}`}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          )}
           {savedTime && (
-            <p className="error-message" role="status">
-              出生时间已更新为 {savedTime}，后续排盘将使用该时间。
+            <p className="rectification-saved" role="status">
+              {savedStatus === "confirmed" ? "已确认校正时间" : "校正采用时间"}：{savedTime}。后续排盘将使用该时间。
             </p>
           )}
           {error && <p className="error-message" role="alert">{error}</p>}

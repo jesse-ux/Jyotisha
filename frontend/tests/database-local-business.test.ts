@@ -32,6 +32,7 @@ test("local PostgreSQL applies the reviewed business schema and serves authentic
     assert.match(migration.stdout, /applied 20260723020000_mark_captured_conversational_messages\.sql/);
     assert.match(migration.stdout, /applied 20260728010000_conversational_event_semantics\.sql/);
     assert.match(migration.stdout, /applied 20260728020000_rectification_agent_v5\.sql/);
+    assert.match(migration.stdout, /applied 20260804010000_agentic_rectification_candidate_acceptance\.sql/);
 
     assert.equal(
       fixture.psql(`
@@ -77,6 +78,7 @@ test("local PostgreSQL applies the reviewed business schema and serves authentic
         where schemaname = 'public'
       `),
       [
+        "agentic_rectification_results",
         "birth_time_rectification_action_receipts",
         "birth_time_rectification_agent_runs",
         "birth_time_rectification_billing",
@@ -189,6 +191,88 @@ test("local PostgreSQL applies the reviewed business schema and serves authentic
     }).select("id").single();
     assert.equal(inserted.error, null);
     assert.deepEqual(inserted.data, { id: sessionId });
+
+    const rectificationSessionId = "22222222-2222-4222-8222-222222222222";
+    fixture.psql(`
+      update public.profiles
+      set birth_date = '1997-08-08',
+          reported_birth_time = '05:00',
+          birth_time_source = 'family_exact',
+          uncertainty_before_minutes = 10,
+          uncertainty_after_minutes = 10,
+          latitude = 36.420487,
+          longitude = 114.209936,
+          timezone_offset = 8,
+          birth_time_status = 'reported'
+      where id = '${userId}';
+      insert into public.chat_sessions (id, user_id, title, theme, model_id, messages, session_type, updated_at)
+      values ('${rectificationSessionId}', '${userId}', 'Rectification', 'general', 'test-model', '[]', 'birth_time_rectification', now());
+      insert into public.agentic_rectification_results (
+        id, user_id, session_id, engine_result_id, canonical_input_hash, algorithm_version,
+        candidate_range, candidates, overall_confidence, selection_allowed, confirmation_allowed,
+        representative_time, baseline_birth_date, baseline_reported_birth_time, baseline_birth_time_source,
+        baseline_uncertainty_before_minutes, baseline_uncertainty_after_minutes, baseline_latitude,
+        baseline_longitude, baseline_timezone_offset
+      ) values (
+        '33333333-3333-4333-8333-333333333333', '${userId}', '${rectificationSessionId}',
+        'engine-result-1', 'canonical-hash-1', 'test-v1', '{}',
+        '[{"time":"04:55","relative_support":60},{"time":"05:07","relative_support":40}]',
+        'medium', true, false, '04:55', '1997-08-08', '05:00', 'family_exact', 10, 10,
+        36.420487, 114.209936, 8
+      );
+    `);
+    assert.equal(
+      fixture.psqlAs(
+        "admin_runtime",
+        "admin-runtime-test-password",
+        `set role service_role;
+         select (result ->> 'saved_time') || ':' || (result ->> 'status') || ':' || (result ->> 'idempotent')
+         from (
+           select public.accept_agentic_rectification_candidate(
+             '${userId}', '${rectificationSessionId}', '33333333-3333-4333-8333-333333333333', '04:55'
+           ) as result
+         ) accepted`,
+      ),
+      "SET\n04:55:accepted:false",
+    );
+    assert.equal(
+      fixture.psql(`select to_char(active_birth_time, 'HH24:MI') || ':' || birth_time_status || ':' || to_char(reported_birth_time, 'HH24:MI') from public.profiles where id = '${userId}'`),
+      "04:55:accepted:05:00",
+    );
+    assert.equal(
+      fixture.psqlAs(
+        "admin_runtime",
+        "admin-runtime-test-password",
+        `set role service_role;
+         select result ->> 'idempotent'
+         from (
+           select public.accept_agentic_rectification_candidate(
+             '${userId}', '${rectificationSessionId}', '33333333-3333-4333-8333-333333333333', '04:55'
+           ) as result
+         ) accepted`,
+      ),
+      "SET\ntrue",
+    );
+    assert.equal(
+      fixture.psql(`select invalidated_at is null from public.agentic_rectification_results where id = '33333333-3333-4333-8333-333333333333'`),
+      "t",
+    );
+    fixture.psql(`update public.profiles set reported_birth_time = '05:01' where id = '${userId}'`);
+    assert.equal(
+      fixture.psql(`select invalidated_at is not null from public.agentic_rectification_results where id = '33333333-3333-4333-8333-333333333333'`),
+      "t",
+    );
+    assert.throws(
+      () => fixture.psqlAs(
+        "admin_runtime",
+        "admin-runtime-test-password",
+        `set role service_role;
+         select public.accept_agentic_rectification_candidate(
+           '${userId}', '${rectificationSessionId}', '33333333-3333-4333-8333-333333333333', '04:55'
+         )`,
+      ),
+      /agentic_rectification_candidate_expired/,
+    );
 
     fixture.psql(`
       insert into public.redemption_codes (code_hash, code_mask, credits)

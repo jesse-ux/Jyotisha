@@ -118,11 +118,11 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
         <section className="birth-time-profile-result" aria-label="生时校正结果">
           <div className="birth-time-profile-result-heading">
             <span>生时校正结果</span>
-            <strong>{displayState.kind === "candidate" ? "候选时间" : "已确认"}</strong>
+            <strong>{displayState.kind === "candidate" ? "候选时间" : displayState.kind === "accepted" ? "用户已选择" : "已确认"}</strong>
           </div>
           <dl>
             <div>
-              <dt>{displayState.kind === "candidate" ? "待验证候选时间" : "当前排盘时间"}</dt>
+              <dt>{displayState.kind === "candidate" ? "待验证候选时间" : displayState.kind === "accepted" ? "校正采用时间" : "已确认校正时间"}</dt>
               <dd>{displayState.activeTime}</dd>
             </div>
             <div>
@@ -132,6 +132,9 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
           </dl>
           {displayState.kind === "candidate" && (
             <p>这仍是未确认候选，不会自动成为出生分钟；{birthTimeConsultationOptionsCopy(value)}</p>
+          )}
+          {displayState.kind === "accepted" && (
+            <p>这是你从候选中选择的校正采用时间，并非引擎唯一确认分钟；后续排盘会使用它。</p>
           )}
         </section>
       )}

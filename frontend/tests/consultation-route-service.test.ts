@@ -76,6 +76,20 @@ test("verified route uses only server active time", async () => {
   assert.equal(prepared.serverChart?.truth.selectedTimeKind, "active");
 });
 
+test("user-accepted rectification time is the server-owned chart time", async () => {
+  const prepared = await prepareConsultationRoute({
+    userId: "user-1",
+    mode: "verified_chart",
+    loadProfile: async () => ({ ...profile, birth_time_status: "accepted" }),
+    reserve: async () => "reserved",
+  });
+
+  assert.equal(prepared.serverChart?.toolInput.hour, 5);
+  assert.equal(prepared.serverChart?.toolInput.minute, 18);
+  assert.equal(prepared.serverChart?.truth.birthTimeStatus, "accepted");
+  assert.equal(prepared.serverChart?.truth.selectedTimeKind, "active");
+});
+
 test("global normalized places use their exact coordinates and historical offset", async () => {
   const prepared = await prepareConsultationRoute({
     userId: "user-global",

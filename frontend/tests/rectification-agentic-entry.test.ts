@@ -25,7 +25,7 @@ test("opening is a server-owned operation rather than a hidden user prompt", () 
   assert.doesNotMatch(chat, /agenticOpeningInstruction|用户刚进入生时校正会话/);
   assert.match(chat, /action: "opening"/);
   assert.match(route, /z\.literal\("opening"\)/);
-  assert.match(route, /parsed\.data\.action === "opening"/);
+  assert.match(route, /conversation\.action === "opening"/);
 });
 
 test("incomplete profiles stay in the shared onboarding flow", () => {
@@ -87,9 +87,35 @@ test("rectification messages survive remounts and suppress duplicate openings", 
 test("successful Agent turns are persisted by the authenticated rectification route", () => {
   assert.match(route, /sessionId: z\.string\(\)\.uuid\(\)/);
   assert.match(route, /\.from\("chat_sessions"\)[\s\S]*\.eq\("user_id", userId\)/);
-  assert.match(route, /parsed\.data\.action === "opening" && persistedMessages\.length > 0/);
+  assert.match(route, /conversation\.action === "opening" && persistedMessages\.length > 0/);
   assert.match(route, /\.update\(\{ messages: nextMessages, updated_at:/);
   assert.match(route, /if \(saveError \|\| !savedSession\) throw new Error\("RectificationSessionPersistenceError"\)/);
+});
+
+
+test("candidate results restore only through the authenticated rectification session", () => {
+  const getRoute = route.slice(
+    route.indexOf("export async function GET"),
+    route.indexOf("export async function POST"),
+  );
+  assert.match(getRoute, /sessionId/);
+  assert.match(getRoute, /\.eq\("user_id", user\.id\)/);
+  assert.match(getRoute, /session\.session_type !== "birth_time_rectification"/);
+  assert.match(getRoute, /loadLatestAgenticRectificationResult\(accounting, user\.id, sessionId\)/);
+});
+
+test("candidate acceptance is non-billable and happens before consultation credit reservation", () => {
+  const acceptance = route.indexOf('parsed.data.action === "accept_candidate"');
+  const reserve = route.indexOf('"begin_consultation_credit"');
+  assert.ok(acceptance >= 0 && reserve > acceptance);
+});
+
+test("candidate state streams before done and renders relative support controls", () => {
+  assert.match(route, /send\(\{ type: "candidates", result: candidateResult \}\)[\s\S]*send\(\{ type: "done", emitted: true \}\)/);
+  assert.match(chat, /fetch\(`\/api\/rectification\/agent\?sessionId=/);
+  assert.match(chat, /action: "accept_candidate"/);
+  assert.match(chat, /相对支持度仅用于本次候选比较，不是统计概率/);
+  assert.match(chat, /采用 \$\{candidate\.time\}/);
 });
 
 test("stream failures remove empty assistant placeholders", () => {
