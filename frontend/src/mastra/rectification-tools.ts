@@ -531,10 +531,11 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
   const confirmTool = createTool({
     id: "rectification-confirm",
     description:
-      "Run the high-rigor confirmation gate for the candidate range and the user's dated events. Official VedAstro runs only after the local external-validation entry gate is ready; external_validation_status=not_evaluated means it was not invoked, not that it failed. Neighbor stability and leave-one-out are diagnostic confidence indicators, not hard blockers. Returns whether a precise minute can be confirmed, the representative minute, and the reasons. Only call once you have enough confirmed dated events across domains. This does NOT write anything.",
+      "Run the high-rigor confirmation gate for the candidate range and the user's dated events. Official VedAstro runs only after the local external-validation entry gate is ready; external_validation_status=not_evaluated means it was not invoked, not that it failed. Neighbor stability and leave-one-out are diagnostic confidence indicators, not hard blockers. Set offer_selection=true only when this turn is ready to offer working-time choices; keep it false while asking for more evidence. Returns whether a precise minute can be confirmed, the representative minute, and the reasons. This does NOT write anything.",
     inputSchema: z.object({
       candidate_range: candidateRangeSchema,
       events: z.array(agenticRectificationEventSchema).min(1).max(40),
+      offer_selection: z.boolean().default(false),
     }).strict(),
     execute: async (input) => {
       requireServerCandidateRange(input.candidate_range, ctx.candidateRange);
@@ -578,7 +579,8 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
         : [{ rank: 1, time: representativeTime, relative_support: 100, tied_minute_count: 1 }];
       const eventCount = typeof data.event_count === "number" ? data.event_count : 0;
       const domainCount = typeof data.domain_count === "number" ? data.domain_count : 0;
-      const selectionAllowed = eventCount >= 3 && domainCount >= 2 && candidates.length > 0;
+      const candidateEligible = eventCount >= 3 && domainCount >= 2 && candidates.length > 0;
+      const selectionAllowed = confirmationAllowed || (input.offer_selection && candidateEligible);
       const persisted = await ctx.persistCandidateResult({
         engineResultId: String(data.result_id ?? ""),
         canonicalInputHash: String(data.canonical_input_hash ?? ""),

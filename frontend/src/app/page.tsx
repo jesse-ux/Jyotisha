@@ -1450,6 +1450,8 @@ export default function Home() {
     try {
       const latest = await fetchAccount();
       if (!accountRefreshGuard.current.isCurrent(requestIdentity)) return;
+      const nextProfile = readProfile(latest.profile);
+      setProfile(nextProfile);
       setAccount((current) => {
         if (current?.rectificationCase
           && latest.rectificationCase?.caseId === current.rectificationCase.caseId

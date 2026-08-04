@@ -229,7 +229,6 @@ export function applyAccountProfileConcurrencyGuards<
 
 export type AccountBirthTimeApplicationPatch = Readonly<{
   active_birth_time?: null;
-  birth_time?: null;
   birth_time_status?: "reported";
   rectification_case_id?: null;
 }>;
@@ -241,7 +240,6 @@ export function resolveAccountBirthTimeApplicationPatch(
   if (!current) {
     return patch.birth_time_source ? {
       active_birth_time: null,
-      birth_time: null,
       birth_time_status: "reported",
       rectification_case_id: null,
     } : {};
@@ -262,7 +260,6 @@ export function resolveAccountBirthTimeApplicationPatch(
   if (!declarationChanged && !repairsMissingStatus) return {};
   return {
     active_birth_time: null,
-    birth_time: null,
     birth_time_status: "reported",
     rectification_case_id: null,
   };

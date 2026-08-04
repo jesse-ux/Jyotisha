@@ -117,16 +117,16 @@ export function BirthTimeIntakeFields({ value, onPatch }: BirthTimeIntakeProps) 
       {displayState && (
         <section className="birth-time-profile-result" aria-label="生时校正结果">
           <div className="birth-time-profile-result-heading">
-            <span>生时校正结果</span>
-            <strong>{displayState.kind === "candidate" ? "候选时间" : displayState.kind === "accepted" ? "用户已选择" : "已确认"}</strong>
+            <span>出生时间记录</span>
+            <strong>{displayState.kind === "candidate" ? "候选时间" : displayState.kind === "accepted" ? "校正采用" : "引擎确认"}</strong>
           </div>
           <dl>
             <div>
-              <dt>{displayState.kind === "candidate" ? "待验证候选时间" : displayState.kind === "accepted" ? "校正采用时间" : "已确认校正时间"}</dt>
+              <dt>{displayState.kind === "candidate" ? "待验证候选" : "当前排盘时间"}</dt>
               <dd>{displayState.activeTime}</dd>
             </div>
             <div>
-              <dt>原始填报</dt>
+              <dt>原始填报时间</dt>
               <dd>{displayState.reportedLabel}</dd>
             </div>
           </dl>

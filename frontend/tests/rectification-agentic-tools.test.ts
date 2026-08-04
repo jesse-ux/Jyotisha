@@ -406,12 +406,45 @@ test("confirm distinguishes skipped external validation from a failed VedAstro r
   const result = await runTool(tools, "rectification-confirm", {
     candidate_range: { start_time: "14:00", end_time: "15:00" },
     events: sampleEvents,
+    offer_selection: false,
   });
 
-  assert.equal(result.selection_allowed, true);
+  assert.equal(result.selection_allowed, false);
   assert.equal(result.external_validation_status, "not_evaluated");
   assert.equal(result.external_validation_invoked, false);
   assert.equal(result.external_validation_reason, "local_candidate_not_ready_for_external_validation");
+  engine.restore();
+});
+
+
+test("confirm offers non-unique candidates only when the Agent explicitly ends evidence collection", async () => {
+  const engine = installEngine([{
+    path: "/api/active_rectification_events",
+    respond: () => {
+      const response = confirmedEngineResponse();
+      return {
+        ...response,
+        body: {
+          ...response.body,
+          can_apply: false,
+          technique_contract: {
+            confirmation_allowed: false,
+            decision: "continue_rectification",
+            external_engines: { status: "not_evaluated" },
+          },
+        },
+      };
+    },
+  }]);
+  const tools = createAgenticRectificationTools(makeCtx());
+
+  const result = await runTool(tools, "rectification-confirm", {
+    candidate_range: { start_time: "14:00", end_time: "15:00" },
+    events: sampleEvents,
+    offer_selection: true,
+  });
+
+  assert.equal(result.selection_allowed, true);
   engine.restore();
 });
 

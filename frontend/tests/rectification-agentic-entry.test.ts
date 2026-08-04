@@ -15,6 +15,11 @@ const route = readFileSync(
   "utf8",
 );
 const page = readFileSync(new URL("../src/app/page.tsx", import.meta.url), "utf8");
+const agent = readFileSync(
+  new URL("../src/mastra/agentic-rectification.ts", import.meta.url),
+  "utf8",
+);
+const styles = readFileSync(new URL("../src/app/globals.css", import.meta.url), "utf8");
 
 test("birth-time rectification entry no longer routes through V4", () => {
   assert.doesNotMatch(component, /loadActiveRectificationV4|RectificationV4Panel|transitionRectificationV4/);
@@ -67,6 +72,17 @@ test("account rehydration normalizes persisted ISO birth dates before completene
   assert.match(profileReader, /const date = normalizePersistedBirthDate\(/);
 });
 
+
+test("candidate acceptance refreshes the profile result without overwriting an open draft", () => {
+  const refresh = page.slice(
+    page.indexOf("async function refreshAccount"),
+    page.indexOf("function updateSession"),
+  );
+  assert.match(refresh, /const nextProfile = readProfile\(latest\.profile\)/);
+  assert.match(refresh, /setProfile\(nextProfile\)/);
+  assert.doesNotMatch(refresh, /setProfileDraft/);
+});
+
 test("agent tool calls leave a final step for visible prose and never end silently", () => {
   assert.match(route, /const agenticRectificationMaxSteps = 8/);
   assert.match(route, /\{ maxSteps: agenticRectificationMaxSteps \}/);
@@ -110,12 +126,26 @@ test("candidate acceptance is non-billable and happens before consultation credi
   assert.ok(acceptance >= 0 && reserve > acceptance);
 });
 
-test("candidate state streams before done and renders relative support controls", () => {
+test("candidate state streams before done and renders reusable multi-column choices", () => {
   assert.match(route, /send\(\{ type: "candidates", result: candidateResult \}\)[\s\S]*send\(\{ type: "done", emitted: true \}\)/);
   assert.match(chat, /fetch\(`\/api\/rectification\/agent\?sessionId=/);
   assert.match(chat, /action: "accept_candidate"/);
-  assert.match(chat, /相对支持度仅用于本次候选比较，不是统计概率/);
-  assert.match(chat, /采用 \$\{candidate\.time\}/);
+  assert.match(chat, /当前可能的出生时间/);
+  assert.match(chat, /可以先采用一个作为当前排盘时间，也可以继续补充事件/);
+  assert.match(chat, /新增证据后，候选和相对支持度会重新计算/);
+  assert.match(chat, /相对支持度不是统计概率/);
+  assert.match(chat, /改选为此时间/);
+  assert.doesNotMatch(chat, /disabled=\{Boolean\(candidateResult\.selectedTime\)/);
+  assert.match(styles, /\.rectification-candidate-list \{[\s\S]*grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(styles, /\.rectification-candidate-list \{[\s\S]*min-width: 0/);
+  assert.match(chat, /当前推荐/);
+  assert.match(chat, /已采用/);
+});
+
+test("Agent cannot offer a candidate selection in the same turn that asks for more evidence", () => {
+  assert.match(agent, /offer_selection/);
+  assert.match(agent, /If you will ask for another event or date detail in the same reply, offer_selection must be false/);
+  assert.match(agent, /Never both ask for more evidence and offer candidate adoption in the same reply/);
 });
 
 test("stream failures remove empty assistant placeholders", () => {

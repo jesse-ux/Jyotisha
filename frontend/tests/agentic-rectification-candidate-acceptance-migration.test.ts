@@ -7,6 +7,11 @@ const migration = readFileSync(
   "utf8",
 );
 
+const preservationMigration = readFileSync(
+  new URL("../supabase/migrations/20260804020000_preserve_reported_birth_time_on_candidate_acceptance.sql", import.meta.url),
+  "utf8",
+);
+
 test("candidate acceptance migration adds accepted status and durable result ownership", () => {
   assert.match(migration, /birth_time_status in \([\s\S]*'reported'[\s\S]*'assessing'[\s\S]*'rectifying'[\s\S]*'candidate'[\s\S]*'accepted'[\s\S]*'confirmed'[\s\S]*\)/);
   assert.match(migration, /create table public\.agentic_rectification_results/);
@@ -64,4 +69,35 @@ test("profile declaration changes invalidate restored Agentic candidate results"
   assert.match(migration, /old\.latitude is distinct from new\.latitude/);
   assert.match(migration, /set invalidated_at = pg_catalog\.now\(\)/);
   assert.match(migration, /coalesce\(new\.birth_time_status, ''\) not in \('accepted', 'confirmed'\)/);
+});
+
+
+test("forward repair separates original declaration from the active chart time", () => {
+  const profileUpdate = preservationMigration.slice(
+    preservationMigration.indexOf("update public.profiles\n  set active_birth_time"),
+    preservationMigration.indexOf("update public.agentic_rectification_results", preservationMigration.indexOf("update public.profiles\n  set active_birth_time")),
+  );
+  assert.match(profileUpdate, /active_birth_time = p_time/);
+  assert.match(profileUpdate, /birth_time_status = v_status/);
+  assert.doesNotMatch(profileUpdate, /^\s*birth_time = p_time/m);
+  assert.doesNotMatch(profileUpdate, /reported_birth_time\s*=/);
+  assert.doesNotMatch(preservationMigration, /v_profile\.birth_time is distinct from v_result\.selected_time/);
+});
+
+test("forward repair removes legacy field mirroring and repairs already selected Agentic profiles", () => {
+  const guard = preservationMigration.slice(
+    preservationMigration.indexOf("create or replace function public.guard_birth_time_journey"),
+    preservationMigration.indexOf("update public.profiles", preservationMigration.indexOf("create or replace function public.guard_birth_time_journey")),
+  );
+  assert.doesNotMatch(guard, /new\.birth_time := new\.active_birth_time/);
+  assert.doesNotMatch(guard, /new\.active_birth_time := new\.birth_time/);
+  assert.match(preservationMigration, /p\.birth_time_status in \('accepted', 'confirmed'\)/);
+  assert.match(preservationMigration, /p\.active_birth_time is not distinct from selected\.selected_time/);
+});
+
+
+test("forward repair lets the user change a previously adopted candidate", () => {
+  assert.doesNotMatch(preservationMigration, /agentic_rectification_candidate_already_selected/);
+  assert.match(preservationMigration, /v_profile\.active_birth_time is distinct from v_result\.selected_time/);
+  assert.match(preservationMigration, /update public\.agentic_rectification_results[\s\S]*selected_time = p_time/);
 });

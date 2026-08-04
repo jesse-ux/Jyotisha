@@ -2068,3 +2068,33 @@
 - 防复发：self-hosted query builder 新增 Supabase/PostgREST 链式操作时必须由真实 PostgreSQL fixture 覆盖；公开文案必须按 `external_engines.status` 区分未执行、失败和通过。
 - 相关记录：BUG-116、BUG-117
 - 修复版本：待本次 staging 修复提交与部署验收
+
+## BUG-119 | 候选采用覆盖兼容出生时间且个人资料不显示双时间记录
+
+- 状态：resolved（local，pending deployment）
+- 首次发现：2026-08-04
+- 最近更新：2026-08-04
+- 影响面：Agentic 生时校正候选采用、个人资料出生时间展示、账户资料刷新、后续排盘时间
+- 用户现象：采用候选 `05:06` 后，账户虽然返回 `active_birth_time=05:06`，但个人资料仍只展示初始化填写的 `05:00`；数据库兼容字段 `birth_time` 同时被改成 `05:06`，导致“原始填报”与“校正采用”语义混在一起。
+- 根因：候选采用 RPC 主动把 `active_birth_time` 和兼容字段 `birth_time` 同时写为候选时间，旧 `guard_birth_time_journey()` 触发器还会双向镜像这两个字段；客户端 `refreshAccount()` 只刷新账户对象，没有同步个人资料展示使用的独立 `profile` state。
+- 修复：新增向前迁移解除 `birth_time` / `active_birth_time` 双向镜像，候选采用只写服务端拥有的 `active_birth_time`，并修复既有 Agentic 采用记录；保留 `reported_birth_time` 作为用户原始填报。账户刷新同步 `profile` 但不覆盖正在编辑的 draft；个人资料同时展示“当前排盘时间”和“原始填报时间”，候选卡明确采用边界并移除易被误解为概率的进度条。
+- 数据边界：`reported_birth_time` 是原始填报，`active_birth_time` 是平台当前排盘时间，`birth_time` 仅保留旧系统兼容用途；`accepted` 是用户采用，不等于引擎唯一确认。后续咨询继续读取 `active_birth_time`。
+- 验证：聚焦账户、迁移、Agentic UI 合同测试 38/38；本地 PostgreSQL 完整迁移与业务测试通过，验证采用后 `active_birth_time=04:55`、`birth_time_status=accepted`、`reported_birth_time=05:00`、`birth_time=null`。
+- 相关记录：BUG-117、BUG-118
+- 修复版本：待提交与发布
+
+## BUG-120 | Agent 仍在追问事件时过早显示候选采用卡且采用后无法改选
+
+- 状态：resolved（local，pending deployment）
+- 首次发现：2026-08-04
+- 最近更新：2026-08-04
+- 影响面：Agentic 生时校正确认门、候选卡展示时机、候选采用交互与数据库原子写入
+- 用户现象：Agent 回复仍在要求补充事件或确认日期时，页面已经显示三项候选并可立即采用；候选采用后所有选项被禁用，无法在同一批有效候选中改选。
+- 触发条件：确认工具取得至少三条事件、覆盖两个领域且返回候选，但引擎仍为 `continue_rectification`；或用户已经采用当前结果中的一个候选。
+- 根因：确认工具仅用事件数、领域数和候选存在性推导 `selection_allowed`，没有区分“继续收集证据”与“结束收集并邀请选择”；Agent 合同未禁止同轮追问和提供采用；前端与 RPC 又把首次采用误当成不可变终态。
+- 修复：`rectification-confirm` 新增显式 `offer_selection`，继续追问时必须为 `false`，仅在用户要求现在选择或本轮唯一下一步是选择候选时为 `true`；引擎真正通过唯一分钟确认门时仍自动允许确认。候选卡改为桌面端一行三列、移动端横向滚动，说明候选来自当前事件、可继续补充事件并重新计算；采用后保留其他候选可点击。向前迁移允许在候选结果仍有效且 Profile 基线未漂移时原子改选。
+- 数据边界：继续补事件不会把当前候选冒充最终结果；相对支持度不是统计概率；改选只更新 `active_birth_time` 和采用记录，不覆盖 `reported_birth_time`，也不写兼容字段 `birth_time`。
+- 验证：Agent 工具与入口合同聚焦测试 37/37；真实本地 PostgreSQL 业务测试通过 `04:55 -> 05:07` 改选并保持 `reported_birth_time=05:00`、`birth_time=null`；TypeScript、聚焦 ESLint 与 production build 通过；桌面端三列和移动端横向滚动截图已完成视觉检查。
+- 防复发：任何非唯一候选卡必须由显式选择阶段开启；同一 Agent 回复不得既索取新证据又提供采用操作；候选采用测试必须覆盖幂等、改选、过期结果和 Profile 基线漂移。
+- 相关记录：BUG-117、BUG-118、BUG-119
+- 修复版本：待提交与发布
