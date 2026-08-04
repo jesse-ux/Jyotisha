@@ -192,6 +192,7 @@ test("score tool normalizes year-precision events into the V5 date range contrac
     events: [
       { id: "marriage-2015", domain: "relationship", date: "2015", precision: "year", summary: "结婚" },
       { id: "moved", domain: "relocation", date: "2015-06", precision: "month", summary: "搬家" },
+      { id: "salary-range", domain: "finance", date: "2026-01/2026-07", precision: "range", summary: "欠薪区间" },
     ],
   });
 
@@ -199,7 +200,7 @@ test("score tool normalizes year-precision events into the V5 date range contrac
   const events = (sent.events ?? []) as Array<Record<string, unknown>>;
   assert.equal(sent.start_time, "14:00");
   assert.equal(sent.end_time, "15:00");
-  assert.equal(events.length, 2);
+  assert.equal(events.length, 3);
 
   const marriage = events[0]!;
   assert.equal(marriage.date_start, "2015-01-01");
@@ -211,6 +212,11 @@ test("score tool normalizes year-precision events into the V5 date range contrac
   const moved = events[1]!;
   assert.equal(moved.date_start, "2015-06-01");
   assert.equal(moved.date_end, "2015-06-30");
+
+  const salaryRange = events[2]!;
+  assert.equal(salaryRange.date_start, "2026-01-01");
+  assert.equal(salaryRange.date_end, "2026-07-31");
+  assert.equal(salaryRange.precision, "range");
 
   assert.equal(result.candidate_count, 1);
   const top = (result.top_candidates as Array<{ time: string }>)[0];
@@ -351,6 +357,32 @@ test("confirm then save with the matching minute applies the write", async () =>
   assert.equal(saved.ok, true);
   assert.equal(saved.saved_time, "14:30");
   assert.deepEqual(applied, ["14:30"]);
+  engine.restore();
+});
+
+test("confirm serializes event dates to the legacy precision contract", async () => {
+  const engine = installEngine([
+    { path: "/api/active_rectification_events", respond: confirmedEngineResponse },
+  ]);
+  const tools = createAgenticRectificationTools(makeCtx());
+
+  await runTool(tools, "rectification-confirm", {
+    candidate_range: { start_time: "14:00", end_time: "15:00" },
+    events: [
+      { id: "year", domain: "education", date: "2016", precision: "year" },
+      { id: "month", domain: "career", date: "2020-04", precision: "month" },
+      { id: "day", domain: "relationship", date: "2024-08-08", precision: "day" },
+      { id: "range", domain: "finance", date: "2026-01/2026-07", precision: "range" },
+    ],
+  });
+
+  const events = requestBody(engine).events as Array<Record<string, unknown>>;
+  assert.deepEqual(events.map(({ date, precision }) => ({ date, precision })), [
+    { date: "2016", precision: "year" },
+    { date: "2020-04", precision: "month" },
+    { date: "2024-08-08", precision: "day" },
+    { date: "2026", precision: "year" },
+  ]);
   engine.restore();
 });
 
