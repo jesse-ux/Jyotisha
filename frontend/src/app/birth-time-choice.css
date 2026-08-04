@@ -9,7 +9,7 @@
 .birth-time-choice-option.is-primary { width: 100%; padding: var(--space-3) var(--space-4); }
 .birth-time-choice-option.is-secondary { min-height: 44px; flex: 1 1 0; padding: var(--space-2) var(--space-4); color: var(--color-ink-secondary); text-align: center; }
 .birth-time-choice-option:hover:not(:disabled) { border-color: var(--color-border-strong); background: var(--color-canvas-soft); }
-.birth-time-choice-option:active:not(:disabled) { transform: translateY(1px); }
+.birth-time-choice-option:active:not(:disabled) { transform: scale(.96); }
 .birth-time-choice-option[data-selected="true"] { border-color: var(--color-action); background: var(--color-action-soft); color: var(--color-ink); }
 .birth-time-choice-option:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
 .birth-time-choice-question:disabled .birth-time-choice-option { cursor: wait; opacity: .62; }

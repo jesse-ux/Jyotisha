@@ -1,6 +1,6 @@
 "use client";
 
-import { Popover } from "@base-ui/react/popover";
+import { Menu } from "@base-ui/react/menu";
 import Link from "next/link";
 import {
   ChevronRight,
@@ -79,15 +79,15 @@ export function AppSidebar({
   const historyHeadingRef = useRef<HTMLHeadingElement>(null);
   const isCollapsedDesktop = state === "collapsed" && !isMobile;
   const showExpandedContent = !isCollapsedDesktop;
-  const popoverPlacement = `${viewport}:${state}`;
-  const previousPopoverPlacement = useRef(popoverPlacement);
+  const menuPlacement = `${viewport}:${state}`;
+  const previousMenuPlacement = useRef(menuPlacement);
 
   useEffect(() => {
-    if (previousPopoverPlacement.current !== popoverPlacement && accountMenuOpen) {
+    if (previousMenuPlacement.current !== menuPlacement && accountMenuOpen) {
       onAccountMenuOpenChange(false);
     }
-    previousPopoverPlacement.current = popoverPlacement;
-  }, [accountMenuOpen, onAccountMenuOpenChange, popoverPlacement]);
+    previousMenuPlacement.current = menuPlacement;
+  }, [accountMenuOpen, menuPlacement, onAccountMenuOpenChange]);
 
   function handleNewChat() {
     onNewChat();
@@ -99,11 +99,6 @@ export function AppSidebar({
     window.requestAnimationFrame(() => {
       (firstSessionRef.current ?? historyHeadingRef.current)?.focus();
     });
-  }
-
-  function handleAccountAction(action: () => void) {
-    onAccountMenuOpenChange(false);
-    action();
   }
 
   return (
@@ -185,46 +180,45 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter className="sidebar-footer">
-        <Popover.Root open={accountMenuOpen} onOpenChange={onAccountMenuOpenChange}>
-          <Popover.Trigger
+        <Menu.Root open={accountMenuOpen} onOpenChange={onAccountMenuOpenChange} modal={false}>
+          <Menu.Trigger
             className="profile-trigger"
             ref={accountTriggerRef}
             type="button"
-            aria-haspopup="menu"
           >
             <span className="profile-initial" aria-hidden="true">{account.initial}</span>
             {showExpandedContent ? <span><b>{account.name}</b></span> : null}
             {showExpandedContent ? <ChevronRight className={accountMenuOpen ? "chevron is-open" : "chevron"} aria-hidden="true" /> : null}
-          </Popover.Trigger>
-          <Popover.Portal>
-            <Popover.Positioner
+          </Menu.Trigger>
+          <Menu.Portal>
+            <Menu.Positioner
               side={isMobile || state === "expanded" ? "top" : "right"}
               align={isMobile || state === "expanded" ? "end" : "center"}
               sideOffset={8}
               collisionPadding={12}
             >
-              <Popover.Popup className="account-menu-popup" role="menu" aria-label="账户菜单">
+              <Menu.Popup className="account-menu-popup" aria-label="账户菜单">
                 <div className="account-menu-identity">
                   <span className="account-menu-avatar" aria-hidden="true">{account.initial}</span>
                   <span><b>{account.name}</b><small>{account.email}</small></span>
                 </div>
-                <button className="account-menu-item" role="menuitem" type="button" onClick={() => handleAccountAction(onOpenProfile)}>
+                <Menu.Item className="account-menu-item" onClick={onOpenProfile}>
                   <UserRound aria-hidden="true" /><span>个人资料</span><ChevronRight aria-hidden="true" />
-                </button>
-                <button className="account-menu-item" role="menuitem" type="button" onClick={() => handleAccountAction(onOpenRedeem)}>
+                </Menu.Item>
+                <Menu.Item className="account-menu-item" onClick={onOpenRedeem}>
                   <Gift aria-hidden="true" /><span>兑换点数</span><small>{account.credits} 点</small>
-                </button>
-                {account.isAdmin && <Link className="account-menu-item" href="/admin/codes" role="menuitem" onClick={() => onAccountMenuOpenChange(false)}>
+                </Menu.Item>
+                {account.isAdmin && <Menu.LinkItem className="account-menu-item" render={<Link href="/admin/codes" />} closeOnClick>
                   <KeyRound aria-hidden="true" /><span>管理兑换码</span><ChevronRight aria-hidden="true" />
-                </Link>}
-                <div className="account-menu-separator" role="separator" />
-                <button className="account-menu-item account-menu-danger" role="menuitem" type="button" onClick={() => handleAccountAction(onOpenLogout)}>
+                </Menu.LinkItem>}
+                <Menu.Separator className="account-menu-separator" />
+                <Menu.Item className="account-menu-item account-menu-danger" onClick={onOpenLogout}>
                   <LogOut aria-hidden="true" /><span>退出登录</span>
-                </button>
-              </Popover.Popup>
-            </Popover.Positioner>
-          </Popover.Portal>
-        </Popover.Root>
+                </Menu.Item>
+              </Menu.Popup>
+            </Menu.Positioner>
+          </Menu.Portal>
+        </Menu.Root>
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

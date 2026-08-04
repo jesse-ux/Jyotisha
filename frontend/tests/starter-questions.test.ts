@@ -114,7 +114,7 @@ test("centers the credit value with its icon", () => {
   assert.match(creditValueStyles, /line-height:\s*1/);
 });
 
-test("routes account actions through a popover and focused dialogs", () => {
+test("routes account actions through a menu and focused dialogs", () => {
   // Given: the account surface state and entry-point handlers.
   // When: the page source is inspected for independent menu and dialog routes.
   // Then: each account task has a focused destination instead of one combined sheet.
@@ -123,9 +123,9 @@ test("routes account actions through a popover and focused dialogs", () => {
   assert.match(pageSource, /openAccountDialog\("profile"/);
   assert.match(pageSource, /openAccountDialog\("redeem"/);
   assert.match(pageSource, /openAccountDialog\("logout"/);
-  assert.match(appSidebarSource, /<Popover\.Popup className="account-menu-popup"/);
-  assert.doesNotMatch(appSidebarSource, /<Popover\.Popup className="account-menu"/);
-  assert.match(appSidebarSource, /<Popover\.Root open=\{accountMenuOpen\} onOpenChange=\{onAccountMenuOpenChange\}>/);
+  assert.match(appSidebarSource, /<Menu\.Popup className="account-menu-popup"/);
+  assert.doesNotMatch(appSidebarSource, /<Menu\.Popup className="account-menu"/);
+  assert.match(appSidebarSource, /<Menu\.Root open=\{accountMenuOpen\} onOpenChange=\{onAccountMenuOpenChange\} modal=\{false\}>/);
 });
 
 test("removes the monolithic account sheet", () => {
@@ -140,5 +140,31 @@ test("keeps admin navigation separate from account task dialogs", () => {
   // Given: the administrator-only route and the new account menu.
   // When: their source relationship is inspected.
   // Then: code management stays a guarded navigation action rather than a modal.
-  assert.match(appSidebarSource, /account\.isAdmin\s*&&\s*<Link[^>]+href="\/admin\/codes"[^>]+role="menuitem"/);
+  assert.match(appSidebarSource, /account\.isAdmin\s*&&\s*<Menu\.LinkItem[^>]+render=\{<Link href="\/admin\/codes" \/>\}/);
+});
+
+test("keeps the empty starter home at the top instead of auto-scrolling", () => {
+  const autoScrollEffect = sourceBetween(
+    pageSource,
+    "useEffect(() => {\n    if (starterHomeVisible) return;",
+    "profileComplete, starterHomeVisible]);",
+  );
+
+  assert.match(autoScrollEffect, /if \(starterHomeVisible\) return/);
+  assert.match(autoScrollEffect, /conversationEnd\.current\?\.scrollIntoView/);
+});
+
+test("does not submit the composer while an IME composition is active", () => {
+  const keyHandler = sourceBetween(
+    pageSource,
+    "function handleComposerKeyDown",
+    "\n\n  if (!hydrated",
+  );
+
+  assert.match(keyHandler, /if \(event\.nativeEvent\.isComposing\) return/);
+  assert.match(keyHandler, /event\.currentTarget\.form\?\.requestSubmit\(\)/);
+});
+
+test("announces conversation errors to assistive technology", () => {
+  assert.match(pageSource, /<p className="error-message" role="alert">\{activeError\}<\/p>/);
 });

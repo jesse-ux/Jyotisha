@@ -1068,20 +1068,6 @@ export default function Home() {
     localStorage.setItem(`${prefix}archived`, JSON.stringify(archivedSessionIds));
   }, [accountId, archivedSessionIds, hydrated, pinnedSessionIds]);
 
-  useEffect(() => {
-    if (!sessionMenuId) return;
-    function closeSessionMenu(event: Event) {
-      if (event instanceof globalThis.KeyboardEvent && event.key !== "Escape") return;
-      if (event instanceof MouseEvent && (event.target as Element | null)?.closest(".session-row")) return;
-      setSessionMenuId(null);
-    }
-    window.addEventListener("mousedown", closeSessionMenu);
-    window.addEventListener("keydown", closeSessionMenu);
-    return () => {
-      window.removeEventListener("mousedown", closeSessionMenu);
-      window.removeEventListener("keydown", closeSessionMenu);
-    };
-  }, [sessionMenuId]);
   const activeSuggestions = activeSession?.messages.reduce<readonly string[]>(
     (latest, message) => message.role === "assistant" && message.suggestions?.length ? message.suggestions : latest,
     [],
@@ -1413,9 +1399,10 @@ export default function Home() {
   }, [hydrated, profile, profileComplete]);
 
   useEffect(() => {
+    if (starterHomeVisible) return;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     conversationEnd.current?.scrollIntoView({ behavior: isLoading || reduceMotion ? "auto" : "smooth", block: "end" });
-  }, [activeSessionId, activeSession?.messages.length, activeStreamingText, isLoading, onboardingPending, onboardingStep, presetMessageFinished, profileComplete]);
+  }, [activeSessionId, activeSession?.messages.length, activeStreamingText, isLoading, onboardingPending, onboardingStep, presetMessageFinished, profileComplete, starterHomeVisible]);
 
   useEffect(() => {
     if (hydrated && accountId && !profileComplete && onboardingStep === "name" && presetMessageFinished && activeAccountDialog === null) {
@@ -2660,6 +2647,7 @@ export default function Home() {
   }
 
   function handleComposerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.nativeEvent.isComposing) return;
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       event.currentTarget.form?.requestSubmit();
@@ -2964,7 +2952,7 @@ export default function Home() {
               {chatMessageViews(activeSession.messages, isLoading, activeStreamingText).map((message) => (
                 <ChatMessageRow key={message.renderKey} message={message} />
               ))}
-              {activeError && <p className="error-message">{activeError}</p>}
+              {activeError && <p className="error-message" role="alert">{activeError}</p>}
               <div ref={conversationEnd} />
             </div>
             )}

@@ -130,21 +130,25 @@ test("keeps session navigation independent of request state", () => {
   assert.doesNotMatch(appSidebar, /pendingSession|isLoading|cancellationPending|requestPending/);
 });
 
-test("uses a portaled Base UI account popover with safe collision padding", () => {
+test("uses portaled Base UI menus with safe collision padding", () => {
   const appSidebar = readProjectFile("src/components/app-sidebar.tsx");
-  assert.match(appSidebar, /import \{ Popover \} from "@base-ui\/react\/popover"/);
-  assert.match(appSidebar, /<Popover\.Portal>/);
+  const sessionRow = readProjectFile("src/components/sidebar-session-row.tsx");
+  assert.match(appSidebar, /import \{ Menu \} from "@base-ui\/react\/menu"/);
+  assert.match(appSidebar, /<Menu\.Portal>/);
   assert.match(appSidebar, /collisionPadding=\{12\}/);
-  assert.match(appSidebar, /<Popover\.Popup className="account-menu-popup"/);
-  assert.doesNotMatch(appSidebar, /<Popover\.Popup className="account-menu"/);
+  assert.match(appSidebar, /<Menu\.Popup className="account-menu-popup"/);
+  assert.match(sessionRow, /import \{ Menu \} from "@base-ui\/react\/menu"/);
+  assert.match(sessionRow, /<Menu\.Portal>/);
+  assert.match(sessionRow, /<Menu\.Popup className="session-actions"/);
+  assert.doesNotMatch(sessionRow, /role="menu(?:item)?"/);
 });
 
 test("closes an open account menu when the sidebar viewport or state changes", () => {
   const appSidebar = readProjectFile("src/components/app-sidebar.tsx");
   assert.match(appSidebar, /const \{[^}]*\bviewport\b[^}]*\} = useSidebar\(\)/);
-  assert.match(appSidebar, /const popoverPlacement = `\$\{viewport\}:\$\{state\}`/);
-  assert.match(appSidebar, /previousPopoverPlacement/);
-  assert.match(appSidebar, /previousPopoverPlacement\.current !== popoverPlacement && accountMenuOpen/);
+  assert.match(appSidebar, /const menuPlacement = `\$\{viewport\}:\$\{state\}`/);
+  assert.match(appSidebar, /previousMenuPlacement/);
+  assert.match(appSidebar, /previousMenuPlacement\.current !== menuPlacement && accountMenuOpen/);
 });
 
 test("keeps app sidebar props as product data and callbacks", () => {
