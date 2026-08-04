@@ -1,6 +1,7 @@
 import { createTool } from "@mastra/core/tools";
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import { dateRangeFromDeclared } from "../lib/rectification-v4/date-range.ts";
 
 /**
  * Agentic birth-time rectification tool layer.
@@ -86,7 +87,7 @@ export type RectificationDomain = z.infer<typeof rectificationDomainSchema>;
 export const agenticRectificationEventSchema = z.object({
   id: z.string().min(1).max(64),
   domain: rectificationDomainSchema,
-  date: z.string().min(4).max(23),
+  date: z.string().min(4).max(23).describe("YYYY, YYYY-MM, YYYY-MM-DD, or start..end for a range"),
   precision: z.enum(["year", "month", "day", "range"]),
   summary: z.string().max(1000).optional(),
 });
@@ -152,39 +153,59 @@ function toV5Event(event: AgenticRectificationEvent): Readonly<{
   precision: "day" | "month" | "quarter" | "year" | "range";
   summary?: string;
 }> {
-  const [startPart, endPart] = event.date.includes("..")
-    ? event.date.split("..", 2)
-    : [event.date, ""];
-  const startDate = normalizeDateStart(startPart, event.precision);
-  const endDate = endPart ? normalizeDateStart(endPart, event.precision) : normalizeDateEnd(startPart, event.precision);
-  const normalizedPrecision = event.precision === "range" || endPart ? "range" : event.precision === "day" ? "day" : event.precision === "month" ? "month" : "year";
+  const range = normalizedEventDateRange(event);
   return {
     id: stableEventId(event.id),
     domain: event.domain,
     event_kind: defaultEventKind[event.domain],
-    date_start: startDate,
-    date_end: endDate,
-    precision: normalizedPrecision,
+    date_start: range.start,
+    date_end: range.end,
+    precision: range.precision,
     summary: event.summary,
   };
 }
 
-function normalizeDateStart(date: string, precision: AgenticRectificationEvent["precision"]): string {
-  const [year, month = "01", day = "01"] = date.split("-");
-  const paddedMonth = month.length === 1 ? `0${month}` : month;
-  const paddedDay = day.length === 1 ? `0${day}` : day;
-  if (precision === "year" || !paddedMonth) return `${year}-01-01`;
-  return `${year}-${paddedMonth}-${paddedDay}`;
+function normalizedDeclaredDate(value: string, precision: "year" | "month" | "day") {
+  const matched = precision === "year"
+    ? /^(\d{4})$/.exec(value.trim())
+    : precision === "month"
+      ? /^(\d{4})-(\d{1,2})$/.exec(value.trim())
+      : /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(value.trim());
+  if (!matched) throw new Error(`event_date_precision_mismatch: ${value} is not ${precision}`);
+  return matched.slice(1).map((part, index) => index === 0 ? part : part!.padStart(2, "0")).join("-");
 }
 
-function normalizeDateEnd(date: string, precision: AgenticRectificationEvent["precision"]): string {
-  const [year, month, day] = date.split("-");
-  if (precision === "year" || !month) return `${year}-12-31`;
-  if (precision === "month" || !day) {
-    const last = new Date(Number(year), Number(month), 0).getDate();
-    return `${year}-${month.length === 1 ? `0${month}` : month}-${String(last).padStart(2, "0")}`;
+function declaredDateRange(value: string) {
+  const precision = /^\d{4}$/.test(value.trim())
+    ? "year"
+    : /^\d{4}-\d{1,2}$/.test(value.trim())
+      ? "month"
+      : "day";
+  return dateRangeFromDeclared(normalizedDeclaredDate(value, precision), precision);
+}
+
+function splitRangeDate(value: string): readonly [string, string] {
+  const normalized = value.trim();
+  const compactDayRange = /^(\d{4}-\d{1,2}-\d{1,2})-(\d{4}-\d{1,2}-\d{1,2})$/.exec(normalized);
+  if (compactDayRange) return [compactDayRange[1]!, compactDayRange[2]!];
+  const compactMonthRange = /^(\d{4}-\d{1,2})-(\d{4}-\d{1,2})$/.exec(normalized);
+  if (compactMonthRange) return [compactMonthRange[1]!, compactMonthRange[2]!];
+  const parts = normalized.split(/\s*(?:\.\.|\/|\bto\b|至|到|[–—])\s*/iu);
+  if (parts.length > 2 || !parts[0] || (parts.length === 2 && !parts[1])) {
+    throw new Error(`invalid_event_date_range: ${value}`);
   }
-  return `${year}-${month.length === 1 ? `0${month}` : month}-${day.length === 1 ? `0${day}` : day}`;
+  return [parts[0], parts[1] ?? parts[0]];
+}
+
+function normalizedEventDateRange(event: AgenticRectificationEvent) {
+  if (event.precision !== "range") {
+    return dateRangeFromDeclared(normalizedDeclaredDate(event.date, event.precision), event.precision);
+  }
+  const [start, end] = splitRangeDate(event.date);
+  const startRange = declaredDateRange(start);
+  const endRange = declaredDateRange(end);
+  if (startRange.start > endRange.end) throw new Error(`invalid_event_date_range: ${event.date}`);
+  return { start: startRange.start, end: endRange.end, precision: "range" as const };
 }
 
 /** Convert a V5 event to the v3 events schema used by `/api/active_rectification_events`. */
@@ -197,7 +218,8 @@ function toV3Event(event: AgenticRectificationEvent): Readonly<{
 }> {
   const v5 = toV5Event(event);
   const precision = v5.precision === "day" ? "day" : v5.precision === "month" ? "month" : "year";
-  return { id: v5.id, domain: v5.domain, date: v5.date_start, precision, summary: v5.summary };
+  const date = precision === "day" ? v5.date_start : precision === "month" ? v5.date_start.slice(0, 7) : v5.date_start.slice(0, 4);
+  return { id: v5.id, domain: v5.domain, date, precision, summary: v5.summary };
 }
 
 async function postEngine(base: string, path: string, body: unknown): Promise<Record<string, unknown>> {
