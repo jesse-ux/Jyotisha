@@ -303,28 +303,32 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
           {candidateResult?.selectionAllowed && candidateResult.candidates.length > 0 && (
             <section className="rectification-candidates" aria-label="生时校正候选时间">
               <div className="rectification-candidates-heading">
-                <strong>{candidateResult.confirmationAllowed ? "已通过确认门" : "请选择校正采用时间"}</strong>
-                <span>相对支持度仅用于本次候选比较，不是统计概率。</span>
+                <strong>{candidateResult.confirmationAllowed ? "确认校正时间" : "当前可能的出生时间"}</strong>
+                <span>这是根据你目前提供的人生事件推算出的几种可能时间。可以先采用一个作为当前排盘时间，也可以继续补充事件；新增证据后，候选和相对支持度会重新计算，准确度还可以继续提高。</span>
+                <span>相对支持度不是统计概率，采用不会覆盖原始填报时间。</span>
               </div>
               <div className="rectification-candidate-list">
                 {candidateResult.candidates.map((candidate) => {
                   const selected = candidateResult.selectedTime === candidate.time;
+                  const recommended = !candidateResult.selectedTime && candidate.rank === 1;
                   return (
-                    <div className={`rectification-candidate${selected ? " is-selected" : ""}`} key={`${candidateResult.resultId}-${candidate.time}`}>
-                      <div>
+                    <button
+                      type="button"
+                      className={`rectification-candidate${selected ? " is-selected" : ""}`}
+                      key={`${candidateResult.resultId}-${candidate.time}`}
+                      disabled={selected || Boolean(acceptingTime)}
+                      onClick={() => void acceptCandidate(candidate.time)}
+                    >
+                      <span className="rectification-candidate-time">
                         <strong>{candidate.time}</strong>
-                        <span>相对支持度 {candidate.relative_support}%</span>
-                      </div>
-                      <div className="rectification-support" aria-hidden="true"><i style={{ width: `${candidate.relative_support}%` }} /></div>
-                      <Button
-                        type="button"
-                        variant={selected ? "secondary" : "outline"}
-                        disabled={Boolean(candidateResult.selectedTime) || Boolean(acceptingTime)}
-                        onClick={() => void acceptCandidate(candidate.time)}
-                      >
-                        {selected ? "已采用" : acceptingTime === candidate.time ? "保存中…" : `采用 ${candidate.time}`}
-                      </Button>
-                    </div>
+                        {selected && <span className="rectification-candidate-badge">已采用</span>}
+                        {recommended && <span className="rectification-candidate-badge">当前推荐</span>}
+                      </span>
+                      <span className="rectification-candidate-support">相对支持度 {candidate.relative_support}%</span>
+                      <span className="rectification-candidate-action">
+                        {selected ? "已采用" : acceptingTime === candidate.time ? "保存中…" : candidateResult.selectedTime ? "改选为此时间" : "采用此时间"}
+                      </span>
+                    </button>
                   );
                 })}
               </div>
@@ -332,7 +336,7 @@ export function AgenticRectificationChat(props: AgenticRectificationChatProps) {
           )}
           {savedTime && (
             <p className="rectification-saved" role="status">
-              {savedStatus === "confirmed" ? "已确认校正时间" : "校正采用时间"}：{savedTime}。后续排盘将使用该时间。
+              {savedStatus === "confirmed" ? "已确认校正时间" : "校正采用时间"}：{savedTime}。后续排盘将使用该时间；你仍可继续补充事件或改选其他候选。
             </p>
           )}
           {error && <p className="error-message" role="alert">{error}</p>}

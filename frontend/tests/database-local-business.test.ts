@@ -34,6 +34,7 @@ test("local PostgreSQL applies the reviewed business schema and serves authentic
     assert.match(migration.stdout, /applied 20260728010000_conversational_event_semantics\.sql/);
     assert.match(migration.stdout, /applied 20260728020000_rectification_agent_v5\.sql/);
     assert.match(migration.stdout, /applied 20260804010000_agentic_rectification_candidate_acceptance\.sql/);
+    assert.match(migration.stdout, /applied 20260804020000_preserve_reported_birth_time_on_candidate_acceptance\.sql/);
 
     assert.equal(
       fixture.psql(`
@@ -248,8 +249,8 @@ test("local PostgreSQL applies the reviewed business schema and serves authentic
       "SET\n04:55:accepted:false",
     );
     assert.equal(
-      fixture.psql(`select to_char(active_birth_time, 'HH24:MI') || ':' || birth_time_status || ':' || to_char(reported_birth_time, 'HH24:MI') from public.profiles where id = '${userId}'`),
-      "04:55:accepted:05:00",
+      fixture.psql(`select to_char(active_birth_time, 'HH24:MI') || ':' || birth_time_status || ':' || to_char(reported_birth_time, 'HH24:MI') || ':' || coalesce(to_char(birth_time, 'HH24:MI'), 'null') from public.profiles where id = '${userId}'`),
+      "04:55:accepted:05:00:null",
     );
     assert.equal(
       fixture.psqlAs(
@@ -264,6 +265,24 @@ test("local PostgreSQL applies the reviewed business schema and serves authentic
          ) accepted`,
       ),
       "SET\ntrue",
+    );
+    assert.equal(
+      fixture.psqlAs(
+        "admin_runtime",
+        "admin-runtime-test-password",
+        `set role service_role;
+         select (result ->> 'saved_time') || ':' || (result ->> 'status') || ':' || (result ->> 'idempotent')
+         from (
+           select public.accept_agentic_rectification_candidate(
+             '${userId}', '${rectificationSessionId}', '33333333-3333-4333-8333-333333333333', '05:07'
+           ) as result
+         ) accepted`,
+      ),
+      "SET\n05:07:accepted:false",
+    );
+    assert.equal(
+      fixture.psql(`select to_char(active_birth_time, 'HH24:MI') || ':' || birth_time_status || ':' || to_char(reported_birth_time, 'HH24:MI') || ':' || coalesce(to_char(birth_time, 'HH24:MI'), 'null') from public.profiles where id = '${userId}'`),
+      "05:07:accepted:05:00:null",
     );
     assert.equal(
       fixture.psql(`select invalidated_at is null from public.agentic_rectification_results where id = '33333333-3333-4333-8333-333333333333'`),

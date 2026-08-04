@@ -397,7 +397,6 @@ test("ordinary declaration edits clear stale candidate application but never ove
 
   assert.deepEqual(resolveAccountBirthTimeApplicationPatch(candidate, edited), {
     active_birth_time: null,
-    birth_time: null,
     birth_time_status: "reported",
     rectification_case_id: null,
   });
@@ -405,7 +404,6 @@ test("ordinary declaration edits clear stale candidate application but never ove
     district_code: "130407",
   }), {
     active_birth_time: null,
-    birth_time: null,
     birth_time_status: "reported",
     rectification_case_id: null,
   });
@@ -416,7 +414,6 @@ test("ordinary declaration edits clear stale candidate application but never ove
   ]) {
     assert.deepEqual(resolveAccountBirthTimeApplicationPatch(candidate, coordinatePatch), {
       active_birth_time: null,
-      birth_time: null,
       birth_time_status: "reported",
       rectification_case_id: null,
     });
@@ -426,7 +423,6 @@ test("ordinary declaration edits clear stale candidate application but never ove
     birth_time_status: "accepted",
   }, edited), {
     active_birth_time: null,
-    birth_time: null,
     birth_time_status: "reported",
     rectification_case_id: null,
   });
@@ -437,11 +433,9 @@ test("ordinary declaration edits clear stale candidate application but never ove
   assert.deepEqual(resolveAccountBirthTimeApplicationPatch({
     ...candidate,
     active_birth_time: null,
-    birth_time: null,
     birth_time_status: "reported",
   }, { timezone_offset: 7 }), {
     active_birth_time: null,
-    birth_time: null,
     birth_time_status: "reported",
     rectification_case_id: null,
   });
@@ -453,7 +447,6 @@ test("ordinary declaration edits clear stale candidate application but never ove
     rectification_case_id: null,
   }, edited), {
     active_birth_time: null,
-    birth_time: null,
     birth_time_status: "reported",
     rectification_case_id: null,
   });
@@ -466,13 +459,11 @@ test("ordinary declaration edits clear stale candidate application but never ove
     reported_birth_time: edited.reported_birth_time,
   }, edited), {
     active_birth_time: null,
-    birth_time: null,
     birth_time_status: "reported",
     rectification_case_id: null,
   });
   assert.deepEqual(resolveAccountBirthTimeApplicationPatch(null, edited), {
     active_birth_time: null,
-    birth_time: null,
     birth_time_status: "reported",
     rectification_case_id: null,
   });
@@ -481,7 +472,6 @@ test("ordinary declaration edits clear stale candidate application but never ove
     birth_time_status: "accepted",
   }, edited), {
     active_birth_time: null,
-    birth_time: null,
     birth_time_status: "reported",
     rectification_case_id: null,
   });
@@ -492,7 +482,6 @@ test("ordinary declaration edits clear stale candidate application but never ove
   assert.deepEqual(resolveAccountBirthTimeApplicationPatch({
     ...candidate,
     active_birth_time: null,
-    birth_time: null,
     birth_time_status: null,
     reported_birth_time: edited.reported_birth_time,
   }, edited), {});
