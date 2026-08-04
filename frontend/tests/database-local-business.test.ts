@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import test from "node:test";
 
 import { createLocalPostgresDataClient } from "../src/lib/db/local-postgres-client-core.ts";
+import { loadLatestAgenticRectificationResult } from "../src/lib/rectification-agentic/session.ts";
 import { startPostgresFixture } from "./helpers/postgres-fixture.ts";
 
 const runnerPath = fileURLToPath(
@@ -216,11 +217,22 @@ test("local PostgreSQL applies the reviewed business schema and serves authentic
       ) values (
         '33333333-3333-4333-8333-333333333333', '${userId}', '${rectificationSessionId}',
         'engine-result-1', 'canonical-hash-1', 'test-v1', '{}',
-        '[{"time":"04:55","relative_support":60},{"time":"05:07","relative_support":40}]',
+        '[{"rank":1,"time":"04:55","relative_support":60,"tied_minute_count":1},{"rank":2,"time":"05:07","relative_support":40,"tied_minute_count":1}]',
         'medium', true, false, '04:55', '1997-08-08', '05:00', 'family_exact', 10, 10,
         36.420487, 114.209936, 8
       );
     `);
+    const latestCandidate = await loadLatestAgenticRectificationResult(
+      admin as never,
+      userId,
+      rectificationSessionId,
+    );
+    assert.equal(latestCandidate?.resultId, "33333333-3333-4333-8333-333333333333");
+    assert.equal(latestCandidate?.selectionAllowed, true);
+    assert.deepEqual(latestCandidate?.candidates.map(({ time, relative_support }) => ({ time, relative_support })), [
+      { time: "04:55", relative_support: 60 },
+      { time: "05:07", relative_support: 40 },
+    ]);
     assert.equal(
       fixture.psqlAs(
         "admin_runtime",

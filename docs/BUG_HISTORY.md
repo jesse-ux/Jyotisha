@@ -2054,3 +2054,17 @@
 - 验证：TypeScript 通过；聚焦测试 90/90；完整测试 1221/1221；lint 0 error、3 个既有 warning；production build 通过；本地 PostgreSQL 验证 `04:55` 写为 `accepted`、保留 `05:00` reported time、重复采纳幂等，并验证出生申报时间变化会使结果失效且拒绝再次采纳。
 - 相关记录：BUG-113、BUG-114、BUG-115、BUG-116
 - 修复版本：待提交与发布
+
+## BUG-118 | 候选已落库但确认卡不显示，VedAstro 未执行被误述为未通过
+
+- 状态：resolved（local，pending deployment）
+- 首次发现：2026-08-04
+- 最近更新：2026-08-04
+- 影响面：Agentic 生时校正候选 SSE、self-hosted PostgreSQL 查询兼容层、确认门公开语义
+- 用户现象：`rectification-confirm` 已返回并持久化 `selection_allowed=true` 的候选时间，但页面只显示 Agent 文本，不显示候选确认卡；Agent 同时把 VedAstro 未执行、邻近分钟诊断和留一事件诊断混写成确认门未通过。
+- 根因：候选恢复查询调用 `.gt("expires_at", now)`，而 staging 使用的 `LocalPostgresQueryBuilder` 未实现 `gt`，路由捕获读取异常后仍发送完成事件；外部验证本身只有在本地候选满足事件数、领域数、窄区间、唯一领先和必需层完整时才执行，`missing_mandatory_layers` 会使其保持 `not_evaluated`，并非 VedAstro 调用失败。邻近分钟与留一事件在 technique contract 中仅为诊断项。
+- 修复：在共享本地 PostgreSQL query builder 中实现参数化 `gt` 过滤；保留现有候选卡与 SSE 协议不另起状态；确认工具显式返回外部验证是否已调用、状态和原因，并要求 Agent 区分 `not_evaluated` 与 `fail`，不得把诊断项描述为硬阻塞。
+- 验证：真实 local PostgreSQL business client 回归覆盖未过期候选读取；Agentic 工具回归覆盖 `not_evaluated` 映射为 `external_validation_invoked=false`；Session、entry、candidate persistence 聚焦测试通过。
+- 防复发：self-hosted query builder 新增 Supabase/PostgREST 链式操作时必须由真实 PostgreSQL fixture 覆盖；公开文案必须按 `external_engines.status` 区分未执行、失败和通过。
+- 相关记录：BUG-116、BUG-117
+- 修复版本：待本次 staging 修复提交与部署验收

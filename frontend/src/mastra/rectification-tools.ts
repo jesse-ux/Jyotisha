@@ -531,7 +531,7 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
   const confirmTool = createTool({
     id: "rectification-confirm",
     description:
-      "Run the high-rigor confirmation gate for the candidate range and the user's dated events: three-engine parity, external VedAstro validation, neighbor stability, leave-one-out retention, width and margin thresholds. Returns whether a precise minute can be confirmed, the representative minute, and the reasons. Only call once you have enough confirmed dated events across domains. This does NOT write anything.",
+      "Run the high-rigor confirmation gate for the candidate range and the user's dated events. Official VedAstro runs only after the local external-validation entry gate is ready; external_validation_status=not_evaluated means it was not invoked, not that it failed. Neighbor stability and leave-one-out are diagnostic confidence indicators, not hard blockers. Returns whether a precise minute can be confirmed, the representative minute, and the reasons. Only call once you have enough confirmed dated events across domains. This does NOT write anything.",
     inputSchema: z.object({
       candidate_range: candidateRangeSchema,
       events: z.array(agenticRectificationEventSchema).min(1).max(40),
@@ -558,6 +558,15 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
       const gates = (technique?.gates && typeof technique.gates === "object")
         ? technique.gates as Record<string, unknown>
         : {};
+      const externalEngines = (technique?.external_engines && typeof technique.external_engines === "object")
+        ? technique.external_engines as Record<string, unknown>
+        : {};
+      const externalValidation = (externalEngines.validation && typeof externalEngines.validation === "object")
+        ? externalEngines.validation as Record<string, unknown>
+        : {};
+      const externalValidationStatus = typeof externalEngines.status === "string"
+        ? externalEngines.status
+        : "not_evaluated";
       const confirmationAllowed = technique?.confirmation_allowed === true
         && technique?.decision === "confirm_minute";
       const representativeTime = winning && timePattern.test(String(winning.representative_time ?? ""))
@@ -604,6 +613,11 @@ export function createAgenticRectificationTools(ctx: AgenticRectificationContext
         } : null,
         reasons: Array.isArray(data.reasons) ? data.reasons : [],
         stability_diagnostics: data.stability_diagnostics,
+        external_validation_status: externalValidationStatus,
+        external_validation_invoked: externalValidationStatus !== "not_evaluated",
+        external_validation_reason: typeof externalValidation.reason === "string"
+          ? externalValidation.reason
+          : typeof externalValidation.vedastro_reason === "string" ? externalValidation.vedastro_reason : null,
         technique_contract: {
           decision: technique?.decision,
           confirmation_allowed: technique?.confirmation_allowed,
