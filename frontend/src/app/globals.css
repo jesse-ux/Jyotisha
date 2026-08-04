@@ -1706,3 +1706,27 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
 
 .birth-time-clock-menu.select-content { width: 108px; min-width: 108px; }
 .birth-time-clock-menu .select-item { justify-content: flex-start; }
+
+.rectification-candidates {
+  display: grid;
+  gap: 12px;
+  margin: 8px 0 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+}
+.rectification-candidates-heading { display: grid; gap: 4px; }
+.rectification-candidates-heading span,
+.rectification-candidate span { color: var(--muted-foreground); font-size: 12px; }
+.rectification-candidate-list { display: grid; gap: 10px; }
+.rectification-candidate { display: grid; grid-template-columns: minmax(88px, auto) minmax(80px, 1fr) auto; gap: 12px; align-items: center; }
+.rectification-candidate > div:first-child { display: grid; gap: 2px; }
+.rectification-candidate.is-selected { color: var(--foreground); }
+.rectification-support { height: 6px; overflow: hidden; border-radius: 999px; background: var(--muted); }
+.rectification-support i { display: block; height: 100%; border-radius: inherit; background: var(--primary); }
+.rectification-saved { margin: 8px 0 16px; color: var(--foreground); font-size: 14px; }
+@media (max-width: 640px) {
+  .rectification-candidate { grid-template-columns: 1fr auto; }
+  .rectification-support { grid-column: 1 / -1; grid-row: 2; }
+}

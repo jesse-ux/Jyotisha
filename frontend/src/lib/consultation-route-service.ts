@@ -74,7 +74,7 @@ const allowedBirthTimeSources = new Set([
   "hospital_record", "family_exact", "approximate", "period_only", "unknown", "legacy_import",
 ]);
 const allowedBirthTimeStatuses = new Set([
-  "reported", "assessing", "rectifying", "candidate", "confirmed",
+  "reported", "assessing", "rectifying", "candidate", "accepted", "confirmed",
 ]);
 const concreteReportedSources = new Set([
   "hospital_record", "family_exact", "approximate",
@@ -130,8 +130,8 @@ function persistedChartMode(value: unknown): Exclude<ConsultationBirthTimeMode, 
   const source = optionalText(profile, "birth_time_source");
   const activeTime = optionalText(profile, "active_birth_time")?.slice(0, 5) ?? "";
   const reportedTime = optionalText(profile, "reported_birth_time")?.slice(0, 5) ?? "";
-  if (status === "confirmed" && isBirthClockTime(activeTime)) return "verified_chart";
-  if (status && allowedBirthTimeStatuses.has(status) && status !== "confirmed"
+  if ((status === "accepted" || status === "confirmed") && isBirthClockTime(activeTime)) return "verified_chart";
+  if (status && allowedBirthTimeStatuses.has(status) && status !== "accepted" && status !== "confirmed"
     && source && concreteReportedSources.has(source)
     && isBirthClockTime(reportedTime)) return "unverified_birth_time";
   return null;
@@ -205,14 +205,14 @@ function serverChartFromProfile(
     selectedTime = candidateBoundary;
     selectedTimeKind = "candidate_range_boundary";
   } else if (mode === "verified_chart") {
-    if (birthTimeStatus !== "confirmed") {
+    if (birthTimeStatus !== "accepted" && birthTimeStatus !== "confirmed") {
       throw new ConsultationProfileTruthError("mode_changed");
     }
     if (!activeBirthTime) throw new ConsultationProfileTruthError("profile_incomplete");
     selectedTime = activeBirthTime;
     selectedTimeKind = "active";
   } else {
-    if (birthTimeStatus === "confirmed" || !concreteReportedSources.has(birthTimeSource)) {
+    if (birthTimeStatus === "accepted" || birthTimeStatus === "confirmed" || !concreteReportedSources.has(birthTimeSource)) {
       throw new ConsultationProfileTruthError("mode_changed");
     }
     if (!reportedBirthTime) throw new ConsultationProfileTruthError("profile_incomplete");

@@ -181,6 +181,7 @@ type Account = {
   isAdmin: boolean;
   rectificationPriceCredits: number;
   hasConfirmedBirthTime: boolean;
+  hasUsableBirthTime: boolean;
   rectificationCase: AccountRectificationCaseState | null;
   profile: unknown;
 };
@@ -626,7 +627,7 @@ function readProfile(value: unknown): Profile {
   const reportedTime = persistedReportedTime || (source === "legacy_import" ? time : "");
   const knownPeriods = ["early_morning", "morning", "afternoon", "evening", "late_night"] as const;
   const period = knownPeriods.find((item) => item === profile.birth_time_period) ?? "";
-  const knownStatuses = ["reported", "assessing", "rectifying", "candidate", "confirmed"] as const;
+  const knownStatuses = ["reported", "assessing", "rectifying", "candidate", "accepted", "confirmed"] as const;
   const status = knownStatuses.find((item) => item === profile.birth_time_status)
     ?? (time ? "confirmed" : "");
   const provinceCode = typeof profile.province_code === "string" ? profile.province_code : profile.provinceCode;
@@ -1020,7 +1021,7 @@ export default function Home() {
   const accountId = account?.user.id;
   const rectificationCardAction = resolveRectificationCardAction({
     rectificationCase: account?.rectificationCase ?? null,
-    hasConfirmedBirthTime: account?.hasConfirmedBirthTime ?? false,
+    hasUsableBirthTime: account?.hasUsableBirthTime ?? false,
   });
   const rectificationCardLabel = rectificationCardLabels[rectificationCardAction];
   const onboardingFingerprint = onboardingProfileFingerprint(profile);
@@ -1236,6 +1237,7 @@ export default function Home() {
             isAdmin: false,
             rectificationPriceCredits: 1,
             hasConfirmedBirthTime: previewProfile.birthTimeStatus === "confirmed",
+            hasUsableBirthTime: previewProfile.birthTimeStatus === "accepted" || previewProfile.birthTimeStatus === "confirmed",
             rectificationCase: null,
             profile: previewProfile,
           });
@@ -1454,7 +1456,8 @@ export default function Home() {
           && latest.rectificationCase.turnVersion < current.rectificationCase.turnVersion) {
           return {
             ...latest,
-            hasConfirmedBirthTime: latest.hasConfirmedBirthTime || current.hasConfirmedBirthTime,
+            hasConfirmedBirthTime: latest.hasConfirmedBirthTime,
+            hasUsableBirthTime: latest.hasUsableBirthTime,
             rectificationCase: current.rectificationCase,
           };
         }

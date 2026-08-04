@@ -97,7 +97,7 @@ function hasCompleteBirthProfile(profile: OnboardingProfileRow): boolean {
   const source = knownSources.find((item) => item === profile.birth_time_source)
     ?? (persistedTime ? "legacy_import" : "");
   const knownStatuses: readonly BirthTimeStatus[] = [
-    "reported", "assessing", "rectifying", "candidate", "confirmed",
+    "reported", "assessing", "rectifying", "candidate", "accepted", "confirmed",
   ];
   const status = knownStatuses.find((item) => item === profile.birth_time_status)
     ?? (persistedTime ? "confirmed" : "");

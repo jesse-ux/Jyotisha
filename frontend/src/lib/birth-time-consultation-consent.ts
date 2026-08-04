@@ -79,7 +79,7 @@ export function clearBirthTimeConsultationConsent(
 }
 
 export function unverifiedBirthTime(profile: BirthTimeDraft): string | null {
-  if (profile.birthTimeStatus === "confirmed") return null;
+  if (profile.birthTimeStatus === "accepted" || profile.birthTimeStatus === "confirmed") return null;
   if (!concreteReportedSources.has(profile.birthTimeSource)) return null;
   return isBirthClockTime(profile.reportedTime) ? profile.reportedTime : null;
 }
@@ -114,7 +114,7 @@ export function resolveBirthTimeConsultationRoute(
 ): BirthTimeConsultationRoute {
   void _state;
   void _sessionId;
-  if (profile.birthTimeStatus === "confirmed" && isBirthClockTime(profile.time)) {
+  if ((profile.birthTimeStatus === "accepted" || profile.birthTimeStatus === "confirmed") && isBirthClockTime(profile.time)) {
     return { kind: "consult", mode: "verified_chart", time: profile.time };
   }
   const reportedTime = unverifiedBirthTime(profile);
@@ -126,13 +126,13 @@ export function resolveBirthTimeConsultationRoute(
 
 export function resolveRectificationCardAction(input: Readonly<{
   rectificationCase: AccountRectificationCaseState | null;
-  hasConfirmedBirthTime: boolean;
+  hasUsableBirthTime: boolean;
 }>): RectificationCardAction {
   if (input.rectificationCase
     && unfinishedRectificationStatuses.has(input.rectificationCase.status)) {
     return "resume";
   }
-  if (input.hasConfirmedBirthTime) return "revise";
+  if (input.hasUsableBirthTime) return "revise";
   return "start";
 }
 

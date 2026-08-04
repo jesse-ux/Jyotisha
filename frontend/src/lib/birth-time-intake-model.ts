@@ -29,6 +29,7 @@ export type BirthTimeStatus =
   | "assessing"
   | "rectifying"
   | "candidate"
+  | "accepted"
   | "confirmed";
 
 export type BirthTimeDraft = {
@@ -95,7 +96,7 @@ export const birthTimePeriodOptions = [
 ] as const;
 
 export type BirthTimeDisplayState = {
-  readonly kind: "candidate" | "confirmed";
+  readonly kind: "candidate" | "accepted" | "confirmed";
   readonly activeTime: string;
   readonly reportedLabel: string;
 };
@@ -110,11 +111,12 @@ function reportedBirthTimeLabel(draft: BirthTimeDraft): string {
 }
 
 export function birthTimeDisplayState(draft: BirthTimeDraft): BirthTimeDisplayState | null {
-  if (!draft.time || (draft.birthTimeStatus !== "candidate" && draft.birthTimeStatus !== "confirmed")) {
+  const kind = draft.birthTimeStatus;
+  if (!draft.time || (kind !== "candidate" && kind !== "accepted" && kind !== "confirmed")) {
     return null;
   }
   return {
-    kind: draft.birthTimeStatus,
+    kind,
     activeTime: draft.time,
     reportedLabel: reportedBirthTimeLabel(draft),
   };
@@ -212,7 +214,7 @@ export function isDeclaredBirthProfileComplete(
 
 export function isBirthTimeReadyForConsultation(draft: BirthTimeDraft) {
   return isBirthClockTime(draft.time)
-    && draft.birthTimeStatus === "confirmed";
+    && (draft.birthTimeStatus === "accepted" || draft.birthTimeStatus === "confirmed");
 }
 
 const declaredBirthInputKeys = [
@@ -235,8 +237,8 @@ export function declaredBirthInputChanged(
 /**
  * Applies an intake edit without allowing a stale, unconfirmed candidate minute
  * to survive changes to the declaration it was calculated from.
- * Confirmed active time belongs to the account and is changed only by explicit
- * rectification confirmation, so ordinary profile edits leave it intact.
+ * Engine-confirmed active time belongs to the account and is changed only by explicit
+ * rectification confirmation. User-accepted time is invalidated when its birth declaration changes.
  */
 export function applyBirthTimeDraftPatch<T extends BirthTimeDraft>(
   current: T,

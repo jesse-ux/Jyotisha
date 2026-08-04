@@ -117,6 +117,8 @@ export async function GET() {
       rectificationPriceCredits,
       hasConfirmedBirthTime: profile.birth_time_status === "confirmed"
         && typeof profile.active_birth_time === "string",
+      hasUsableBirthTime: (profile.birth_time_status === "accepted" || profile.birth_time_status === "confirmed")
+        && typeof profile.active_birth_time === "string",
       rectificationCase,
       profile,
       birthLocation: {

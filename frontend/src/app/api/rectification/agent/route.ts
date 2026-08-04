@@ -10,14 +10,16 @@ import { createAdminSupabaseClient } from "@/lib/supabase/admin";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   AgenticRectificationProfileError,
+  acceptAgenticRectificationCandidate,
   createAgenticRectificationContext,
   loadAgenticRectificationProfile,
+  loadLatestAgenticRectificationResult,
 } from "@/lib/rectification-agentic/session";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
-const agenticRectificationRequestFields = {
+const agenticRectificationConversationFields = {
   requestId: z.string().uuid(),
   sessionId: z.string().uuid(),
   modelId: z.string().trim().min(1).max(64).optional(),
@@ -35,13 +37,19 @@ const agenticRectificationRequestFields = {
 
 const agenticRectificationRequestSchema = z.discriminatedUnion("action", [
   z.object({
-    ...agenticRectificationRequestFields,
+    ...agenticRectificationConversationFields,
     action: z.literal("opening"),
   }).strict(),
   z.object({
-    ...agenticRectificationRequestFields,
+    ...agenticRectificationConversationFields,
     action: z.literal("message"),
     message: z.string().trim().min(1).max(4000),
+  }).strict(),
+  z.object({
+    action: z.literal("accept_candidate"),
+    sessionId: z.string().uuid(),
+    resultId: z.string().uuid(),
+    time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
   }).strict(),
 ]);
 
@@ -97,6 +105,34 @@ async function recordModelUsage(
   }
 }
 
+export async function GET(request: Request) {
+  let supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>;
+  let accounting: ReturnType<typeof createAdminSupabaseClient>;
+  try {
+    supabase = await createServerSupabaseClient();
+    accounting = createAdminSupabaseClient();
+  } catch {
+    return NextResponse.json({ error: "服务尚未配置" }, { status: 503 });
+  }
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) return NextResponse.json({ error: "请先登录" }, { status: 401 });
+  const sessionId = new URL(request.url).searchParams.get("sessionId") ?? "";
+  if (!z.string().uuid().safeParse(sessionId).success) return NextResponse.json({ error: "请求格式不正确" }, { status: 400 });
+  const { data: session, error } = await supabase
+    .from("chat_sessions")
+    .select("id,session_type")
+    .eq("id", sessionId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (error) return NextResponse.json({ error: "暂时无法读取生时校正会话" }, { status: 503 });
+  if (!session || session.session_type !== "birth_time_rectification") return NextResponse.json({ error: "生时校正会话不存在" }, { status: 404 });
+  try {
+    return NextResponse.json({ result: await loadLatestAgenticRectificationResult(accounting, user.id, sessionId) });
+  } catch {
+    return NextResponse.json({ error: "暂时无法读取候选结果" }, { status: 503 });
+  }
+}
+
 export async function POST(request: Request) {
   let supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>;
   let accounting: ReturnType<typeof createAdminSupabaseClient>;
@@ -131,7 +167,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const promptSource = [
+  const promptSource = parsed.data.action === "accept_candidate" ? "" : [
     parsed.data.action === "message" ? parsed.data.message : "",
     ...parsed.data.history.filter((message) => message.role === "user").map((message) => message.text),
   ].join("\n");
@@ -143,7 +179,6 @@ export async function POST(request: Request) {
   }
 
   const userId = user.id;
-  const requestId = parsed.data.requestId;
   const requestTime = new Date();
 
   const { data: chatSession, error: chatSessionError } = await supabase
@@ -164,8 +199,26 @@ export async function POST(request: Request) {
       { status: 404 },
     );
   }
+  if (parsed.data.action === "accept_candidate") {
+    const accepted = await acceptAgenticRectificationCandidate(
+      accounting,
+      userId,
+      parsed.data.sessionId,
+      parsed.data.time,
+      parsed.data.resultId,
+    );
+    if (!accepted.ok) {
+      return NextResponse.json(
+        { error: "暂时无法采用该候选时间", message: accepted.reason },
+        { status: 409 },
+      );
+    }
+    return NextResponse.json(accepted);
+  }
+  const conversation = parsed.data;
+  const requestId = conversation.requestId;
   const persistedMessages = readPersistedMessages(chatSession.messages);
-  if (parsed.data.action === "opening" && persistedMessages.length > 0) {
+  if (conversation.action === "opening" && persistedMessages.length > 0) {
     return NextResponse.json(
       { code: "opening_already_started", error: "生时校正已开始", message: "已有校正记录，无需重复生成首次引导。" },
       { status: 409 },
@@ -198,7 +251,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const selectedModel = (parsed.data.modelId ? resolveLanguageModel(parsed.data.modelId) : null)
+  const selectedModel = (conversation.modelId ? resolveLanguageModel(conversation.modelId) : null)
     ?? defaultLanguageModel();
   if (!selectedModel) {
     return NextResponse.json(
@@ -234,7 +287,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const ctx = createAgenticRectificationContext(accounting, userId, profile);
+  const ctx = createAgenticRectificationContext(accounting, userId, profile, conversation.sessionId);
   const agent = getAgenticRectificationAgent(selectedModel, ctx);
 
   const encoder = new TextEncoder();
@@ -263,15 +316,15 @@ export async function POST(request: Request) {
       try {
         const result = await agent.stream(
           [
-            ...parsed.data.history.map((message) => message.role === "user"
+            ...conversation.history.map((message) => message.role === "user"
               ? { role: "user" as const, content: message.text }
               : { role: "assistant" as const, content: message.text }),
             {
               role: "user",
               content: [
                 currentTimeContext(requestTime),
-                parsed.data.name ? `用户称呼：${parsed.data.name}` : "",
-                parsed.data.action === "opening" ? openingContext : parsed.data.message,
+                conversation.name ? `用户称呼：${conversation.name}` : "",
+                conversation.action === "opening" ? openingContext : conversation.message,
               ].filter(Boolean).join("\n"),
             },
           ],
@@ -297,7 +350,7 @@ export async function POST(request: Request) {
           controller.close();
           return;
         }
-        const requestHistory = parsed.data.history.map((message) => ({
+        const requestHistory = conversation.history.map((message) => ({
           role: message.role,
           text: message.text,
         } satisfies ChatMessage));
@@ -306,20 +359,26 @@ export async function POST(request: Request) {
           : persistedMessages;
         const nextMessages: ChatMessage[] = [
           ...baseMessages,
-          ...(parsed.data.action === "message"
-            ? [{ role: "user" as const, text: parsed.data.message }]
+          ...(conversation.action === "message"
+            ? [{ role: "user" as const, text: conversation.message }]
             : []),
           { role: "assistant" as const, text: reply.text, suggestions: reply.suggestions },
         ].slice(-500);
         const { data: savedSession, error: saveError } = await supabase
           .from("chat_sessions")
           .update({ messages: nextMessages, updated_at: new Date().toISOString() })
-          .eq("id", parsed.data.sessionId)
+          .eq("id", conversation.sessionId)
           .eq("user_id", userId)
           .eq("session_type", "birth_time_rectification")
           .select("id")
           .maybeSingle();
         if (saveError || !savedSession) throw new Error("RectificationSessionPersistenceError");
+        try {
+          const candidateResult = await loadLatestAgenticRectificationResult(accounting, userId, conversation.sessionId);
+          if (candidateResult) send({ type: "candidates", result: candidateResult });
+        } catch {
+          console.warn(`[agentic-rectification] unable to read candidate result request=${requestId}`);
+        }
         send({ type: "done", emitted: true });
         await settle(true);
         controller.close();
