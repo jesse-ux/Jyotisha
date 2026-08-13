@@ -675,7 +675,7 @@ button:disabled { cursor: default; opacity: .45; }
 .composer { width: min(760px, 100%); display: flex; align-items: flex-end; gap: 10px; margin: 0 auto; border: 1px solid var(--color-border); transition: border-color 140ms ease-out; min-height: 60px; padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4); border-color: var(--color-border-strong); border-radius: var(--radius-lg); background: var(--color-canvas); box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-border) 42%, transparent); }
 .composer:focus-within { border-color: var(--color-action); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-action) 15%, transparent); }
 .composer textarea { min-width: 0; min-height: 44px; max-height: 128px; flex: 1; resize: none; padding: 11px 0 8px; border: 0; outline: 0; background: transparent; color: var(--color-ink); line-height: 1.5; font-size: 16px; }
-.composer button { width: 44px; height: 44px; display: grid; flex: 0 0 auto; place-items: center; border: 0; color: var(--color-on-dark); cursor: pointer; transition: background-color 120ms ease-out, transform 120ms ease-out; border-radius: var(--radius-md); background: var(--color-action); }
+.composer button { width: 44px; height: 44px; display: grid; flex: 0 0 auto; place-items: center; border: 0; color: var(--color-on-dark); cursor: pointer; transition: background-color 120ms ease-out, transform 120ms ease-out; border-radius: 999px; background: var(--color-action); }
 .composer .composer-stop { background: var(--color-action); }
 .composer .composer-stop:not(:disabled):hover { background: var(--color-action-hover); }
 .composer-footer { width: min(760px, 100%); min-height: 44px; display: flex; align-items: center; margin: var(--space-1) auto 0; }
@@ -939,7 +939,7 @@ input:disabled, select:disabled { color: var(--color-ink-tertiary); background: 
   padding: var(--space-10);
   border: 1px solid color-mix(in srgb, var(--color-action) 14%, var(--color-border));
   border-radius: var(--radius-xl);
-  background: radial-gradient(circle at 82% 36%, rgba(133, 67, 47, .12), transparent 33%), linear-gradient(135deg, #fbfaf7 0%, #f5f1eb 100%);
+  background: var(--color-canvas);
 }
 
 .starter-hero::after {

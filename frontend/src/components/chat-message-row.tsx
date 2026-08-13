@@ -32,8 +32,8 @@ export function ChatMessageRow({ message }: { readonly message: ChatMessageView 
       }, {
         autoAlpha: 1,
         clearProps: "opacity,transform,visibility",
-        duration: message.role === "user" ? 0.3 : 0.42,
-        ease: "power3.out",
+        duration: 0.18,
+        ease: "cubic-bezier(.22, 1, .36, 1)",
         y: 0,
       });
     });
