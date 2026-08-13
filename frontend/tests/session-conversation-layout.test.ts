@@ -16,7 +16,8 @@ test("aligns the session transcript and composer to one readable column", () => 
 test("keeps message motion restrained and honors reduced-motion preferences", () => {
   assert.match(messageRowSource, /gsap\.matchMedia\(\)/);
   assert.match(messageRowSource, /prefers-reduced-motion:\s*no-preference/);
-  assert.match(messageRowSource, /duration:\s*message\.role === "user" \? 0\.3 : 0\.42/);
+  assert.match(messageRowSource, /duration:\s*0\.18/);
+  assert.match(messageRowSource, /ease:\s*"cubic-bezier\(\.22,\s*1,\s*\.36,\s*1\)"/);
   assert.match(messageRowSource, /clearProps:\s*"opacity,transform,visibility"/);
 });
 
